@@ -42,7 +42,7 @@ const Navigation = ({ dictionary }) => {
   return (
     <div
       {...(!isBreakpointReached && {
-        className: classnames(horizontalLayoutClasses.navigation, 'relative flex border-bs')
+        className: classnames(horizontalLayoutClasses.navigation, 'relative hidden border-bs lg:flex')
       })}
     >
       <StyledDiv

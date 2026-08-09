@@ -11,6 +11,15 @@ import { useObjectCookie } from '@core/hooks/useObjectCookie'
 // Initial Settings Context
 export const SettingsContext = createContext(null)
 
+const lockedLayoutSettings = {
+  layout: 'horizontal',
+  navbarContentWidth: 'wide',
+  contentWidth: 'wide',
+  footerContentWidth: 'wide'
+}
+
+const lockLayoutSettings = settings => ({ ...settings, ...lockedLayoutSettings })
+
 // Settings Provider
 export const SettingsProvider = props => {
   // Initial Settings
@@ -25,10 +34,10 @@ export const SettingsProvider = props => {
     primaryColor: primaryColorConfig[0].main
   }
 
-  const updatedInitialSettings = {
+  const updatedInitialSettings = lockLayoutSettings({
     ...initialSettings,
     mode: props.mode || themeConfig.mode
-  }
+  })
 
   // Cookies
   const [settingsCookie, updateSettingsCookie] = useObjectCookie(
@@ -38,14 +47,14 @@ export const SettingsProvider = props => {
 
   // State
   const [_settingsState, _updateSettingsState] = useState(
-    JSON.stringify(settingsCookie) !== '{}' ? settingsCookie : updatedInitialSettings
+    lockLayoutSettings(JSON.stringify(settingsCookie) !== '{}' ? settingsCookie : updatedInitialSettings)
   )
 
   const updateSettings = (settings, options) => {
     const { updateCookie = true } = options || {}
 
     _updateSettingsState(prev => {
-      const newSettings = { ...prev, ...settings }
+      const newSettings = lockLayoutSettings({ ...prev, ...settings })
 
       // Update cookie if needed
       if (updateCookie) updateSettingsCookie(newSettings)
@@ -70,7 +79,7 @@ export const SettingsProvider = props => {
     updateSettings(settings, { updateCookie: false })
 
     // Returns a function to reset the page settings
-    return () => updateSettings(settingsCookie, { updateCookie: false })
+    return () => updateSettings(lockLayoutSettings(settingsCookie), { updateCookie: false })
   }
 
   const resetSettings = () => {

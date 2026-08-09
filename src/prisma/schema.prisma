@@ -72,12 +72,15 @@ model User {
   created_users User[] @relation("UserCreatedBy")
 
   // ERP Core & RBAC Relations
-  staff      HrmStaff?
-  roles      Role[]     @relation("UserRoles")
-  audit_logs AuditLog[]
+  staff         HrmStaff?
+  roles         Role[]       @relation("UserRoles")
+  audit_logs    AuditLog[]
+  hosted_visits CrmVisitor[]
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
+
+  @@index([created_by_id])
 }
 
 model Role {
@@ -127,8 +130,8 @@ model AuditLog {
 
   user User? @relation(fields: [user_id], references: [id], onDelete: SetNull)
 
-  @@index([user_id])
-  @@index([module])
+  @@index([user_id, created_at])
+  @@index([module, created_at])
 }
 
 // HRM
@@ -198,9 +201,11 @@ model HrmStaffContract {
   updated_at       DateTime  @updatedAt
 
   // Relations
-  staff         HrmStaff @relation(fields: [staff_id], references: [id], onDelete: Cascade)
+  staff         HrmStaff @relation(fields: [staff_id], references: [id], onDelete: Restrict)
   contract_type Option   @relation("ContractType", fields: [contract_type_id], references: [id])
   status        Option   @relation("ContractStatus", fields: [status_id], references: [id])
+
+  @@index([staff_id, status_id])
 }
 
 model HrmStaffLeave {
@@ -221,6 +226,8 @@ model HrmStaffLeave {
   approved_by HrmStaff? @relation("ApprovedLeaves", fields: [approved_by_id], references: [id], onDelete: SetNull)
   leave_type  Option    @relation("LeaveType", fields: [leave_type_id], references: [id])
   status      Option    @relation("LeaveStatus", fields: [status_id], references: [id])
+
+  @@index([staff_id, start_date])
 }
 
 model HrmStaffTimesheet {
@@ -239,6 +246,8 @@ model HrmStaffTimesheet {
   // Relations
   staff   HrmStaff @relation(fields: [staff_id], references: [id], onDelete: Cascade)
   project Project? @relation(fields: [project_id], references: [id], onDelete: SetNull)
+
+  @@index([staff_id, date])
 }
 
 // CRM
@@ -263,6 +272,8 @@ model CrmLead {
   assigned_to      HrmStaff?  @relation(fields: [assigned_to_id], references: [id], onDelete: SetNull)
   converted_client CrmClient?
   contracts        Contract[]
+
+  @@index([status_id, created_at])
 }
 
 model CrmClient {
@@ -286,6 +297,25 @@ model CrmClient {
   projects        Project[]
   incomes         FinanceIncome[]
   invoices        ContractInvoice[]
+}
+
+model CrmVisitor {
+  id           String   @id @default(uuid())
+  full_name    String
+  email        String?
+  phone        String
+  company_name String?
+  purpose      String
+  visited_at   DateTime @default(now())
+  host_user_id String?
+  notes        String?  @db.Text
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+
+  host_user User? @relation(fields: [host_user_id], references: [id], onDelete: SetNull)
+
+  @@index([visited_at])
+  @@index([host_user_id])
 }
 
 // PROJECT
@@ -312,7 +342,7 @@ model Project {
 
   // Relations
   contract        Contract?           @relation(fields: [contract_id], references: [id], onDelete: SetNull)
-  client          CrmClient           @relation(fields: [client_id], references: [id], onDelete: Cascade)
+  client          CrmClient           @relation(fields: [client_id], references: [id], onDelete: Restrict)
   status          Option              @relation("ProjectStatus", fields: [status_id], references: [id])
   priority        Option              @relation("ProjectPriority", fields: [priority_id], references: [id])
   project_manager HrmStaff?           @relation("ProjectManager", fields: [project_manager_id], references: [id], onDelete: SetNull)
@@ -321,6 +351,8 @@ model Project {
   timesheets      HrmStaffTimesheet[]
   incomes         FinanceIncome[]
   expenses        FinanceExpense[]
+
+  @@index([client_id, status_id])
 }
 
 model ProjectMember {
@@ -365,7 +397,7 @@ model Contract {
   updated_at         DateTime  @updatedAt
 
   // Relations
-  client          CrmClient              @relation(fields: [client_id], references: [id], onDelete: Cascade)
+  client          CrmClient              @relation(fields: [client_id], references: [id], onDelete: Restrict)
   lead            CrmLead?               @relation(fields: [lead_id], references: [id], onDelete: SetNull)
   status          Option                 @relation("ContractStatus", fields: [status_id], references: [id])
   contract_type   Option                 @relation("ContractType", fields: [contract_type_id], references: [id])
@@ -376,6 +408,8 @@ model Contract {
   invoices        ContractInvoice[]
   incomes         FinanceIncome[]
   notifications   ContractNotification[]
+
+  @@index([client_id, status_id])
 }
 
 model ContractInvoice {
@@ -392,8 +426,10 @@ model ContractInvoice {
 
   // Relations
   contract Contract  @relation(fields: [contract_id], references: [id], onDelete: Cascade)
-  client   CrmClient @relation(fields: [client_id], references: [id], onDelete: Cascade)
+  client   CrmClient @relation(fields: [client_id], references: [id], onDelete: Restrict)
   status   Option    @relation("InvoiceStatus", fields: [status_id], references: [id])
+
+  @@index([contract_id, status_id])
 }
 
 model ContractNotification {
@@ -428,11 +464,14 @@ model Task {
   updated_at      DateTime  @updatedAt
 
   // Relations
-  project     Project   @relation(fields: [project_id], references: [id], onDelete: Cascade)
+  project     Project   @relation(fields: [project_id], references: [id], onDelete: Restrict)
   status      Option    @relation("TaskStatus", fields: [status_id], references: [id])
   priority    Option    @relation("TaskPriority", fields: [priority_id], references: [id])
   assigned_to HrmStaff? @relation("AssignedTasks", fields: [assigned_to_id], references: [id], onDelete: SetNull)
   created_by  HrmStaff? @relation("CreatedTasks", fields: [created_by_id], references: [id], onDelete: SetNull)
+
+  @@index([project_id, status_id])
+  @@index([assigned_to_id, status_id])
 }
 
 // FINANCE
@@ -461,6 +500,8 @@ model FinanceIncome {
   project     Project?   @relation(fields: [project_id], references: [id], onDelete: SetNull)
   received_by HrmStaff?  @relation(fields: [received_by_id], references: [id], onDelete: SetNull)
   income_type Option     @relation("IncomeType", fields: [income_type_id], references: [id])
+
+  @@index([created_at])
 }
 
 model FinanceExpense {
@@ -483,6 +524,8 @@ model FinanceExpense {
   project      Project?  @relation(fields: [project_id], references: [id], onDelete: SetNull)
   spent_by     HrmStaff? @relation(fields: [spent_by_id], references: [id], onDelete: SetNull)
   expense_type Option    @relation("ExpenseType", fields: [expense_type_id], references: [id])
+
+  @@index([created_at])
 }
 
 model FinanceSalary {
@@ -509,8 +552,10 @@ model FinanceSalary {
   updated_at        DateTime  @updatedAt
 
   // Relations
-  staff        HrmStaff  @relation("StaffSalaries", fields: [staff_id], references: [id], onDelete: Cascade)
+  staff        HrmStaff  @relation("StaffSalaries", fields: [staff_id], references: [id], onDelete: Restrict)
   processed_by HrmStaff? @relation("ProcessedSalaries", fields: [processed_by_id], references: [id], onDelete: SetNull)
+
+  @@unique([staff_id, timesheet_month])
 }
 
 model FinanceLoan {
@@ -529,7 +574,7 @@ model FinanceLoan {
   updated_at        DateTime @updatedAt
 
   // Relations
-  staff       HrmStaff  @relation("StaffLoans", fields: [staff_id], references: [id], onDelete: Cascade)
+  staff       HrmStaff  @relation("StaffLoans", fields: [staff_id], references: [id], onDelete: Restrict)
   approved_by HrmStaff? @relation("ApprovedLoans", fields: [approved_by_id], references: [id], onDelete: SetNull)
   status      Option    @relation("LoanStatus", fields: [status_id], references: [id])
 }
@@ -549,6 +594,8 @@ model Inventory {
   // Relations
   category Option @relation("InventoryCategory", fields: [category_id], references: [id])
   status   Option @relation("InventoryStatus", fields: [status_id], references: [id])
+
+  @@index([category_id, status_id])
 }
 
 // OPTION
@@ -599,17 +646,22 @@ model Option {
 }
 
 // SETUP
+enum SetupScope {
+  GLOBAL
+}
+
 model Setup {
-  id                String   @id @default(cuid())
-  app_name          String   @default("ERP System")
+  id                String     @id @default(cuid())
+  scope             SetupScope @unique @default(GLOBAL)
+  app_name          String     @default("ERP System")
   company_name      String
-  company_logo      String?  @db.Text
-  currency_code     String   @default("AFN")
-  currency_symbol   String   @default("؋")
-  timezone          String   @default("Asia/Kabul")
-  date_format       String   @default("YYYY-MM-DD")
-  fiscal_year_start String   @default("01-01") // MM-DD format
-  default_tax_rate  Decimal  @default(0.00) @db.Decimal(5, 2)
-  created_at        DateTime @default(now())
-  updated_at        DateTime @updatedAt
+  company_logo      String?    @db.Text
+  currency_code     String     @default("AFN")
+  currency_symbol   String     @default("؋")
+  timezone          String     @default("Asia/Kabul")
+  date_format       String     @default("YYYY-MM-DD")
+  fiscal_year_start String     @default("01-01") // MM-DD format
+  default_tax_rate  Decimal    @default(0.00) @db.Decimal(5, 2)
+  created_at        DateTime   @default(now())
+  updated_at        DateTime   @updatedAt
 }

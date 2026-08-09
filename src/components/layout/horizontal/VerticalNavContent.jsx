@@ -1,3 +1,5 @@
+'use client'
+
 // React Imports
 import { useRef } from 'react'
 
@@ -40,35 +42,24 @@ const StyledBoxForShadow = styled('div')(({ theme }) => ({
 }))
 
 const VerticalNavContent = ({ children }) => {
-  // Hooks
   const { isBreakpointReached } = useHorizontalNav()
   const { lang: locale } = useParams()
-
-  // Refs
   const shadowRef = useRef(null)
 
-  // Vars
   const ScrollWrapper = isBreakpointReached ? 'div' : PerfectScrollbar
 
   const scrollMenu = (container, isPerfectScrollbar) => {
-    container = isBreakpointReached || !isPerfectScrollbar ? container.target : container
+    const scrollContainer = isBreakpointReached || !isPerfectScrollbar ? container.target : container
 
-    if (shadowRef && container.scrollTop > 0) {
-      // @ts-ignore
-      if (!shadowRef.current.classList.contains('scrolled')) {
-        // @ts-ignore
-        shadowRef.current.classList.add('scrolled')
-      }
-    } else {
-      // @ts-ignore
-      shadowRef.current.classList.remove('scrolled')
+    if (shadowRef.current) {
+      shadowRef.current.classList.toggle('scrolled', scrollContainer.scrollTop > 0)
     }
   }
 
   return (
     <>
       <NavHeader>
-        <Link href={getLocalizedUrl('/', locale)}>
+        <Link href={getLocalizedUrl('/dashboard', locale)}>
           <Logo />
         </Link>
         <NavCollapseIcons

@@ -11,7 +11,7 @@ import { getLocalizedUrl } from '@/utils/i18n'
 const noResultData = [
   {
     label: 'Analytics',
-    href: '/dashboards/analytics',
+    href: '/dashboard',
     icon: 'tabler-chart-pie-2'
   },
   {

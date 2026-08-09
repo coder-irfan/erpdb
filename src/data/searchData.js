@@ -9,7 +9,7 @@ const data = [
   {
     id: '2',
     name: 'Analytics Dashboard',
-    url: '/dashboards/analytics',
+    url: '/dashboard',
     icon: 'tabler-trending-up',
     section: 'Dashboards'
   },

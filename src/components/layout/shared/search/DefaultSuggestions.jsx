@@ -14,7 +14,7 @@ const defaultSuggestions = [
     items: [
       {
         label: 'Analytics',
-        href: '/dashboards/analytics',
+        href: '/dashboard',
         icon: 'tabler-trending-up'
       },
       {

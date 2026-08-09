@@ -4,20 +4,20 @@ const nextConfig = {
   redirects: async () => {
     return [
       {
-        source: '/',
-        destination: '/en/dashboards/analytics',
+        source: '/:lang(en|ps|fa)',
+        destination: '/:lang/dashboard',
         permanent: true,
         locale: false
       },
       {
-        source: '/:lang(en|fr|ar)',
-        destination: '/:lang/dashboards/analytics',
+        source: '/:lang(en|ps|fa)/dashboards/analytics',
+        destination: '/:lang/dashboard',
         permanent: true,
         locale: false
       },
       {
-        source: '/:path((?!en|fr|ar|front-pages|images|api|favicon.ico).*)*',
-        destination: '/en/:path*',
+        source: '/:lang(en|ps|fa)/dashboards',
+        destination: '/:lang/dashboard',
         permanent: true,
         locale: false
       }

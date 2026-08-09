@@ -4,11 +4,10 @@
 import { useRef, useState } from 'react'
 
 // Next Imports
-import Link from 'next/link'
-import { usePathname, useParams } from 'next/navigation'
+import { usePathname, useParams, useRouter } from 'next/navigation'
 
 // MUI Imports
-import IconButton from '@mui/material/IconButton'
+import Button from '@mui/material/Button'
 import Popper from '@mui/material/Popper'
 import Fade from '@mui/material/Fade'
 import Paper from '@mui/material/Paper'
@@ -16,31 +15,41 @@ import ClickAwayListener from '@mui/material/ClickAwayListener'
 import MenuList from '@mui/material/MenuList'
 import MenuItem from '@mui/material/MenuItem'
 
+// Third-party Imports
+import ReactCountryFlag from 'react-country-flag'
+
 // Hook Imports
 import { useSettings } from '@core/hooks/useSettings'
 
+// Config Imports
+import { i18n } from '@/configs/i18n'
+
 const getLocalePath = (pathName, locale) => {
-  if (!pathName) return '/'
-  const segments = pathName.split('/')
+  const segments = (pathName || '/').split('/').filter(Boolean)
 
-  segments[1] = locale
+  while (i18n.locales.includes(segments[0])) {
+    segments.shift()
+  }
 
-  return segments.join('/')
+  return `/${[locale, ...segments].join('/')}`
 }
 
 // Vars
 const languageData = [
   {
     langCode: 'en',
-    langName: 'English'
+    langName: 'English',
+    countryCode: 'US'
   },
   {
-    langCode: 'fr',
-    langName: 'French'
+    langCode: 'ps',
+    langName: 'پښتو',
+    countryCode: 'AF'
   },
   {
-    langCode: 'ar',
-    langName: 'Arabic'
+    langCode: 'fa',
+    langName: 'دری',
+    countryCode: 'AF'
   }
 ]
 
@@ -53,8 +62,10 @@ const LanguageDropdown = () => {
 
   // Hooks
   const pathName = usePathname()
+  const router = useRouter()
   const { settings } = useSettings()
   const { lang } = useParams()
+  const selectedLanguage = languageData.find(language => language.langCode === lang) || languageData[0]
 
   const handleClose = () => {
     setOpen(false)
@@ -64,11 +75,27 @@ const LanguageDropdown = () => {
     setOpen(prevOpen => !prevOpen)
   }
 
+  const handleLanguageChange = locale => {
+    router.push(getLocalePath(pathName, locale))
+    handleClose()
+  }
+
   return (
     <>
-      <IconButton ref={anchorRef} onClick={handleToggle} className='text-textPrimary'>
-        <i className='tabler-language' />
-      </IconButton>
+      <Button
+        ref={anchorRef}
+        onClick={handleToggle}
+        color='inherit'
+        className='text-textPrimary min-is-0 gap-0 normal-case lg:gap-2'
+      >
+        <ReactCountryFlag
+          svg
+          countryCode={selectedLanguage.countryCode}
+          aria-label={`${selectedLanguage.countryCode} flag`}
+          className='text-xl'
+        />
+        <span className='hidden lg:inline-flex'>{selectedLanguage.langName}</span>
+      </Button>
       <Popper
         open={open}
         transition
@@ -88,12 +115,17 @@ const LanguageDropdown = () => {
                   {languageData.map(locale => (
                     <MenuItem
                       key={locale.langCode}
-                      component={Link}
-                      href={getLocalePath(pathName, locale.langCode)}
-                      onClick={handleClose}
+                      onClick={() => handleLanguageChange(locale.langCode)}
                       selected={lang === locale.langCode}
+                      className='gap-2'
                     >
-                      {locale.langName}
+                      <ReactCountryFlag
+                        svg
+                        countryCode={locale.countryCode}
+                        aria-label={`${locale.countryCode} flag`}
+                        className='text-xl'
+                      />
+                      <span>{locale.langName}</span>
                     </MenuItem>
                   ))}
                 </MenuList>
