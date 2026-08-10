@@ -5,39 +5,80 @@ import { useState } from 'react'
 
 // Next Imports
 import Link from 'next/link'
-import { useParams } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 
 // MUI Imports
+import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
-import Typography from '@mui/material/Typography'
+import Checkbox from '@mui/material/Checkbox'
+import FormControlLabel from '@mui/material/FormControlLabel'
 import IconButton from '@mui/material/IconButton'
 import InputAdornment from '@mui/material/InputAdornment'
-import Checkbox from '@mui/material/Checkbox'
-import Button from '@mui/material/Button'
-import FormControlLabel from '@mui/material/FormControlLabel'
-import Divider from '@mui/material/Divider'
+import Typography from '@mui/material/Typography'
+
+// Third-party Imports
+import { valibotResolver } from '@hookform/resolvers/valibot'
+import { Controller, useForm } from 'react-hook-form'
+import { toast } from 'sonner'
 
 // Component Imports
+import LoadingButtonContent from '@components/LoadingButtonContent'
 import Logo from '@components/layout/shared/Logo'
 import CustomTextField from '@core/components/mui/TextField'
 
-// Config Imports
-import themeConfig from '@configs/themeConfig'
+// Server Action Imports
+import { loginAction } from '@/app/actions/authActions'
 
 // Util Imports
 import { getLocalizedUrl } from '@/utils/i18n'
 
+// Validation Imports
+import { createLoginSchema } from '@/utils/validation/authSchemas'
+
 // Styled Component Imports
 import AuthIllustrationWrapper from './AuthIllustrationWrapper'
 
-const LoginV1 = () => {
-  // States
+const LoginV1 = ({ dictionary, locale }) => {
   const [isPasswordShown, setIsPasswordShown] = useState(false)
 
-  // Hooks
-  const { lang: locale } = useParams()
-  const handleClickShowPassword = () => setIsPasswordShown(show => !show)
+  const router = useRouter()
+  const searchParams = useSearchParams()
+
+  const {
+    control,
+    handleSubmit,
+    formState: { errors, isSubmitting }
+  } = useForm({
+    resolver: valibotResolver(createLoginSchema(dictionary.validation)),
+    defaultValues: {
+      email: '',
+      password: '',
+      rememberMe: false
+    }
+  })
+
+  const onSubmit = async data => {
+    const result = await loginAction({ ...data, locale })
+
+    if (!result.success) {
+      toast.error(result.message)
+
+      return
+    }
+
+    toast.success(result.message)
+
+    const callbackUrl = searchParams.get('callbackUrl')
+
+    const redirectUrl =
+      callbackUrl?.startsWith('/') && !callbackUrl.startsWith('//')
+        ? callbackUrl
+        : getLocalizedUrl('/dashboard', locale)
+
+    router.replace(redirectUrl)
+    router.refresh()
+  }
 
   return (
     <AuthIllustrationWrapper>
@@ -46,69 +87,86 @@ const LoginV1 = () => {
           <Link href={getLocalizedUrl('/', locale)} className='flex justify-center mbe-6'>
             <Logo />
           </Link>
-          <div className='flex flex-col gap-1 mbe-6'>
-            <Typography variant='h4'>{`Welcome to ${themeConfig.templateName}! 👋🏻`}</Typography>
-            <Typography>Please sign-in to your account and start the adventure</Typography>
-          </div>
-          <form noValidate autoComplete='off' onSubmit={e => e.preventDefault()} className='flex flex-col gap-6'>
-            <CustomTextField autoFocus fullWidth label='Email or Username' placeholder='Enter your email or username' />
-            <CustomTextField
-              fullWidth
-              label='Password'
-              placeholder='············'
-              id='outlined-adornment-password'
-              type={isPasswordShown ? 'text' : 'password'}
-              slotProps={{
-                input: {
-                  endAdornment: (
-                    <InputAdornment position='end'>
-                      <IconButton edge='end' onClick={handleClickShowPassword} onMouseDown={e => e.preventDefault()}>
-                        <i className={isPasswordShown ? 'tabler-eye-off' : 'tabler-eye'} />
-                      </IconButton>
-                    </InputAdornment>
-                  )
-                }
-              }}
+          <Typography variant='h4' className='mbe-6'>
+            {dictionary.login.title}
+          </Typography>
+          <form noValidate autoComplete='off' onSubmit={handleSubmit(onSubmit)} className='flex flex-col gap-6'>
+            <Controller
+              name='email'
+              control={control}
+              render={({ field }) => (
+                <CustomTextField
+                  {...field}
+                  autoFocus
+                  fullWidth
+                  type='email'
+                  label={dictionary.common.email}
+                  placeholder={dictionary.common.emailPlaceholder}
+                  error={Boolean(errors.email)}
+                  helperText={errors.email?.message}
+                />
+              )}
+            />
+            <Controller
+              name='password'
+              control={control}
+              render={({ field }) => (
+                <CustomTextField
+                  {...field}
+                  fullWidth
+                  label={dictionary.common.password}
+                  placeholder={dictionary.common.passwordPlaceholder}
+                  id='login-password'
+                  type={isPasswordShown ? 'text' : 'password'}
+                  error={Boolean(errors.password)}
+                  helperText={errors.password?.message}
+                  slotProps={{
+                    input: {
+                      endAdornment: (
+                        <InputAdornment position='end'>
+                          <IconButton
+                            edge='end'
+                            onClick={() => setIsPasswordShown(shown => !shown)}
+                            onMouseDown={event => event.preventDefault()}
+                            aria-label={
+                              isPasswordShown ? dictionary.common.hidePassword : dictionary.common.showPassword
+                            }
+                          >
+                            <i className={isPasswordShown ? 'tabler-eye-off' : 'tabler-eye'} />
+                          </IconButton>
+                        </InputAdornment>
+                      )
+                    }
+                  }}
+                />
+              )}
             />
             <div className='flex justify-between items-center gap-x-3 gap-y-1 flex-wrap'>
-              <FormControlLabel control={<Checkbox />} label='Remember me' />
-              <Typography
-                className='text-end'
-                color='primary.main'
-                component={Link}
-                href={getLocalizedUrl('/pages/auth/forgot-password-v1', locale)}
-              >
-                Forgot password?
+              <Controller
+                name='rememberMe'
+                control={control}
+                render={({ field }) => (
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={field.value}
+                        onChange={event => field.onChange(event.target.checked)}
+                        inputRef={field.ref}
+                      />
+                    }
+                    label={dictionary.login.rememberMe}
+                  />
+                )}
+              />
+              <Typography className='text-end' color='primary.main'>
+                <Link href={getLocalizedUrl('/forgot-password', locale)}>{dictionary.login.forgotPassword}</Link>
               </Typography>
             </div>
-            <Button fullWidth variant='contained' type='submit'>
-              Login
+            <Button fullWidth variant='contained' type='submit' disabled={isSubmitting}>
+              <LoadingButtonContent loading={isSubmitting} loadingLabel={dictionary.login.submitting}>
+                {dictionary.login.submit}
+              </LoadingButtonContent>
             </Button>
-            <div className='flex justify-center items-center flex-wrap gap-2'>
-              <Typography>New on our platform?</Typography>
-              <Typography
-                component={Link}
-                href={getLocalizedUrl('/pages/auth/register-v1', locale)}
-                color='primary.main'
-              >
-                Create an account
-              </Typography>
-            </div>
-            <Divider className='gap-2 text-textPrimary'>or</Divider>
-            <div className='flex justify-center items-center gap-1.5'>
-              <IconButton className='text-facebook' size='small'>
-                <i className='tabler-brand-facebook-filled' />
-              </IconButton>
-              <IconButton className='text-twitter' size='small'>
-                <i className='tabler-brand-twitter-filled' />
-              </IconButton>
-              <IconButton className='text-textPrimary' size='small'>
-                <i className='tabler-brand-github-filled' />
-              </IconButton>
-              <IconButton className='text-error' size='small'>
-                <i className='tabler-brand-google-filled' />
-              </IconButton>
-            </div>
           </form>
         </CardContent>
       </Card>

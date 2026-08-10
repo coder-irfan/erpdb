@@ -6,6 +6,7 @@ import InitColorSchemeScript from '@mui/material/InitColorSchemeScript'
 import 'react-perfect-scrollbar/dist/css/styles.css'
 
 // Context Imports
+import { BrandingProvider } from '@/contexts/BrandingProvider'
 import { IntersectionProvider } from '@/contexts/intersectionContext'
 
 // Component Imports
@@ -16,6 +17,7 @@ import ScrollToTop from '@core/components/scroll-to-top'
 
 // Util Imports
 import { getSystemMode } from '@core/utils/serverHelpers'
+import { getBrandingSettings } from '@/libs/systemSettings'
 
 // Style Imports
 import '@/app/globals.css'
@@ -31,29 +33,31 @@ export const metadata = {
 
 const Layout = async ({ children }) => {
   // Vars
-  const systemMode = await getSystemMode()
+  const [systemMode, branding] = await Promise.all([getSystemMode(), getBrandingSettings()])
 
   return (
     <html id='__next' suppressHydrationWarning>
       <body className='flex is-full min-bs-full flex-auto flex-col'>
         <InitColorSchemeScript attribute='data' defaultMode={systemMode} />
-        <Providers direction='ltr'>
-          <BlankLayout systemMode={systemMode}>
-            <IntersectionProvider>
-              <FrontLayout>
-                {children}
-                <ScrollToTop className='mui-fixed'>
-                  <Button
-                    variant='contained'
-                    className='is-10 bs-10 rounded-full p-0 min-is-0 flex items-center justify-center'
-                  >
-                    <i className='tabler-arrow-up' />
-                  </Button>
-                </ScrollToTop>
-              </FrontLayout>
-            </IntersectionProvider>
-          </BlankLayout>
-        </Providers>
+        <BrandingProvider branding={branding}>
+          <Providers direction='ltr'>
+            <BlankLayout systemMode={systemMode}>
+              <IntersectionProvider>
+                <FrontLayout>
+                  {children}
+                  <ScrollToTop className='mui-fixed'>
+                    <Button
+                      variant='contained'
+                      className='is-10 bs-10 rounded-full p-0 min-is-0 flex items-center justify-center'
+                    >
+                      <i className='tabler-arrow-up' />
+                    </Button>
+                  </ScrollToTop>
+                </FrontLayout>
+              </IntersectionProvider>
+            </BlankLayout>
+          </Providers>
+        </BrandingProvider>
       </body>
     </html>
   )

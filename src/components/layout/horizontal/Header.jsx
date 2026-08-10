@@ -17,7 +17,7 @@ const Header = ({ dictionary }) => {
     <>
       <LayoutHeader>
         <Navbar>
-          <NavbarContent />
+          <NavbarContent dictionary={dictionary} />
         </Navbar>
         {!isBreakpointReached && <Navigation dictionary={dictionary} />}
       </LayoutHeader>

@@ -1,5 +1,11 @@
+// React Imports
+import { useMemo } from 'react'
+
 // MUI Imports
 import { useTheme } from '@mui/material/styles'
+
+// Third-party Imports
+import { useSession } from 'next-auth/react'
 
 // Component Imports
 import HorizontalNav, { Menu } from '@menu/horizontal-menu'
@@ -15,6 +21,9 @@ import StyledVerticalNavExpandIcon from '@menu/styles/vertical/StyledVerticalNav
 
 // Data Imports
 import horizontalMenuData from '@/data/navigation/horizontalMenuData'
+
+// Util Imports
+import { filterNavByPermissions } from '@/utils/permissions'
 
 // Style Imports
 import menuItemStyles from '@core/styles/horizontal/menuItemStyles'
@@ -38,7 +47,13 @@ const RenderVerticalExpandIcon = ({ open, transitionDuration }) => (
 const HorizontalMenu = ({ dictionary }) => {
   const verticalNavOptions = useVerticalNav()
   const theme = useTheme()
+  const { data: session } = useSession()
   const { transitionDuration } = verticalNavOptions
+
+  const menuData = useMemo(
+    () => filterNavByPermissions(horizontalMenuData(dictionary), session?.user?.permissions, session?.user?.roles),
+    [dictionary, session?.user?.permissions, session?.user?.roles]
+  )
 
   return (
     <HorizontalNav
@@ -68,7 +83,7 @@ const HorizontalMenu = ({ dictionary }) => {
           menuSectionStyles: verticalMenuSectionStyles(verticalNavOptions, theme)
         }}
       >
-        <GenerateHorizontalMenu menuData={horizontalMenuData(dictionary)} />
+        <GenerateHorizontalMenu menuData={menuData} />
       </Menu>
     </HorizontalNav>
   )

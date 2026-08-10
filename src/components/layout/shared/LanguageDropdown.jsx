@@ -42,13 +42,13 @@ const languageData = [
     countryCode: 'US'
   },
   {
-    langCode: 'ps',
-    langName: 'پښتو',
+    langCode: 'fa',
+    langName: 'دری',
     countryCode: 'AF'
   },
   {
-    langCode: 'fa',
-    langName: 'دری',
+    langCode: 'ps',
+    langName: 'پشتو',
     countryCode: 'AF'
   }
 ]

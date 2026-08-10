@@ -1,13 +1,51 @@
 // Third-party Imports
 import CredentialProvider from 'next-auth/providers/credentials'
 import GoogleProvider from 'next-auth/providers/google'
+import { encode as encodeJwt } from 'next-auth/jwt'
 import { PrismaAdapter } from '@auth/prisma-adapter'
-import { PrismaClient } from '@prisma/client'
+import bcrypt from 'bcrypt'
 
-const prisma = new PrismaClient()
+// Lib Imports
+import { prisma } from '@/libs/prisma'
+
+export const STANDARD_SESSION_MAX_AGE = 2 * 24 * 60 * 60
+export const REMEMBERED_SESSION_MAX_AGE = 7 * 24 * 60 * 60
+
+const getUserAccess = userId =>
+  prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      image: true,
+      locale: true,
+      account_status: true,
+      roles: {
+        select: {
+          name: true,
+          role_permissions: {
+            select: {
+              permission: {
+                select: { key: true }
+              }
+            }
+          }
+        }
+      }
+    }
+  })
+
+const getAccessClaims = user => ({
+  roles: user.roles.map(role => role.name),
+  permissions: [
+    ...new Set(user.roles.flatMap(role => role.role_permissions.map(rolePermission => rolePermission.permission.key)))
+  ]
+})
 
 export const authOptions = {
   adapter: PrismaAdapter(prisma),
+  secret: process.env.NEXTAUTH_SECRET,
 
   // ** Configure one or more authentication providers
   // ** Please refer to https://next-auth.js.org/configuration/options#providers for more `providers` options
@@ -18,48 +56,42 @@ export const authOptions = {
       name: 'Credentials',
       type: 'credentials',
 
-      /*
-       * As we are using our own Sign-in page, we do not need to change
-       * username or password attributes manually in following credentials object.
-       */
-      credentials: {},
+      credentials: {
+        email: { label: 'Email', type: 'email' },
+        password: { label: 'Password', type: 'password' },
+        rememberMe: { label: 'Remember Me', type: 'checkbox' }
+      },
       async authorize(credentials) {
-        /*
-         * You need to provide your own logic here that takes the credentials submitted and returns either
-         * an object representing a user or value that is false/null if the credentials are invalid.
-         * For e.g. return { id: 1, name: 'J Smith', email: 'jsmith@example.com' }
-         * You can also use the `req` object to obtain additional parameters (i.e., the request IP address)
-         */
-        const { email, password } = credentials
+        const email = credentials?.email?.trim().toLowerCase()
+        const password = credentials?.password
+        const rememberMe = credentials?.rememberMe === 'true'
 
-        try {
-          // ** Login API Call to match the user credentials and receive user data in response along with his role
-          const res = await fetch(`${process.env.API_URL}/login`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ email, password })
-          })
+        if (!email || !password) return null
 
-          const data = await res.json()
-
-          if (res.status === 401) {
-            throw new Error(JSON.stringify(data))
+        const user = await prisma.user.findUnique({
+          where: { email },
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            image: true,
+            password_hash: true,
+            account_status: true
           }
+        })
 
-          if (res.status === 200) {
-            /*
-             * Please unset all the sensitive information of the user either from API response or before returning
-             * user data below. Below return statement will set the user object in the token and the same is set in
-             * the session which will be accessible all over the app.
-             */
-            return data
-          }
+        if (!user?.password_hash || user.account_status !== 'ACTIVE') return null
 
-          return null
-        } catch (e) {
-          throw new Error(e.message)
+        const passwordMatches = await bcrypt.compare(password, user.password_hash)
+
+        if (!passwordMatches) return null
+
+        return {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          image: user.image,
+          rememberMe
         }
       }
     }),
@@ -86,7 +118,15 @@ export const authOptions = {
     strategy: 'jwt',
 
     // ** Seconds - How long until an idle session expires and is no longer valid
-    maxAge: 30 * 24 * 60 * 60 // ** 30 days
+    maxAge: REMEMBERED_SESSION_MAX_AGE
+  },
+
+  jwt: {
+    encode: params =>
+      encodeJwt({
+        ...params,
+        maxAge: params.token?.rememberMe ? REMEMBERED_SESSION_MAX_AGE : STANDARD_SESSION_MAX_AGE
+      })
   },
 
   // ** Please refer to https://next-auth.js.org/configuration/options#pages for more `pages` options
@@ -102,20 +142,53 @@ export const authOptions = {
      * via `jwt()` callback to make them accessible in the `session()` callback
      */
     async jwt({ token, user }) {
+      const userId = user?.id || token.sub
+
       if (user) {
-        /*
-         * For adding custom parameters to user in session, we first need to add those parameters
-         * in token which then will be available in the `session()` callback
-         */
-        token.name = user.name
+        token.rememberMe = user.rememberMe === true
       }
+
+      if (!userId) return token
+
+      const accessUser = await getUserAccess(userId)
+
+      if (!accessUser) {
+        token.accountStatus = 'INACTIVE'
+        token.roles = []
+        token.permissions = []
+
+        return token
+      }
+
+      const accessClaims =
+        accessUser.account_status === 'ACTIVE' ? getAccessClaims(accessUser) : { roles: [], permissions: [] }
+
+      token.id = accessUser.id
+      token.name = accessUser.name
+      token.email = accessUser.email
+      token.picture = accessUser.image
+      token.locale = accessUser.locale
+      token.accountStatus = accessUser.account_status
+      token.roles = accessClaims.roles
+      token.permissions = accessClaims.permissions
 
       return token
     },
     async session({ session, token }) {
+      const sessionMaxAge = token.rememberMe ? REMEMBERED_SESSION_MAX_AGE : STANDARD_SESSION_MAX_AGE
+
+      session.expires = new Date(Date.now() + sessionMaxAge * 1000).toISOString()
+
       if (session.user) {
-        // ** Add custom params to user in session which are added in `jwt()` callback via `token` parameter
+        session.user.id = token.id || token.sub
         session.user.name = token.name
+        session.user.email = token.email
+        session.user.image = token.picture
+        session.user.locale = token.locale
+        session.user.accountStatus = token.accountStatus
+        session.user.roles = token.roles || []
+        session.user.permissions = token.permissions || []
+        session.user.rememberMe = token.rememberMe === true
       }
 
       return session

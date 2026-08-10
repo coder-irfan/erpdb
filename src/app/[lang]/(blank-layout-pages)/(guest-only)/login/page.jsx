@@ -1,19 +1,24 @@
 // Component Imports
-import Login from '@views/Login'
+import LoginV1 from '@views/pages/auth/LoginV1'
 
-// Server Action Imports
-import { getServerMode } from '@core/utils/serverHelpers'
+// Util Imports
+import { getDictionary } from '@/utils/getDictionary'
 
-export const metadata = {
-  title: 'Login',
-  description: 'Login to your account'
+export const generateMetadata = async props => {
+  const params = await props.params
+  const dictionary = await getDictionary(params.lang)
+
+  return {
+    title: dictionary.auth.login.metadataTitle,
+    description: dictionary.auth.login.metadataDescription
+  }
 }
 
-const LoginPage = async () => {
-  // Vars
-  const mode = await getServerMode()
+const LoginPage = async props => {
+  const params = await props.params
+  const dictionary = await getDictionary(params.lang)
 
-  return <Login mode={mode} />
+  return <LoginV1 dictionary={dictionary.auth} locale={params.lang} />
 }
 
 export default LoginPage

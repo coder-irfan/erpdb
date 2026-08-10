@@ -142,16 +142,20 @@ const verticalMenuData = dictionary => [
     icon: 'tabler-building',
     children: [
       {
+        label: dictionary.profile.menuLabel,
+        href: '/settings/profile'
+      },
+      {
         label: dictionary.navigation.companySetup,
         href: '/setup'
       },
       {
         label: dictionary.navigation.rolesPermissions,
-        href: '/settings/roles'
+        href: '/setup/roles'
       },
       {
         label: dictionary.navigation.systemAuditLogs,
-        href: '/settings/audit-logs'
+        href: '/setup/audit-logs'
       }
     ]
   }

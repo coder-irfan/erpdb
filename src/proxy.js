@@ -4,9 +4,12 @@ import { NextResponse } from 'next/server'
 // Third-party Imports
 import { match } from '@formatjs/intl-localematcher'
 import Negotiator from 'negotiator'
+import { getToken } from 'next-auth/jwt'
 
 // Config Imports
 import { i18n } from '@/configs/i18n'
+
+const publicRoutes = new Set(['/login', '/forgot-password', '/reset-password'])
 
 const getPreferredLocale = request => {
   const acceptLanguage = request.headers.get('accept-language') || ''
@@ -20,8 +23,32 @@ const getPreferredLocale = request => {
   }
 }
 
-export function proxy(request) {
+const getActiveToken = async request => {
+  try {
+    const token = await getToken({
+      req: request,
+      secret: process.env.NEXTAUTH_SECRET
+    })
+
+    return token?.accountStatus === 'ACTIVE' ? token : null
+  } catch {
+    return null
+  }
+}
+
+export async function proxy(request) {
   const { pathname } = request.nextUrl
+
+  if (pathname.startsWith('/api/auth')) {
+    return NextResponse.next()
+  }
+
+  if (pathname.startsWith('/api/')) {
+    const token = await getActiveToken(request)
+
+    return token ? NextResponse.next() : NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   const segments = pathname.split('/').filter(Boolean)
   const leadingLocales = []
 
@@ -39,7 +66,25 @@ export function proxy(request) {
   }
 
   if (leadingLocales.length === 1) {
-    return NextResponse.next()
+    const routePath = `/${segments.join('/')}`
+
+    if (publicRoutes.has(routePath)) {
+      return NextResponse.next()
+    }
+
+    const token = await getActiveToken(request)
+
+    if (token) {
+      return NextResponse.next()
+    }
+
+    const loginUrl = request.nextUrl.clone()
+
+    loginUrl.pathname = `/${leadingLocales[0]}/login`
+    loginUrl.search = ''
+    loginUrl.searchParams.set('callbackUrl', `${pathname}${request.nextUrl.search}`)
+
+    return NextResponse.redirect(loginUrl)
   }
 
   const localizedUrl = request.nextUrl.clone()
@@ -51,7 +96,5 @@ export function proxy(request) {
 }
 
 export const config = {
-  matcher: [
-    '/((?!api|front-pages|images|uploads|_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|.*\\..*).*)'
-  ]
+  matcher: ['/((?!front-pages|images|uploads|_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|.*\\..*).*)']
 }

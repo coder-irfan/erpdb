@@ -66,7 +66,7 @@ const notifications = [
   }
 ]
 
-const NavbarContent = () => {
+const NavbarContent = ({ dictionary }) => {
   // Hooks
   const { lang: locale } = useParams()
 
@@ -82,11 +82,11 @@ const NavbarContent = () => {
       </div>
 
       <div className='flex items-center'>
-        <NavSearch />
+        <NavSearch dictionary={dictionary} />
         <LanguageDropdown />
         <ModeDropdown />
         <NotificationsDropdown notifications={notifications} />
-        <UserDropdown />
+        <UserDropdown dictionary={dictionary} />
         {/* Language Dropdown, Notification Dropdown, quick access menu dropdown, user dropdown will be placed here */}
       </div>
     </div>

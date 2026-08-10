@@ -1,6 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   basePath: process.env.BASEPATH,
+  experimental: {
+    serverActions: {
+      bodySizeLimit: '5mb'
+    }
+  },
   redirects: async () => {
     return [
       {

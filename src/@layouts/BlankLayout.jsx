@@ -12,7 +12,7 @@ import { blankLayoutClasses } from './utils/layoutClasses'
 
 const BlankLayout = props => {
   // Props
-  const { children, systemMode } = props
+  const { children, className, systemMode } = props
 
   // Hooks
   const { settings } = useSettings()
@@ -20,7 +20,10 @@ const BlankLayout = props => {
   useLayoutInit(systemMode)
 
   return (
-    <div className={classnames(blankLayoutClasses.root, 'is-full bs-full')} data-skin={settings.skin}>
+    <div
+      className={classnames(blankLayoutClasses.root, 'blank-page-wrapper is-full bs-full', className)}
+      data-skin={settings.skin}
+    >
       {children}
     </div>
   )

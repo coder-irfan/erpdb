@@ -1,19 +1,24 @@
 // Component Imports
-import ForgotPassword from '@views/ForgotPassword'
+import ForgotPasswordV1 from '@views/pages/auth/ForgotPasswordV1'
 
-// Server Action Imports
-import { getServerMode } from '@core/utils/serverHelpers'
+// Util Imports
+import { getDictionary } from '@/utils/getDictionary'
 
-export const metadata = {
-  title: 'Forgot Password',
-  description: 'Forgotten Password to your account'
+export const generateMetadata = async props => {
+  const params = await props.params
+  const dictionary = await getDictionary(params.lang)
+
+  return {
+    title: dictionary.auth.forgotPassword.metadataTitle,
+    description: dictionary.auth.forgotPassword.metadataDescription
+  }
 }
 
-const ForgotPasswordPage = async () => {
-  // Vars
-  const mode = await getServerMode()
+const ForgotPasswordPage = async props => {
+  const params = await props.params
+  const dictionary = await getDictionary(params.lang)
 
-  return <ForgotPassword mode={mode} />
+  return <ForgotPasswordV1 dictionary={dictionary.auth} locale={params.lang} />
 }
 
 export default ForgotPasswordPage

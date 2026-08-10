@@ -23,7 +23,7 @@ export const GenerateVerticalMenu = ({ menuData }) => {
 
       // Check if the current item is a section
       if (menuSectionItem.isSection) {
-        const { children, isSection, ...rest } = menuSectionItem
+        const { children, isSection, permission, ...rest } = menuSectionItem
 
         // If it is, return a MenuSection component and call generateMenu with the current menuSectionItem's children
         return (
@@ -35,7 +35,7 @@ export const GenerateVerticalMenu = ({ menuData }) => {
 
       // Check if the current item is a sub menu
       if (subMenuItem.children) {
-        const { children, icon, prefix, suffix, ...rest } = subMenuItem
+        const { children, icon, permission, prefix, suffix, ...rest } = subMenuItem
         const Icon = icon ? <i className={icon} /> : null
         const subMenuPrefix = prefix && prefix.label ? <CustomChip size='small' round='true' {...prefix} /> : prefix
         const subMenuSuffix = suffix && suffix.label ? <CustomChip size='small' round='true' {...suffix} /> : suffix
@@ -55,7 +55,7 @@ export const GenerateVerticalMenu = ({ menuData }) => {
       }
 
       // If the current item is neither a section nor a sub menu, return a MenuItem component
-      const { label, excludeLang, icon, prefix, suffix, ...rest } = menuItem
+      const { label, excludeLang, icon, permission, prefix, suffix, ...rest } = menuItem
 
       // Localize the href
       const href = rest.href?.startsWith('http')
@@ -97,7 +97,7 @@ export const GenerateHorizontalMenu = ({ menuData }) => {
 
       // Check if the current item is a sub menu
       if (subMenuItem.children) {
-        const { children, icon, prefix, suffix, ...rest } = subMenuItem
+        const { children, icon, permission, prefix, suffix, ...rest } = subMenuItem
         const Icon = icon ? <i className={icon} /> : null
         const subMenuPrefix = prefix && prefix.label ? <CustomChip size='small' round='true' {...prefix} /> : prefix
         const subMenuSuffix = suffix && suffix.label ? <CustomChip size='small' round='true' {...suffix} /> : suffix
@@ -117,7 +117,7 @@ export const GenerateHorizontalMenu = ({ menuData }) => {
       }
 
       // If the current item is not a sub menu, return a MenuItem component
-      const { label, excludeLang, icon, prefix, suffix, ...rest } = menuItem
+      const { label, excludeLang, icon, permission, prefix, suffix, ...rest } = menuItem
 
       // Localize the href
       const href = rest.href?.startsWith('http')

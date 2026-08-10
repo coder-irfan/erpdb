@@ -2,6 +2,9 @@
 import Providers from '@components/Providers'
 import BlankLayout from '@layouts/BlankLayout'
 
+// Font Imports
+import { peyda, publicSans, vazirmatn } from '@assets/fonts/fonts'
+
 // Config Imports
 import { i18n } from '@configs/i18n'
 
@@ -21,7 +24,12 @@ const Layout = async props => {
 
   return (
     <Providers direction={direction}>
-      <BlankLayout systemMode={systemMode}>{children}</BlankLayout>
+      <BlankLayout
+        className={`${publicSans.variable} ${peyda.variable} ${vazirmatn.variable} locale-${lang} font-primary`}
+        systemMode={systemMode}
+      >
+        {children}
+      </BlankLayout>
     </Providers>
   )
 }

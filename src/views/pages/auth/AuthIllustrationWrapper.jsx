@@ -3,8 +3,18 @@
 // MUI Imports
 import { styled } from '@mui/material/styles'
 
-// Styled Component
-const AuthIllustrationWrapper = styled('div')(({ theme }) => ({
+// Styled Components
+const AuthPageContainer = styled('div')(({ theme }) => ({
+  minHeight: '100dvh',
+  width: '100%',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  padding: theme.spacing(4),
+  backgroundColor: theme.palette.background.default
+}))
+
+const AuthCardContainer = styled('div')(({ theme }) => ({
   width: '100%',
   maxWidth: 450,
   position: 'relative',
@@ -31,5 +41,11 @@ const AuthIllustrationWrapper = styled('div')(({ theme }) => ({
     }
   }
 }))
+
+const AuthIllustrationWrapper = ({ children }) => (
+  <AuthPageContainer>
+    <AuthCardContainer>{children}</AuthCardContainer>
+  </AuthPageContainer>
+)
 
 export default AuthIllustrationWrapper

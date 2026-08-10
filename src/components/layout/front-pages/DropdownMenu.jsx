@@ -49,45 +49,6 @@ const pageData = [
   }
 ]
 
-const authData = [
-  {
-    title: 'Login (Basic)',
-    href: '/login-v1'
-  },
-  {
-    title: 'Login (Cover)',
-    href: '/login-v2'
-  },
-  {
-    title: 'Register (Basic)',
-    href: '/register-v1'
-  },
-  {
-    title: 'Register (Cover)',
-    href: '/register-v2'
-  },
-  {
-    title: 'Register (Multi-steps)',
-    href: '/register-multi-steps'
-  },
-  {
-    title: 'Forgot Password (Basic)',
-    href: '/forgot-password-v1'
-  },
-  {
-    title: 'Forgot Password (Cover)',
-    href: '/forgot-password-v2'
-  },
-  {
-    title: 'Reset Password (Basic)',
-    href: '/reset-password-v1'
-  },
-  {
-    title: 'Reset Password (Cover)',
-    href: '/reset-password-v2'
-  }
-]
-
 const othersData = [
   {
     title: 'Under Maintenance',
@@ -292,26 +253,6 @@ const DropdownMenu = props => {
               className={classnames('flex items-center gap-3 focus:outline-hidden hover:text-primary', {
                 'text-primary': pathname.includes('/front-pages' + page.href)
               })}
-              onClick={handleLinkClick}
-            >
-              <i className='tabler-circle text-[10px]' />
-              <span>{page.title}</span>
-            </Link>
-          ))}
-        </div>
-        <div className='flex flex-col gap-4'>
-          <div className='flex gap-3 items-center'>
-            <CustomAvatar variant='rounded' color='primary' skin='light'>
-              <i className='tabler-lock' />
-            </CustomAvatar>
-            <Typography variant='h6'>Auth Demo</Typography>
-          </div>
-          {authData.map((page, index) => (
-            <Link
-              key={index}
-              href={'/pages/auth' + page.href}
-              target='_blank'
-              className='flex items-center gap-3 focus:outline-hidden hover:text-primary'
               onClick={handleLinkClick}
             >
               <i className='tabler-circle text-[10px]' />

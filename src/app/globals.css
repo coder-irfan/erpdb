@@ -218,3 +218,52 @@ code {
   background-color: rgb(var(--mui-palette-info-mainChannel) / 0.08);
   border: 0;
 }
+
+/* Locale-aware font selection. The next/font variables are injected by the root locale layout. */
+.locale-en {
+  --font-primary: var(--font-public-sans), sans-serif;
+}
+
+.locale-fa {
+  --font-primary: var(--font-peyda), sans-serif;
+}
+
+.locale-ps {
+  --font-primary: var(--font-vazirmatn), sans-serif;
+}
+
+body,
+*,
+.blank-page-wrapper,
+[class*='locale-'],
+.font-primary,
+[class*='locale-'] *:not([class^='tabler-']):not([class*=' tabler-']) {
+  font-family: var(--font-primary);
+}
+
+/* Opt-in responsive copy sizing for longer RTL labels and messages. */
+.locale-fa .rtl-responsive-text,
+.locale-ps .rtl-responsive-text {
+  font-size: clamp(0.875rem, 0.825rem + 0.25vw, 1rem);
+  line-height: 1.75;
+}
+
+.brand-logo {
+  display: block;
+  block-size: 30px;
+  inline-size: auto;
+  max-inline-size: 160px;
+  object-fit: contain;
+}
+
+.brand-logo-dark {
+  display: none;
+}
+
+[data-dark] .brand-logo-light {
+  display: none;
+}
+
+[data-dark] .brand-logo-dark {
+  display: block;
+}

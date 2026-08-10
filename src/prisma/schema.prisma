@@ -665,3 +665,11 @@ model Setup {
   created_at        DateTime   @default(now())
   updated_at        DateTime   @updatedAt
 }
+
+model SystemSetting {
+  id           String   @id @default("default")
+  lightLogoUrl String?
+  darkLogoUrl  String?
+  faviconUrl   String?
+  updatedAt    DateTime @updatedAt
+}

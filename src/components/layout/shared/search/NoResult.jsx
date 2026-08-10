@@ -16,7 +16,7 @@ const noResultData = [
   },
   {
     label: 'User Profile',
-    href: '/pages/user-profile',
+    href: '/settings/profile',
     icon: 'tabler-user'
   },
   {

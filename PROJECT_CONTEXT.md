@@ -66,3 +66,58 @@ When assigned future coding tasks:
 - **Reusable Component Threshold**: Create dedicated reusable UI components or custom hooks when a structural pattern or UI layout is used repeatedly across **3 or more** different modules/pages.
 - **Inline Component Allowance**: Do NOT over-engineer single-use abstractions or force minor UI snippets into separate files if used only 2-3 times with minimal code footprint (10-20 lines). Keep simple, localized logic inline unless reusability scales.
 - **Server Action & Validation Consistency**: Use standard helper wrappers for handling Server Action responses, error sanitization, and Valibot schema execution across all backend actions.
+
+## Master RBAC & Permissions Blueprint
+
+This blueprint defines system-wide Role-Based Access Control (RBAC) rules mapped directly to our `schema.prisma` models. Use this specification as the single source of truth when implementing server actions, API authorization checks, navigation menu visibility, and component-level permission rendering.
+
+### 1. Super Admin (System Owner)
+- **Setup (`SystemSetting`, `Setup`):** Read, Update (Controls global branding, currency, tax rates).
+- **Options (`Option`):** Create, Read, Update, Delete (Controls all dropdowns like Lead Status, Task Priorities, Expense Types).
+- **Auth & Roles (`User`, `Role`, `Permission`, `AuditLog`):** Create, Read, Update, Delete (Assigns roles to users, reviews security audit logs).
+- **All Other Modules:** Full CRUD (Create, Read, Update, Delete) access to everything globally.
+
+### 2. HR Manager (Human Resources)
+- **HRM (`HrmStaff`, `HrmStaffContract`):** Create, Read, Update, Delete (Adds employees and manages employment contracts).
+- **Attendance & Leaves (`HrmStaffLeave`, `HrmStaffTimesheet`):** Read (Global), Update (Approve/Reject leaves and timesheets).
+- **Finance (Payroll & Loans) (`FinanceSalary`, `FinanceLoan`):** Create, Read, Update (Prepares draft salaries based on attendance and approves staff loan requests).
+- **Options (`Option`):** Read (Views Leave Types, Contract Types).
+- **Other Modules:** Restricted. No access to CRM, Projects, or general Finance.
+
+### 3. Finance Manager (Accounting)
+- **Finance (`FinanceIncome`, `FinanceExpense`):** Create, Read, Update, Delete (Logs all money in/out, sets exchange rates).
+- **Invoicing (`ContractInvoice`):** Create, Read, Update, Delete (Generates bills for clients).
+- **Payroll Execution (`FinanceSalary`):** Update (Takes HR-drafted salaries and marks them as "Paid", generating final payable amounts).
+- **Inventory (`Inventory`):** Create, Read, Update, Delete (Tracks physical assets, SKUs, and reorder levels).
+- **HRM & Contracts:** Read-Only (Views staff base salaries and signed contract values to verify financial data).
+
+### 4. Sales Manager (CRM & Contracts)
+- **CRM (`CrmLead`, `CrmClient`, `CrmVisitor`):** Create, Read, Update, Delete (Manages pipeline, converts leads to clients, tracks office visitors).
+- **Contracts (`Contract`, `ContractNotification`):** Create, Read, Update (Drafts agreements, sets auto-renewals, manages expiration notifications).
+- **Invoicing (`ContractInvoice`):** Read-Only (Views client payment status, cannot modify invoices).
+- **Options (`Option`):** Read (Views Lead Sources, Contract Statuses).
+
+### 5. Project Manager (Operations)
+- **Projects (`Project`, `ProjectMember`):** Create, Read, Update (Builds projects, sets budgets, assigns staff members).
+- **Tasks (`Task`):** Create, Read, Update, Delete (Creates Kanban boards, assigns tasks, sets due dates).
+- **Timesheets (`HrmStaffTimesheet`):** Read (Project-specific), Update (Approves hours logged by staff against assigned projects).
+- **CRM & Contracts:** Read-Only (Assigned only; views client details and contract scopes for assigned projects).
+
+### 6. Standard Employee (Staff Member)
+- **Main Dashboard:** Read (Personal metrics only: open tasks, leave balance).
+- **HRM Self-Service:**
+  - `HrmStaff`: Read (Own profile only).
+  - `HrmStaffLeave`: Create (Submit requests), Read (Own history).
+  - `HrmStaffTimesheet`: Create (Check-in/out), Read (Own history).
+- **Tasks (`Task`):** Read (Where `assigned_to_id` = current staff ID), Update (Changes status to "Done", logs actual hours worked).
+- **Finance Self-Service:**
+  - `FinanceExpense`: Create (Submits personal reimbursement receipts).
+  - `FinanceSalary`, `FinanceLoan`: Read (Views own payslips and loan balances).
+- **Setup, Options, CRM, Contracts, Inventory:** Strictly Blocked.
+
+---
+
+### Implementation Guidelines
+- **Global Permission Check:** If user has module-wide access (e.g., `finance:read`), query without user filter (e.g., `prisma.financeIncome.findMany()`).
+- **Scoped Permission Check:** For non-manager roles (e.g., `tasks:read_assigned`), enforce relational constraints (e.g., `where: { assigned_to_id: currentStaffId }`).
+- **UI & Navigation Guarding:** Filter navigation links and top-search palette using `hasPermission()` mapped to these rules.
