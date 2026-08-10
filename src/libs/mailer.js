@@ -39,6 +39,14 @@ const getTransporter = () => {
   return transporter
 }
 
+const escapeHtml = value =>
+  String(value ?? '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#039;')
+
 export const sendPasswordResetEmail = async (toEmail, resetToken, requestedLocale) => {
   try {
     const locale = i18n.locales.includes(requestedLocale) ? requestedLocale : i18n.defaultLocale
@@ -71,5 +79,42 @@ export const sendPasswordResetEmail = async (toEmail, resetToken, requestedLocal
     })
   } catch (error) {
     throw new Error('Unable to deliver the password reset email.', { cause: error })
+  }
+}
+
+export const sendUserInvitationEmail = async (toEmail, invitationToken, requestedLocale, inviteeName) => {
+  try {
+    const locale = i18n.locales.includes(requestedLocale) ? requestedLocale : i18n.defaultLocale
+    const dictionary = await getDictionary(locale)
+    const translations = dictionary.auth.invitationEmail
+    const applicationUrl = getRequiredEnvironmentValue('NEXTAUTH_URL')
+    const emailUser = getRequiredEnvironmentValue('EMAIL_USER')
+    const fromName = process.env.EMAIL_FROM_NAME || 'ERP System'
+    const invitationUrl = new URL(`/${locale}/auth/accept-invite`, applicationUrl)
+    const direction = i18n.langDirection[locale]
+    const textAlign = direction === 'rtl' ? 'right' : 'left'
+    const greeting = translations.greeting.replace('{name}', inviteeName || toEmail)
+
+    invitationUrl.searchParams.set('token', invitationToken)
+
+    await getTransporter().sendMail({
+      from: `"${fromName.replaceAll('"', '')}" <${emailUser}>`,
+      to: toEmail,
+      subject: translations.subject,
+      text: `${greeting}\n\n${translations.intro}\n\n${translations.button}: ${invitationUrl.toString()}\n\n${translations.expiry}`,
+      html: `
+        <div lang="${locale}" dir="${direction}" style="background:#f4f5fa;padding:32px 16px;font-family:Arial,sans-serif;color:#2f2b3d;text-align:${textAlign};">
+          <div style="max-width:560px;margin:0 auto;background:#ffffff;border-radius:10px;padding:32px;box-shadow:0 2px 12px rgba(47,43,61,.08);">
+            <h1 style="margin:0 0 16px;font-size:24px;">${escapeHtml(translations.title)}</h1>
+            <p style="margin:0 0 12px;line-height:1.6;">${escapeHtml(greeting)}</p>
+            <p style="margin:0 0 24px;line-height:1.6;">${escapeHtml(translations.intro)}</p>
+            <a href="${invitationUrl.toString()}" style="display:inline-block;background:#7367f0;color:#ffffff;text-decoration:none;padding:12px 20px;border-radius:6px;font-weight:600;">${escapeHtml(translations.button)}</a>
+            <p style="margin:24px 0 0;line-height:1.6;color:#6d6b77;">${escapeHtml(translations.expiry)}</p>
+          </div>
+        </div>
+      `
+    })
+  } catch (error) {
+    throw new Error('Unable to deliver the user invitation email.', { cause: error })
   }
 }

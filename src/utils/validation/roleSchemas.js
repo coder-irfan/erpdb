@@ -4,6 +4,7 @@ import {
   maxLength,
   minLength,
   nonEmpty,
+  nullable,
   object,
   optional,
   picklist,
@@ -11,7 +12,9 @@ import {
   regex,
   string,
   toLowerCase,
-  trim
+  trim,
+  union,
+  literal
 } from 'valibot'
 
 const createRequiredString = (message, max, maxMessage) =>
@@ -52,7 +55,7 @@ export const createInviteUserSchema = messages =>
       toLowerCase()
     ),
     roleId: createIdSchema(messages.roleRequired),
-    staffId: optional(createIdSchema(messages.staffInvalid))
+    staffId: optional(nullable(union([literal(''), createIdSchema(messages.staffInvalid)])), null)
   })
 
 export const createUserStatusSchema = messages =>

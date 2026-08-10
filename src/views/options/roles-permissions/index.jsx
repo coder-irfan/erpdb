@@ -7,10 +7,6 @@ import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import Chip from '@mui/material/Chip'
-import Dialog from '@mui/material/Dialog'
-import DialogActions from '@mui/material/DialogActions'
-import DialogContent from '@mui/material/DialogContent'
-import DialogTitle from '@mui/material/DialogTitle'
 import Typography from '@mui/material/Typography'
 import { toast } from 'sonner'
 
@@ -40,7 +36,6 @@ const RolesPermissionsView = ({
   const [permissionRole, setPermissionRole] = useState(null)
   const [createRoleOpen, setCreateRoleOpen] = useState(false)
   const [inviteOpen, setInviteOpen] = useState(false)
-  const [credentials, setCredentials] = useState(null)
 
   const runAction = async (action, fallbackError) => {
     try {
@@ -96,7 +91,6 @@ const RolesPermissionsView = ({
 
     if (values.staffId) setStaff(current => current.filter(employee => employee.id !== values.staffId))
 
-    setCredentials(result.data.credentials)
     toast.success(result.message)
 
     return true
@@ -130,15 +124,6 @@ const RolesPermissionsView = ({
     toast.success(result.message)
 
     return true
-  }
-
-  const copyTemporaryPassword = async () => {
-    try {
-      await navigator.clipboard.writeText(credentials.temporaryPassword)
-      toast.success(dictionary.credentials.copied)
-    } catch {
-      toast.error(dictionary.messages.operationFailed)
-    }
   }
 
   return (
@@ -247,34 +232,6 @@ const RolesPermissionsView = ({
         translations={dictionary}
       />
 
-      <Dialog open={Boolean(credentials)} onClose={() => setCredentials(null)} fullWidth maxWidth='sm'>
-        <DialogTitle>{dictionary.credentials.title}</DialogTitle>
-        <DialogContent dividers className='flex flex-col gap-5'>
-          <Alert severity='warning'>{dictionary.credentials.description}</Alert>
-          <div className='rounded-lg border border-divider p-4'>
-            <Typography variant='caption' color='text.secondary'>
-              {dictionary.credentials.email}
-            </Typography>
-            <Typography className='mb-4 font-medium' color='text.primary'>
-              {credentials?.email}
-            </Typography>
-            <Typography variant='caption' color='text.secondary'>
-              {dictionary.credentials.password}
-            </Typography>
-            <Typography className='break-all font-mono font-semibold' color='text.primary'>
-              {credentials?.temporaryPassword}
-            </Typography>
-          </div>
-        </DialogContent>
-        <DialogActions className='p-5'>
-          <Button variant='tonal' color='secondary' onClick={() => setCredentials(null)}>
-            {dictionary.close}
-          </Button>
-          <Button variant='contained' startIcon={<i className='tabler-copy' />} onClick={copyTemporaryPassword}>
-            {dictionary.credentials.copy}
-          </Button>
-        </DialogActions>
-      </Dialog>
     </div>
   )
 }

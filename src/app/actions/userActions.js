@@ -1,14 +1,14 @@
 'use server'
 
-import { randomBytes } from 'node:crypto'
+import { createHash, randomBytes } from 'node:crypto'
 
 import { revalidatePath } from 'next/cache'
 
-import bcrypt from 'bcrypt'
 import { safeParse } from 'valibot'
 
 import { i18n } from '@/configs/i18n'
 import { authorizeAction } from '@/libs/actionAuthorization'
+import { sendUserInvitationEmail } from '@/libs/mailer'
 import { prisma } from '@/libs/prisma'
 import { getDictionary } from '@/utils/getDictionary'
 import {
@@ -18,6 +18,7 @@ import {
 } from '@/utils/validation/roleSchemas'
 
 const USER_MANAGEMENT_PERMISSIONS = ['settings:manage', 'settings_roles:manage']
+const INVITATION_EXPIRATION_MS = 48 * 60 * 60 * 1000
 
 const normalizeLocale = locale => (i18n.locales.includes(locale) ? locale : i18n.defaultLocale)
 const isSuperAdmin = session => session?.user?.roles?.includes('super_admin') === true
@@ -31,11 +32,14 @@ const getActionContext = async payload => {
   if (!authorization.authorized) {
     const error = authorization.code === 'UNAUTHENTICATED' ? translations.messages.unauthenticated : translations.messages.forbidden
 
-    return { authorized: false, error, code: authorization.code, translations }
+    return { authorized: false, error, code: authorization.code, locale, translations }
   }
 
-  return { authorized: true, session: authorization.session, translations }
+  return { authorized: true, session: authorization.session, locale, translations }
 }
+
+const hashInvitationToken = token => createHash('sha256').update(token).digest('hex')
+const getInvitationIdentifier = userId => `invite:${userId}`
 
 const userDetailsSelect = {
   id: true,
@@ -147,7 +151,7 @@ export const inviteUser = async payload => {
     name: payload?.name,
     email: payload?.email,
     roleId: payload?.roleId,
-    staffId: payload?.staffId || undefined
+    staffId: payload?.staffId || null
   })
 
   if (!validation.success) {
@@ -186,17 +190,18 @@ export const inviteUser = async payload => {
       return { success: false, code: 'STAFF_UNAVAILABLE', error: context.translations.messages.staffUnavailable }
     }
 
-    const temporaryPassword = `${randomBytes(12).toString('base64url')}A1!`
-    const passwordHash = await bcrypt.hash(temporaryPassword, 10)
+    const invitationToken = randomBytes(32).toString('base64url')
+    const storedToken = hashInvitationToken(invitationToken)
+    const invitationExpires = new Date(Date.now() + INVITATION_EXPIRATION_MS)
 
     const userId = await prisma.$transaction(async transaction => {
       const user = await transaction.user.create({
         data: {
           name: validation.output.name,
           email: validation.output.email,
-          password_hash: passwordHash,
           account_status: 'PENDING_ACTIVATION',
           created_by_id: context.session.user.id,
+          locale: context.locale,
           roles: { connect: { id: role.id } }
         },
         select: { id: true }
@@ -211,17 +216,65 @@ export const inviteUser = async payload => {
         if (staffUpdate.count !== 1) throw new Error('STAFF_UNAVAILABLE')
       }
 
-      await transaction.auditLog.create({
+      await transaction.verificationToken.create({
         data: {
-          user_id: context.session.user.id,
-          action: 'USER_INVITED',
-          module: 'SETTINGS',
-          details: { invitedUserId: user.id, roleId: role.id, staffId: validation.output.staffId ?? null }
+          identifier: getInvitationIdentifier(user.id),
+          token: storedToken,
+          expires: invitationExpires
         }
       })
 
       return user.id
     })
+
+    try {
+      await sendUserInvitationEmail(validation.output.email, invitationToken, context.locale, validation.output.name)
+    } catch {
+      await prisma
+        .$transaction(async transaction => {
+          await transaction.verificationToken.deleteMany({ where: { token: storedToken } })
+
+          if (validation.output.staffId) {
+            await transaction.hrmStaff.updateMany({
+              where: { id: validation.output.staffId, user_id: userId },
+              data: { user_id: null }
+            })
+          }
+
+          await transaction.user.deleteMany({
+            where: { id: userId, account_status: 'PENDING_ACTIVATION' }
+          })
+        })
+        .catch(() => undefined)
+
+      await prisma.auditLog
+        .create({
+          data: {
+            user_id: context.session.user.id,
+            action: 'USER_INVITATION_EMAIL_FAILED',
+            module: 'SETTINGS',
+            details: { email: validation.output.email }
+          }
+        })
+        .catch(() => undefined)
+
+      return {
+        success: false,
+        code: 'INVITATION_EMAIL_FAILED',
+        error: context.translations.messages.invitationEmailFailed
+      }
+    }
+
+    await prisma.auditLog
+      .create({
+        data: {
+          user_id: context.session.user.id,
+          action: 'USER_INVITED',
+          module: 'SETTINGS',
+          details: { invitedUserId: userId, roleId: role.id, staffId: validation.output.staffId ?? null }
+        }
+      })
+      .catch(() => undefined)
 
     const createdUser = await getNormalizedUser(userId, context.session.user.id)
 
@@ -229,10 +282,7 @@ export const inviteUser = async payload => {
 
     return {
       success: true,
-      data: {
-        user: createdUser,
-        credentials: { email: validation.output.email, temporaryPassword }
-      },
+      data: { user: createdUser },
       message: context.translations.messages.userInvited
     }
   } catch (error) {

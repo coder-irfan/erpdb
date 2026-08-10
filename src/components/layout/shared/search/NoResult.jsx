@@ -15,11 +15,6 @@ const noResultData = [
     icon: 'tabler-chart-pie-2'
   },
   {
-    label: 'User Profile',
-    href: '/settings/profile',
-    icon: 'tabler-user'
-  },
-  {
     label: 'CRM',
     href: '/dashboards/crm',
     icon: 'tabler-chart-donut-3'

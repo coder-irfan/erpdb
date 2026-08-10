@@ -13,7 +13,6 @@ const hasSuperAdminRole = userRole => {
 }
 
 const hasNavigationPermission = (permissions, requiredPermission) => {
-  if (requiredPermission === 'profile:self') return true
   if (!requiredPermission || permissions.has(requiredPermission)) return Boolean(requiredPermission)
 
   const [resource, action] = requiredPermission.split(':')

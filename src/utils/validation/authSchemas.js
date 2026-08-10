@@ -3,6 +3,7 @@ import {
   check,
   email,
   forward,
+  maxLength,
   minLength,
   nonEmpty,
   object,
@@ -51,4 +52,35 @@ export const createResetPasswordSchema = messages =>
       check(input => input.password === input.confirmPassword, messages.passwordsDoNotMatch),
       ['confirmPassword']
     )
+  )
+
+export const createInvitationTokenSchema = messages =>
+  object({
+    token: pipe(string(messages.tokenRequired), trim(), nonEmpty(messages.tokenRequired), minLength(32, messages.tokenInvalid))
+  })
+
+export const createAcceptInvitationSchema = messages =>
+  pipe(
+    object({
+      token: pipe(string(messages.tokenRequired), trim(), nonEmpty(messages.tokenRequired), minLength(32, messages.tokenInvalid)),
+      name: pipe(
+        string(messages.nameRequired),
+        trim(),
+        nonEmpty(messages.nameRequired),
+        minLength(2, messages.nameTooShort),
+        maxLength(100, messages.nameTooLong)
+      ),
+      password: pipe(
+        string(messages.passwordRequired),
+        nonEmpty(messages.passwordRequired),
+        minLength(8, messages.passwordMinLength)
+      ),
+      confirmPassword: pipe(
+        string(messages.confirmPasswordRequired),
+        nonEmpty(messages.confirmPasswordRequired)
+      )
+    }),
+    forward(check(input => input.password === input.confirmPassword, messages.passwordsDoNotMatch), [
+      'confirmPassword'
+    ])
   )

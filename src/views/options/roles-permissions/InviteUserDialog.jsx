@@ -112,9 +112,9 @@ const InviteUserDialog = ({ open, roles, staff, onClose, onSubmit, translations 
             error={Boolean(errors.staffId)}
             helperText={errors.staffId?.message}
             disabled={isSubmitting}
-            {...register('staffId', { setValueAs: value => value || undefined })}
+            {...register('staffId', { setValueAs: value => value || null })}
           >
-            <MenuItem value=''>{translations.inviteForm.selectEmployee}</MenuItem>
+            <MenuItem value=''>{staff.length > 0 ? translations.inviteForm.selectEmployee : translations.inviteForm.noStaffAvailable}</MenuItem>
             {staff.map(employee => (
               <MenuItem key={employee.id} value={employee.id}>
                 {`${employee.name} — ${employee.position}`}

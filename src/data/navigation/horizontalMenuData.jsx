@@ -174,11 +174,6 @@ const horizontalMenuData = dictionary => [
     permission: 'settings:manage',
     children: [
       {
-        label: dictionary.profile.menuLabel,
-        href: '/settings/profile',
-        permission: 'profile:self'
-      },
-      {
         label: dictionary.navigation.companySetup,
         href: '/setup',
         permission: 'setup:manage'

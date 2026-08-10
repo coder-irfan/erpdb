@@ -9,7 +9,7 @@ import { getToken } from 'next-auth/jwt'
 // Config Imports
 import { i18n } from '@/configs/i18n'
 
-const publicRoutes = new Set(['/login', '/forgot-password', '/reset-password'])
+const publicRoutes = new Set(['/login', '/forgot-password', '/reset-password', '/auth/accept-invite'])
 
 const getPreferredLocale = request => {
   const acceptLanguage = request.headers.get('accept-language') || ''
