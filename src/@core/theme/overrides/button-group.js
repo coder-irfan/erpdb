@@ -4,7 +4,8 @@ import themeConfig from '@configs/themeConfig'
 const buttonGroup = {
   MuiButtonGroup: {
     defaultProps: {
-      disableRipple: themeConfig.disableRipple
+      disableRipple: themeConfig.disableRipple,
+      color: 'secondary'
     },
     styleOverrides: {
       root: {
@@ -14,7 +15,7 @@ const buttonGroup = {
             style: {
               '& .MuiButtonGroup-firstButton, & .MuiButtonGroup-middleButton': {
                 '&, &.Mui-disabled': {
-                  borderColor: 'var(--mui-palette-primary-main)'
+                  borderColor: 'var(--mui-palette-secondary-main)'
                 }
               }
             }
@@ -73,11 +74,11 @@ const buttonGroup = {
             props: { variant: 'contained', color: 'primary' },
             style: {
               '&:not(.Mui-disabled)': {
-                boxShadow: 'var(--mui-customShadows-primary-sm)'
+                boxShadow: 'var(--mui-customShadows-secondary-sm)'
               },
               '& .MuiButtonGroup-firstButton, & .MuiButtonGroup-middleButton': {
                 '&, &.Mui-disabled': {
-                  borderColor: 'var(--mui-palette-primary-dark)'
+                  borderColor: 'var(--mui-palette-secondary-dark)'
                 }
               }
             }
@@ -152,7 +153,7 @@ const buttonGroup = {
             style: {
               '& .MuiButtonGroup-firstButton, & .MuiButtonGroup-middleButton': {
                 '&, &.Mui-disabled': {
-                  borderRight: '1px solid var(--mui-palette-primary-darkOpacity)'
+                  borderRight: '1px solid var(--mui-palette-secondary-darkOpacity)'
                 }
               }
             }
@@ -212,7 +213,7 @@ const buttonGroup = {
             style: {
               '& .MuiButtonGroup-firstButton, & .MuiButtonGroup-middleButton': {
                 '&, &.Mui-disabled': {
-                  borderBottom: '1px solid var(--mui-palette-primary-darkOpacity)'
+                  borderBottom: '1px solid var(--mui-palette-secondary-darkOpacity)'
                 }
               }
             }

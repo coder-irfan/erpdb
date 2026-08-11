@@ -3,7 +3,6 @@ import { createContext, useMemo, useState } from 'react'
 
 // Config Imports
 import themeConfig from '@configs/themeConfig'
-import primaryColorConfig from '@configs/primaryColorConfig'
 
 // Hook Imports
 import { useObjectCookie } from '@core/hooks/useObjectCookie'
@@ -15,7 +14,8 @@ const lockedLayoutSettings = {
   layout: 'horizontal',
   navbarContentWidth: 'wide',
   contentWidth: 'wide',
-  footerContentWidth: 'wide'
+  footerContentWidth: 'wide',
+  primaryColor: themeConfig.primaryColor
 }
 
 const lockLayoutSettings = settings => ({ ...settings, ...lockedLayoutSettings })
@@ -31,7 +31,7 @@ export const SettingsProvider = props => {
     navbarContentWidth: themeConfig.navbar.contentWidth,
     contentWidth: themeConfig.contentWidth,
     footerContentWidth: themeConfig.footer.contentWidth,
-    primaryColor: primaryColorConfig[0].main
+    primaryColor: themeConfig.primaryColor
   }
 
   const updatedInitialSettings = lockLayoutSettings({

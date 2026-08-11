@@ -127,7 +127,7 @@ const UsersTable = ({ users, roles, locale, onInvite, onStatusChange, onRoleChan
               setPage(0)
             }}
             placeholder={translations.searchUsers}
-            className='is-full sm:is-[320px]'
+            className='is-full sm:is-[320px] mt-5'
             slotProps={{ input: { startAdornment: <i className='tabler-search me-2 text-textSecondary' /> } }}
           />
         </CardContent>
@@ -222,7 +222,10 @@ const UsersTable = ({ users, roles, locale, onInvite, onStatusChange, onRoleChan
                           </CustomTextField>
                           <Tooltip title={translations.editUserRole}>
                             <span>
-                              <IconButton disabled={protectedUser || busyUserId === user.id} onClick={() => openRoleDialog(user)}>
+                              <IconButton
+                                disabled={protectedUser || busyUserId === user.id}
+                                onClick={() => openRoleDialog(user)}
+                              >
                                 <i className='tabler-user-cog' />
                               </IconButton>
                             </span>

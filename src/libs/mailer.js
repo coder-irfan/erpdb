@@ -71,7 +71,7 @@ export const sendPasswordResetEmail = async (toEmail, resetToken, requestedLocal
           <div style="max-width:560px;margin:0 auto;background:#ffffff;border-radius:10px;padding:32px;box-shadow:0 2px 12px rgba(47,43,61,.08);">
             <h1 style="margin:0 0 16px;font-size:24px;">${translations.title}</h1>
             <p style="margin:0 0 24px;line-height:1.6;">${translations.intro}</p>
-            <a href="${resetUrl.toString()}" style="display:inline-block;background:#7367f0;color:#ffffff;text-decoration:none;padding:12px 20px;border-radius:6px;font-weight:600;">${translations.button}</a>
+            <a href="${resetUrl.toString()}" style="display:inline-block;background:#022483;color:#ffffff;text-decoration:none;padding:12px 20px;border-radius:6px;font-weight:600;">${translations.button}</a>
             <p style="margin:24px 0 0;line-height:1.6;color:#6d6b77;">${translations.expiry}</p>
           </div>
         </div>
@@ -108,7 +108,7 @@ export const sendUserInvitationEmail = async (toEmail, invitationToken, requeste
             <h1 style="margin:0 0 16px;font-size:24px;">${escapeHtml(translations.title)}</h1>
             <p style="margin:0 0 12px;line-height:1.6;">${escapeHtml(greeting)}</p>
             <p style="margin:0 0 24px;line-height:1.6;">${escapeHtml(translations.intro)}</p>
-            <a href="${invitationUrl.toString()}" style="display:inline-block;background:#7367f0;color:#ffffff;text-decoration:none;padding:12px 20px;border-radius:6px;font-weight:600;">${escapeHtml(translations.button)}</a>
+            <a href="${invitationUrl.toString()}" style="display:inline-block;background:#022483;color:#ffffff;text-decoration:none;padding:12px 20px;border-radius:6px;font-weight:600;">${escapeHtml(translations.button)}</a>
             <p style="margin:24px 0 0;line-height:1.6;color:#6d6b77;">${escapeHtml(translations.expiry)}</p>
           </div>
         </div>

@@ -26,6 +26,9 @@ const button = {
     }
   },
   MuiButton: {
+    defaultProps: {
+      color: 'secondary'
+    },
     styleOverrides: {
       root: ({ theme, ownerState }) => ({
         '&.Mui-disabled': {
@@ -78,24 +81,30 @@ const button = {
           {
             props: { variant: 'text', color: 'primary' },
             style: {
-              '&:not(.Mui-disabled):hover, &:not(.Mui-disabled):active, &.Mui-focusVisible:not(:has(span.MuiTouchRipple-root))':
-                {
-                  backgroundColor: 'var(--mui-palette-primary-lighterOpacity)'
-                },
+              color: 'var(--mui-palette-secondary-readableText)',
+              '&:not(.Mui-disabled):hover': {
+                backgroundColor: 'var(--mui-palette-secondary-lighterOpacity)'
+              },
+              '&:not(.Mui-disabled):active, &.Mui-focusVisible:not(:has(span.MuiTouchRipple-root))': {
+                backgroundColor: 'var(--mui-palette-secondary-lightOpacity)'
+              },
               '&.Mui-disabled': {
-                color: 'var(--mui-palette-primary-main)'
+                color: 'var(--mui-palette-secondary-readableText)'
               }
             }
           },
           {
             props: { variant: 'text', color: 'secondary' },
             style: {
-              '&:not(.Mui-disabled):hover, &:not(.Mui-disabled):active, &.Mui-focusVisible:not(:has(span.MuiTouchRipple-root))':
-                {
-                  backgroundColor: 'var(--mui-palette-secondary-lighterOpacity)'
-                },
+              color: 'var(--mui-palette-secondary-readableText)',
+              '&:not(.Mui-disabled):hover': {
+                backgroundColor: 'var(--mui-palette-secondary-lighterOpacity)'
+              },
+              '&:not(.Mui-disabled):active, &.Mui-focusVisible:not(:has(span.MuiTouchRipple-root))': {
+                backgroundColor: 'var(--mui-palette-secondary-lightOpacity)'
+              },
               '&.Mui-disabled': {
-                color: 'var(--mui-palette-secondary-main)'
+                color: 'var(--mui-palette-secondary-readableText)'
               }
             }
           },
@@ -150,27 +159,33 @@ const button = {
           {
             props: { variant: 'outlined', color: 'primary' },
             style: {
-              borderColor: 'var(--mui-palette-primary-main)',
-              '&:not(.Mui-disabled):hover, &:not(.Mui-disabled):active, &.Mui-focusVisible:not(:has(span.MuiTouchRipple-root))':
-                {
-                  backgroundColor: 'var(--mui-palette-primary-lighterOpacity)'
-                },
+              color: 'var(--mui-palette-secondary-readableText)',
+              borderColor: 'var(--mui-palette-secondary-main)',
+              '&:not(.Mui-disabled):hover': {
+                backgroundColor: 'var(--mui-palette-secondary-lighterOpacity)'
+              },
+              '&:not(.Mui-disabled):active, &.Mui-focusVisible:not(:has(span.MuiTouchRipple-root))': {
+                backgroundColor: 'var(--mui-palette-secondary-lightOpacity)'
+              },
               '&.Mui-disabled': {
-                color: 'var(--mui-palette-primary-main)',
-                borderColor: 'var(--mui-palette-primary-main)'
+                color: 'var(--mui-palette-secondary-readableText)',
+                borderColor: 'var(--mui-palette-secondary-main)'
               }
             }
           },
           {
             props: { variant: 'outlined', color: 'secondary' },
             style: {
+              color: 'var(--mui-palette-secondary-readableText)',
               borderColor: 'var(--mui-palette-secondary-main)',
-              '&:not(.Mui-disabled):hover, &:not(.Mui-disabled):active, &.Mui-focusVisible:not(:has(span.MuiTouchRipple-root))':
-                {
-                  backgroundColor: 'var(--mui-palette-secondary-lighterOpacity)'
-                },
+              '&:not(.Mui-disabled):hover': {
+                backgroundColor: 'var(--mui-palette-secondary-lighterOpacity)'
+              },
+              '&:not(.Mui-disabled):active, &.Mui-focusVisible:not(:has(span.MuiTouchRipple-root))': {
+                backgroundColor: 'var(--mui-palette-secondary-lightOpacity)'
+              },
               '&.Mui-disabled': {
-                color: 'var(--mui-palette-secondary-main)',
+                color: 'var(--mui-palette-secondary-readableText)',
                 borderColor: 'var(--mui-palette-secondary-main)'
               }
             }
@@ -234,26 +249,38 @@ const button = {
           {
             props: { variant: 'contained', color: 'primary' },
             style: {
+              color: 'var(--mui-palette-secondary-contrastText)',
+              backgroundColor: 'var(--mui-palette-secondary-main)',
               '&:not(.Mui-disabled)': {
-                boxShadow: 'var(--mui-customShadows-primary-sm)'
+                boxShadow: 'var(--mui-customShadows-secondary-sm)'
+              },
+              '&:not(.Mui-disabled):hover': {
+                backgroundColor: 'var(--mui-palette-secondary-light)'
               },
               '&:not(.Mui-disabled):active, &.Mui-focusVisible:not(:has(span.MuiTouchRipple-root))': {
-                backgroundColor: 'var(--mui-palette-primary-dark)'
+                backgroundColor: 'var(--mui-palette-secondary-main)',
+                boxShadow: '0 0 0 3px var(--mui-palette-secondary-mainOpacity)'
               },
               '&.Mui-disabled': {
-                color: 'var(--mui-palette-primary-contrastText)',
-                backgroundColor: 'var(--mui-palette-primary-main)'
+                color: 'var(--mui-palette-secondary-contrastText)',
+                backgroundColor: 'var(--mui-palette-secondary-main)'
               }
             }
           },
           {
             props: { variant: 'contained', color: 'secondary' },
             style: {
+              color: 'var(--mui-palette-secondary-contrastText)',
+              backgroundColor: 'var(--mui-palette-secondary-main)',
               '&:not(.Mui-disabled)': {
                 boxShadow: 'var(--mui-customShadows-secondary-sm)'
               },
+              '&:not(.Mui-disabled):hover': {
+                backgroundColor: 'var(--mui-palette-secondary-light)'
+              },
               '&:not(.Mui-disabled):active, &.Mui-focusVisible:not(:has(span.MuiTouchRipple-root))': {
-                backgroundColor: 'var(--mui-palette-secondary-dark)'
+                backgroundColor: 'var(--mui-palette-secondary-main)',
+                boxShadow: '0 0 0 3px var(--mui-palette-secondary-mainOpacity)'
               },
               '&.Mui-disabled': {
                 color: 'var(--mui-palette-secondary-contrastText)',
@@ -324,14 +351,14 @@ const button = {
           {
             props: { variant: 'tonal', color: 'primary' },
             style: {
-              backgroundColor: 'var(--mui-palette-primary-lightOpacity)',
-              color: 'var(--mui-palette-primary-main)',
+              backgroundColor: 'var(--mui-palette-secondary-lightOpacity)',
+              color: 'var(--mui-palette-secondary-readableText)',
               '&:not(.Mui-disabled):hover, &:not(.Mui-disabled):active, &.Mui-focusVisible:not(:has(span.MuiTouchRipple-root))':
                 {
-                  backgroundColor: 'var(--mui-palette-primary-mainOpacity)'
+                  backgroundColor: 'var(--mui-palette-secondary-mainOpacity)'
                 },
               '&.Mui-disabled': {
-                color: 'var(--mui-palette-primary-main)'
+                color: 'var(--mui-palette-secondary-readableText)'
               }
             }
           },
@@ -339,13 +366,13 @@ const button = {
             props: { variant: 'tonal', color: 'secondary' },
             style: {
               backgroundColor: 'var(--mui-palette-secondary-lightOpacity)',
-              color: 'var(--mui-palette-secondary-main)',
+              color: 'var(--mui-palette-secondary-readableText)',
               '&:not(.Mui-disabled):hover, &:not(.Mui-disabled):active, &.Mui-focusVisible:not(:has(span.MuiTouchRipple-root))':
                 {
                   backgroundColor: 'var(--mui-palette-secondary-mainOpacity)'
                 },
               '&.Mui-disabled': {
-                color: 'var(--mui-palette-secondary-main)'
+                color: 'var(--mui-palette-secondary-readableText)'
               }
             }
           },

@@ -4,8 +4,7 @@
 import { useMemo } from 'react'
 
 // MUI Imports
-import { deepmerge } from '@mui/utils'
-import { ThemeProvider, lighten, darken, createTheme } from '@mui/material/styles'
+import { ThemeProvider, createTheme } from '@mui/material/styles'
 import { AppRouterCacheProvider } from '@mui/material-nextjs/v14-appRouter'
 import CssBaseline from '@mui/material/CssBaseline'
 
@@ -47,39 +46,18 @@ const CustomThemeProvider = props => {
     }
   }
 
-  // Merge the primary color scheme override with the core theme
+  // Keep the light and dark palettes defined in colorSchemes.js authoritative.
   const theme = useMemo(() => {
-    const newTheme = {
-      colorSchemes: {
-        light: {
-          palette: {
-            primary: {
-              main: settings.primaryColor,
-              light: lighten(settings.primaryColor, 0.2),
-              dark: darken(settings.primaryColor, 0.1)
-            }
-          }
-        },
-        dark: {
-          palette: {
-            primary: {
-              main: settings.primaryColor,
-              light: lighten(settings.primaryColor, 0.2),
-              dark: darken(settings.primaryColor, 0.1)
-            }
-          }
-        }
-      },
+    const coreTheme = defaultCoreTheme(settings, currentMode, direction)
+
+    return createTheme({
+      ...coreTheme,
       cssVariables: {
         colorSchemeSelector: 'data'
       }
-    }
-
-    const coreTheme = deepmerge(defaultCoreTheme(settings, currentMode, direction), newTheme)
-
-    return createTheme(coreTheme)
+    })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [settings.primaryColor, settings.skin, currentMode])
+  }, [settings.skin, currentMode, direction])
 
   return (
     <AppRouterCacheProvider

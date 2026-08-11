@@ -3,9 +3,9 @@ const colorSchemes = skin => {
     light: {
       palette: {
         primary: {
-          main: '#7367F0',
-          light: '#8F85F3',
-          dark: '#675DD8',
+          main: '#022483',
+          light: '#366afc',
+          dark: '#01195a',
           lighterOpacity: 'rgb(var(--mui-palette-primary-mainChannel) / 0.08)',
           lightOpacity: 'rgb(var(--mui-palette-primary-mainChannel) / 0.16)',
           mainOpacity: 'rgb(var(--mui-palette-primary-mainChannel) / 0.24)',
@@ -13,10 +13,11 @@ const colorSchemes = skin => {
           darkerOpacity: 'rgb(var(--mui-palette-primary-mainChannel) / 0.38)'
         },
         secondary: {
-          main: '#808390',
-          light: '#999CA6',
-          dark: '#737682',
-          contrastText: '#FFF',
+          main: '#f38022',
+          light: '#f69d56',
+          dark: '#c15c0b',
+          contrastText: '#ffffff',
+          readableText: '#8a3c00',
           lighterOpacity: 'rgb(var(--mui-palette-secondary-mainChannel) / 0.08)',
           lightOpacity: 'rgb(var(--mui-palette-secondary-mainChannel) / 0.16)',
           mainOpacity: 'rgb(var(--mui-palette-secondary-mainChannel) / 0.24)',
@@ -155,9 +156,9 @@ const colorSchemes = skin => {
     dark: {
       palette: {
         primary: {
-          main: '#7367F0',
-          light: '#8F85F3',
-          dark: '#675DD8',
+          main: '#033ee2',
+          light: '#4f7dfc',
+          dark: '#021d69',
           lighterOpacity: 'rgb(var(--mui-palette-primary-mainChannel) / 0.08)',
           lightOpacity: 'rgb(var(--mui-palette-primary-mainChannel) / 0.16)',
           mainOpacity: 'rgb(var(--mui-palette-primary-mainChannel) / 0.24)',
@@ -165,10 +166,11 @@ const colorSchemes = skin => {
           darkerOpacity: 'rgb(var(--mui-palette-primary-mainChannel) / 0.38)'
         },
         secondary: {
-          main: '#808390',
-          light: '#999CA6',
-          dark: '#737682',
-          contrastText: '#FFF',
+          main: '#f38022',
+          light: '#f69d56',
+          dark: '#c15c0b',
+          contrastText: '#ffffff',
+          readableText: '#f38022',
           lighterOpacity: 'rgb(var(--mui-palette-secondary-mainChannel) / 0.08)',
           lightOpacity: 'rgb(var(--mui-palette-secondary-mainChannel) / 0.16)',
           mainOpacity: 'rgb(var(--mui-palette-secondary-mainChannel) / 0.24)',
@@ -226,12 +228,12 @@ const colorSchemes = skin => {
           primaryChannel: 'var(--mui-mainColorChannels-dark)',
           secondaryChannel: 'var(--mui-mainColorChannels-dark)'
         },
-        divider: `rgb(var(--mui-mainColorChannels-dark) / 0.12)`,
+        divider: `rgb(var(--mui-mainColorChannels-dark) / 0.18)`,
         dividerChannel: 'var(--mui-mainColorChannels-dark)',
         background: {
-          default: skin === 'bordered' ? '#2F3349' : '#25293C',
-          paper: '#2F3349',
-          paperChannel: '47 51 73'
+          default: '#020202',
+          paper: '#1f1f1f',
+          paperChannel: '18 18 18'
         },
         action: {
           active: `rgb(var(--mui-mainColorChannels-dark) / 0.6)`,
@@ -263,7 +265,7 @@ const colorSchemes = skin => {
           successFilledBg: 'var(--mui-palette-success-main)'
         },
         Avatar: {
-          defaultBg: '#373B50'
+          defaultBg: '#242424'
         },
         Chip: {
           defaultBorder: 'var(--mui-palette-divider)'
@@ -294,13 +296,13 @@ const colorSchemes = skin => {
           border: 'var(--mui-palette-divider)'
         },
         customColors: {
-          bodyBg: '#25293C',
-          chatBg: '#202534',
-          greyLightBg: '#353A52',
-          inputBorder: `rgb(var(--mui-mainColorChannels-dark) / 0.22)`,
-          tableHeaderBg: '#2F3349',
-          tooltipText: '#2F3349',
-          trackBg: '#3A3F57'
+          bodyBg: '#020202',
+          chatBg: '#0A0A0A',
+          greyLightBg: '#1A1A1A',
+          inputBorder: `rgb(var(--mui-mainColorChannels-dark) / 0.28)`,
+          tableHeaderBg: '#1A1A1A',
+          tooltipText: '#121212',
+          trackBg: '#242424'
         }
       }
     }

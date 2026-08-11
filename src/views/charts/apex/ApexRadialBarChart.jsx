@@ -17,7 +17,7 @@ const radialBarColors = {
   series1: '#fdd835',
   series2: '#32baff',
   series3: '#00d4bd',
-  series4: '#7367f0',
+  series4: '#022483',
   series5: '#FFA1A1'
 }
 

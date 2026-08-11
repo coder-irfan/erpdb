@@ -91,12 +91,12 @@ const ApexHeatmapChart = () => {
         enableShades: false,
         colorScale: {
           ranges: [
-            { to: 10, from: 0, name: '0-10', color: '#b9b3f8' },
-            { to: 20, from: 11, name: '10-20', color: '#aba4f6' },
-            { to: 30, from: 21, name: '20-30', color: '#9d95f5' },
-            { to: 40, from: 31, name: '30-40', color: '#8f85f3' },
-            { to: 50, from: 41, name: '40-50', color: '#8176f2' },
-            { to: 60, from: 51, name: '50-60', color: '#7367f0' }
+            { to: 10, from: 0, name: '0-10', color: 'rgba(54, 106, 252, .2)' },
+            { to: 20, from: 11, name: '10-20', color: 'rgba(54, 106, 252, .4)' },
+            { to: 30, from: 21, name: '20-30', color: 'rgba(54, 106, 252, .6)' },
+            { to: 40, from: 31, name: '30-40', color: '#366afc' },
+            { to: 50, from: 41, name: '40-50', color: '#01195a' },
+            { to: 60, from: 51, name: '50-60', color: '#022483' }
           ]
         }
       }

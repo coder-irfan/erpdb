@@ -143,15 +143,15 @@ const RechartsAreaChart = () => {
       />
       <CardContent>
         <div className='flex mbe-4 gap-6'>
-          <Box className='flex items-center gap-1.5' sx={{ '& i': { color: 'rgb(115, 103, 240)' } }}>
+          <Box className='flex items-center gap-1.5' sx={{ '& i': { color: 'rgb(2, 36, 131)' } }}>
             <i className='tabler-circle-filled text-xs' />
             <Typography variant='body2'>Click</Typography>
           </Box>
-          <Box className='flex items-center gap-1.5' sx={{ '& i': { color: 'rgba(115, 103, 240, .5)' } }}>
+          <Box className='flex items-center gap-1.5' sx={{ '& i': { color: 'rgba(2, 36, 131, .5)' } }}>
             <i className='tabler-circle-filled text-xs' />
             <Typography variant='body2'>Sales</Typography>
           </Box>
-          <Box className='flex items-center gap-1.5' sx={{ '& i': { color: 'rgba(115, 103, 240, .2)' } }}>
+          <Box className='flex items-center gap-1.5' sx={{ '& i': { color: 'rgba(2, 36, 131, .2)' } }}>
             <i className='tabler-circle-filled text-xs' />
             <Typography variant='body2'>Visits</Typography>
           </Box>
@@ -164,9 +164,9 @@ const RechartsAreaChart = () => {
                 <XAxis dataKey='name' reversed={theme.direction === 'rtl'} />
                 <YAxis orientation={theme.direction === 'rtl' ? 'right' : 'left'} />
                 <Tooltip content={CustomTooltip} />
-                <Area dataKey='Clicks' stackId='Clicks' stroke='0' fill='rgb(115, 103, 240)' />
-                <Area dataKey='Sales' stackId='Sales' stroke='0' fill='rgba(115, 103, 240, .5)' />
-                <Area dataKey='Visits' stackId='Visits' stroke='0' fill='rgba(115, 103, 240, .2)' />
+                <Area dataKey='Clicks' stackId='Clicks' stroke='0' fill='rgb(2, 36, 131)' />
+                <Area dataKey='Sales' stackId='Sales' stroke='0' fill='rgba(2, 36, 131, .5)' />
+                <Area dataKey='Visits' stackId='Visits' stroke='0' fill='rgba(2, 36, 131, .2)' />
               </AreaChart>
             </ResponsiveContainer>
           </div>

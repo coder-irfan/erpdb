@@ -289,8 +289,6 @@
     }
   },
   "rolesPermissions": {
-    "title": "Roles & Permissions",
-    "description": "Manage access policies, user invitations, and account status from one secure workspace.",
     "rolesTitle": "System Roles",
     "rolesDescription": "Review assigned users and control the permissions attached to each role.",
     "usersTitle": "Users & Invitations",
@@ -418,9 +416,9 @@
       "emailPlaceholder": "name@company.com",
       "role": "Role",
       "selectRole": "Select a role",
-        "employee": "Employee Link (Optional)",
-        "selectEmployee": "No employee link",
-        "noStaffAvailable": "No unlinked staff found (Optional)",
+      "employee": "Employee Link (Optional)",
+      "selectEmployee": "No employee link",
+      "noStaffAvailable": "No unlinked staff found (Optional)",
       "submit": "Send Invitation",
       "submitting": "Inviting..."
     },
@@ -452,8 +450,8 @@
     "messages": {
       "permissionsUpdated": "Role permissions updated successfully.",
       "roleCreated": "Role created successfully.",
-        "userInvited": "Invitation email sent successfully.",
-        "invitationEmailFailed": "The invitation email could not be delivered. No user account was created.",
+      "userInvited": "Invitation email sent successfully.",
+      "invitationEmailFailed": "The invitation email could not be delivered. No user account was created.",
       "statusUpdated": "Account status updated successfully.",
       "roleAssigned": "User role updated successfully.",
       "roleExists": "A role with this key already exists.",

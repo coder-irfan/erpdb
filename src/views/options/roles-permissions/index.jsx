@@ -72,7 +72,9 @@ const RolesPermissionsView = ({
       return false
     }
 
-    setRoles(current => [...current, result.data].sort((first, second) => first.displayName.localeCompare(second.displayName)))
+    setRoles(current =>
+      [...current, result.data].sort((first, second) => first.displayName.localeCompare(second.displayName))
+    )
     toast.success(result.message)
 
     return true
@@ -97,7 +99,10 @@ const RolesPermissionsView = ({
   }
 
   const handleStatusChange = async (userId, status) => {
-    const result = await runAction(() => updateUserStatus({ userId, status, locale }), dictionary.messages.operationFailed)
+    const result = await runAction(
+      () => updateUserStatus({ userId, status, locale }),
+      dictionary.messages.operationFailed
+    )
 
     if (!result.success) {
       toast.error(result.error)
@@ -112,7 +117,10 @@ const RolesPermissionsView = ({
   }
 
   const handleRoleChange = async (userId, roleId) => {
-    const result = await runAction(() => assignUserRole({ userId, roleId, locale }), dictionary.messages.operationFailed)
+    const result = await runAction(
+      () => assignUserRole({ userId, roleId, locale }),
+      dictionary.messages.operationFailed
+    )
 
     if (!result.success) {
       toast.error(result.error)
@@ -128,11 +136,6 @@ const RolesPermissionsView = ({
 
   return (
     <div className='flex flex-col gap-6'>
-      <div>
-        <Typography variant='h4'>{dictionary.title}</Typography>
-        <Typography color='text.secondary'>{dictionary.description}</Typography>
-      </div>
-
       {initialError && <Alert severity='error'>{initialError}</Alert>}
 
       <div className='flex items-center justify-between gap-4'>
@@ -140,7 +143,11 @@ const RolesPermissionsView = ({
           <Typography variant='h5'>{dictionary.rolesTitle}</Typography>
           <Typography color='text.secondary'>{dictionary.rolesDescription}</Typography>
         </div>
-        <Button variant='contained' startIcon={<i className='tabler-shield-plus' />} onClick={() => setCreateRoleOpen(true)}>
+        <Button
+          variant='contained'
+          startIcon={<i className='tabler-shield-plus' />}
+          onClick={() => setCreateRoleOpen(true)}
+        >
           {dictionary.createRole}
         </Button>
       </div>
@@ -169,7 +176,11 @@ const RolesPermissionsView = ({
                   <Typography color='text.secondary'>{role.description}</Typography>
                 </div>
                 <div className='flex flex-wrap gap-2'>
-                  <Chip size='small' icon={<i className='tabler-users' />} label={replaceCount(dictionary.usersAssigned, assignedUsers)} />
+                  <Chip
+                    size='small'
+                    icon={<i className='tabler-users' />}
+                    label={replaceCount(dictionary.usersAssigned, assignedUsers)}
+                  />
                   <Chip
                     size='small'
                     icon={<i className='tabler-key' />}
@@ -231,7 +242,6 @@ const RolesPermissionsView = ({
         onSubmit={handleInvite}
         translations={dictionary}
       />
-
     </div>
   )
 }

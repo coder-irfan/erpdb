@@ -19,9 +19,9 @@ import './styles.css'
 
 // Vars
 const colors = {
-  series1: '#7367F0',
-  series2: '#8F85F3',
-  series3: '#ABA4F6'
+  series1: '#022483',
+  series2: '#366afc',
+  series3: '#01195a'
 }
 
 const labelColor = 'var(--mui-palette-text-disabled)'

@@ -15,7 +15,7 @@ const AppReactApexCharts = dynamic(() => import('@/libs/styles/AppReactApexChart
 // Vars
 const scatterColors = {
   series1: '#ff9f43',
-  series2: '#7367f0',
+  series2: '#022483',
   series3: '#28c76f'
 }
 

@@ -16,7 +16,7 @@ const NavToggle = () => {
       aria-label='Open navigation menu'
       onClick={() => toggleVerticalNav()}
     >
-      <i className='tabler-menu-2' />
+      <i className='tabler-align-justified' />
     </IconButton>
   )
 }
