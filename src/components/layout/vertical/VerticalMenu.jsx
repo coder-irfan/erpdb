@@ -15,7 +15,7 @@ import useVerticalNav from '@menu/hooks/useVerticalNav'
 import StyledVerticalNavExpandIcon from '@menu/styles/vertical/StyledVerticalNavExpandIcon'
 
 // Data Imports
-import verticalMenuData from '@/data/navigation/verticalMenuData'
+import horizontalMenuData from '@/data/navigation/horizontalMenuData'
 
 // Style Imports
 import menuItemStyles from '@core/styles/vertical/menuItemStyles'
@@ -52,7 +52,7 @@ const VerticalMenu = ({ dictionary, scrollMenu }) => {
         renderExpandedMenuItemIcon={{ icon: <i className='tabler-circle text-xs' /> }}
         menuSectionStyles={menuSectionStyles(verticalNavOptions, theme)}
       >
-        <GenerateVerticalMenu menuData={verticalMenuData(dictionary)} />
+        <GenerateVerticalMenu menuData={horizontalMenuData(dictionary)} />
       </Menu>
     </ScrollWrapper>
   )

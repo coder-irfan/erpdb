@@ -15,7 +15,7 @@ import OptionMenu from '@core/components/option-menu'
 
 // Style Imports
 import tableStyles from '@core/styles/table.module.css'
-import styles from '@views/apps/logistics/dashboard/styles.module.css'
+import styles from './styles.module.css'
 
 const data = [
   {

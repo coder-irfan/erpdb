@@ -21,7 +21,7 @@ import BarChartRevenueGrowth from '@views/pages/widget-examples/statistics/BarCh
 import DonutChartGeneratedLeads from '@views/pages/widget-examples/statistics/DonutChartGeneratedLeads'
 import HorizontalStatisticsCard from '@views/pages/widget-examples/statistics/HorizontalStatisticsCard'
 import CustomerStatisticsCard from '@views/pages/widget-examples/statistics/CustomerStatisticsCard'
-import LogisticsStatisticsCard from '@views/apps/logistics/dashboard/LogisticsStatisticsCard'
+import LogisticsStatisticsCard from '@views/pages/widget-examples/statistics/LogisticsStatisticsCard'
 import UserListCards from '@views/pages/widget-examples/statistics/UserListCards'
 
 // Data Imports

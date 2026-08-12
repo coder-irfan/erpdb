@@ -130,6 +130,8 @@
     "financeReports": "Reports",
     "options": "Options",
     "lookupOptions": "Lookup Options",
+    "contractPolicies": "Contract Policies",
+    "staffPositions": "Staff Positions",
     "setupSettings": "Setup",
     "companySetup": "Company Setup",
     "systemAuditLogs": "System Audit Logs"
@@ -288,6 +290,220 @@
       "previewAlt": "Uploaded image preview"
     }
   },
+  "hrmStaff": {
+    "title": "Staff Management",
+    "description": "Manage employee profiles, employment details, and account links.",
+    "stats": {
+      "total": "Total Employees",
+      "active": "Active Staff",
+      "inactive": "Inactive Staff",
+      "terminated": "Terminated Staff"
+    },
+    "sections": {
+      "personal": "Personal Information",
+      "employment": "Employment Details",
+      "guarantor": "Guarantor Details",
+      "education": "Education"
+    },
+    "fields": {
+      "firstName": "First Name",
+      "lastName": "Last Name",
+      "fatherName": "Father Name",
+      "email": "Email Address",
+      "phone": "Phone Number",
+      "address": "Address",
+      "tazkiraNo": "Tazkira Number",
+      "position": "Position",
+      "salary": "Salary",
+      "joinDate": "Joining Date",
+      "contractPeriod": "Contract Period",
+      "status": "Staff Status",
+      "systemUser": "Linked System User",
+      "noSystemUser": "No system user",
+      "guarantorName": "Guarantor Name",
+      "guarantorPhone": "Guarantor Phone",
+      "guarantorLicense": "Guarantor License / ID",
+      "educations": "Highest Degree / Education History"
+    },
+    "filters": {
+      "search": "Search Staff",
+      "searchPlaceholder": "Search name, email, or phone",
+      "status": "Status",
+      "allStatuses": "All statuses",
+      "position": "Position",
+      "allPositions": "All positions"
+    },
+    "actions": {
+      "add": "Add New Staff",
+      "view": "View Profile",
+      "edit": "Edit Staff",
+      "changeStatus": "Change staff status",
+      "addFirst": "Add First Staff Member",
+      "create": "Create Staff",
+      "saveChanges": "Save Changes",
+      "saving": "Saving...",
+      "addPosition": "Add New",
+      "loadingPositions": "Loading positions...",
+      "noPositions": "No active positions available",
+      "cancel": "Cancel",
+      "close": "Close"
+    },
+    "table": {
+      "staff": "Staff Member",
+      "position": "Position",
+      "phone": "Phone",
+      "joinDate": "Joining Date",
+      "salary": "Salary",
+      "status": "Status",
+      "actions": "Actions",
+      "noResults": "No staff records found.",
+      "noResultsTitle": "No Staff Records Found",
+      "noResultsDescription": "Get started by adding your first employee to the system.",
+      "rowsPerPage": "Rows per page:",
+      "of": "of"
+    },
+    "status": {
+      "ACTIVE": "Active",
+      "INACTIVE": "Inactive",
+      "TERMINATED": "Terminated"
+    },
+    "drawer": {
+      "addTitle": "Add New Staff",
+      "editTitle": "Edit Staff",
+      "description": "Complete the employee record using English data entries."
+    },
+    "details": {
+      "title": "Staff Profile",
+      "description": "Complete employee and employment overview.",
+      "linkedUser": "System account linked",
+      "createdAt": "Record Created",
+      "activeContracts": "Active Contracts",
+      "noActiveContracts": "No active contracts are linked to this employee."
+    },
+    "messages": {
+      "created": "Staff member created successfully.",
+      "updated": "Staff member updated successfully.",
+      "statusUpdated": "Staff status updated successfully.",
+      "emailExists": "A staff member with this email already exists.",
+      "userUnavailable": "The selected system user is already linked or unavailable.",
+      "notFound": "The selected staff record could not be found.",
+      "loadFailed": "Staff records could not be loaded.",
+      "statsFailed": "Staff statistics could not be loaded.",
+      "usersLoadFailed": "Available system users could not be loaded.",
+      "positionsLoadFailed": "Staff positions could not be loaded.",
+      "operationFailed": "The operation could not be completed. Please try again.",
+      "unauthenticated": "Sign in to access staff management.",
+      "forbidden": "You do not have permission to access staff management."
+    },
+    "validation": {
+      "invalidSubmission": "Review the highlighted fields and try again.",
+      "required": "This field is required.",
+      "emailInvalid": "Enter a valid email address.",
+      "emailTooLong": "Email must not exceed 191 characters.",
+      "valueTooLong": "This value is too long.",
+      "salaryInvalid": "Enter a valid salary.",
+      "salaryPositive": "Salary must be greater than zero.",
+      "joinDateInvalid": "Enter a valid joining date.",
+      "statusInvalid": "Select a valid staff status.",
+      "userInvalid": "Select a valid system user."
+    }
+  },
+  "optionsManagement": {
+    "common": {
+      "search": "Search",
+      "status": "Status",
+      "active": "Active",
+      "inactive": "Inactive",
+      "createdDate": "Created Date",
+      "actions": "Actions",
+      "edit": "Edit",
+      "activate": "Activate",
+      "deactivate": "Deactivate",
+      "delete": "Delete",
+      "cancel": "Cancel",
+      "create": "Create",
+      "saveChanges": "Save Changes",
+      "saving": "Saving...",
+      "rowsPerPage": "Rows per page:",
+      "of": "of",
+      "noDescription": "No description"
+    },
+    "editor": {
+      "bold": "Bold",
+      "italic": "Italic",
+      "heading": "Heading",
+      "bulletList": "Bullet list",
+      "orderedList": "Numbered list",
+      "alignLeft": "Align left",
+      "alignCenter": "Align center",
+      "alignRight": "Align right"
+    },
+    "contractPolicies": {
+      "title": "Contract Policies",
+      "description": "Create and maintain reusable policies for staff contracts.",
+      "add": "Add Contract Policy",
+      "addFirst": "Add First Contract Policy",
+      "addTitle": "Create Contract Policy",
+      "editTitle": "Edit Contract Policy",
+      "searchPlaceholder": "Search policy titles or descriptions",
+      "emptyTitle": "No Contract Policies Found",
+      "emptyDescription": "Create your first policy to standardize staff contract terms.",
+      "deleteTitle": "Delete Contract Policy",
+      "deleteDescription": "Delete \"{name}\"? This action cannot be undone.",
+      "fields": {
+        "name": "Policy Name / Title",
+        "namePlaceholder": "e.g., Standard Staff Employment Policy",
+        "description": "Policy Description"
+      },
+      "table": {
+        "title": "Policy Title",
+        "description": "Description Preview"
+      }
+    },
+    "positions": {
+      "title": "Staff Positions",
+      "description": "Maintain the approved job titles used throughout HRM.",
+      "add": "Add Staff Position",
+      "addFirst": "Add First Staff Position",
+      "addTitle": "Create Staff Position",
+      "editTitle": "Edit Staff Position",
+      "searchPlaceholder": "Search position titles or descriptions",
+      "emptyTitle": "No Staff Positions Found",
+      "emptyDescription": "Add the first approved job title for staff records.",
+      "fields": {
+        "name": "Position Title",
+        "namePlaceholder": "e.g., Full-Stack Engineer",
+        "description": "Description",
+        "descriptionPlaceholder": "Role scope or internal notes"
+      },
+      "table": {
+        "title": "Position Title",
+        "description": "Description"
+      }
+    },
+    "messages": {
+      "unauthenticated": "Sign in to access system options.",
+      "forbidden": "You do not have permission to manage system options.",
+      "invalidCategory": "The selected option category is invalid.",
+      "loadFailed": "Options could not be loaded.",
+      "exists": "An option with this title already exists in this category.",
+      "notFound": "The selected option could not be found.",
+      "created": "Option created successfully.",
+      "updated": "Option updated successfully.",
+      "statusUpdated": "Option status updated successfully.",
+      "deleted": "Option deleted successfully.",
+      "inUse": "This option is in use and cannot be deleted. Deactivate it instead.",
+      "operationFailed": "The operation could not be completed. Please try again."
+    },
+    "validation": {
+      "invalidSubmission": "Review the highlighted fields and try again.",
+      "required": "This field is required.",
+      "nameTooLong": "The title must not exceed 191 characters.",
+      "descriptionTooLong": "The description is too long.",
+      "categoryInvalid": "Select a valid option category.",
+      "statusInvalid": "Select a valid status."
+    }
+  },
   "rolesPermissions": {
     "rolesTitle": "System Roles",
     "rolesDescription": "Review assigned users and control the permissions attached to each role.",
@@ -298,6 +514,7 @@
     "editUserRole": "Edit User Role",
     "saveRole": "Save Role",
     "rowsPerPage": "Rows per page:",
+    "of": "of",
     "editPermissions": "Edit Permissions",
     "usersAssigned": "{count} assigned users",
     "permissionsAssigned": "{count} permissions",
@@ -571,7 +788,14 @@
       "USER_ROLE_ASSIGNED": "User role assigned",
       "ROLE_CREATED": "Role created",
       "ROLE_PERMISSIONS_UPDATED": "Role permissions updated",
-      "BRANDING_UPDATED": "Branding updated"
+      "BRANDING_UPDATED": "Branding updated",
+      "HRM_STAFF_CREATED": "Added new staff member",
+      "HRM_STAFF_UPDATED": "Updated staff member",
+      "HRM_STAFF_STATUS_UPDATED": "Changed staff status",
+      "OPTION_CREATED": "Created system option",
+      "OPTION_UPDATED": "Updated system option",
+      "OPTION_STATUS_UPDATED": "Changed option status",
+      "OPTION_DELETED": "Deleted system option"
     },
     "notAvailable": "Not available",
     "messages": {

@@ -130,6 +130,8 @@
     "financeReports": "گزارش‌ها",
     "options": "گزینه‌ها",
     "lookupOptions": "گزینه‌های مرجع",
+    "contractPolicies": "پالیسی‌های قرارداد",
+    "staffPositions": "بست‌های کارمندان",
     "setupSettings": "تنظیمات سیستم",
     "companySetup": "تنظیمات شرکت",
     "systemAuditLogs": "ثبت‌های تفتیش سیستم"
@@ -288,6 +290,220 @@
       "previewAlt": "پیش‌نمایش تصویر بارگذاری‌شده"
     }
   },
+  "hrmStaff": {
+    "title": "مدیریت کارمندان",
+    "description": "پروفایل‌ها، جزئیات وظیفه و پیوند حساب‌های کارمندان را مدیریت کنید.",
+    "stats": {
+      "total": "مجموع کارمندان",
+      "active": "کارمندان فعال",
+      "inactive": "کارمندان غیرفعال",
+      "terminated": "کارمندان منفک‌شده"
+    },
+    "sections": {
+      "personal": "معلومات شخصی",
+      "employment": "جزئیات وظیفه",
+      "guarantor": "معلومات ضامن",
+      "education": "تحصیلات"
+    },
+    "fields": {
+      "firstName": "نام",
+      "lastName": "تخلص",
+      "fatherName": "نام پدر",
+      "email": "آدرس ایمیل",
+      "phone": "شماره تماس",
+      "address": "آدرس",
+      "tazkiraNo": "شماره تذکره",
+      "position": "سمت",
+      "salary": "معاش",
+      "joinDate": "تاریخ آغاز کار",
+      "contractPeriod": "مدت قرارداد",
+      "status": "وضعیت کارمند",
+      "systemUser": "کاربر سیستم مرتبط",
+      "noSystemUser": "بدون کاربر سیستم",
+      "guarantorName": "نام ضامن",
+      "guarantorPhone": "شماره تماس ضامن",
+      "guarantorLicense": "جواز / شناسه ضامن",
+      "educations": "بالاترین مدرک / سابقه تحصیلی"
+    },
+    "filters": {
+      "search": "جستجوی کارمندان",
+      "searchPlaceholder": "جستجو بر اساس نام، ایمیل یا تماس",
+      "status": "وضعیت",
+      "allStatuses": "همه وضعیت‌ها",
+      "position": "سمت",
+      "allPositions": "همه سمت‌ها"
+    },
+    "actions": {
+      "add": "افزودن کارمند جدید",
+      "view": "مشاهده پروفایل",
+      "edit": "ویرایش کارمند",
+      "changeStatus": "تغییر وضعیت کارمند",
+      "addFirst": "افزودن اولین کارمند",
+      "create": "ایجاد کارمند",
+      "saveChanges": "ذخیره تغییرات",
+      "saving": "در حال ذخیره...",
+      "addPosition": "افزودن جدید",
+      "loadingPositions": "در حال بارگذاری بست‌ها...",
+      "noPositions": "هیچ بست فعالی موجود نیست",
+      "cancel": "لغو",
+      "close": "بستن"
+    },
+    "table": {
+      "staff": "کارمند",
+      "position": "سمت",
+      "phone": "تماس",
+      "joinDate": "تاریخ آغاز",
+      "salary": "معاش",
+      "status": "وضعیت",
+      "actions": "عملیات",
+      "noResults": "هیچ سابقه کارمند یافت نشد.",
+      "noResultsTitle": "هیچ کارمندی یافت نشد",
+      "noResultsDescription": "با افزودن اولین کارمند به سیستم شروع کنید.",
+      "rowsPerPage": "تعداد سطر در صفحه:",
+      "of": "از"
+    },
+    "status": {
+      "ACTIVE": "فعال",
+      "INACTIVE": "غیرفعال",
+      "TERMINATED": "منفک‌شده"
+    },
+    "drawer": {
+      "addTitle": "افزودن کارمند جدید",
+      "editTitle": "ویرایش کارمند",
+      "description": "سابقه کارمند را با معلومات انگلیسی تکمیل کنید."
+    },
+    "details": {
+      "title": "پروفایل کارمند",
+      "description": "نمای کامل معلومات شخصی و وظیفوی کارمند.",
+      "linkedUser": "حساب سیستم مرتبط است",
+      "createdAt": "تاریخ ایجاد سابقه",
+      "activeContracts": "قراردادهای فعال",
+      "noActiveContracts": "هیچ قرارداد فعالی به این کارمند مرتبط نیست."
+    },
+    "messages": {
+      "created": "کارمند با موفقیت ایجاد شد.",
+      "updated": "معلومات کارمند با موفقیت به‌روزرسانی شد.",
+      "statusUpdated": "وضعیت کارمند با موفقیت به‌روزرسانی شد.",
+      "emailExists": "کارمندی با این ایمیل از قبل موجود است.",
+      "userUnavailable": "کاربر انتخاب‌شده قبلاً مرتبط شده یا در دسترس نیست.",
+      "notFound": "سابقه کارمند انتخاب‌شده یافت نشد.",
+      "loadFailed": "سوابق کارمندان بارگذاری نشد.",
+      "statsFailed": "آمار کارمندان بارگذاری نشد.",
+      "usersLoadFailed": "کاربران موجود سیستم بارگذاری نشدند.",
+      "positionsLoadFailed": "بست‌های کارمندان بارگذاری نشدند.",
+      "operationFailed": "عملیات انجام نشد. لطفاً دوباره تلاش کنید.",
+      "unauthenticated": "برای دسترسی به مدیریت کارمندان وارد شوید.",
+      "forbidden": "شما اجازه دسترسی به مدیریت کارمندان را ندارید."
+    },
+    "validation": {
+      "invalidSubmission": "فیلدهای مشخص‌شده را بررسی و دوباره تلاش کنید.",
+      "required": "این فیلد الزامی است.",
+      "emailInvalid": "یک آدرس ایمیل معتبر وارد کنید.",
+      "emailTooLong": "ایمیل نباید بیشتر از ۱۹۱ حرف باشد.",
+      "valueTooLong": "این مقدار بیش از حد طولانی است.",
+      "salaryInvalid": "یک معاش معتبر وارد کنید.",
+      "salaryPositive": "معاش باید بیشتر از صفر باشد.",
+      "joinDateInvalid": "یک تاریخ آغاز معتبر وارد کنید.",
+      "statusInvalid": "یک وضعیت معتبر انتخاب کنید.",
+      "userInvalid": "یک کاربر معتبر سیستم انتخاب کنید."
+    }
+  },
+  "optionsManagement": {
+    "common": {
+      "search": "جستجو",
+      "status": "وضعیت",
+      "active": "فعال",
+      "inactive": "غیرفعال",
+      "createdDate": "تاریخ ایجاد",
+      "actions": "عملیات",
+      "edit": "ویرایش",
+      "activate": "فعال‌سازی",
+      "deactivate": "غیرفعال‌سازی",
+      "delete": "حذف",
+      "cancel": "لغو",
+      "create": "ایجاد",
+      "saveChanges": "ذخیره تغییرات",
+      "saving": "در حال ذخیره...",
+      "rowsPerPage": "تعداد سطر در صفحه:",
+      "of": "از",
+      "noDescription": "بدون توضیحات"
+    },
+    "editor": {
+      "bold": "ضخیم",
+      "italic": "مایل",
+      "heading": "عنوان",
+      "bulletList": "فهرست نشانه‌دار",
+      "orderedList": "فهرست شماره‌دار",
+      "alignLeft": "چپ‌چین",
+      "alignCenter": "وسط‌چین",
+      "alignRight": "راست‌چین"
+    },
+    "contractPolicies": {
+      "title": "پالیسی‌های قرارداد",
+      "description": "پالیسی‌های قابل استفاده مجدد برای قراردادهای کارمندان را ایجاد و مدیریت کنید.",
+      "add": "افزودن پالیسی قرارداد",
+      "addFirst": "افزودن اولین پالیسی قرارداد",
+      "addTitle": "ایجاد پالیسی قرارداد",
+      "editTitle": "ویرایش پالیسی قرارداد",
+      "searchPlaceholder": "جستجوی عنوان یا توضیحات پالیسی",
+      "emptyTitle": "هیچ پالیسی قراردادی یافت نشد",
+      "emptyDescription": "برای معیاری‌سازی شرایط قرارداد، اولین پالیسی را ایجاد کنید.",
+      "deleteTitle": "حذف پالیسی قرارداد",
+      "deleteDescription": "آیا «{name}» حذف شود؟ این عمل قابل بازگشت نیست.",
+      "fields": {
+        "name": "نام / عنوان پالیسی",
+        "namePlaceholder": "مثلاً پالیسی معیاری استخدام کارمندان",
+        "description": "توضیحات پالیسی"
+      },
+      "table": {
+        "title": "عنوان پالیسی",
+        "description": "پیش‌نمایش توضیحات"
+      }
+    },
+    "positions": {
+      "title": "بست‌های کارمندان",
+      "description": "عنوان‌های وظیفوی تأییدشده مورد استفاده در منابع بشری را مدیریت کنید.",
+      "add": "افزودن بست کارمند",
+      "addFirst": "افزودن اولین بست کارمند",
+      "addTitle": "ایجاد بست کارمند",
+      "editTitle": "ویرایش بست کارمند",
+      "searchPlaceholder": "جستجوی عنوان یا توضیحات بست",
+      "emptyTitle": "هیچ بست کارمندی یافت نشد",
+      "emptyDescription": "اولین عنوان وظیفوی تأییدشده را برای سوابق کارمندان اضافه کنید.",
+      "fields": {
+        "name": "عنوان بست",
+        "namePlaceholder": "مثلاً انجنیر فول‌استک",
+        "description": "توضیحات",
+        "descriptionPlaceholder": "دامنه وظایف یا یادداشت‌های داخلی"
+      },
+      "table": {
+        "title": "عنوان بست",
+        "description": "توضیحات"
+      }
+    },
+    "messages": {
+      "unauthenticated": "برای دسترسی به گزینه‌های سیستم وارد شوید.",
+      "forbidden": "شما اجازه مدیریت گزینه‌های سیستم را ندارید.",
+      "invalidCategory": "دسته گزینه انتخاب‌شده معتبر نیست.",
+      "loadFailed": "گزینه‌ها بارگذاری نشدند.",
+      "exists": "گزینه‌ای با این عنوان در این دسته از قبل موجود است.",
+      "notFound": "گزینه انتخاب‌شده یافت نشد.",
+      "created": "گزینه با موفقیت ایجاد شد.",
+      "updated": "گزینه با موفقیت به‌روزرسانی شد.",
+      "statusUpdated": "وضعیت گزینه با موفقیت به‌روزرسانی شد.",
+      "deleted": "گزینه با موفقیت حذف شد.",
+      "inUse": "این گزینه در حال استفاده است و حذف نمی‌شود. در عوض آن را غیرفعال کنید.",
+      "operationFailed": "عملیات انجام نشد. لطفاً دوباره تلاش کنید."
+    },
+    "validation": {
+      "invalidSubmission": "فیلدهای مشخص‌شده را بررسی و دوباره تلاش کنید.",
+      "required": "این فیلد الزامی است.",
+      "nameTooLong": "عنوان نباید بیشتر از ۱۹۱ حرف باشد.",
+      "descriptionTooLong": "توضیحات بیش از حد طولانی است.",
+      "categoryInvalid": "یک دسته گزینه معتبر انتخاب کنید.",
+      "statusInvalid": "یک وضعیت معتبر انتخاب کنید."
+    }
+  },
   "rolesPermissions": {
     "rolesDescription": "کاربران اختصاص‌یافته و مجوزهای هر نقش را بررسی و مدیریت کنید.",
     "usersTitle": "کاربران و دعوت‌ها",
@@ -297,6 +513,7 @@
     "editUserRole": "ویرایش نقش کاربر",
     "saveRole": "ذخیره نقش",
     "rowsPerPage": "تعداد سطر در صفحه:",
+    "of": "از",
     "editPermissions": "ویرایش مجوزها",
     "usersAssigned": "{count} کاربر اختصاص‌یافته",
     "permissionsAssigned": "{count} مجوز",
@@ -570,7 +787,14 @@
       "USER_ROLE_ASSIGNED": "نقش کاربر تعیین شد",
       "ROLE_CREATED": "نقش ایجاد شد",
       "ROLE_PERMISSIONS_UPDATED": "مجوزهای نقش به‌روزرسانی شد",
-      "BRANDING_UPDATED": "برند به‌روزرسانی شد"
+      "BRANDING_UPDATED": "برند به‌روزرسانی شد",
+      "HRM_STAFF_CREATED": "کارمند جدید افزوده شد",
+      "HRM_STAFF_UPDATED": "معلومات کارمند به‌روزرسانی شد",
+      "HRM_STAFF_STATUS_UPDATED": "وضعیت کارمند تغییر کرد",
+      "OPTION_CREATED": "گزینه سیستم ایجاد شد",
+      "OPTION_UPDATED": "گزینه سیستم به‌روزرسانی شد",
+      "OPTION_STATUS_UPDATED": "وضعیت گزینه تغییر کرد",
+      "OPTION_DELETED": "گزینه سیستم حذف شد"
     },
     "notAvailable": "موجود نیست",
     "messages": {

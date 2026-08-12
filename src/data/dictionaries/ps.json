@@ -130,6 +130,8 @@
     "financeReports": "راپورونه",
     "options": "اختیارونه",
     "lookupOptions": "د مراجعې اختیارونه",
+    "contractPolicies": "د قرارداد پالیسۍ",
+    "staffPositions": "د کارکوونکو بستونه",
     "setupSettings": "سیسټم او امستنې",
     "companySetup": "د شرکت امستنې",
     "systemAuditLogs": "د سیسټم د تفتیش ثبتونه"
@@ -288,6 +290,220 @@
       "previewAlt": "د پورته شوي انځور مخکتنه"
     }
   },
+  "hrmStaff": {
+    "title": "د کارکوونکو مدیریت",
+    "description": "د کارکوونکو پروفایلونه، د دندې معلومات او د سیسټم حساب اړیکې اداره کړئ.",
+    "stats": {
+      "total": "ټول کارکوونکي",
+      "active": "فعال کارکوونکي",
+      "inactive": "غیرفعال کارکوونکي",
+      "terminated": "له دندې ګوښه شوي"
+    },
+    "sections": {
+      "personal": "شخصي معلومات",
+      "employment": "د دندې معلومات",
+      "guarantor": "د ضامن معلومات",
+      "education": "زده کړې"
+    },
+    "fields": {
+      "firstName": "نوم",
+      "lastName": "تخلص",
+      "fatherName": "د پلار نوم",
+      "email": "برېښنالیک پته",
+      "phone": "د تلیفون شمېره",
+      "address": "پته",
+      "tazkiraNo": "د تذکرې شمېره",
+      "position": "دنده",
+      "salary": "معاش",
+      "joinDate": "د کار پیل نېټه",
+      "contractPeriod": "د قرارداد موده",
+      "status": "د کارکوونکي حالت",
+      "systemUser": "تړلی سیسټمي کارن",
+      "noSystemUser": "سیسټمي کارن نشته",
+      "guarantorName": "د ضامن نوم",
+      "guarantorPhone": "د ضامن تلیفون",
+      "guarantorLicense": "د ضامن جواز / پېژندپاڼه",
+      "educations": "لوړه درجه / د زده کړو مخینه"
+    },
+    "filters": {
+      "search": "د کارکوونکو لټون",
+      "searchPlaceholder": "د نوم، برېښنالیک یا تلیفون له مخې لټون",
+      "status": "حالت",
+      "allStatuses": "ټول حالتونه",
+      "position": "دنده",
+      "allPositions": "ټولې دندې"
+    },
+    "actions": {
+      "add": "نوی کارکوونکی زیاتول",
+      "view": "پروفایل کتل",
+      "edit": "کارکوونکی سمول",
+      "changeStatus": "د کارکوونکي حالت بدلول",
+      "addFirst": "لومړی کارکوونکی زیاتول",
+      "create": "کارکوونکی جوړول",
+      "saveChanges": "بدلونونه خوندي کول",
+      "saving": "خوندي کېږي...",
+      "addPosition": "نوی زیاتول",
+      "loadingPositions": "بستونه پورته کېږي...",
+      "noPositions": "فعال بستونه نشته",
+      "cancel": "لغوه کول",
+      "close": "تړل"
+    },
+    "table": {
+      "staff": "کارکوونکی",
+      "position": "دنده",
+      "phone": "تلیفون",
+      "joinDate": "د پیل نېټه",
+      "salary": "معاش",
+      "status": "حالت",
+      "actions": "کړنې",
+      "noResults": "د کارکوونکو هېڅ ریکارډ ونه موندل شو.",
+      "noResultsTitle": "د کارکوونکو ریکارډونه ونه موندل شول",
+      "noResultsDescription": "سیسټم ته د خپل لومړي کارکوونکي په زیاتولو پیل وکړئ.",
+      "rowsPerPage": "په پاڼه کې کتارونه:",
+      "of": "له"
+    },
+    "status": {
+      "ACTIVE": "فعال",
+      "INACTIVE": "غیرفعال",
+      "TERMINATED": "ګوښه شوی"
+    },
+    "drawer": {
+      "addTitle": "نوی کارکوونکی زیاتول",
+      "editTitle": "کارکوونکی سمول",
+      "description": "د کارکوونکي ریکارډ په انګلیسي معلوماتو بشپړ کړئ."
+    },
+    "details": {
+      "title": "د کارکوونکي پروفایل",
+      "description": "د کارکوونکي د شخصي او دندې معلوماتو بشپړ لنډیز.",
+      "linkedUser": "سیسټمي حساب تړل شوی",
+      "createdAt": "د ریکارډ جوړېدو نېټه",
+      "activeContracts": "فعال قراردادونه",
+      "noActiveContracts": "له دې کارکوونکي سره فعال قرارداد نشته."
+    },
+    "messages": {
+      "created": "کارکوونکی په بریالیتوب سره جوړ شو.",
+      "updated": "د کارکوونکي معلومات په بریالیتوب سره تازه شول.",
+      "statusUpdated": "د کارکوونکي حالت په بریالیتوب سره تازه شو.",
+      "emailExists": "په دې برېښنالیک یو کارکوونکی له مخکې شته.",
+      "userUnavailable": "ټاکل شوی سیسټمي کارن له مخکې تړل شوی یا شتون نه لري.",
+      "notFound": "ټاکل شوی د کارکوونکي ریکارډ ونه موندل شو.",
+      "loadFailed": "د کارکوونکو ریکارډونه پورته نه شول.",
+      "statsFailed": "د کارکوونکو شمېرې پورته نه شوې.",
+      "usersLoadFailed": "شته سیسټمي کارنان پورته نه شول.",
+      "positionsLoadFailed": "د کارکوونکو بستونه پورته نه شول.",
+      "operationFailed": "کړنه بشپړه نه شوه. مهرباني وکړئ بیا هڅه وکړئ.",
+      "unauthenticated": "د کارکوونکو مدیریت ته د لاسرسي لپاره ننوځئ.",
+      "forbidden": "تاسو د کارکوونکو مدیریت ته د لاسرسي اجازه نه لرئ."
+    },
+    "validation": {
+      "invalidSubmission": "نښه شوي ځایونه وګورئ او بیا هڅه وکړئ.",
+      "required": "دا ځای اړین دی.",
+      "emailInvalid": "سم برېښنالیک ولیکئ.",
+      "emailTooLong": "برېښنالیک باید تر ۱۹۱ تورو زیات نه وي.",
+      "valueTooLong": "دا ارزښت ډېر اوږد دی.",
+      "salaryInvalid": "سم معاش ولیکئ.",
+      "salaryPositive": "معاش باید له صفر څخه زیات وي.",
+      "joinDateInvalid": "د کار پیل سمه نېټه ولیکئ.",
+      "statusInvalid": "د کارکوونکي سم حالت وټاکئ.",
+      "userInvalid": "یو سم سیسټمي کارن وټاکئ."
+    }
+  },
+  "optionsManagement": {
+    "common": {
+      "search": "لټون",
+      "status": "حالت",
+      "active": "فعال",
+      "inactive": "غیرفعال",
+      "createdDate": "د جوړېدو نېټه",
+      "actions": "کړنې",
+      "edit": "سمول",
+      "activate": "فعالول",
+      "deactivate": "غیرفعالول",
+      "delete": "ړنګول",
+      "cancel": "لغوه کول",
+      "create": "جوړول",
+      "saveChanges": "بدلونونه خوندي کول",
+      "saving": "خوندي کېږي...",
+      "rowsPerPage": "په پاڼه کې کتارونه:",
+      "of": "له",
+      "noDescription": "توضیحات نشته"
+    },
+    "editor": {
+      "bold": "ډبل",
+      "italic": "کوږ",
+      "heading": "سرلیک",
+      "bulletList": "نښان لرونکی لېست",
+      "orderedList": "شمېرل شوی لېست",
+      "alignLeft": "چپ برابرول",
+      "alignCenter": "منځ ته برابرول",
+      "alignRight": "ښي برابرول"
+    },
+    "contractPolicies": {
+      "title": "د قرارداد پالیسۍ",
+      "description": "د کارکوونکو د قراردادونو لپاره بیا کارېدونکې پالیسۍ جوړې او اداره کړئ.",
+      "add": "د قرارداد پالیسي زیاتول",
+      "addFirst": "لومړۍ د قرارداد پالیسي زیاتول",
+      "addTitle": "د قرارداد پالیسي جوړول",
+      "editTitle": "د قرارداد پالیسي سمول",
+      "searchPlaceholder": "د پالیسۍ په سرلیک یا توضیحاتو کې لټون",
+      "emptyTitle": "د قرارداد پالیسۍ ونه موندل شوې",
+      "emptyDescription": "د قرارداد د شرایطو د معیاري کولو لپاره لومړۍ پالیسي جوړه کړئ.",
+      "deleteTitle": "د قرارداد پالیسي ړنګول",
+      "deleteDescription": "«{name}» ړنګ شي؟ دا کړنه بېرته نه راګرځي.",
+      "fields": {
+        "name": "د پالیسۍ نوم / سرلیک",
+        "namePlaceholder": "لکه د کارکوونکو معیاري استخدام پالیسي",
+        "description": "د پالیسۍ توضیحات"
+      },
+      "table": {
+        "title": "د پالیسۍ سرلیک",
+        "description": "د توضیحاتو لنډیز"
+      }
+    },
+    "positions": {
+      "title": "د کارکوونکو بستونه",
+      "description": "په بشري سرچینو کې کارېدونکي تایید شوي دندې سرلیکونه اداره کړئ.",
+      "add": "د کارکوونکي بست زیاتول",
+      "addFirst": "لومړی د کارکوونکي بست زیاتول",
+      "addTitle": "د کارکوونکي بست جوړول",
+      "editTitle": "د کارکوونکي بست سمول",
+      "searchPlaceholder": "د بست په سرلیک یا توضیحاتو کې لټون",
+      "emptyTitle": "د کارکوونکو بستونه ونه موندل شول",
+      "emptyDescription": "د کارکوونکو د ریکارډونو لپاره لومړی تایید شوی دندې سرلیک زیات کړئ.",
+      "fields": {
+        "name": "د بست سرلیک",
+        "namePlaceholder": "لکه فول‌سټک انجنیر",
+        "description": "توضیحات",
+        "descriptionPlaceholder": "د دندې ساحه یا داخلي یادښتونه"
+      },
+      "table": {
+        "title": "د بست سرلیک",
+        "description": "توضیحات"
+      }
+    },
+    "messages": {
+      "unauthenticated": "د سیسټم غوراویو ته د لاسرسي لپاره ننوځئ.",
+      "forbidden": "تاسو د سیسټم غوراویو د ادارې اجازه نه لرئ.",
+      "invalidCategory": "ټاکل شوې د غوراوي کټګوري سمه نه ده.",
+      "loadFailed": "غوراوي پورته نه شول.",
+      "exists": "په دې کټګورۍ کې په دې سرلیک یو غوراوی له مخکې شته.",
+      "notFound": "ټاکل شوی غوراوی ونه موندل شو.",
+      "created": "غوراوی په بریالیتوب جوړ شو.",
+      "updated": "غوراوی په بریالیتوب تازه شو.",
+      "statusUpdated": "د غوراوي حالت په بریالیتوب تازه شو.",
+      "deleted": "غوراوی په بریالیتوب ړنګ شو.",
+      "inUse": "دا غوراوی کارول کېږي او نه شي ړنګېدای. پر ځای یې غیرفعال کړئ.",
+      "operationFailed": "کړنه بشپړه نه شوه. مهرباني وکړئ بیا هڅه وکړئ."
+    },
+    "validation": {
+      "invalidSubmission": "نښه شوي ځایونه وګورئ او بیا هڅه وکړئ.",
+      "required": "دا ځای اړین دی.",
+      "nameTooLong": "سرلیک باید تر ۱۹۱ تورو زیات نه وي.",
+      "descriptionTooLong": "توضیحات ډېر اوږده دي.",
+      "categoryInvalid": "د غوراوي سمه کټګوري وټاکئ.",
+      "statusInvalid": "سم حالت وټاکئ."
+    }
+  },
   "rolesPermissions": {
     "rolesDescription": "ټاکل شوي کاروونکي وګورئ او د هر رول اجازې اداره کړئ.",
     "usersTitle": "کاروونکي او بلنې",
@@ -297,6 +513,7 @@
     "editUserRole": "د کاروونکي رول سمول",
     "saveRole": "رول خوندي کول",
     "rowsPerPage": "په پاڼه کې کتارونه:",
+    "of": "له",
     "editPermissions": "اجازې سمول",
     "usersAssigned": "{count} ټاکل شوي کاروونکي",
     "permissionsAssigned": "{count} اجازې",
@@ -570,7 +787,14 @@
       "USER_ROLE_ASSIGNED": "د کاروونکي رول وټاکل شو",
       "ROLE_CREATED": "رول جوړ شو",
       "ROLE_PERMISSIONS_UPDATED": "د رول اجازې تازه شوې",
-      "BRANDING_UPDATED": "نښه تازه شوه"
+      "BRANDING_UPDATED": "نښه تازه شوه",
+      "HRM_STAFF_CREATED": "نوی کارکوونکی زیات شو",
+      "HRM_STAFF_UPDATED": "د کارکوونکي معلومات تازه شول",
+      "HRM_STAFF_STATUS_UPDATED": "د کارکوونکي حالت بدل شو",
+      "OPTION_CREATED": "سیسټمي غوراوی جوړ شو",
+      "OPTION_UPDATED": "سیسټمي غوراوی تازه شو",
+      "OPTION_STATUS_UPDATED": "د غوراوي حالت بدل شو",
+      "OPTION_DELETED": "سیسټمي غوراوی ړنګ شو"
     },
     "notAvailable": "معلومات نشته",
     "messages": {

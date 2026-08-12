@@ -1,17 +1,9 @@
-import Card from '@mui/material/Card'
-import CardHeader from '@mui/material/CardHeader'
-
-import { getDictionary } from '@/utils/getDictionary'
+import { redirect } from 'next/navigation'
 
 const StaffListPage = async props => {
-  const params = await props.params
-  const dictionary = await getDictionary(params.lang)
+  const { lang } = await props.params
 
-  return (
-    <Card>
-      <CardHeader title={dictionary.navigation.staffList} />
-    </Card>
-  )
+  redirect(`/${lang}/hrm/staff`)
 }
 
 export default StaffListPage

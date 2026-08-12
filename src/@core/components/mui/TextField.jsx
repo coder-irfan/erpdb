@@ -30,8 +30,10 @@ const TextFieldStyled = styled(TextField)(({ theme }) => ({
   '& .MuiInputBase-root': {
     backgroundColor: 'transparent !important',
     border: `1px solid var(--mui-palette-customColors-inputBorder)`,
+    transition: 'border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
     '&:not(.Mui-focused):not(.Mui-disabled):not(.Mui-error):hover': {
-      borderColor: 'var(--mui-palette-action-active)'
+      borderColor: 'var(--mui-palette-action-active)',
+      boxShadow: '0 0 0 3px rgb(var(--mui-palette-primary-mainChannel) / 0.08)'
     },
     '&:before, &:after': {
       display: 'none'
@@ -43,16 +45,12 @@ const TextFieldStyled = styled(TextField)(({ theme }) => ({
       borderColor: 'var(--mui-palette-error-main)'
     },
     '&.Mui-focused': {
-      borderWidth: 2,
       '& .MuiInputBase-input:not(.MuiInputBase-readOnly):not([readonly])::placeholder': {
         transform: 'translateX(4px)'
       },
-      '& :not(textarea).MuiFilledInput-input': {
-        padding: '6.25px 13px'
-      },
       '&:not(.Mui-error).MuiInputBase-colorPrimary': {
         borderColor: 'var(--mui-palette-primary-main)',
-        boxShadow: 'var(--mui-customShadows-primary-sm)'
+        boxShadow: '0 0 0 3px rgb(var(--mui-palette-primary-mainChannel) / 0.16)'
       },
       '&.MuiInputBase-colorSecondary': {
         borderColor: 'var(--mui-palette-secondary-main)'
@@ -88,38 +86,14 @@ const TextFieldStyled = styled(TextField)(({ theme }) => ({
   '& .MuiInputBase-inputAdornedEnd.MuiInputBase-input': {
     paddingInlineEnd: '0px !important'
   },
-  '& .MuiInputBase-sizeSmall.MuiInputBase-adornedStart.Mui-focused': {
-    paddingInlineStart: '13px',
-    '& .MuiInputBase-input': {
-      paddingInlineStart: '0px !important'
-    }
-  },
   '& .MuiInputBase-sizeSmall.MuiInputBase-adornedStart:not(.MuiAutocomplete-inputRoot)': {
     paddingInlineStart: '14px'
   },
   '& .MuiInputBase-sizeSmall.MuiInputBase-adornedEnd:not(.MuiAutocomplete-inputRoot)': {
     paddingInlineEnd: '14px'
   },
-  '& .MuiInputBase-sizeSmall.MuiInputBase-adornedEnd.Mui-focused:not(.MuiAutocomplete-inputRoot)': {
-    paddingInlineEnd: '13px',
-    '& .MuiInputBase-input': {
-      paddingInlineEnd: '0px !important'
-    }
-  },
-  '& :not(.MuiInputBase-sizeSmall).MuiInputBase-adornedStart.Mui-focused': {
-    paddingInlineStart: '15px',
-    '& .MuiInputBase-input': {
-      paddingInlineStart: '0px !important'
-    }
-  },
   '& :not(.MuiInputBase-sizeSmall).MuiInputBase-adornedStart': {
     paddingInlineStart: '16px'
-  },
-  '& :not(.MuiInputBase-sizeSmall).MuiInputBase-adornedEnd.Mui-focused': {
-    paddingInlineEnd: '15px',
-    '& .MuiInputBase-input': {
-      paddingInlineEnd: '0px !important'
-    }
   },
   '& :not(.MuiInputBase-sizeSmall).MuiInputBase-adornedEnd': {
     paddingInlineEnd: '16px'
@@ -146,11 +120,6 @@ const TextFieldStyled = styled(TextField)(({ theme }) => ({
     '& .MuiInputBase-input': {
       padding: '10.8px 16px'
     },
-    '&.Mui-focused': {
-      '& .MuiInputBase-input': {
-        padding: '9.8px 15px'
-      }
-    }
   },
   '& .MuiFormHelperText-root': {
     lineHeight: 1.154,
@@ -195,12 +164,6 @@ const TextFieldStyled = styled(TextField)(({ theme }) => ({
       paddingInline: '8px !important',
       paddingBlock: '5.25px !important'
     },
-    '&.Mui-focused .MuiAutocomplete-input': {
-      paddingInlineStart: '7px !important'
-    },
-    '&.Mui-focused': {
-      paddingBlock: '4.55px !important'
-    },
     '& .MuiAutocomplete-endAdornment': {
       top: 'calc(50% - 12px)'
     }
@@ -208,14 +171,6 @@ const TextFieldStyled = styled(TextField)(({ theme }) => ({
   '& .MuiAutocomplete-inputRoot.MuiInputBase-sizeSmall': {
     paddingBlock: '4.75px !important',
     paddingInlineStart: '10px',
-    '&.Mui-focused': {
-      paddingBlock: '3.75px !important',
-      paddingInlineStart: '9px',
-      '.MuiAutocomplete-input': {
-        paddingBlock: '2.5px',
-        paddingInline: '3px !important'
-      }
-    },
     '& .MuiAutocomplete-input': {
       paddingInline: '3px !important'
     }
@@ -234,10 +189,7 @@ const TextFieldStyled = styled(TextField)(({ theme }) => ({
   // For Textarea
   '& .MuiInputBase-multiline': {
     '&.MuiInputBase-sizeSmall': {
-      padding: '6px 14px',
-      '&.Mui-focused': {
-        padding: '5px 13px'
-      }
+      padding: '6px 14px'
     },
     '& textarea.MuiInputBase-inputSizeSmall:placeholder-shown': {
       overflowX: 'hidden'

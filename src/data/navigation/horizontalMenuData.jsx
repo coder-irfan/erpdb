@@ -12,7 +12,7 @@ const horizontalMenuData = dictionary => [
     children: [
       {
         label: dictionary.navigation.staffList,
-        href: '/hrm/staff-list',
+        href: '/hrm/staff',
         permission: 'hrm_staff:read'
       },
       {
@@ -164,6 +164,16 @@ const horizontalMenuData = dictionary => [
       {
         label: dictionary.navigation.lookupOptions,
         href: '/options',
+        permission: 'options:read'
+      },
+      {
+        label: dictionary.navigation.contractPolicies,
+        href: '/options/contracts/staff-policy',
+        permission: 'options:read'
+      },
+      {
+        label: dictionary.navigation.staffPositions,
+        href: '/options/hrm/positions',
         permission: 'options:read'
       }
     ]

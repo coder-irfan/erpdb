@@ -13,13 +13,14 @@ import DialogContent from '@mui/material/DialogContent'
 import DialogTitle from '@mui/material/DialogTitle'
 import IconButton from '@mui/material/IconButton'
 import MenuItem from '@mui/material/MenuItem'
-import TablePagination from '@mui/material/TablePagination'
 import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
 
 import CustomAvatar from '@core/components/mui/Avatar'
 import CustomTextField from '@core/components/mui/TextField'
 import LoadingButtonContent from '@/components/LoadingButtonContent'
+import DashboardTablePagination from '@/components/table/DashboardTablePagination'
+import TableEmptyStateRow from '@/components/table/TableEmptyStateRow'
 import { getInitials } from '@/utils/getInitials'
 
 import tableStyles from '@core/styles/table.module.css'
@@ -113,23 +114,28 @@ const UsersTable = ({ users, roles, locale, onInvite, onStatusChange, onRoleChan
         <CardHeader
           title={translations.usersTitle}
           subheader={translations.usersDescription}
-          action={
-            <Button variant='contained' startIcon={<i className='tabler-user-plus' />} onClick={onInvite}>
-              {translations.inviteUser}
-            </Button>
-          }
         />
         <CardContent className='border-bs border-divider'>
-          <CustomTextField
-            value={search}
-            onChange={event => {
-              setSearch(event.target.value)
-              setPage(0)
-            }}
-            placeholder={translations.searchUsers}
-            className='is-full sm:is-[320px] mt-5'
-            slotProps={{ input: { startAdornment: <i className='tabler-search me-2 text-textSecondary' /> } }}
-          />
+          <div className='mt-5 flex flex-wrap items-end gap-2 sm:justify-between'>
+            <CustomTextField
+              value={search}
+              onChange={event => {
+                setSearch(event.target.value)
+                setPage(0)
+              }}
+              placeholder={translations.searchUsers}
+              className='is-full sm:is-[260px]'
+              slotProps={{ input: { startAdornment: <i className='tabler-search me-2 text-textSecondary' /> } }}
+            />
+            <Button
+              variant='contained'
+              startIcon={<i className='tabler-user-plus' />}
+              onClick={onInvite}
+              className='is-full sm:is-auto'
+            >
+              {translations.inviteUser}
+            </Button>
+          </div>
         </CardContent>
         <div className='overflow-x-auto'>
           <table className={tableStyles.table}>
@@ -145,11 +151,14 @@ const UsersTable = ({ users, roles, locale, onInvite, onStatusChange, onRoleChan
             </thead>
             <tbody>
               {paginatedUsers.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className='text-center'>
-                    {translations.noUsers}
-                  </td>
-                </tr>
+                <TableEmptyStateRow
+                  colSpan={6}
+                  icon='tabler-users-plus'
+                  title={translations.noUsers}
+                  description={translations.usersDescription}
+                  actionLabel={translations.inviteUser}
+                  onAction={onInvite}
+                />
               ) : (
                 paginatedUsers.map(user => {
                   const protectedUser = user.isCurrentUser || user.isSuperAdmin
@@ -239,8 +248,7 @@ const UsersTable = ({ users, roles, locale, onInvite, onStatusChange, onRoleChan
             </tbody>
           </table>
         </div>
-        <TablePagination
-          component='div'
+        <DashboardTablePagination
           count={filteredUsers.length}
           page={page}
           rowsPerPage={rowsPerPage}
@@ -250,8 +258,8 @@ const UsersTable = ({ users, roles, locale, onInvite, onStatusChange, onRoleChan
             setRowsPerPage(Number(event.target.value))
             setPage(0)
           }}
-          labelRowsPerPage={translations.rowsPerPage}
-          labelDisplayedRows={({ from, to, count }) => `${from}-${to} / ${count}`}
+          rowsPerPageLabel={translations.rowsPerPage}
+          ofLabel={translations.of}
         />
       </Card>
 

@@ -63,13 +63,69 @@ const profileSelect = {
     }
   },
   audit_logs: {
-    select: { id: true, action: true, module: true, created_at: true },
+    select: { id: true, action: true, module: true, details: true, created_at: true },
     orderBy: { created_at: 'desc' },
     take: 5
   }
 }
 
 const canEditEmail = roles => roles.some(role => ['admin', 'super_admin'].includes(role.name))
+
+const getAuditDetails = details =>
+  details && typeof details === 'object' && !Array.isArray(details) ? details : {}
+
+const uniqueIds = values => [...new Set(values.filter(value => typeof value === 'string' && value))]
+
+const resolveActivityEntityLabels = async logs => {
+  const details = logs.map(log => getAuditDetails(log.details))
+  const staffIds = uniqueIds(details.map(item => item.staffId))
+  const userIds = uniqueIds(details.flatMap(item => [item.targetUserId, item.invitedUserId]))
+  const roleIds = uniqueIds(details.map(item => item.roleId))
+
+  const [staffRecords, users, roles] = await Promise.all([
+    staffIds.length
+      ? prisma.hrmStaff.findMany({
+          where: { id: { in: staffIds } },
+          select: { id: true, first_name: true, last_name: true, email: true }
+        })
+      : [],
+    userIds.length
+      ? prisma.user.findMany({ where: { id: { in: userIds } }, select: { id: true, name: true, email: true } })
+      : [],
+    roleIds.length
+      ? prisma.role.findMany({ where: { id: { in: roleIds } }, select: { id: true, display_name: true } })
+      : []
+  ])
+
+  const staffLabels = new Map(
+    staffRecords.map(staff => [staff.id, `${staff.first_name} ${staff.last_name}`.trim() || staff.email])
+  )
+
+  const userLabels = new Map(users.map(user => [user.id, user.name || user.email]))
+  const roleLabels = new Map(roles.map(role => [role.id, role.display_name]))
+
+  return new Map(
+    logs.map(log => {
+      const item = getAuditDetails(log.details)
+
+      const resolvedLabel =
+        staffLabels.get(item.staffId) ||
+        userLabels.get(item.targetUserId || item.invitedUserId) ||
+        roleLabels.get(item.roleId) ||
+        item.staffName ||
+        item.targetUserName ||
+        item.invitedUserName ||
+        item.roleDisplayName ||
+        item.optionName ||
+        item.title ||
+        item.name ||
+        item.email ||
+        null
+
+      return [log.id, resolvedLabel]
+    })
+  )
+}
 
 const normalizeProfile = user => ({
   id: user.id,
@@ -103,6 +159,7 @@ const normalizeProfile = user => ({
     id: log.id,
     action: log.action,
     module: log.module,
+    entityLabel: log.entityLabel,
     createdAt: log.created_at.toISOString()
   })),
   lastLoginAt: user.last_login_at?.toISOString() ?? null,
@@ -110,7 +167,19 @@ const normalizeProfile = user => ({
   updatedAt: user.updated_at.toISOString()
 })
 
-const findProfile = userId => prisma.user.findUnique({ where: { id: userId }, select: profileSelect })
+const findProfile = async userId => {
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: profileSelect })
+
+  if (!user) return null
+
+  const activityLabels = await resolveActivityEntityLabels(user.audit_logs)
+
+  return {
+    ...user,
+    audit_logs: user.audit_logs.map(log => ({ ...log, entityLabel: activityLabels.get(log.id) || null }))
+  }
+}
+
 const revalidateProfilePage = () => revalidatePath('/[lang]/settings/profile', 'page')
 
 export const getCurrentUserProfile = async (payload = {}) => {

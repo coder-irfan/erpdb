@@ -14,6 +14,8 @@ import Divider from '@mui/material/Divider'
 import MenuItem from '@mui/material/MenuItem'
 import Typography from '@mui/material/Typography'
 import { valibotResolver } from '@hookform/resolvers/valibot'
+import { formatDistanceToNow } from 'date-fns'
+import { enUS, faIR } from 'date-fns/locale'
 import { useSession } from 'next-auth/react'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
@@ -61,6 +63,54 @@ const formatDate = (value, locale, fallback) => {
   } catch {
     return new Date(value).toLocaleString()
   }
+}
+
+const formatRelativeDate = (value, locale, fallback) => {
+  if (!value) return fallback
+
+  const date = new Date(value)
+
+  if (Number.isNaN(date.getTime())) return fallback
+
+  try {
+    if (locale === 'ps') {
+      const elapsedSeconds = Math.round((date.getTime() - Date.now()) / 1000)
+
+      const ranges = [
+        { limit: 60, divisor: 1, unit: 'second' },
+        { limit: 3600, divisor: 60, unit: 'minute' },
+        { limit: 86400, divisor: 3600, unit: 'hour' },
+        { limit: 2592000, divisor: 86400, unit: 'day' },
+        { limit: 31536000, divisor: 2592000, unit: 'month' },
+        { limit: Number.POSITIVE_INFINITY, divisor: 31536000, unit: 'year' }
+      ]
+
+      const range = ranges.find(item => Math.abs(elapsedSeconds) < item.limit) || ranges.at(-1)
+
+      return new Intl.RelativeTimeFormat('ps-AF', { numeric: 'auto' }).format(
+        Math.round(elapsedSeconds / range.divisor),
+        range.unit
+      )
+    }
+
+    return formatDistanceToNow(date, { addSuffix: true, locale: locale === 'fa' ? faIR : enUS })
+  } catch {
+    return formatDate(value, locale, fallback)
+  }
+}
+
+const humanizeAuditAction = action =>
+  action
+    .toLocaleLowerCase()
+    .split('_')
+    .filter(Boolean)
+    .map((word, index) => (index === 0 ? `${word.charAt(0).toLocaleUpperCase()}${word.slice(1)}` : word))
+    .join(' ')
+
+const getActivityDescription = (activity, dictionary) => {
+  const actionLabel = dictionary.activityActions[activity.action] || humanizeAuditAction(activity.action)
+
+  return activity.entityLabel ? `${actionLabel}: ${activity.entityLabel}` : actionLabel
 }
 
 const ProfileView = ({ initialProfile, dictionary, uploadTranslations, locale }) => {
@@ -398,10 +448,10 @@ const ProfileView = ({ initialProfile, dictionary, uploadTranslations, locale })
                       <i className='tabler-activity text-xl text-primary' />
                       <div className='min-is-0 grow'>
                         <Typography color='text.primary'>
-                          {dictionary.activityActions[activity.action] || dictionary.notAvailable}
+                          {getActivityDescription(activity, dictionary)}
                         </Typography>
                         <Typography variant='caption' color='text.secondary'>
-                          {formatDate(activity.createdAt, locale, dictionary.notAvailable)}
+                          {formatRelativeDate(activity.createdAt, locale, dictionary.notAvailable)}
                         </Typography>
                       </div>
                     </div>

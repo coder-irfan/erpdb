@@ -6,7 +6,7 @@ const staticMenuFiles = [
   'src/components/layout/horizontal/HorizontalMenu.jsx'
 ]
 
-const menuDataFiles = ['src/data/navigation/verticalMenuData.jsx', 'src/data/navigation/horizontalMenuData.jsx']
+const menuDataFiles = ['src/data/navigation/horizontalMenuData.jsx']
 
 const removeTranslationInNavigation = async path => {
   consola.start('Removing translation in navigation files...')

@@ -13,6 +13,7 @@ const input = {
     styleOverrides: {
       root: {
         lineHeight: 1.6,
+        transition: 'border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
         '&.MuiInput-underline': {
           '&:before': {
             borderColor: 'var(--mui-palette-customColors-inputBorder)'
@@ -32,8 +33,11 @@ const input = {
       root: {
         borderStartStartRadius: 4,
         borderStartEndRadius: 4,
+        '&:before, &:after': {
+          borderBottomWidth: '1px !important'
+        },
         '&:before': {
-          borderBottom: '1px solid var(--mui-palette-text-secondary)'
+          borderBottomColor: 'var(--mui-palette-text-secondary)'
         },
         '&:hover:before': {
           borderBottom: '1px solid var(--mui-palette-text-primary)'
@@ -63,14 +67,19 @@ const input = {
   MuiOutlinedInput: {
     styleOverrides: {
       root: {
+        transition: 'border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
         '&:not(.Mui-focused):not(.Mui-error):not(.Mui-disabled):hover .MuiOutlinedInput-notchedOutline': {
-          borderColor: 'var(--mui-palette-action-active)'
+          borderColor: 'var(--mui-palette-action-active)',
+          borderWidth: '1px'
         },
         '&.Mui-disabled .MuiOutlinedInput-notchedOutline': {
           borderColor: 'var(--mui-palette-divider)'
         },
         '&:not(.Mui-error).MuiInputBase-colorPrimary.Mui-focused': {
-          boxShadow: 'var(--mui-customShadows-primary-sm)'
+          boxShadow: '0 0 0 3px rgb(var(--mui-palette-primary-mainChannel) / 0.16)'
+        },
+        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+          borderWidth: '1px'
         }
       },
       input: ({ theme, ownerState }) => ({
@@ -85,6 +94,8 @@ const input = {
         }
       }),
       notchedOutline: {
+        borderWidth: '1px !important',
+        transition: 'border-color 0.2s ease-in-out',
         '& legend': {
           fontSize: '0.867em'
         }
