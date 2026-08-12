@@ -20,6 +20,7 @@ import CustomTextField from '@core/components/mui/TextField'
 import DashboardTablePagination from '@/components/table/DashboardTablePagination'
 import TableEmptyStateRow from '@/components/table/TableEmptyStateRow'
 import TableSkeletonRows from '@/components/table/TableSkeletonRows'
+import { formatCurrency } from '@/utils/formatCurrency'
 import {
   getAvailableStaffUsers,
   getStaffList,
@@ -40,13 +41,6 @@ const localeMap = { en: 'en-US', fa: 'fa-AF', ps: 'ps-AF' }
 
 const formatDate = (value, locale) =>
   new Intl.DateTimeFormat(localeMap[locale] || 'en-US', { dateStyle: 'medium' }).format(new Date(value))
-
-const formatCurrency = (value, locale) =>
-  new Intl.NumberFormat(localeMap[locale] || 'en-US', {
-    style: 'currency',
-    currency: 'AFN',
-    maximumFractionDigits: 2
-  }).format(Number(value || 0))
 
 const StaffListTable = ({
   initialResult,
@@ -295,7 +289,7 @@ const StaffListTable = ({
               label={dictionary.filters.search}
               placeholder={dictionary.filters.searchPlaceholder}
               className='is-full sm:is-[260px]'
-              slotProps={{ input: { startAdornment: <i className='tabler-search me-2 text-textSecondary' /> } }}
+              slotProps={{ input: { startAdornment: <i className='tabler-search text-textSecondary' /> } }}
             />
             <CustomTextField
               select
@@ -306,6 +300,12 @@ const StaffListTable = ({
               }}
               label={dictionary.filters.status}
               className='is-full sm:is-[180px]'
+              slotProps={{
+                select: {
+                  displayEmpty: true,
+                  renderValue: selected => selected ? dictionary.status[selected] : dictionary.filters.allStatuses
+                }
+              }}
             >
               <MenuItem value=''>{dictionary.filters.allStatuses}</MenuItem>
               {['ACTIVE', 'INACTIVE', 'TERMINATED'].map(statusValue => (
@@ -323,6 +323,12 @@ const StaffListTable = ({
               }}
               label={dictionary.filters.position}
               className='is-full sm:is-[220px]'
+              slotProps={{
+                select: {
+                  displayEmpty: true,
+                  renderValue: selected => selected || dictionary.filters.allPositions
+                }
+              }}
             >
               <MenuItem value=''>{dictionary.filters.allPositions}</MenuItem>
               {positions.map(positionValue => (

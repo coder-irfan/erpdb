@@ -51,6 +51,7 @@
     "@tiptap/extension-list": "3.14.0",
     "@tiptap/extension-list-item": "3.14.0",
     "@tiptap/extension-placeholder": "3.14.0",
+    "@tiptap/extension-table": "3.14.0",
     "@tiptap/extension-text-align": "3.14.0",
     "@tiptap/extension-text-style": "3.14.0",
     "@tiptap/extension-underline": "3.14.0",

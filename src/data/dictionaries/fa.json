@@ -132,6 +132,9 @@
     "lookupOptions": "گزینه‌های مرجع",
     "contractPolicies": "پالیسی‌های قرارداد",
     "staffPositions": "بست‌های کارمندان",
+    "hrManagement": "مدیریت منابع بشری",
+    "hrContractPolicies": "پالیسی‌های منابع بشری و قرارداد",
+    "leaveTypes": "انواع رخصتی",
     "setupSettings": "تنظیمات سیستم",
     "companySetup": "تنظیمات شرکت",
     "systemAuditLogs": "ثبت‌های تفتیش سیستم"
@@ -259,6 +262,13 @@
   "setupBranding": {
     "title": "برند و نشان‌ها",
     "description": "نشان‌هایی را که در رابط ERP نمایش داده می‌شوند مدیریت کنید.",
+    "letterheadTitle": "سربرگ و برند شرکت",
+    "letterheadDescription": "هویت قانونی شرکت و امضای مجاز برای اسناد رسمی را تنظیم کنید.",
+    "workHoursTitle": "ساعات کاری پیش‌فرض",
+    "workHoursDescription": "این ساعت‌ها به‌صورت خودکار در ورود و خروج حاضری درج می‌شوند.",
+    "companyLogo": "لوگوی سربرگ شرکت",
+    "signatoryStamp": "امضا / مهر مجاز",
+    "saveAll": "ذخیره تنظیمات شرکت",
     "lightLogo": "نشان حالت روشن",
     "lightLogoDescription": "در پس‌زمینه‌های روشن و حالت روشن نمایش داده می‌شود.",
     "darkLogo": "نشان حالت تاریک",
@@ -273,6 +283,22 @@
     "saved": "تنظیمات برند با موفقیت ذخیره شد.",
     "saveFailed": "تنظیمات برند ذخیره نشد. لطفاً دوباره تلاش کنید.",
     "invalidLogoPath": "فایل‌های معتبر نشان و آیکون مرورگر را انتخاب کنید.",
+    "fields": {
+      "appName": "نام برنامه",
+      "companyName": "نام قانونی شرکت",
+      "companyEmail": "ایمیل شرکت",
+      "companyPhone": "تلفن شرکت",
+      "companyAddress": "آدرس شرکت",
+      "companyTaxId": "جواز / شماره مالیاتی",
+      "signatoryName": "نام امضاکننده مجاز",
+      "signatoryTitle": "عنوان امضاکننده مجاز",
+      "workStart": "زمان شروع کار",
+      "workEnd": "زمان پایان کار"
+    },
+    "validation": {
+      "companyNameRequired": "نام قانونی شرکت الزامی است.",
+      "workEndAfterStart": "زمان پایان کار باید بعد از زمان شروع باشد."
+    },
     "upload": {
       "drop": "تصویر را اینجا بکشید و رها کنید یا فایل را انتخاب کنید.",
       "browse": "انتخاب تصویر",
@@ -288,6 +314,76 @@
       "unauthenticated": "پیش از بارگذاری فایل وارد شوید.",
       "forbidden": "اجازه بارگذاری این فایل را ندارید.",
       "previewAlt": "پیش‌نمایش تصویر بارگذاری‌شده"
+    }
+  },
+  "hrmTimesheets": {
+    "title": "حاضری روزانه و تایم‌شیت‌ها", "description": "حاضری روزانه را ثبت و ساعات کاری را خودکار محاسبه کنید.",
+    "date": { "today": "امروز", "date": "تاریخ حاضری", "previous": "روز قبل", "next": "روز بعد", "yesterday": "دیروز", "custom": "تاریخ دلخواه" },
+    "summary": { "present": "مجموع حاضر", "absent": "مجموع غایب", "leave": "مجموع رخصتی", "unmarked": "ثبت‌نشده" },
+    "fields": { "date": "تاریخ حاضری", "staff": "کارمند", "position": "سمت", "status": "وضعیت", "checkIn": "ورود", "checkOut": "خروج", "hours": "ساعات کاری", "project": "پروژه مرتبط", "notes": "یادداشت" },
+    "status": { "PRESENT": "حاضر", "ABSENT": "غایب", "LEAVE": "رخصتی" },
+    "filters": { "search": "جستجوی کارمند", "searchPlaceholder": "نام کارمند را جستجو کنید", "status": "وضعیت", "allStatuses": "همه وضعیت‌ها" },
+    "actions": { "mark": "ثبت حاضری", "bulkAbsent": "ثبت باقی‌مانده به‌عنوان غایب", "export": "خروجی CSV", "print": "چاپ", "edit": "ویرایش", "delete": "حذف", "save": "ذخیره حاضری", "saveNext": "ذخیره و نفر بعد", "saveChanges": "ذخیره تغییرات", "saving": "در حال ذخیره...", "cancel": "لغو" },
+    "table": { "title": "ثبت روزانه حاضری", "description": "سوابق حاضری تاریخ انتخاب‌شده.", "actions": "عملیات", "emptyTitle": "سابقه حاضری یافت نشد", "emptyDescription": "با ثبت حاضری یک کارمند فعال آغاز کنید." },
+    "drawer": { "title": "ثبت حاضری روزانه", "editTitle": "ویرایش حاضری", "description": "فقط کارمندان ثبت‌نشده این تاریخ نمایش داده می‌شوند." },
+    "placeholders": { "selectStaff": "کارمند باقی‌مانده را انتخاب کنید", "noProject": "بدون پروژه" }, "hoursShort": "ساعت",
+    "export": { "columns": ["نام کارمند", "سمت", "وضعیت", "ورود", "خروج", "ساعات", "یادداشت"] },
+    "messages": { "created": "حاضری با موفقیت ذخیره شد.", "updated": "حاضری با موفقیت به‌روزرسانی شد.", "deleted": "سابقه حاضری حذف شد.", "bulkAbsent": "{count} کارمند باقی‌مانده غایب ثبت شد.", "noRemainingStaff": "حاضری همه کارمندان فعال ثبت شده است.", "duplicate": "حاضری این کارمند برای این تاریخ قبلاً ثبت شده است.", "staffNotFound": "کارمند فعال انتخاب‌شده یافت نشد.", "projectNotFound": "پروژه انتخاب‌شده یافت نشد.", "notFound": "سابقه حاضری یافت نشد.", "loadFailed": "سوابق حاضری بارگذاری نشد.", "operationFailed": "عملیات انجام نشد. دوباره تلاش کنید.", "unauthenticated": "برای دسترسی به حاضری وارد شوید.", "forbidden": "اجازه دسترسی به حاضری را ندارید.", "deleteTitle": "حذف سابقه حاضری", "deleteDescription": "آیا مطمئن هستید که می‌خواهید این سابقه حاضری را حذف کنید؟ این عمل قابل بازگشت نیست." },
+    "validation": { "invalidSubmission": "فیلدهای مشخص‌شده را بررسی کنید.", "required": "این فیلد الزامی است.", "statusInvalid": "وضعیت معتبر انتخاب کنید.", "dateInvalid": "تاریخ معتبر انتخاب کنید.", "timeInvalid": "زمان معتبر وارد کنید.", "checkoutBeforeCheckin": "زمان خروج نمی‌تواند پیش از ورود باشد.", "notesTooLong": "یادداشت نباید بیشتر از ۲۰۰۰ حرف باشد." }
+  },
+  "hrmContracts": {
+    "title": "قراردادهای کارمندان",
+    "description": "قراردادهای استخدام را با نسخه ثابت پالیسی ایجاد، مدیریت و چاپ کنید.",
+    "fields": {
+      "contractNumber": "شماره قرارداد", "staffMember": "کارمند", "contractType": "پالیسی قرارداد",
+      "position": "سمت", "baseSalary": "معاش توافق‌شده", "startDate": "تاریخ شروع", "endDate": "تاریخ پایان",
+      "status": "وضعیت", "email": "ایمیل", "phone": "تلفن", "tazkiraNo": "شماره تذکره"
+    },
+    "filters": {
+      "search": "جستجوی قراردادها", "searchPlaceholder": "نام کارمند یا شماره قرارداد را جستجو کنید",
+      "status": "وضعیت", "allStatuses": "همه وضعیت‌ها", "contractType": "پالیسی قرارداد",
+      "allContractTypes": "همه پالیسی‌های قرارداد"
+    },
+    "actions": {
+      "add": "ایجاد قرارداد", "addFirst": "ایجاد اولین قرارداد", "view": "مشاهده جزئیات",
+      "print": "چاپ قرارداد", "printSavePdf": "چاپ / ذخیره PDF", "edit": "ویرایش", "create": "ایجاد قرارداد",
+      "saveChanges": "ذخیره تغییرات", "saving": "در حال ذخیره...", "cancel": "لغو", "close": "بستن",
+      "back": "بازگشت به قراردادها"
+    },
+    "table": {
+      "contractNumber": "شماره قرارداد", "staff": "کارمند", "position": "سمت", "contractType": "پالیسی قرارداد",
+      "salary": "معاش پایه", "period": "مدت قرارداد", "status": "وضعیت", "actions": "عملیات",
+      "emptyTitle": "قرارداد کارمند یافت نشد", "emptyDescription": "اولین قرارداد استخدام را از یک قالب پالیسی فعال ایجاد کنید.",
+      "rowsPerPage": "تعداد سطر در صفحه:", "of": "از"
+    },
+    "status": { "DRAFT": "پیش‌نویس", "ACTIVE": "فعال", "EXPIRED": "منقضی", "TERMINATED": "خاتمه‌یافته" },
+    "drawer": {
+      "addTitle": "ایجاد قرارداد کارمند", "editTitle": "ویرایش قرارداد کارمند",
+      "description": "کارمند و پالیسی را انتخاب کنید؛ نسخه سند قانونی هنگام ذخیره ساخته می‌شود.",
+      "templateHelpTitle": "فیلدهای خودکار قالب",
+      "templateHelpSubtitle": "هنگام نمایش قرارداد، این فیلدها به‌صورت خودکار از پروفایل کارمند تکمیل می‌شوند:",
+      "templateFields": { "staffName": "نام کارمند", "tazkira": "تذکره / شناسه ملی", "position": "عنوان وظیفه", "salary": "معاش پایه", "startDate": "تاریخ شروع", "companyName": "نام شرکت" }
+    },
+    "placeholders": { "selectStaff": "کارمند را انتخاب کنید", "selectPolicy": "پالیسی قرارداد را انتخاب کنید", "selectStatus": "وضعیت قرارداد را انتخاب کنید" },
+    "details": { "title": "جزئیات قرارداد", "documentSnapshot": "سند نهایی قرارداد", "noContent": "محتوای سند قرارداد موجود نیست." },
+    "print": {
+      "title": "قرارداد استخدام", "taxId": "جواز / شماره مالیاتی", "employeeSignature": "امضای کارمند",
+      "employerSignature": "کارفرما / امضاکننده مجاز", "signatoryStamp": "امضا یا مهر مجاز", "date": "تاریخ"
+    },
+    "messages": {
+      "created": "قرارداد کارمند با موفقیت ایجاد شد.", "updated": "قرارداد کارمند با موفقیت به‌روزرسانی شد.",
+      "statusUpdated": "وضعیت قرارداد با موفقیت به‌روزرسانی شد.", "loadFailed": "قراردادهای کارمندان بارگذاری نشدند.",
+      "optionsLoadFailed": "گزینه‌های فرم قرارداد بارگذاری نشدند.", "notFound": "قرارداد انتخاب‌شده یافت نشد.",
+      "staffNotFound": "کارمند انتخاب‌شده یافت نشد.", "policyNotFound": "پالیسی قرارداد انتخاب‌شده یافت نشد.",
+      "statusNotFound": "وضعیت قرارداد انتخاب‌شده یافت نشد.", "numberConflict": "تداخل شماره قرارداد رخ داد. دوباره ارسال کنید.",
+      "operationFailed": "عملیات انجام نشد. لطفاً دوباره تلاش کنید.", "unauthenticated": "برای دسترسی به قراردادها وارد شوید.",
+      "forbidden": "اجازه دسترسی به قراردادهای کارمندان را ندارید."
+    },
+    "validation": {
+      "invalidSubmission": "فیلدهای مشخص‌شده را بررسی و دوباره تلاش کنید.", "required": "این فیلد الزامی است.",
+      "valueTooLong": "این مقدار بیش از حد طولانی است.", "salaryInvalid": "معاش معتبر وارد کنید.",
+      "salaryPositive": "معاش باید بیشتر از صفر باشد.", "dateInvalid": "تاریخ معتبر وارد کنید.",
+      "endDateBeforeStart": "تاریخ پایان نمی‌تواند پیش از تاریخ شروع باشد.", "statusInvalid": "وضعیت معتبر قرارداد را انتخاب کنید."
     }
   },
   "hrmStaff": {
@@ -343,6 +439,7 @@
       "saveChanges": "ذخیره تغییرات",
       "saving": "در حال ذخیره...",
       "addPosition": "افزودن جدید",
+      "selectPosition": "سمت را انتخاب کنید...",
       "loadingPositions": "در حال بارگذاری بست‌ها...",
       "noPositions": "هیچ بست فعالی موجود نیست",
       "cancel": "لغو",
@@ -377,8 +474,13 @@
       "description": "نمای کامل معلومات شخصی و وظیفوی کارمند.",
       "linkedUser": "حساب سیستم مرتبط است",
       "createdAt": "تاریخ ایجاد سابقه",
-      "activeContracts": "قراردادهای فعال",
-      "noActiveContracts": "هیچ قرارداد فعالی به این کارمند مرتبط نیست."
+      "profileTab": "نمایه",
+      "contracts": "قراردادها",
+      "attendanceTab": "حاضری و تایم‌شیت‌ها",
+      "attendance": { "month": "ماه", "date": "تاریخ", "statusLabel": "وضعیت", "checkIn": "زمان ورود", "checkOut": "زمان خروج", "hours": "ساعت‌ها", "totalHours": "مجموع ساعت‌ها", "emptyTitle": "سابقه حاضری یافت نشد", "emptyDescription": "برای این کارمند در ماه انتخاب‌شده حاضری ثبت نشده است.", "status": { "PRESENT": "حاضر", "ABSENT": "غایب", "LEAVE": "رخصتی" } },
+      "noContractsTitle": "سابقه قرارداد یافت نشد",
+      "noContracts": "هیچ سابقه قراردادی به این کارمند مرتبط نیست.",
+      "printContract": "چاپ قرارداد"
     },
     "messages": {
       "created": "کارمند با موفقیت ایجاد شد.",
@@ -408,6 +510,23 @@
       "userInvalid": "یک کاربر معتبر سیستم انتخاب کنید."
     }
   },
+  "hrmLeaves": {
+    "title": "درخواست‌های رخصتی کارمندان",
+    "description": "درخواست‌ها را بررسی، رخصتی‌ها را پیگیری و جریان تأیید روزانه را مدیریت کنید.",
+    "summary": { "pending": "در انتظار بررسی", "onLeaveToday": "امروز در رخصتی", "monthlyDays": "روزهای رخصتی ماه" },
+    "filters": { "staff": "کارمند", "allStaff": "همه کارمندان", "leaveType": "نوع رخصتی", "allLeaveTypes": "همه انواع رخصتی", "status": "وضعیت", "allStatuses": "همه وضعیت‌ها" },
+    "table": { "staff": "کارمند", "leaveType": "نوع رخصتی", "duration": "مدت / بازه تاریخ", "reason": "دلیل", "status": "وضعیت", "approvedBy": "تأییدکننده", "actions": "عملیات", "days": "{count} روز" },
+    "drawer": { "title": "درخواست رخصتی", "editTitle": "ویرایش درخواست رخصتی", "description": "جزئیات درخواست را وارد کنید؛ مدت رخصتی خودکار محاسبه می‌شود.", "calculatedDays": "روزهای محاسبه‌شده" },
+    "fields": { "staff": "کارمند", "leaveType": "نوع رخصتی", "startDate": "تاریخ شروع", "endDate": "تاریخ پایان", "reason": "دلیل / یادداشت", "initialStatus": "وضعیت ابتدایی" },
+    "placeholders": { "selectStaff": "کارمند را انتخاب کنید...", "selectLeaveType": "نوع رخصتی را انتخاب کنید...", "reason": "دلیل درخواست رخصتی را بنویسید" },
+    "status": { "PENDING": "در انتظار", "APPROVED": "تأییدشده", "REJECTED": "ردشده" },
+    "actions": { "requestLeave": "درخواست رخصتی", "approve": "تأیید", "reject": "رد", "edit": "ویرایش", "delete": "حذف", "cancel": "لغو", "close": "بستن", "submit": "ثبت درخواست", "saveChanges": "ذخیره تغییرات", "saving": "در حال ذخیره..." },
+    "empty": { "title": "درخواست رخصتی یافت نشد", "description": "هیچ درخواستی با فیلترهای انتخاب‌شده مطابقت ندارد.", "action": "ایجاد اولین درخواست" },
+    "delete": { "title": "حذف درخواست رخصتی", "description": "آیا از حذف این درخواست رخصتی مطمئن هستید؟ این عمل قابل بازگشت نیست." },
+    "pagination": { "rowsPerPage": "تعداد سطر در صفحه:", "of": "از" },
+    "messages": { "created": "درخواست رخصتی با موفقیت ثبت شد.", "updated": "درخواست رخصتی با موفقیت به‌روزرسانی شد.", "approved": "درخواست تأیید و حاضری همگام شد.", "rejected": "درخواست رخصتی رد شد.", "deleted": "درخواست رخصتی حذف شد.", "loadFailed": "درخواست‌های رخصتی بارگذاری نشد.", "operationFailed": "عملیات انجام نشد. لطفاً دوباره تلاش کنید.", "unauthenticated": "برای دسترسی وارد شوید.", "forbidden": "اجازه مدیریت این درخواست را ندارید.", "staffProfileRequired": "برای درخواست رخصتی، حساب شما باید به پروفایل کارمند وصل باشد.", "staffNotFound": "کارمند انتخاب‌شده یافت نشد.", "leaveTypeNotFound": "یک نوع رخصتی فعال انتخاب کنید.", "statusNotFound": "وضعیت‌های رخصتی تنظیم نشده‌اند؛ Seed دیتابیس را اجرا کنید.", "notFound": "درخواست انتخاب‌شده یافت نشد.", "invalidRelations": "یک یا چند مقدار انتخاب‌شده نامعتبر است." },
+    "validation": { "required": "این فیلد الزامی است.", "dateInvalid": "یک تاریخ معتبر انتخاب کنید.", "dateRangeInvalid": "تاریخ پایان باید برابر یا بعد از تاریخ شروع باشد.", "reasonTooLong": "دلیل نباید بیشتر از ۲۰۰۰ حرف باشد.", "statusInvalid": "تأیید یا رد را انتخاب کنید." }
+  },
   "optionsManagement": {
     "common": {
       "search": "جستجو",
@@ -416,11 +535,13 @@
       "inactive": "غیرفعال",
       "createdDate": "تاریخ ایجاد",
       "actions": "عملیات",
+      "view": "مشاهده سند",
       "edit": "ویرایش",
       "activate": "فعال‌سازی",
       "deactivate": "غیرفعال‌سازی",
       "delete": "حذف",
       "cancel": "لغو",
+      "close": "بستن",
       "create": "ایجاد",
       "saveChanges": "ذخیره تغییرات",
       "saving": "در حال ذخیره...",
@@ -429,14 +550,38 @@
       "noDescription": "بدون توضیحات"
     },
     "editor": {
+      "paragraph": "پاراگراف",
+      "fontFamily": "نوع خط",
+      "defaultFont": "خط پیش‌فرض",
+      "fontSize": "اندازه متن",
+      "defaultSize": "اندازه",
+      "lineHeight": "فاصله سطر",
       "bold": "ضخیم",
       "italic": "مایل",
+      "strike": "خط‌خورده",
+      "textColor": "رنگ متن",
+      "highlightColor": "رنگ برجسته‌سازی",
       "heading": "عنوان",
       "bulletList": "فهرست نشانه‌دار",
       "orderedList": "فهرست شماره‌دار",
       "alignLeft": "چپ‌چین",
       "alignCenter": "وسط‌چین",
-      "alignRight": "راست‌چین"
+      "alignRight": "راست‌چین",
+      "alignJustify": "هم‌تراز",
+      "indent": "افزایش تورفتگی",
+      "outdent": "کاهش تورفتگی",
+      "blockquote": "نقل قول",
+      "horizontalRule": "خط افقی",
+      "codeBlock": "بلوک کد",
+      "insertTable": "درج جدول",
+      "addColumn": "افزودن ستون",
+      "deleteColumn": "حذف ستون",
+      "addRow": "افزودن سطر",
+      "deleteRow": "حذف سطر",
+      "deleteTable": "حذف جدول",
+      "undo": "واگرد",
+      "redo": "انجام مجدد",
+      "sourceCode": "منبع HTML"
     },
     "contractPolicies": {
       "title": "پالیسی‌های قرارداد",
@@ -445,6 +590,7 @@
       "addFirst": "افزودن اولین پالیسی قرارداد",
       "addTitle": "ایجاد پالیسی قرارداد",
       "editTitle": "ویرایش پالیسی قرارداد",
+      "previewTitle": "پیش‌نمایش رسمی سند پالیسی",
       "searchPlaceholder": "جستجوی عنوان یا توضیحات پالیسی",
       "emptyTitle": "هیچ پالیسی قراردادی یافت نشد",
       "emptyDescription": "برای معیاری‌سازی شرایط قرارداد، اولین پالیسی را ایجاد کنید.",
@@ -481,6 +627,10 @@
         "description": "توضیحات"
       }
     },
+    "leaveTypes": {
+      "title": "انواع رخصتی", "description": "دسته‌های فعال رخصتی در فورم درخواست کارمندان را مدیریت کنید.", "add": "افزودن نوع رخصتی", "addFirst": "افزودن اولین نوع رخصتی", "addTitle": "ایجاد نوع رخصتی", "editTitle": "ویرایش نوع رخصتی", "searchPlaceholder": "جستجوی نوع رخصتی یا توضیحات", "emptyTitle": "نوع رخصتی یافت نشد", "emptyDescription": "رخصتی سالانه، مریضی، ضروری، بدون معاش یا نوع دیگری اضافه کنید.", "deleteTitle": "حذف نوع رخصتی", "deleteDescription": "آیا «{name}» حذف شود؟ این عمل قابل بازگشت نیست.",
+      "fields": { "name": "نام نوع رخصتی", "namePlaceholder": "مثلاً رخصتی سالانه", "description": "توضیحات", "descriptionPlaceholder": "شرایط، بیلانس یا رهنمود داخلی" }, "table": { "title": "نوع رخصتی", "description": "توضیحات" }
+    },
     "messages": {
       "unauthenticated": "برای دسترسی به گزینه‌های سیستم وارد شوید.",
       "forbidden": "شما اجازه مدیریت گزینه‌های سیستم را ندارید.",
@@ -492,7 +642,7 @@
       "updated": "گزینه با موفقیت به‌روزرسانی شد.",
       "statusUpdated": "وضعیت گزینه با موفقیت به‌روزرسانی شد.",
       "deleted": "گزینه با موفقیت حذف شد.",
-      "inUse": "این گزینه در حال استفاده است و حذف نمی‌شود. در عوض آن را غیرفعال کنید.",
+      "inUse": "این گزینه به رکوردهای فعال پیوند دارد و حذف نمی‌شود. در عوض آن را غیرفعال کنید.",
       "operationFailed": "عملیات انجام نشد. لطفاً دوباره تلاش کنید."
     },
     "validation": {
@@ -519,6 +669,8 @@
     "permissionsAssigned": "{count} مجوز",
     "systemRole": "نقش سیستمی",
     "customRole": "نقش سفارشی",
+    "activeRole": "نقش فعال",
+    "inactiveRole": "نقش غیرفعال",
     "protectedRole": "مجوزهای مدیر کل محافظت شده‌اند.",
     "permissionFallback": "مدیریت دسترسی بخش",
     "permissionModules": {
@@ -558,8 +710,10 @@
       "hrm_contract:delete": "حذف قراردادهای کارمندان",
       "hrm_leave:read": "مشاهده درخواست‌های رخصتی",
       "hrm_leave:write": "ایجاد و تأیید درخواست‌های رخصتی",
+      "hrm_leave:delete": "حذف درخواست‌های رخصتی",
       "hrm_timesheet:read": "مشاهده ورق‌های زمانی",
       "hrm_timesheet:write": "ایجاد و تأیید ورق‌های زمانی",
+      "hrm_timesheet:delete": "حذف سوابق حاضری",
       "projects:read": "مشاهده پروژه‌ها",
       "projects:write": "ایجاد و به‌روزرسانی پروژه‌ها",
       "projects:delete": "حذف پروژه‌ها",
@@ -666,6 +820,8 @@
     "messages": {
       "permissionsUpdated": "مجوزهای نقش با موفقیت به‌روزرسانی شد.",
       "roleCreated": "نقش با موفقیت ایجاد شد.",
+      "roleActivated": "نقش با موفقیت فعال شد.",
+      "roleDeactivated": "نقش با موفقیت غیرفعال شد.",
       "userInvited": "ایمیل دعوت با موفقیت ارسال شد.",
       "invitationEmailFailed": "ایمیل دعوت ارسال نشد. هیچ حساب کاربری ایجاد نشد.",
       "statusUpdated": "وضعیت حساب با موفقیت به‌روزرسانی شد.",
@@ -676,6 +832,7 @@
       "userNotFound": "کاربر انتخاب‌شده یافت نشد.",
       "staffUnavailable": "کارمند انتخاب‌شده قبلاً پیوند شده یا موجود نیست.",
       "invalidPermissions": "یک یا چند مجوز انتخاب‌شده نامعتبر است.",
+      "invalidRoleStatus": "یک وضعیت معتبر برای نقش انتخاب کنید.",
       "protectedRole": "نقش مدیر کل قابل تغییر نیست.",
       "protectedUser": "حساب‌های مدیر کل از اینجا قابل تغییر نیستند.",
       "selfProtected": "نمی‌توانید وضعیت یا نقش حساب خود را تغییر دهید.",
@@ -787,6 +944,15 @@
       "USER_ROLE_ASSIGNED": "نقش کاربر تعیین شد",
       "ROLE_CREATED": "نقش ایجاد شد",
       "ROLE_PERMISSIONS_UPDATED": "مجوزهای نقش به‌روزرسانی شد",
+      "ROLE_STATUS_UPDATED": "وضعیت نقش به‌روزرسانی شد",
+      "COMPANY_SETUP_UPDATED": "تنظیمات شرکت به‌روزرسانی شد",
+      "HRM_CONTRACT_CREATED": "قرارداد کارمند ایجاد شد",
+      "HRM_CONTRACT_UPDATED": "قرارداد کارمند به‌روزرسانی شد",
+      "HRM_CONTRACT_STATUS_UPDATED": "وضعیت قرارداد کارمند به‌روزرسانی شد",
+      "ATTENDANCE_CREATED": "حاضری ثبت شد",
+      "ATTENDANCE_UPDATED": "حاضری به‌روزرسانی شد",
+      "ATTENDANCE_DELETED": "حاضری حذف شد",
+      "ATTENDANCE_BULK_ABSENT": "کارمندان باقی‌مانده غایب ثبت شدند",
       "BRANDING_UPDATED": "برند به‌روزرسانی شد",
       "HRM_STAFF_CREATED": "کارمند جدید افزوده شد",
       "HRM_STAFF_UPDATED": "معلومات کارمند به‌روزرسانی شد",

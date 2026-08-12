@@ -165,7 +165,10 @@ export const inviteUser = async payload => {
   try {
     const [existingUser, role, staff] = await Promise.all([
       prisma.user.findUnique({ where: { email: validation.output.email }, select: { id: true } }),
-      prisma.role.findUnique({ where: { id: validation.output.roleId }, select: { id: true, name: true } }),
+      prisma.role.findUnique({
+        where: { id: validation.output.roleId },
+        select: { id: true, name: true, is_active: true }
+      }),
       validation.output.staffId
         ? prisma.hrmStaff.findUnique({
             where: { id: validation.output.staffId },
@@ -178,7 +181,7 @@ export const inviteUser = async payload => {
       return { success: false, code: 'EMAIL_EXISTS', error: context.translations.messages.emailExists }
     }
 
-    if (!role) {
+    if (!role || !role.is_active) {
       return { success: false, code: 'ROLE_NOT_FOUND', error: context.translations.messages.roleNotFound }
     }
 
@@ -387,14 +390,17 @@ export const assignUserRole = async payload => {
         where: { id: validation.output.userId },
         select: { id: true, roles: { select: { name: true } } }
       }),
-      prisma.role.findUnique({ where: { id: validation.output.roleId }, select: { id: true, name: true } })
+      prisma.role.findUnique({
+        where: { id: validation.output.roleId },
+        select: { id: true, name: true, is_active: true }
+      })
     ])
 
     if (!user) {
       return { success: false, code: 'USER_NOT_FOUND', error: context.translations.messages.userNotFound }
     }
 
-    if (!role) {
+    if (!role || !role.is_active) {
       return { success: false, code: 'ROLE_NOT_FOUND', error: context.translations.messages.roleNotFound }
     }
 

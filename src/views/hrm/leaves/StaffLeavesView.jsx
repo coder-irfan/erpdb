@@ -1,0 +1,322 @@
+'use client'
+
+import { useCallback, useEffect, useState } from 'react'
+
+import Avatar from '@mui/material/Avatar'
+import Button from '@mui/material/Button'
+import Card from '@mui/material/Card'
+import CardContent from '@mui/material/CardContent'
+import Chip from '@mui/material/Chip'
+import IconButton from '@mui/material/IconButton'
+import MenuItem from '@mui/material/MenuItem'
+import Tooltip from '@mui/material/Tooltip'
+import Typography from '@mui/material/Typography'
+import { toast } from 'sonner'
+
+import CustomTextField from '@core/components/mui/TextField'
+import ConfirmDeleteModal from '@/components/dialogs/ConfirmDeleteModal'
+import DashboardTablePagination from '@/components/table/DashboardTablePagination'
+import TableEmptyStateRow from '@/components/table/TableEmptyStateRow'
+import TableSkeletonRows from '@/components/table/TableSkeletonRows'
+
+import LeaveStatsCards from './LeaveStatsCards'
+import StaffLeaveDrawer from './StaffLeaveDrawer'
+
+import tableStyles from '@core/styles/table.module.css'
+
+const EMPTY_DATA = {
+  leaves: [],
+  totalCount: 0,
+  page: 1,
+  totalPages: 1,
+  options: { statuses: [], leaveTypes: [], staff: [] },
+  summary: { pending: 0, onLeaveToday: 0, monthlyDays: 0 },
+  currentStaffId: null,
+  canManage: false
+}
+
+const localeMap = { en: 'en-US', fa: 'fa-AF', ps: 'ps-AF' }
+
+const formatDate = (value, locale) =>
+  new Intl.DateTimeFormat(localeMap[locale] || 'en-US', { dateStyle: 'medium', timeZone: 'UTC' }).format(
+    new Date(`${value}T00:00:00.000Z`)
+  )
+
+const getInitials = staff =>
+  `${staff?.first_name?.charAt(0) || ''}${staff?.last_name?.charAt(0) || ''}`.toUpperCase() || '?'
+
+const StaffLeavesView = ({ locale, dictionary }) => {
+  const [data, setData] = useState(EMPTY_DATA)
+  const [page, setPage] = useState(0)
+  const [rowsPerPage, setRowsPerPage] = useState(10)
+  const [staffId, setStaffId] = useState('')
+  const [leaveTypeId, setLeaveTypeId] = useState('')
+  const [statusId, setStatusId] = useState('')
+  const [loading, setLoading] = useState(true)
+  const [busyId, setBusyId] = useState(null)
+  const [drawerOpen, setDrawerOpen] = useState(false)
+  const [editingLeave, setEditingLeave] = useState(null)
+  const [deleteTarget, setDeleteTarget] = useState(null)
+
+  const loadLeaves = useCallback(async () => {
+    setLoading(true)
+
+    try {
+      const params = new URLSearchParams({ page: String(page + 1), limit: String(rowsPerPage), locale })
+
+      if (staffId) params.set('staff_id', staffId)
+      if (leaveTypeId) params.set('leave_type_id', leaveTypeId)
+      if (statusId) params.set('status_id', statusId)
+
+      const response = await fetch(`/api/hrm/leaves?${params.toString()}`, { cache: 'no-store' })
+      const result = await response.json()
+
+      if (!response.ok || !result.success) {
+        toast.error(result.error || dictionary.messages.loadFailed)
+
+        return
+      }
+
+      setData(result.data)
+    } catch {
+      toast.error(dictionary.messages.loadFailed)
+    } finally {
+      setLoading(false)
+    }
+  }, [dictionary.messages.loadFailed, leaveTypeId, locale, page, rowsPerPage, staffId, statusId])
+
+  useEffect(() => {
+    loadLeaves()
+  }, [loadLeaves])
+
+  const openCreate = () => {
+    setEditingLeave(null)
+    setDrawerOpen(true)
+  }
+
+  const openEdit = leave => {
+    setEditingLeave(leave)
+    setDrawerOpen(true)
+  }
+
+  const updateStatus = async (leave, status) => {
+    setBusyId(leave.id)
+
+    try {
+      const response = await fetch(`/api/hrm/leaves/${leave.id}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status, locale })
+      })
+
+      const result = await response.json()
+
+      if (!response.ok || !result.success) {
+        toast.error(result.error || dictionary.messages.operationFailed)
+
+        return
+      }
+
+      toast.success(result.message)
+      await loadLeaves()
+    } catch {
+      toast.error(dictionary.messages.operationFailed)
+    } finally {
+      setBusyId(null)
+    }
+  }
+
+  const deleteLeave = async () => {
+    if (!deleteTarget) return
+
+    setBusyId(deleteTarget.id)
+
+    try {
+      const response = await fetch(`/api/hrm/leaves/${deleteTarget.id}?locale=${locale}`, { method: 'DELETE' })
+      const result = await response.json()
+
+      if (!response.ok || !result.success) {
+        toast.error(result.error || dictionary.messages.operationFailed)
+
+        return
+      }
+
+      toast.success(result.message)
+      setDeleteTarget(null)
+      await loadLeaves()
+    } catch {
+      toast.error(dictionary.messages.operationFailed)
+    } finally {
+      setBusyId(null)
+    }
+  }
+
+  const canCreate = data.canManage || Boolean(data.currentStaffId)
+
+  return (
+    <div className='flex flex-col gap-6'>
+      <LeaveStatsCards summary={data.summary} dictionary={dictionary} />
+
+      <Card>
+        <CardContent className='flex flex-col gap-5 border-bs border-divider'>
+          <div className='flex flex-wrap items-start justify-between gap-4'>
+            <div>
+              <Typography variant='h5'>{dictionary.title}</Typography>
+              <Typography color='text.secondary'>{dictionary.description}</Typography>
+            </div>
+            {canCreate && (
+              <Button variant='contained' startIcon={<i className='tabler-plus' />} onClick={openCreate} className='is-full sm:is-auto'>
+                {dictionary.actions.requestLeave}
+              </Button>
+            )}
+          </div>
+
+          <div className='flex flex-wrap items-end gap-2 sm:justify-between'>
+            <div className='flex flex-1 flex-wrap gap-2'>
+              {data.canManage && (
+                <CustomTextField select label={dictionary.filters.staff} value={staffId} onChange={event => { setStaffId(event.target.value); setPage(0) }} className='is-full sm:is-[240px]'>
+                  <MenuItem value=''>{dictionary.filters.allStaff}</MenuItem>
+                  {data.options.staff.map(staff => <MenuItem key={staff.id} value={staff.id}>{staff.full_name}</MenuItem>)}
+                </CustomTextField>
+              )}
+              <CustomTextField select label={dictionary.filters.leaveType} value={leaveTypeId} onChange={event => { setLeaveTypeId(event.target.value); setPage(0) }} className='is-full sm:is-[220px]'>
+                <MenuItem value=''>{dictionary.filters.allLeaveTypes}</MenuItem>
+                {data.options.leaveTypes.map(type => <MenuItem key={type.id} value={type.id}>{type.label}</MenuItem>)}
+              </CustomTextField>
+              <CustomTextField select label={dictionary.filters.status} value={statusId} onChange={event => { setStatusId(event.target.value); setPage(0) }} className='is-full sm:is-[200px]'>
+                <MenuItem value=''>{dictionary.filters.allStatuses}</MenuItem>
+                {data.options.statuses.map(status => <MenuItem key={status.id} value={status.id}>{dictionary.status[status.value] || status.label}</MenuItem>)}
+              </CustomTextField>
+            </div>
+          </div>
+        </CardContent>
+
+        <div className='overflow-x-auto'>
+          <table className={tableStyles.table}>
+            <thead>
+              <tr>
+                <th>{dictionary.table.staff}</th>
+                <th>{dictionary.table.leaveType}</th>
+                <th>{dictionary.table.duration}</th>
+                <th>{dictionary.table.reason}</th>
+                <th>{dictionary.table.status}</th>
+                <th>{dictionary.table.approvedBy}</th>
+                <th>{dictionary.table.actions}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {loading ? (
+                <TableSkeletonRows columns={7} rows={5} />
+              ) : data.leaves.length === 0 ? (
+                <TableEmptyStateRow
+                  colSpan={7}
+                  icon='tabler-calendar-off'
+                  title={dictionary.empty.title}
+                  description={dictionary.empty.description}
+                  actionLabel={canCreate ? dictionary.empty.action : null}
+                  onAction={canCreate ? openCreate : null}
+                />
+              ) : (
+                data.leaves.map(leave => {
+                  const isPending = leave.status.value === 'PENDING'
+                  const canEditOwnPending = leave.staff_id === data.currentStaffId && isPending
+                  const canModify = data.canManage || canEditOwnPending
+
+                  return (
+                    <tr key={leave.id}>
+                      <td>
+                        <div className='flex min-is-[220px] items-center gap-3'>
+                          <Avatar variant='rounded' className='bg-primaryLighter text-primary'>{getInitials(leave.staff)}</Avatar>
+                          <div>
+                            <Typography color='text.primary' className='font-medium'>{leave.staff.full_name}</Typography>
+                            <Typography variant='body2' color='text.secondary'>{leave.staff.position}</Typography>
+                          </div>
+                        </div>
+                      </td>
+                      <td><Typography color='text.primary'>{leave.leave_type.label}</Typography></td>
+                      <td>
+                        <div className='min-is-[190px]'>
+                          <Typography color='text.primary'>{formatDate(leave.start_date, locale)} → {formatDate(leave.end_date, locale)}</Typography>
+                          <Chip size='small' variant='tonal' label={dictionary.table.days.replace('{count}', leave.total_days)} className='mt-1' />
+                        </div>
+                      </td>
+                      <td>
+                        {leave.reason ? (
+                          <Tooltip title={leave.reason} arrow>
+                            <Typography color='text.secondary' className='max-is-[220px] truncate'>{leave.reason}</Typography>
+                          </Tooltip>
+                        ) : <Typography color='text.secondary'>—</Typography>}
+                      </td>
+                      <td><Chip size='small' variant='tonal' label={dictionary.status[leave.status.value] || leave.status.label} /></td>
+                      <td>{leave.approved_by?.full_name || '—'}</td>
+                      <td>
+                        <div className='flex min-is-[150px] items-center gap-1'>
+                          {data.canManage && isPending && (
+                            <>
+                              <Tooltip title={dictionary.actions.approve}>
+                                <IconButton color='success' disabled={busyId === leave.id} onClick={() => updateStatus(leave, 'APPROVED')}><i className='tabler-check' /></IconButton>
+                              </Tooltip>
+                              <Tooltip title={dictionary.actions.reject}>
+                                <IconButton color='error' disabled={busyId === leave.id} onClick={() => updateStatus(leave, 'REJECTED')}><i className='tabler-x' /></IconButton>
+                              </Tooltip>
+                            </>
+                          )}
+                          {canModify && (
+                            <>
+                              <Tooltip title={dictionary.actions.edit}>
+                                <IconButton disabled={busyId === leave.id} onClick={() => openEdit(leave)}><i className='tabler-edit' /></IconButton>
+                              </Tooltip>
+                              <Tooltip title={dictionary.actions.delete}>
+                                <IconButton color='error' disabled={busyId === leave.id} onClick={() => setDeleteTarget(leave)}><i className='tabler-trash' /></IconButton>
+                              </Tooltip>
+                            </>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        <DashboardTablePagination
+          count={data.totalCount}
+          page={page}
+          rowsPerPage={rowsPerPage}
+          rowsPerPageLabel={dictionary.pagination.rowsPerPage}
+          ofLabel={dictionary.pagination.of}
+          onPageChange={(_, nextPage) => setPage(nextPage)}
+          onRowsPerPageChange={event => { setRowsPerPage(Number(event.target.value)); setPage(0) }}
+        />
+      </Card>
+
+      <StaffLeaveDrawer
+        open={drawerOpen}
+        leave={editingLeave}
+        options={data.options}
+        currentStaffId={data.currentStaffId}
+        canManage={data.canManage}
+        locale={locale}
+        dictionary={dictionary}
+        onClose={() => setDrawerOpen(false)}
+        onSaved={loadLeaves}
+      />
+
+      <ConfirmDeleteModal
+        open={Boolean(deleteTarget)}
+        title={dictionary.delete.title}
+        description={dictionary.delete.description}
+        itemName={deleteTarget?.staff?.full_name}
+        confirmText={dictionary.actions.delete}
+        cancelText={dictionary.actions.cancel}
+        loading={busyId === deleteTarget?.id}
+        onConfirm={deleteLeave}
+        onClose={() => setDeleteTarget(null)}
+      />
+    </div>
+  )
+}
+
+export default StaffLeavesView

@@ -14,6 +14,7 @@ import Typography from '@mui/material/Typography'
 
 // Third-party Imports
 import classnames from 'classnames'
+import { toast } from 'sonner'
 
 // Component Imports
 import CustomAvatar from '@core/components/mui/Avatar'
@@ -69,7 +70,7 @@ const CreateDeal = () => {
     if (activeStep !== steps.length - 1) {
       setActiveStep(activeStep + 1)
     } else {
-      alert('Submitted..!!')
+      toast.success('Submitted successfully.')
     }
   }
 

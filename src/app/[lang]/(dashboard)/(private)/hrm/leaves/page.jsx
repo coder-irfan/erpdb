@@ -1,17 +1,11 @@
-import Card from '@mui/material/Card'
-import CardHeader from '@mui/material/CardHeader'
-
 import { getDictionary } from '@/utils/getDictionary'
+import StaffLeavesView from '@/views/hrm/leaves/StaffLeavesView'
 
 const LeavesPage = async props => {
-  const params = await props.params
-  const dictionary = await getDictionary(params.lang)
+  const { lang } = await props.params
+  const dictionary = await getDictionary(lang)
 
-  return (
-    <Card>
-      <CardHeader title={dictionary.navigation.leaves} />
-    </Card>
-  )
+  return <StaffLeavesView locale={lang} dictionary={dictionary.hrmLeaves} />
 }
 
 export default LeavesPage

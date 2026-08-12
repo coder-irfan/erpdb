@@ -9,7 +9,6 @@ import CardContent from '@mui/material/CardContent'
 import CardHeader from '@mui/material/CardHeader'
 import Chip from '@mui/material/Chip'
 import Dialog from '@mui/material/Dialog'
-import DialogActions from '@mui/material/DialogActions'
 import DialogContent from '@mui/material/DialogContent'
 import DialogTitle from '@mui/material/DialogTitle'
 import IconButton from '@mui/material/IconButton'
@@ -19,6 +18,7 @@ import { toast } from 'sonner'
 
 import CustomTextField from '@core/components/mui/TextField'
 import { deleteOption, getOptionsListPaginated, toggleOptionStatus } from '@/actions/options'
+import ConfirmDeleteModal from '@/components/dialogs/ConfirmDeleteModal'
 import DashboardTablePagination from '@/components/table/DashboardTablePagination'
 import TableEmptyStateRow from '@/components/table/TableEmptyStateRow'
 import TableSkeletonRows from '@/components/table/TableSkeletonRows'
@@ -36,7 +36,7 @@ const getDescriptionPreview = description =>
   (description || '')
     .replace(/<[^>]*>/g, ' ')
     .replace(/&nbsp;/g, ' ')
-    .replace(/s+/g, ' ')
+    .replace(/\s+/g, ' ')
     .trim()
 
 const ContractPolicyTable = ({ initialResult, initialError, canCreate, canUpdate, canDelete, locale, dictionary }) => {
@@ -51,6 +51,7 @@ const ContractPolicyTable = ({ initialResult, initialError, canCreate, canUpdate
   const [formOpen, setFormOpen] = useState(false)
   const [editingOption, setEditingOption] = useState(null)
   const [deletingOption, setDeletingOption] = useState(null)
+  const [viewingOption, setViewingOption] = useState(null)
 
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -231,6 +232,11 @@ const ContractPolicyTable = ({ initialResult, initialError, canCreate, canUpdate
                       <td>{formatDate(option.created_at, locale)}</td>
                       <td>
                         <div className='flex min-is-[150px] items-center gap-1'>
+                          <Tooltip title={dictionary.common.view}>
+                            <IconButton onClick={() => setViewingOption(option)}>
+                              <i className='tabler-eye' />
+                            </IconButton>
+                          </Tooltip>
                           {(canUpdate || canDelete) && (
                             <>
                               {canUpdate && (
@@ -289,22 +295,39 @@ const ContractPolicyTable = ({ initialResult, initialError, canCreate, canUpdate
         onSaved={refreshData}
       />
 
-      <Dialog open={Boolean(deletingOption)} onClose={() => !busyId && setDeletingOption(null)} maxWidth='xs' fullWidth>
-        <DialogTitle>{dictionary.contractPolicies.deleteTitle}</DialogTitle>
-        <DialogContent dividers>
-          <Typography>
-            {dictionary.contractPolicies.deleteDescription.replace('{name}', deletingOption?.name || '')}
-          </Typography>
+      <Dialog open={Boolean(viewingOption)} onClose={() => setViewingOption(null)} fullWidth maxWidth='lg'>
+        <DialogTitle className='flex items-start justify-between gap-4'>
+          <div>
+            <Typography variant='h5'>{viewingOption?.name}</Typography>
+            <Typography color='text.secondary'>{dictionary.contractPolicies.previewTitle}</Typography>
+          </div>
+          <IconButton onClick={() => setViewingOption(null)} aria-label={dictionary.common.close}>
+            <i className='tabler-x' />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent dividers className='bg-actionHover'>
+          {viewingOption?.description ? (
+            <article
+              className='policy-document-preview rounded shadow-sm'
+              dangerouslySetInnerHTML={{ __html: viewingOption.description }}
+            />
+          ) : (
+            <Typography color='text.secondary'>{dictionary.common.noDescription}</Typography>
+          )}
         </DialogContent>
-        <DialogActions className='p-5'>
-          <Button variant='tonal' color='secondary' onClick={() => setDeletingOption(null)} disabled={Boolean(busyId)}>
-            {dictionary.common.cancel}
-          </Button>
-          <Button variant='contained' color='error' onClick={confirmDelete} disabled={Boolean(busyId)}>
-            {dictionary.common.delete}
-          </Button>
-        </DialogActions>
       </Dialog>
+
+      <ConfirmDeleteModal
+        open={Boolean(deletingOption)}
+        title={dictionary.contractPolicies.deleteTitle}
+        description={dictionary.contractPolicies.deleteDescription}
+        itemName={deletingOption?.name}
+        confirmText={dictionary.common.delete}
+        cancelText={dictionary.common.cancel}
+        loading={Boolean(deletingOption && busyId === deletingOption.id)}
+        onConfirm={confirmDelete}
+        onClose={() => setDeletingOption(null)}
+      />
     </>
   )
 }

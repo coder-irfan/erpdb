@@ -11,7 +11,7 @@ import IconButton from '@mui/material/IconButton'
 import MenuItem from '@mui/material/MenuItem'
 import Typography from '@mui/material/Typography'
 import { valibotResolver } from '@hookform/resolvers/valibot'
-import { useForm } from 'react-hook-form'
+import { Controller, useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 
 import CustomTextField from '@core/components/mui/TextField'
@@ -90,6 +90,7 @@ const StaffDrawer = ({ open, staff, users, locale, dictionary, onClose, onSaved 
   }, [positionOptions, staff])
 
   const {
+    control,
     register,
     handleSubmit,
     reset,
@@ -219,28 +220,35 @@ const StaffDrawer = ({ open, staff, users, locale, dictionary, onClose, onSaved 
                   {dictionary.actions.addPosition}
                 </Button>
               </div>
-              <CustomTextField
-                fullWidth
-                select
-                aria-label={dictionary.fields.position}
-                {...fieldProps('position')}
-              >
-                {positionsLoading && (
-                  <MenuItem value='' disabled>
-                    {dictionary.actions.loadingPositions}
-                  </MenuItem>
+              <Controller
+                name='position'
+                control={control}
+                render={({ field }) => (
+                  <CustomTextField
+                    {...field}
+                    fullWidth
+                    select
+                    value={field.value || ''}
+                    aria-label={dictionary.fields.position}
+                    error={Boolean(errors.position)}
+                    helperText={errors.position?.message}
+                    disabled={isSubmitting || positionsLoading}
+                  >
+                    <MenuItem value='' disabled>
+                      {positionsLoading
+                        ? dictionary.actions.loadingPositions
+                        : availablePositions.length === 0
+                          ? dictionary.actions.noPositions
+                          : dictionary.actions.selectPosition}
+                    </MenuItem>
+                    {availablePositions.map(position => (
+                      <MenuItem key={position} value={position}>
+                        {position}
+                      </MenuItem>
+                    ))}
+                  </CustomTextField>
                 )}
-                {!positionsLoading && availablePositions.length === 0 && (
-                  <MenuItem value='' disabled>
-                    {dictionary.actions.noPositions}
-                  </MenuItem>
-                )}
-                {availablePositions.map(position => (
-                  <MenuItem key={position} value={position}>
-                    {position}
-                  </MenuItem>
-                ))}
-              </CustomTextField>
+              />
             </div>
             <CustomTextField
               fullWidth
@@ -251,21 +259,33 @@ const StaffDrawer = ({ open, staff, users, locale, dictionary, onClose, onSaved 
             />
             <CustomTextField fullWidth type='date' label={dictionary.fields.joinDate} {...fieldProps('join_date')} />
             <CustomTextField fullWidth label={dictionary.fields.contractPeriod} {...fieldProps('contract_period')} />
-            <CustomTextField fullWidth select label={dictionary.fields.status} defaultValue='ACTIVE' {...fieldProps('status')}>
-              {STAFF_STATUSES.map(status => (
-                <MenuItem key={status} value={status}>
-                  {dictionary.status[status]}
-                </MenuItem>
-              ))}
-            </CustomTextField>
-            <CustomTextField fullWidth select label={dictionary.fields.systemUser} defaultValue='' {...fieldProps('user_id')}>
-              <MenuItem value=''>{dictionary.fields.noSystemUser}</MenuItem>
-              {availableUsers.map(user => (
-                <MenuItem key={user.id} value={user.id}>
-                  {user.name || user.email}
-                </MenuItem>
-              ))}
-            </CustomTextField>
+            <Controller
+              name='status'
+              control={control}
+              render={({ field }) => (
+                <CustomTextField {...field} fullWidth select label={dictionary.fields.status} value={field.value || 'ACTIVE'} disabled={isSubmitting}>
+                  {STAFF_STATUSES.map(status => (
+                    <MenuItem key={status} value={status}>
+                      {dictionary.status[status]}
+                    </MenuItem>
+                  ))}
+                </CustomTextField>
+              )}
+            />
+            <Controller
+              name='user_id'
+              control={control}
+              render={({ field }) => (
+                <CustomTextField {...field} fullWidth select label={dictionary.fields.systemUser} value={field.value || ''} disabled={isSubmitting}>
+                  <MenuItem value=''>{dictionary.fields.noSystemUser}</MenuItem>
+                  {availableUsers.map(user => (
+                    <MenuItem key={user.id} value={user.id}>
+                      {user.name || user.email}
+                    </MenuItem>
+                  ))}
+                </CustomTextField>
+              )}
+            />
           </div>
 
           <SectionTitle>{dictionary.sections.guarantor}</SectionTitle>

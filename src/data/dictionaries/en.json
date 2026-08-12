@@ -132,6 +132,9 @@
     "lookupOptions": "Lookup Options",
     "contractPolicies": "Contract Policies",
     "staffPositions": "Staff Positions",
+    "hrManagement": "HR Management",
+    "hrContractPolicies": "HR & Contract Policies",
+    "leaveTypes": "Leave Types",
     "setupSettings": "Setup",
     "companySetup": "Company Setup",
     "systemAuditLogs": "System Audit Logs"
@@ -259,6 +262,13 @@
   "setupBranding": {
     "title": "Branding & Logos",
     "description": "Manage the logos displayed throughout the ERP interface.",
+    "letterheadTitle": "Company Letterhead & Branding",
+    "letterheadDescription": "Configure the legal company identity and authorized signature displayed on official documents.",
+    "workHoursTitle": "Default Work Hours",
+    "workHoursDescription": "These times automatically pre-fill attendance check-in and check-out fields.",
+    "companyLogo": "Company Letterhead Logo",
+    "signatoryStamp": "Authorized Signature / Stamp",
+    "saveAll": "Save Company Settings",
     "lightLogo": "Light Mode Logo",
     "lightLogoDescription": "Displayed on light backgrounds and in light mode.",
     "darkLogo": "Dark Mode Logo",
@@ -273,6 +283,22 @@
     "saved": "Branding settings saved successfully.",
     "saveFailed": "Branding settings could not be saved. Please try again.",
     "invalidLogoPath": "Select valid uploaded logo and favicon files.",
+    "fields": {
+      "appName": "Application Name",
+      "companyName": "Company Legal Name",
+      "companyEmail": "Company Email",
+      "companyPhone": "Company Phone",
+      "companyAddress": "Company Address",
+      "companyTaxId": "License / TIN",
+      "signatoryName": "Authorized Signatory Name",
+      "signatoryTitle": "Authorized Signatory Title",
+      "workStart": "Work Start Time",
+      "workEnd": "Work End Time"
+    },
+    "validation": {
+      "companyNameRequired": "Company legal name is required.",
+      "workEndAfterStart": "Work end time must be later than work start time."
+    },
     "upload": {
       "drop": "Drag and drop an image here, or browse files.",
       "browse": "Browse Image",
@@ -288,6 +314,140 @@
       "unauthenticated": "Sign in before uploading files.",
       "forbidden": "You do not have permission to upload this file.",
       "previewAlt": "Uploaded image preview"
+    }
+  },
+  "hrmTimesheets": {
+    "title": "Daily Attendance & Timesheets",
+    "description": "Record daily attendance and automatically calculate staff working hours.",
+    "date": { "today": "Today", "date": "Attendance Date", "previous": "Previous day", "next": "Next day", "yesterday": "Yesterday", "custom": "Custom Date" },
+    "summary": { "present": "Total Present", "absent": "Total Absent", "leave": "Total Leave", "unmarked": "Pending / Unmarked" },
+    "fields": { "date": "Attendance Date", "staff": "Staff Member", "position": "Position", "status": "Status", "checkIn": "Check-In", "checkOut": "Check-Out", "hours": "Hours Worked", "project": "Linked Project", "notes": "Notes" },
+    "status": { "PRESENT": "Present", "ABSENT": "Absent", "LEAVE": "Leave" },
+    "filters": { "search": "Search Staff", "searchPlaceholder": "Search employee name", "status": "Status", "allStatuses": "All statuses" },
+    "actions": { "mark": "Mark Attendance", "bulkAbsent": "Mark Remaining Absent", "export": "Export CSV", "print": "Print", "edit": "Edit", "delete": "Delete", "save": "Save Attendance", "saveNext": "Save & Mark Next", "saveChanges": "Save Changes", "saving": "Saving...", "cancel": "Cancel" },
+    "table": { "title": "Daily Attendance Log", "description": "Attendance entries for the selected date.", "actions": "Actions", "emptyTitle": "No Attendance Records Found", "emptyDescription": "Start by marking attendance for an active staff member." },
+    "drawer": { "title": "Mark Daily Attendance", "editTitle": "Edit Attendance", "description": "Only staff not yet marked for this date are available." },
+    "placeholders": { "selectStaff": "Select remaining staff member", "noProject": "No linked project" },
+    "hoursShort": "hrs",
+    "export": { "columns": ["Staff Name", "Position", "Status", "Check-In", "Check-Out", "Hours", "Notes"] },
+    "messages": { "created": "Attendance saved successfully.", "updated": "Attendance updated successfully.", "deleted": "Attendance entry deleted successfully.", "bulkAbsent": "{count} remaining staff marked absent.", "noRemainingStaff": "All active staff have already been marked.", "duplicate": "Attendance has already been recorded for this staff member on this date.", "staffNotFound": "The selected active staff member could not be found.", "projectNotFound": "The selected project could not be found.", "notFound": "The attendance entry could not be found.", "loadFailed": "Attendance records could not be loaded.", "operationFailed": "The operation could not be completed. Please try again.", "unauthenticated": "Sign in to access attendance.", "forbidden": "You do not have permission to access attendance.", "deleteTitle": "Delete Attendance Entry", "deleteDescription": "Are you sure you want to delete this attendance entry? This action cannot be undone." },
+    "validation": { "invalidSubmission": "Review the highlighted fields and try again.", "required": "This field is required.", "statusInvalid": "Select a valid attendance status.", "dateInvalid": "Select a valid attendance date.", "timeInvalid": "Enter a valid time.", "checkoutBeforeCheckin": "Check-out time cannot be earlier than check-in time.", "notesTooLong": "Notes must not exceed 2,000 characters." }
+  },
+  "hrmContracts": {
+    "title": "Staff Contracts",
+    "description": "Create, manage, and print employment contracts with immutable policy snapshots.",
+    "fields": {
+      "contractNumber": "Contract Number",
+      "staffMember": "Staff Member",
+      "contractType": "Contract Policy",
+      "position": "Position",
+      "baseSalary": "Agreed Salary",
+      "startDate": "Start Date",
+      "endDate": "End Date",
+      "status": "Status",
+      "email": "Email",
+      "phone": "Phone",
+      "tazkiraNo": "Tazkira Number"
+    },
+    "filters": {
+      "search": "Search Contracts",
+      "searchPlaceholder": "Search staff name or contract number",
+      "status": "Status",
+      "allStatuses": "All statuses",
+      "contractType": "Contract Policy",
+      "allContractTypes": "All contract policies"
+    },
+    "actions": {
+      "add": "Create Contract",
+      "addFirst": "Create First Contract",
+      "view": "View Details",
+      "print": "Print Contract",
+      "printSavePdf": "Print / Save PDF",
+      "edit": "Edit",
+      "create": "Create Contract",
+      "saveChanges": "Save Changes",
+      "saving": "Saving...",
+      "cancel": "Cancel",
+      "close": "Close",
+      "back": "Back to Contracts"
+    },
+    "table": {
+      "contractNumber": "Contract Number",
+      "staff": "Staff Member",
+      "position": "Position",
+      "contractType": "Contract Policy",
+      "salary": "Base Salary",
+      "period": "Contract Period",
+      "status": "Status",
+      "actions": "Actions",
+      "emptyTitle": "No Staff Contracts Found",
+      "emptyDescription": "Create the first employment contract from an active policy template.",
+      "rowsPerPage": "Rows per page:",
+      "of": "of"
+    },
+    "status": {
+      "DRAFT": "Draft",
+      "ACTIVE": "Active",
+      "EXPIRED": "Expired",
+      "TERMINATED": "Terminated"
+    },
+    "drawer": {
+      "addTitle": "Create Staff Contract",
+      "editTitle": "Edit Staff Contract",
+      "description": "Choose a staff member and policy; the legal document snapshot is compiled when saved.",
+      "templateHelpTitle": "Auto-filled Template Fields",
+      "templateHelpSubtitle": "These fields will automatically populate from the staff member's profile when the contract is rendered:",
+      "templateFields": {
+        "staffName": "Employee Name",
+        "tazkira": "National ID / Tazkira",
+        "position": "Position Title",
+        "salary": "Base Salary",
+        "startDate": "Start Date",
+        "companyName": "Company Name"
+      }
+    },
+    "placeholders": {
+      "selectStaff": "Select staff member",
+      "selectPolicy": "Select contract policy",
+      "selectStatus": "Select contract status"
+    },
+    "details": {
+      "title": "Contract Details",
+      "documentSnapshot": "Compiled Contract Document",
+      "noContent": "No contract document content is available."
+    },
+    "print": {
+      "title": "EMPLOYMENT CONTRACT",
+      "taxId": "License / TIN",
+      "employeeSignature": "Employee Signature",
+      "employerSignature": "Employer / Authorized Signatory",
+      "signatoryStamp": "Authorized signature or stamp",
+      "date": "Date"
+    },
+    "messages": {
+      "created": "Staff contract created successfully.",
+      "updated": "Staff contract updated successfully.",
+      "statusUpdated": "Contract status updated successfully.",
+      "loadFailed": "Staff contracts could not be loaded.",
+      "optionsLoadFailed": "Contract form options could not be loaded.",
+      "notFound": "The selected contract could not be found.",
+      "staffNotFound": "The selected staff member could not be found.",
+      "policyNotFound": "The selected contract policy could not be found.",
+      "statusNotFound": "The selected contract status could not be found.",
+      "numberConflict": "A contract-number conflict occurred. Please submit again.",
+      "operationFailed": "The operation could not be completed. Please try again.",
+      "unauthenticated": "Sign in to access staff contracts.",
+      "forbidden": "You do not have permission to access staff contracts."
+    },
+    "validation": {
+      "invalidSubmission": "Review the highlighted fields and try again.",
+      "required": "This field is required.",
+      "valueTooLong": "This value is too long.",
+      "salaryInvalid": "Enter a valid salary.",
+      "salaryPositive": "Salary must be greater than zero.",
+      "dateInvalid": "Enter a valid date.",
+      "endDateBeforeStart": "End date cannot be earlier than start date.",
+      "statusInvalid": "Select a valid contract status."
     }
   },
   "hrmStaff": {
@@ -343,6 +503,7 @@
       "saveChanges": "Save Changes",
       "saving": "Saving...",
       "addPosition": "Add New",
+      "selectPosition": "Select position...",
       "loadingPositions": "Loading positions...",
       "noPositions": "No active positions available",
       "cancel": "Cancel",
@@ -377,8 +538,13 @@
       "description": "Complete employee and employment overview.",
       "linkedUser": "System account linked",
       "createdAt": "Record Created",
-      "activeContracts": "Active Contracts",
-      "noActiveContracts": "No active contracts are linked to this employee."
+      "profileTab": "Profile",
+      "contracts": "Contracts",
+      "attendanceTab": "Attendance & Timesheets",
+      "attendance": { "month": "Month", "date": "Date", "statusLabel": "Status", "checkIn": "Check-In", "checkOut": "Check-Out", "hours": "Hours", "totalHours": "Total Hours", "emptyTitle": "No Attendance History", "emptyDescription": "No attendance entries were recorded for this employee in the selected month.", "status": { "PRESENT": "Present", "ABSENT": "Absent", "LEAVE": "Leave" } },
+      "noContractsTitle": "No Contract History Found",
+      "noContracts": "No contract history is linked to this employee.",
+      "printContract": "Print Contract"
     },
     "messages": {
       "created": "Staff member created successfully.",
@@ -408,6 +574,23 @@
       "userInvalid": "Select a valid system user."
     }
   },
+  "hrmLeaves": {
+    "title": "Staff Leave Requests",
+    "description": "Review requests, track leave balances, and manage daily approval workflows.",
+    "summary": { "pending": "Pending Review", "onLeaveToday": "On Leave Today", "monthlyDays": "Monthly Leave Days" },
+    "filters": { "staff": "Staff Member", "allStaff": "All Staff", "leaveType": "Leave Type", "allLeaveTypes": "All Leave Types", "status": "Status", "allStatuses": "All Statuses" },
+    "table": { "staff": "Staff Member", "leaveType": "Leave Type", "duration": "Duration / Date Range", "reason": "Reason", "status": "Status", "approvedBy": "Approved By", "actions": "Actions", "days": "{count} day(s)" },
+    "drawer": { "title": "Request Leave", "editTitle": "Edit Leave Request", "description": "Enter the request details. Leave duration is calculated automatically.", "calculatedDays": "Calculated leave days" },
+    "fields": { "staff": "Staff Member", "leaveType": "Leave Type", "startDate": "Start Date", "endDate": "End Date", "reason": "Reason / Notes", "initialStatus": "Initial Status" },
+    "placeholders": { "selectStaff": "Select staff member...", "selectLeaveType": "Select leave type...", "reason": "Explain the reason for this leave request" },
+    "status": { "PENDING": "Pending", "APPROVED": "Approved", "REJECTED": "Rejected" },
+    "actions": { "requestLeave": "Request Leave", "approve": "Approve", "reject": "Reject", "edit": "Edit", "delete": "Delete", "cancel": "Cancel", "close": "Close", "submit": "Submit Request", "saveChanges": "Save Changes", "saving": "Saving..." },
+    "empty": { "title": "No Leave Requests Found", "description": "No leave requests match the selected filters.", "action": "Create First Request" },
+    "delete": { "title": "Delete Leave Request", "description": "Are you sure you want to delete this leave request? This action cannot be undone." },
+    "pagination": { "rowsPerPage": "Rows per page:", "of": "of" },
+    "messages": { "created": "Leave request submitted successfully.", "updated": "Leave request updated successfully.", "approved": "Leave request approved and attendance synchronized.", "rejected": "Leave request rejected successfully.", "deleted": "Leave request deleted successfully.", "loadFailed": "Leave requests could not be loaded.", "operationFailed": "The operation could not be completed. Please try again.", "unauthenticated": "Sign in to access leave management.", "forbidden": "You do not have permission to manage this leave request.", "staffProfileRequired": "Your account must be linked to a staff profile before requesting leave.", "staffNotFound": "The selected staff member could not be found.", "leaveTypeNotFound": "Select an active leave type.", "statusNotFound": "Leave statuses are not configured. Run the database seed.", "notFound": "The selected leave request could not be found.", "invalidRelations": "One or more selected leave values are invalid." },
+    "validation": { "required": "This field is required.", "dateInvalid": "Select a valid date.", "dateRangeInvalid": "End date must be on or after the start date.", "reasonTooLong": "The reason must not exceed 2,000 characters.", "statusInvalid": "Select Approved or Rejected." }
+  },
   "optionsManagement": {
     "common": {
       "search": "Search",
@@ -416,11 +599,13 @@
       "inactive": "Inactive",
       "createdDate": "Created Date",
       "actions": "Actions",
+      "view": "View Document",
       "edit": "Edit",
       "activate": "Activate",
       "deactivate": "Deactivate",
       "delete": "Delete",
       "cancel": "Cancel",
+      "close": "Close",
       "create": "Create",
       "saveChanges": "Save Changes",
       "saving": "Saving...",
@@ -429,14 +614,38 @@
       "noDescription": "No description"
     },
     "editor": {
+      "paragraph": "Paragraph",
+      "fontFamily": "Font family",
+      "defaultFont": "Default font",
+      "fontSize": "Text size",
+      "defaultSize": "Size",
+      "lineHeight": "Line height",
       "bold": "Bold",
       "italic": "Italic",
+      "strike": "Strikethrough",
+      "textColor": "Text color",
+      "highlightColor": "Highlight color",
       "heading": "Heading",
       "bulletList": "Bullet list",
       "orderedList": "Numbered list",
       "alignLeft": "Align left",
       "alignCenter": "Align center",
-      "alignRight": "Align right"
+      "alignRight": "Align right",
+      "alignJustify": "Justify",
+      "indent": "Increase indent",
+      "outdent": "Decrease indent",
+      "blockquote": "Blockquote",
+      "horizontalRule": "Horizontal rule",
+      "codeBlock": "Code block",
+      "insertTable": "Insert table",
+      "addColumn": "Add column",
+      "deleteColumn": "Delete column",
+      "addRow": "Add row",
+      "deleteRow": "Delete row",
+      "deleteTable": "Delete table",
+      "undo": "Undo",
+      "redo": "Redo",
+      "sourceCode": "HTML source"
     },
     "contractPolicies": {
       "title": "Contract Policies",
@@ -445,6 +654,7 @@
       "addFirst": "Add First Contract Policy",
       "addTitle": "Create Contract Policy",
       "editTitle": "Edit Contract Policy",
+      "previewTitle": "Formal policy document preview",
       "searchPlaceholder": "Search policy titles or descriptions",
       "emptyTitle": "No Contract Policies Found",
       "emptyDescription": "Create your first policy to standardize staff contract terms.",
@@ -481,6 +691,21 @@
         "description": "Description"
       }
     },
+    "leaveTypes": {
+      "title": "Leave Types",
+      "description": "Maintain the active leave categories available in staff request forms.",
+      "add": "Add Leave Type",
+      "addFirst": "Add First Leave Type",
+      "addTitle": "Create Leave Type",
+      "editTitle": "Edit Leave Type",
+      "searchPlaceholder": "Search leave types or descriptions",
+      "emptyTitle": "No Leave Types Found",
+      "emptyDescription": "Add Annual, Sick, Casual, Unpaid, or another approved leave type.",
+      "deleteTitle": "Delete Leave Type",
+      "deleteDescription": "Delete \"{name}\"? This action cannot be undone.",
+      "fields": { "name": "Leave Type Name", "namePlaceholder": "e.g., Annual Leave", "description": "Description", "descriptionPlaceholder": "Eligibility, balance, or internal guidance" },
+      "table": { "title": "Leave Type", "description": "Description" }
+    },
     "messages": {
       "unauthenticated": "Sign in to access system options.",
       "forbidden": "You do not have permission to manage system options.",
@@ -492,7 +717,7 @@
       "updated": "Option updated successfully.",
       "statusUpdated": "Option status updated successfully.",
       "deleted": "Option deleted successfully.",
-      "inUse": "This option is in use and cannot be deleted. Deactivate it instead.",
+      "inUse": "Cannot delete this option because it is linked to active records. Deactivate it instead.",
       "operationFailed": "The operation could not be completed. Please try again."
     },
     "validation": {
@@ -520,6 +745,8 @@
     "permissionsAssigned": "{count} permissions",
     "systemRole": "System role",
     "customRole": "Custom role",
+    "activeRole": "Active role",
+    "inactiveRole": "Inactive role",
     "protectedRole": "The Super Admin permission set is protected.",
     "permissionFallback": "Manage module access",
     "permissionModules": {
@@ -559,8 +786,10 @@
       "hrm_contract:delete": "Delete staff contracts",
       "hrm_leave:read": "View leave requests",
       "hrm_leave:write": "Create and approve leave requests",
+      "hrm_leave:delete": "Delete leave requests",
       "hrm_timesheet:read": "View timesheets",
       "hrm_timesheet:write": "Create and approve timesheets",
+      "hrm_timesheet:delete": "Delete attendance records",
       "projects:read": "View projects",
       "projects:write": "Create and update projects",
       "projects:delete": "Delete projects",
@@ -667,6 +896,8 @@
     "messages": {
       "permissionsUpdated": "Role permissions updated successfully.",
       "roleCreated": "Role created successfully.",
+      "roleActivated": "Role activated successfully.",
+      "roleDeactivated": "Role deactivated successfully.",
       "userInvited": "Invitation email sent successfully.",
       "invitationEmailFailed": "The invitation email could not be delivered. No user account was created.",
       "statusUpdated": "Account status updated successfully.",
@@ -677,6 +908,7 @@
       "userNotFound": "The selected user could not be found.",
       "staffUnavailable": "The selected employee is already linked or unavailable.",
       "invalidPermissions": "One or more selected permissions are invalid.",
+      "invalidRoleStatus": "Select a valid role status.",
       "protectedRole": "The Super Admin role cannot be modified.",
       "protectedUser": "Super Admin accounts cannot be changed here.",
       "selfProtected": "You cannot change your own status or role.",
@@ -788,6 +1020,15 @@
       "USER_ROLE_ASSIGNED": "User role assigned",
       "ROLE_CREATED": "Role created",
       "ROLE_PERMISSIONS_UPDATED": "Role permissions updated",
+      "ROLE_STATUS_UPDATED": "Role status updated",
+      "COMPANY_SETUP_UPDATED": "Company setup updated",
+      "HRM_CONTRACT_CREATED": "Staff contract created",
+      "HRM_CONTRACT_UPDATED": "Staff contract updated",
+      "HRM_CONTRACT_STATUS_UPDATED": "Staff contract status updated",
+      "ATTENDANCE_CREATED": "Attendance recorded",
+      "ATTENDANCE_UPDATED": "Attendance updated",
+      "ATTENDANCE_DELETED": "Attendance deleted",
+      "ATTENDANCE_BULK_ABSENT": "Remaining staff marked absent",
       "BRANDING_UPDATED": "Branding updated",
       "HRM_STAFF_CREATED": "Added new staff member",
       "HRM_STAFF_UPDATED": "Updated staff member",

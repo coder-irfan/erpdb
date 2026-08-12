@@ -7,11 +7,13 @@ import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import Chip from '@mui/material/Chip'
+import FormControlLabel from '@mui/material/FormControlLabel'
+import Switch from '@mui/material/Switch'
 import Typography from '@mui/material/Typography'
 import { toast } from 'sonner'
 
 import CustomAvatar from '@core/components/mui/Avatar'
-import { createRole, updateRolePermissions } from '@/app/actions/roleActions'
+import { createRole, toggleRoleStatus, updateRolePermissions } from '@/app/actions/roleActions'
 import { assignUserRole, inviteUser, updateUserStatus } from '@/app/actions/userActions'
 
 import CreateRoleDialog from './CreateRoleDialog'
@@ -36,6 +38,9 @@ const RolesPermissionsView = ({
   const [permissionRole, setPermissionRole] = useState(null)
   const [createRoleOpen, setCreateRoleOpen] = useState(false)
   const [inviteOpen, setInviteOpen] = useState(false)
+  const [busyRoleId, setBusyRoleId] = useState(null)
+
+  const activeRoles = roles.filter(role => role.isActive)
 
   const runAction = async (action, fallbackError) => {
     try {
@@ -78,6 +83,23 @@ const RolesPermissionsView = ({
     toast.success(result.message)
 
     return true
+  }
+
+  const handleRoleStatusChange = async role => {
+    setBusyRoleId(role.id)
+
+    const result = await runAction(
+      () => toggleRoleStatus({ roleId: role.id, isActive: !role.isActive, locale }),
+      dictionary.messages.operationFailed
+    )
+
+    if (!result.success) toast.error(result.error)
+    else {
+      setRoles(current => current.map(item => (item.id === role.id ? result.data : item)))
+      toast.success(result.message)
+    }
+
+    setBusyRoleId(null)
   }
 
   const handleInvite = async values => {
@@ -178,6 +200,12 @@ const RolesPermissionsView = ({
                 <div className='flex flex-wrap gap-2'>
                   <Chip
                     size='small'
+                    variant='tonal'
+                    color={role.isActive ? 'success' : 'secondary'}
+                    label={role.isActive ? dictionary.activeRole : dictionary.inactiveRole}
+                  />
+                  <Chip
+                    size='small'
                     icon={<i className='tabler-users' />}
                     label={replaceCount(dictionary.usersAssigned, assignedUsers)}
                   />
@@ -192,6 +220,16 @@ const RolesPermissionsView = ({
                     {dictionary.protectedRole}
                   </Typography>
                 )}
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={role.isActive}
+                      onChange={() => handleRoleStatusChange(role)}
+                      disabled={isProtected || busyRoleId === role.id}
+                    />
+                  }
+                  label={role.isActive ? dictionary.activeRole : dictionary.inactiveRole}
+                />
                 <Button
                   className='mt-auto self-start'
                   variant='tonal'
@@ -209,7 +247,7 @@ const RolesPermissionsView = ({
 
       <UsersTable
         users={users}
-        roles={roles}
+        roles={activeRoles}
         locale={locale}
         onInvite={() => setInviteOpen(true)}
         onStatusChange={handleStatusChange}
@@ -236,7 +274,7 @@ const RolesPermissionsView = ({
 
       <InviteUserDialog
         open={inviteOpen}
-        roles={roles}
+        roles={activeRoles}
         staff={staff}
         onClose={() => setInviteOpen(false)}
         onSubmit={handleInvite}

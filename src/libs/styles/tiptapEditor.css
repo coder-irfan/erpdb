@@ -1,72 +1,178 @@
-/* Basic editor styles */
-.ProseMirror {
-  outline: none;
-  min-block-size: 100px;
-  overflow-y: auto;
-  padding: 1.5rem;
+/* Vuexy-aligned legal document editor and read-only policy preview. */
+.ProseMirror.policy-document-editor,
+.policy-document-preview {
   inline-size: 100%;
+  color: var(--mui-palette-text-primary);
+  font-family: var(--font-primary), sans-serif;
+  font-size: 1rem;
+  line-height: 1.75;
+  overflow-wrap: anywhere;
+}
 
-  > * + * {
-    margin-block-start: 0.75em;
-  }
-  p.is-editor-empty:first-child::before {
-    block-size: 0;
-    color: var(--mui-palette-text-disabled);
-    content: attr(data-placeholder);
-    float: inline-start;
-    pointer-events: none;
-  }
+.ProseMirror.policy-document-editor {
+  min-block-size: 360px;
+  max-block-size: 65vh;
+  overflow-y: auto;
+  padding: 2rem;
+  outline: none;
+}
 
-  ul,
-  ol {
-    padding-block: 0;
-    padding-inline: 1rem;
-  }
+.policy-document-preview {
+  max-inline-size: 920px;
+  min-block-size: 420px;
+  margin-inline: auto;
+  padding: clamp(1.5rem, 4vw, 3rem);
+  background: var(--mui-palette-background-paper);
+}
 
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6 {
-    line-height: 1.1;
-  }
+.ProseMirror.policy-document-editor > * + *,
+.policy-document-preview > * + * {
+  margin-block-start: 0.9em;
+}
 
-  code {
-    background-color: rgb(97 97 97 / 10%);
-    color: #616161;
-  }
+.ProseMirror.policy-document-editor p,
+.policy-document-preview p {
+  margin-block: 0.65em;
+}
 
-  pre {
-    background: #0d0d0d;
-    color: #fff;
-    font-family: 'JetBrainsMono', monospace;
-    padding-block: 0.75rem;
-    padding-inline: 1rem;
-    border-radius: 0.5rem;
-  }
+.ProseMirror.policy-document-editor ul,
+.ProseMirror.policy-document-editor ol,
+.policy-document-preview ul,
+.policy-document-preview ol {
+  padding-inline-start: 1.75rem;
+}
 
-  pre > code {
-    color: inherit;
+.ProseMirror.policy-document-editor h1,
+.ProseMirror.policy-document-editor h2,
+.ProseMirror.policy-document-editor h3,
+.ProseMirror.policy-document-editor h4,
+.ProseMirror.policy-document-editor h5,
+.ProseMirror.policy-document-editor h6,
+.policy-document-preview h1,
+.policy-document-preview h2,
+.policy-document-preview h3,
+.policy-document-preview h4,
+.policy-document-preview h5,
+.policy-document-preview h6 {
+  margin-block: 1.2em 0.5em;
+  color: var(--mui-palette-text-primary);
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.ProseMirror.policy-document-editor h1,
+.policy-document-preview h1 {
+  font-size: 2rem;
+}
+
+.ProseMirror.policy-document-editor h2,
+.policy-document-preview h2 {
+  font-size: 1.75rem;
+}
+
+.ProseMirror.policy-document-editor h3,
+.policy-document-preview h3 {
+  font-size: 1.5rem;
+}
+
+.ProseMirror.policy-document-editor h4,
+.policy-document-preview h4 {
+  font-size: 1.25rem;
+}
+
+.ProseMirror.policy-document-editor h5,
+.policy-document-preview h5 {
+  font-size: 1.125rem;
+}
+
+.ProseMirror.policy-document-editor h6,
+.policy-document-preview h6 {
+  font-size: 1rem;
+}
+
+.ProseMirror.policy-document-editor code,
+.policy-document-preview code {
+  padding: 0.1rem 0.3rem;
+  border-radius: 0.25rem;
+  background-color: rgb(97 97 97 / 10%);
+  color: var(--mui-palette-text-primary);
+}
+
+.ProseMirror.policy-document-editor pre,
+.policy-document-preview pre {
+  overflow-x: auto;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  background: #0d0d0d;
+  color: #fff;
+  font-family: monospace;
+}
+
+.ProseMirror.policy-document-editor pre > code,
+.policy-document-preview pre > code {
+  padding: 0;
+  background: none;
+  color: inherit;
+  font-size: 0.875rem;
+}
+
+.ProseMirror.policy-document-editor blockquote,
+.policy-document-preview blockquote {
+  margin-inline: 0;
+  padding: 0.75rem 1rem;
+  border-inline-start: 3px solid var(--mui-palette-primary-main);
+  background: var(--mui-palette-action-hover);
+}
+
+.ProseMirror.policy-document-editor hr,
+.policy-document-preview hr {
+  margin-block: 2rem;
+  border: none;
+  border-block-start: 1px solid var(--mui-palette-divider);
+}
+
+.ProseMirror.policy-document-editor table,
+.policy-document-preview table {
+  inline-size: 100%;
+  margin-block: 1.25rem;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.ProseMirror.policy-document-editor th,
+.ProseMirror.policy-document-editor td,
+.policy-document-preview th,
+.policy-document-preview td {
+  min-inline-size: 80px;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--mui-palette-divider);
+  vertical-align: top;
+}
+
+.ProseMirror.policy-document-editor th,
+.policy-document-preview th {
+  background: var(--mui-palette-action-hover);
+  font-weight: 600;
+}
+
+.ProseMirror.policy-document-editor .selectedCell::after {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background: rgb(var(--mui-palette-primary-mainChannel) / 0.12);
+  content: '';
+  pointer-events: none;
+}
+
+.ProseMirror.policy-document-editor td,
+.ProseMirror.policy-document-editor th {
+  position: relative;
+}
+
+@media print {
+  .policy-document-preview {
+    max-inline-size: none;
     padding: 0;
-    background: none;
-    font-size: 0.8rem;
-  }
-
-  img {
-    max-inline-size: 100%;
-    block-size: auto;
-  }
-
-  blockquote {
-    padding-inline-start: 1rem;
-    border-inline-start: 2px solid var(--mui-palette-divider);
-  }
-
-  hr {
-    border: none;
-    border-block-start: 2px solid var(--mui-palette-divider);
-    margin-block: 2rem;
-    margin-inline: 0;
+    color: #000;
   }
 }

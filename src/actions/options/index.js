@@ -19,8 +19,9 @@ const DEFAULT_PAGE_SIZE = 10
 const MAX_PAGE_SIZE = 100
 
 const CATEGORY_PATHS = {
-  CONTRACT_POLICY: '/[lang]/options/contracts/staff-policy',
-  STAFF_POSITION: '/[lang]/options/hrm/positions'
+  CONTRACT_POLICY: '/[lang]/options/hrm/policies',
+  STAFF_POSITION: '/[lang]/options/hrm/positions',
+  LEAVE_TYPE: '/[lang]/options/hrm/leave-types'
 }
 
 const normalizeLocale = locale => (i18n.locales.includes(locale) ? locale : i18n.defaultLocale)
@@ -30,6 +31,7 @@ const isValidCategory = category => typeof category === 'string' && OPTION_CATEG
 const getReadPermissions = category => [
   ...OPTIONS_READ_PERMISSIONS,
   ...(category === 'STAFF_POSITION' ? ['hrm:read', 'hrm:write'] : []),
+  ...(category === 'LEAVE_TYPE' ? ['hrm:read', 'hrm:write', 'hrm_leave:read', 'hrm_leave:write'] : []),
   ...(category === 'CONTRACT_POLICY' ? ['contracts:read', 'hrm:read'] : [])
 ]
 
@@ -64,6 +66,29 @@ const normalizeOption = option => ({
   updated_at: option.updated_at.toISOString()
 })
 
+const optionDependencyCountSelect = {
+  contract_types: true,
+  contract_statuses: true,
+  leave_types: true,
+  leave_statuses: true,
+  lead_sources: true,
+  lead_statuses: true,
+  project_statuses: true,
+  project_priorities: true,
+  task_statuses: true,
+  task_priorities: true,
+  contract_statuses_ref: true,
+  contract_types_ref: true,
+  contract_countries: true,
+  contract_levels: true,
+  invoice_statuses: true,
+  income_types: true,
+  expense_types: true,
+  loan_statuses: true,
+  inventory_categories: true,
+  inventory_statuses: true
+}
+
 const sanitizeDescription = (description, category) => {
   if (!description) return null
 
@@ -73,9 +98,50 @@ const sanitizeDescription = (description, category) => {
 
   return (
     sanitizeHtml(description, {
-      allowedTags: ['p', 'br', 'strong', 'em', 's', 'ul', 'ol', 'li', 'h1', 'h2', 'h3', 'blockquote'],
-      allowedAttributes: { '*': ['style'] },
-      allowedStyles: { '*': { 'text-align': [/^(?:left|right|center|justify)$/] } }
+      allowedTags: [
+        'p',
+        'br',
+        'strong',
+        'em',
+        's',
+        'ul',
+        'ol',
+        'li',
+        'h1',
+        'h2',
+        'h3',
+        'h4',
+        'h5',
+        'h6',
+        'blockquote',
+        'hr',
+        'pre',
+        'code',
+        'span',
+        'table',
+        'thead',
+        'tbody',
+        'tr',
+        'th',
+        'td'
+      ],
+      allowedAttributes: {
+        '*': ['style'],
+        table: ['class'],
+        th: ['colspan', 'rowspan', 'colwidth'],
+        td: ['colspan', 'rowspan', 'colwidth']
+      },
+      allowedStyles: {
+        '*': {
+          'text-align': [/^(?:left|right|center|justify)$/],
+          color: [/^#[0-9a-f]{3,8}$/i, /^rgb\(/i],
+          'background-color': [/^#[0-9a-f]{3,8}$/i, /^rgb\(/i],
+          'font-family': [/^[a-z0-9 ,"'-]+$/i],
+          'font-size': [/^[0-9.]+(?:px|rem|em|pt|%)$/],
+          'line-height': [/^[0-9.]+$/],
+          'margin-left': [/^[0-9.]+(?:px|rem|em)$/]
+        }
+      }
     }).trim() || null
   )
 }
@@ -104,6 +170,7 @@ const revalidateOptionPaths = category => {
   if (CATEGORY_PATHS[category]) revalidatePath(CATEGORY_PATHS[category], 'page')
 
   if (category === 'STAFF_POSITION') revalidatePath('/[lang]/hrm/staff', 'page')
+  if (category === 'LEAVE_TYPE') revalidatePath('/[lang]/hrm/leaves', 'page')
 }
 
 export const getOptionsByCategory = async (category, payload = {}) => {
@@ -384,11 +451,27 @@ export const deleteOption = async (id, payload = {}) => {
   try {
     const option = await prisma.option.findUnique({
       where: { id: optionId },
-      select: { id: true, category: true, label: true }
+      select: {
+        id: true,
+        category: true,
+        label: true,
+        _count: { select: optionDependencyCountSelect }
+      }
     })
 
     if (!option) {
       return { success: false, code: 'OPTION_NOT_FOUND', error: context.translations.messages.notFound }
+    }
+
+    const relationCount = Object.values(option._count).reduce((total, count) => total + count, 0)
+
+    const staffPositionCount =
+      option.category === 'STAFF_POSITION'
+        ? await prisma.hrmStaff.count({ where: { position: option.label } })
+        : 0
+
+    if (relationCount + staffPositionCount > 0) {
+      return { success: false, code: 'OPTION_IN_USE', error: context.translations.messages.inUse }
     }
 
     await prisma.$transaction(async transaction => {

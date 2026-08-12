@@ -267,3 +267,92 @@ body,
 [data-dark] .brand-logo-dark {
   display: block;
 }
+
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 10mm;
+  }
+
+  html,
+  body {
+    block-size: auto !important;
+    min-block-size: 0 !important;
+    background: #fff !important;
+    color: #000 !important;
+    overflow: visible !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .no-print,
+  nav,
+  aside,
+  .sidebar,
+  header:not(.print-letterhead),
+  .btn-print,
+  footer:not(.print-signatures) {
+    display: none !important;
+  }
+
+  .attendance-print-report button,
+  .attendance-print-report input,
+  .attendance-print-report .MuiIconButton-root,
+  .attendance-print-report .MuiTablePagination-root,
+  .attendance-print-report .MuiTablePagination-toolbar {
+    display: none !important;
+  }
+
+  .attendance-print-report,
+  .attendance-print-report > *,
+  .ts-horizontal-layout,
+  .ts-horizontal-layout-content-wrapper,
+  .ts-horizontal-layout-content,
+  .print-page-shell {
+    min-block-size: 0 !important;
+    block-size: auto !important;
+    margin-block-end: 0 !important;
+    padding-block-end: 0 !important;
+  }
+
+  .ts-horizontal-layout-content {
+    padding: 0 !important;
+  }
+
+  .attendance-summary,
+  .attendance-summary > * {
+    break-inside: avoid;
+  }
+
+  .print-page-shell {
+    background: #fff !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .print-container {
+    box-shadow: none !important;
+    box-sizing: border-box;
+    inline-size: 100% !important;
+    min-block-size: 0 !important;
+    block-size: auto !important;
+    margin: 0 !important;
+    padding: 15mm !important;
+    page-break-after: avoid !important;
+  }
+
+  .print-letterhead,
+  .print-signatures,
+  table,
+  blockquote {
+    break-inside: avoid;
+  }
+
+  .print-document-body {
+    color: #000 !important;
+  }
+
+  .print-document-body * {
+    color: inherit;
+  }
+}

@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache'
 import { i18n } from '@/configs/i18n'
 import { SYSTEM_SETTING_ID } from '@/configs/branding'
 import { authorizeAction } from '@/libs/actionAuthorization'
+import { getCompanySetupRecord } from '@/libs/companySetup'
 import { prisma } from '@/libs/prisma'
 import { getBrandingSettings } from '@/libs/systemSettings'
 import { getDictionary } from '@/utils/getDictionary'
@@ -32,9 +33,9 @@ export const getSystemSettings = async () => {
     return { success: false, code: authorization.code, error: authorization.error }
   }
 
-  const settings = await getBrandingSettings()
+  const [branding, company] = await Promise.all([getBrandingSettings(), getCompanySetupRecord()])
 
-  return { success: true, data: settings }
+  return { success: true, data: { ...branding, ...company } }
 }
 
 export const updateLogoSettings = async payload => {

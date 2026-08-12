@@ -7,6 +7,14 @@ const permissions = [
   { key: 'hrm:read', module: 'HRM', description: 'View HRM records' },
   { key: 'hrm:write', module: 'HRM', description: 'Create and update HRM records' },
   { key: 'hrm:delete', module: 'HRM', description: 'Delete HRM records' },
+  { key: 'hrm_contract:read', module: 'HRM', description: 'View staff contracts' },
+  { key: 'hrm_contract:write', module: 'HRM', description: 'Create and update staff contracts' },
+  { key: 'hrm_timesheet:read', module: 'HRM', description: 'View attendance and timesheets' },
+  { key: 'hrm_timesheet:write', module: 'HRM', description: 'Create and update attendance and timesheets' },
+  { key: 'hrm_timesheet:delete', module: 'HRM', description: 'Delete attendance and timesheets' },
+  { key: 'hrm_leave:read', module: 'HRM', description: 'View leave requests' },
+  { key: 'hrm_leave:write', module: 'HRM', description: 'Create and approve leave requests' },
+  { key: 'hrm_leave:delete', module: 'HRM', description: 'Delete leave requests' },
   { key: 'projects:read', module: 'Projects', description: 'View projects' },
   { key: 'projects:write', module: 'Projects', description: 'Create and update projects' },
   { key: 'projects:delete', module: 'Projects', description: 'Delete projects' },
@@ -42,14 +50,26 @@ const roles = [
     display_name: 'HR Manager',
     description: 'Manage staff, contracts, leave, and timesheet records',
     is_system: false,
-    permissions: ['hrm:read', 'hrm:write', 'hrm:delete']
+    permissions: [
+      'hrm:read',
+      'hrm:write',
+      'hrm:delete',
+      'hrm_contract:read',
+      'hrm_contract:write',
+      'hrm_timesheet:read',
+      'hrm_timesheet:write',
+      'hrm_timesheet:delete',
+      'hrm_leave:read',
+      'hrm_leave:write',
+      'hrm_leave:delete'
+    ]
   },
   {
     name: 'finance_manager',
     display_name: 'Finance Manager',
     description: 'Manage income, expenses, salary, loans, and inventory records',
     is_system: false,
-    permissions: ['finance:read', 'finance:write', 'finance:delete']
+    permissions: ['finance:read', 'finance:write', 'finance:delete', 'hrm_contract:read']
   },
   {
     name: 'project_manager',
@@ -77,6 +97,26 @@ const syncRolePermissions = async (transaction, roleId, permissionIds) => {
   })
 }
 
+const contractStatuses = [
+  { label: 'Draft', value: 'DRAFT', color_code: 'secondary', sort_order: 1 },
+  { label: 'Active', value: 'ACTIVE', color_code: 'success', sort_order: 2 },
+  { label: 'Expired', value: 'EXPIRED', color_code: 'warning', sort_order: 3 },
+  { label: 'Terminated', value: 'TERMINATED', color_code: 'error', sort_order: 4 }
+]
+
+const leaveTypes = [
+  { label: 'Annual Leave', value: 'ANNUAL', sort_order: 1 },
+  { label: 'Sick Leave', value: 'SICK', sort_order: 2 },
+  { label: 'Casual Leave', value: 'CASUAL', sort_order: 3 },
+  { label: 'Unpaid Leave', value: 'UNPAID', sort_order: 4 }
+]
+
+const leaveStatuses = [
+  { label: 'Pending', value: 'PENDING', sort_order: 1 },
+  { label: 'Approved', value: 'APPROVED', sort_order: 2 },
+  { label: 'Rejected', value: 'REJECTED', sort_order: 3 }
+]
+
 const main = async () => {
   const passwordHash = await bcrypt.hash('Admin123!', 10)
 
@@ -94,6 +134,30 @@ const main = async () => {
       })
 
       permissionIdsByKey.set(savedPermission.key, savedPermission.id)
+    }
+
+    for (const status of contractStatuses) {
+      await transaction.option.upsert({
+        where: { category_value: { category: 'CONTRACT_STATUS', value: status.value } },
+        update: { ...status, is_active: true },
+        create: { category: 'CONTRACT_STATUS', ...status, is_active: true }
+      })
+    }
+
+    for (const leaveType of leaveTypes) {
+      await transaction.option.upsert({
+        where: { category_value: { category: 'LEAVE_TYPE', value: leaveType.value } },
+        update: { ...leaveType, is_active: true },
+        create: { category: 'LEAVE_TYPE', ...leaveType, is_active: true }
+      })
+    }
+
+    for (const leaveStatus of leaveStatuses) {
+      await transaction.option.upsert({
+        where: { category_value: { category: 'LEAVE_STATUS', value: leaveStatus.value } },
+        update: { ...leaveStatus, is_active: true },
+        create: { category: 'LEAVE_STATUS', ...leaveStatus, is_active: true }
+      })
     }
 
     let superAdminRole

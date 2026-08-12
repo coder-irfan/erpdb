@@ -62,6 +62,7 @@ const normalizeStaff = staff => ({
       start_date: contract.start_date.toISOString(),
       end_date: contract.end_date?.toISOString() ?? null,
       document_url: contract.document_url,
+      content_html: contract.content_html,
       contract_type: contract.contract_type
         ? { id: contract.contract_type.id, label: contract.contract_type.label, value: contract.contract_type.value }
         : null,
@@ -474,7 +475,6 @@ export const getStaffById = async (id, payload = {}) => {
       select: {
         ...staffListSelect,
         contracts: {
-          where: { status: { value: 'ACTIVE' } },
           select: {
             id: true,
             contract_number: true,
@@ -483,6 +483,7 @@ export const getStaffById = async (id, payload = {}) => {
             start_date: true,
             end_date: true,
             document_url: true,
+            content_html: true,
             contract_type: { select: { id: true, label: true, value: true } },
             status: { select: { id: true, label: true, value: true } }
           },

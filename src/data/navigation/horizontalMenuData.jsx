@@ -167,14 +167,26 @@ const horizontalMenuData = dictionary => [
         permission: 'options:read'
       },
       {
-        label: dictionary.navigation.contractPolicies,
-        href: '/options/contracts/staff-policy',
-        permission: 'options:read'
-      },
-      {
-        label: dictionary.navigation.staffPositions,
-        href: '/options/hrm/positions',
-        permission: 'options:read'
+        label: dictionary.navigation.hrManagement,
+        icon: 'tabler-users-group',
+        permission: 'options:read',
+        children: [
+          {
+            label: dictionary.navigation.staffPositions,
+            href: '/options/hrm/positions',
+            permission: 'options:read'
+          },
+          {
+            label: dictionary.navigation.hrContractPolicies,
+            href: '/options/hrm/policies',
+            permission: 'options:read'
+          },
+          {
+            label: dictionary.navigation.leaveTypes,
+            href: '/options/hrm/leave-types',
+            permission: 'hrm_leave:read'
+          }
+        ]
       }
     ]
   },

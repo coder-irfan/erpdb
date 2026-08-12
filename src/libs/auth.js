@@ -22,6 +22,7 @@ const getUserAccess = userId =>
       locale: true,
       account_status: true,
       roles: {
+        where: { is_active: true },
         select: {
           name: true,
           role_permissions: {

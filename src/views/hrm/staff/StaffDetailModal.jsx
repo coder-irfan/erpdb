@@ -2,7 +2,10 @@
 
 import { useEffect, useState } from 'react'
 
+import Link from 'next/link'
+
 import Alert from '@mui/material/Alert'
+import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import Chip from '@mui/material/Chip'
@@ -12,13 +15,21 @@ import DialogContent from '@mui/material/DialogContent'
 import DialogTitle from '@mui/material/DialogTitle'
 import Divider from '@mui/material/Divider'
 import IconButton from '@mui/material/IconButton'
+import Tab from '@mui/material/Tab'
+import Tabs from '@mui/material/Tabs'
 import Typography from '@mui/material/Typography'
 
 import CustomAvatar from '@core/components/mui/Avatar'
 import { getStaffById } from '@/actions/hrm/staff'
+import TableEmptyStateRow from '@/components/table/TableEmptyStateRow'
+import { formatCurrency } from '@/utils/formatCurrency'
 import { getInitials } from '@/utils/getInitials'
 
-const STATUS_COLORS = { ACTIVE: 'success', INACTIVE: 'secondary', TERMINATED: 'error' }
+import StaffAttendanceHistory from './StaffAttendanceHistory'
+
+import tableStyles from '@core/styles/table.module.css'
+
+const STAFF_STATUS_COLORS = { ACTIVE: 'success', INACTIVE: 'secondary', TERMINATED: 'error' }
 const localeMap = { en: 'en-US', fa: 'fa-AF', ps: 'ps-AF' }
 
 const formatDate = (value, locale) => {
@@ -26,13 +37,6 @@ const formatDate = (value, locale) => {
 
   return new Intl.DateTimeFormat(localeMap[locale] || 'en-US', { dateStyle: 'medium' }).format(new Date(value))
 }
-
-const formatCurrency = (value, locale) =>
-  new Intl.NumberFormat(localeMap[locale] || 'en-US', {
-    style: 'currency',
-    currency: 'AFN',
-    maximumFractionDigits: 2
-  }).format(Number(value || 0))
 
 const DetailItem = ({ label, value }) => (
   <div>
@@ -49,11 +53,14 @@ const StaffDetailModal = ({ open, staffId, locale, dictionary, onClose }) => {
   const [staff, setStaff] = useState(null)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [activeTab, setActiveTab] = useState(0)
 
   useEffect(() => {
     if (!open || !staffId) return undefined
 
     let active = true
+
+    setActiveTab(0)
 
     const loadStaff = async () => {
       setLoading(true)
@@ -115,7 +122,7 @@ const StaffDetailModal = ({ open, staffId, locale, dictionary, onClose }) => {
                   <Chip
                     size='small'
                     variant='tonal'
-                    color={STATUS_COLORS[staff.status] || 'default'}
+                    color={STAFF_STATUS_COLORS[staff.status] || 'default'}
                     label={dictionary.status[staff.status] || staff.status}
                   />
                   {staff.user && <Chip size='small' variant='tonal' color='info' label={dictionary.details.linkedUser} />}
@@ -123,75 +130,104 @@ const StaffDetailModal = ({ open, staffId, locale, dictionary, onClose }) => {
               </div>
             </div>
 
-            <Divider />
-            <div>
-              <Typography variant='h6' className='mb-4'>
-                {dictionary.sections.personal}
-              </Typography>
-              <div className='grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3'>
-                <DetailItem label={dictionary.fields.fatherName} value={staff.father_name} />
-                <DetailItem label={dictionary.fields.email} value={staff.email} />
-                <DetailItem label={dictionary.fields.phone} value={staff.phone} />
-                <DetailItem label={dictionary.fields.tazkiraNo} value={staff.tazkira_no} />
-                <DetailItem label={dictionary.fields.address} value={staff.address} />
-                <DetailItem label={dictionary.fields.educations} value={staff.educations} />
-              </div>
-            </div>
+            <Tabs value={activeTab} onChange={(_, value) => setActiveTab(value)} variant='scrollable'>
+              <Tab icon={<i className='tabler-user' />} iconPosition='start' label={dictionary.details.profileTab} />
+              <Tab
+                icon={<i className='tabler-file-certificate' />}
+                iconPosition='start'
+                label={`${dictionary.details.contracts} (${staff.contracts.length})`}
+              />
+              <Tab icon={<i className='tabler-calendar-time' />} iconPosition='start' label={dictionary.details.attendanceTab} />
+            </Tabs>
 
-            <Divider />
-            <div>
-              <Typography variant='h6' className='mb-4'>
-                {dictionary.sections.employment}
-              </Typography>
-              <div className='grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3'>
-                <DetailItem label={dictionary.fields.position} value={staff.position} />
-                <DetailItem label={dictionary.fields.salary} value={formatCurrency(staff.salary, locale)} />
-                <DetailItem label={dictionary.fields.joinDate} value={formatDate(staff.join_date, locale)} />
-                <DetailItem label={dictionary.fields.contractPeriod} value={staff.contract_period} />
-                <DetailItem label={dictionary.fields.systemUser} value={staff.user?.name || staff.user?.email} />
-                <DetailItem label={dictionary.details.createdAt} value={formatDate(staff.created_at, locale)} />
-              </div>
-            </div>
-
-            <Divider />
-            <div>
-              <Typography variant='h6' className='mb-4'>
-                {dictionary.sections.guarantor}
-              </Typography>
-              <div className='grid grid-cols-1 gap-5 sm:grid-cols-3'>
-                <DetailItem label={dictionary.fields.guarantorName} value={staff.guarantor_name} />
-                <DetailItem label={dictionary.fields.guarantorPhone} value={staff.guarantor_phone} />
-                <DetailItem label={dictionary.fields.guarantorLicense} value={staff.guarantor_license} />
-              </div>
-            </div>
-
-            <Divider />
-            <div>
-              <Typography variant='h6' className='mb-4'>
-                {dictionary.details.activeContracts}
-              </Typography>
-              {staff.contracts.length === 0 ? (
-                <Typography color='text.secondary'>{dictionary.details.noActiveContracts}</Typography>
-              ) : (
-                <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-                  {staff.contracts.map(contract => (
-                    <Card key={contract.id} variant='outlined'>
-                      <CardContent className='flex flex-col gap-2'>
-                        <div className='flex items-start justify-between gap-3'>
-                          <Typography variant='h6'>{contract.contract_number}</Typography>
-                          <Chip size='small' color='success' variant='tonal' label={contract.status?.label} />
-                        </div>
-                        <Typography>{contract.position_title}</Typography>
-                        <Typography color='text.secondary'>
-                          {`${formatDate(contract.start_date, locale)} — ${formatDate(contract.end_date, locale)}`}
-                        </Typography>
-                        <Typography className='font-medium'>{formatCurrency(contract.base_salary, locale)}</Typography>
-                      </CardContent>
-                    </Card>
-                  ))}
+            {activeTab === 0 ? (
+              <div className='flex flex-col gap-6'>
+                <Divider />
+                <div>
+                  <Typography variant='h6' className='mb-4'>{dictionary.sections.personal}</Typography>
+                  <div className='grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3'>
+                    <DetailItem label={dictionary.fields.fatherName} value={staff.father_name} />
+                    <DetailItem label={dictionary.fields.email} value={staff.email} />
+                    <DetailItem label={dictionary.fields.phone} value={staff.phone} />
+                    <DetailItem label={dictionary.fields.tazkiraNo} value={staff.tazkira_no} />
+                    <DetailItem label={dictionary.fields.address} value={staff.address} />
+                    <DetailItem label={dictionary.fields.educations} value={staff.educations} />
+                  </div>
                 </div>
-              )}
-            </div>
+                <Divider />
+                <div>
+                  <Typography variant='h6' className='mb-4'>{dictionary.sections.employment}</Typography>
+                  <div className='grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3'>
+                    <DetailItem label={dictionary.fields.position} value={staff.position} />
+                    <DetailItem label={dictionary.fields.salary} value={formatCurrency(staff.salary, locale)} />
+                    <DetailItem label={dictionary.fields.joinDate} value={formatDate(staff.join_date, locale)} />
+                    <DetailItem label={dictionary.fields.contractPeriod} value={staff.contract_period} />
+                    <DetailItem label={dictionary.fields.systemUser} value={staff.user?.name || staff.user?.email} />
+                    <DetailItem label={dictionary.details.createdAt} value={formatDate(staff.created_at, locale)} />
+                  </div>
+                </div>
+                <Divider />
+                <div>
+                  <Typography variant='h6' className='mb-4'>{dictionary.sections.guarantor}</Typography>
+                  <div className='grid grid-cols-1 gap-5 sm:grid-cols-3'>
+                    <DetailItem label={dictionary.fields.guarantorName} value={staff.guarantor_name} />
+                    <DetailItem label={dictionary.fields.guarantorPhone} value={staff.guarantor_phone} />
+                    <DetailItem label={dictionary.fields.guarantorLicense} value={staff.guarantor_license} />
+                  </div>
+                </div>
+              </div>
+            ) : activeTab === 1 && staff.contracts.length === 0 ? (
+              <div className='overflow-hidden rounded border border-divider'>
+                <table className={tableStyles.table}>
+                  <tbody>
+                    <TableEmptyStateRow
+                      colSpan={1}
+                      icon='tabler-file-certificate'
+                      title={dictionary.details.noContractsTitle}
+                      description={dictionary.details.noContracts}
+                    />
+                  </tbody>
+                </table>
+              </div>
+            ) : activeTab === 1 ? (
+              <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+                {staff.contracts.map(contract => (
+                  <Card key={contract.id} variant='outlined'>
+                    <CardContent className='flex flex-col gap-2'>
+                      <div className='flex items-start justify-between gap-3'>
+                        <Typography variant='h6'>{contract.contract_number}</Typography>
+                        <Chip
+                          size='small'
+                          variant='tonal'
+                          label={contract.status?.label}
+                        />
+                      </div>
+                      <Typography>{contract.position_title}</Typography>
+                      <Typography color='text.secondary'>
+                        {`${formatDate(contract.start_date, locale)} — ${formatDate(contract.end_date, locale)}`}
+                      </Typography>
+                      <Typography className='font-medium'>{formatCurrency(contract.base_salary, locale)}</Typography>
+                      <Link
+                        href={`/${locale}/hrm/contracts/${contract.id}/print`}
+                        target='_blank'
+                        rel='noopener noreferrer'
+                      >
+                        <Button component='span' variant='tonal' size='small' startIcon={<i className='tabler-printer' />}>
+                          {dictionary.details.printContract}
+                        </Button>
+                      </Link>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <StaffAttendanceHistory
+                active={activeTab === 2}
+                staffId={staff.id}
+                locale={locale}
+                dictionary={{ attendance: dictionary.details.attendance, messages: dictionary.messages }}
+              />
+            )}
           </div>
         ) : null}
       </DialogContent>

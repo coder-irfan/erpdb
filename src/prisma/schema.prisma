@@ -89,6 +89,7 @@ model Role {
   display_name String
   description  String?  @db.Text
   is_system    Boolean  @default(false)
+  is_active    Boolean  @default(true)
   created_at   DateTime @default(now())
   updated_at   DateTime @updatedAt
 
@@ -196,6 +197,7 @@ model HrmStaffContract {
   start_date       DateTime
   end_date         DateTime?
   document_url     String?   @db.Text
+  content_html     String?   @db.Text
   status_id        String
   created_at       DateTime  @default(now())
   updated_at       DateTime  @updatedAt
@@ -206,6 +208,7 @@ model HrmStaffContract {
   status        Option   @relation("ContractStatus", fields: [status_id], references: [id])
 
   @@index([staff_id, status_id])
+  @@index([contract_type_id, status_id])
 }
 
 model HrmStaffLeave {
@@ -228,6 +231,8 @@ model HrmStaffLeave {
   status      Option    @relation("LeaveStatus", fields: [status_id], references: [id])
 
   @@index([staff_id, start_date])
+  @@index([status_id, start_date, end_date])
+  @@index([leave_type_id, start_date])
 }
 
 model HrmStaffTimesheet {
@@ -247,7 +252,9 @@ model HrmStaffTimesheet {
   staff   HrmStaff @relation(fields: [staff_id], references: [id], onDelete: Cascade)
   project Project? @relation(fields: [project_id], references: [id], onDelete: SetNull)
 
+  @@unique([staff_id, date])
   @@index([staff_id, date])
+  @@index([date, status])
 }
 
 // CRM
@@ -600,17 +607,17 @@ model Inventory {
 
 // OPTION
 model Option {
-  id         String   @id @default(cuid())
-  category   String // e.g., LEAD_STATUS, PROJECT_PRIORITY, EXPENSE_TYPE
-  label      String
-  value      String
+  id          String   @id @default(cuid())
+  category    String // e.g., LEAD_STATUS, PROJECT_PRIORITY, EXPENSE_TYPE
+  label       String
+  value       String
   description String?  @db.Text
-  color_code String?
-  sort_order Int      @default(0)
-  is_active  Boolean  @default(true)
-  is_default Boolean  @default(false)
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
+  color_code  String?
+  sort_order  Int      @default(0)
+  is_active   Boolean  @default(true)
+  is_default  Boolean  @default(false)
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
 
   // HRM Relations
   contract_types    HrmStaffContract[] @relation("ContractType")
@@ -652,19 +659,28 @@ enum SetupScope {
 }
 
 model Setup {
-  id                String     @id @default(cuid())
-  scope             SetupScope @unique @default(GLOBAL)
-  app_name          String     @default("ERP System")
-  company_name      String
-  company_logo      String?    @db.Text
-  currency_code     String     @default("AFN")
-  currency_symbol   String     @default("؋")
-  timezone          String     @default("Asia/Kabul")
-  date_format       String     @default("YYYY-MM-DD")
-  fiscal_year_start String     @default("01-01") // MM-DD format
-  default_tax_rate  Decimal    @default(0.00) @db.Decimal(5, 2)
-  created_at        DateTime   @default(now())
-  updated_at        DateTime   @updatedAt
+  id                 String     @id @default(cuid())
+  scope              SetupScope @unique @default(GLOBAL)
+  app_name           String     @default("ERP System")
+  company_name       String
+  company_logo       String?    @db.Text
+  company_email      String?
+  company_phone      String?
+  company_address    String?    @db.Text
+  company_tax_id     String?
+  signatory_name     String?
+  signatory_title    String?
+  signatory_stamp    String?    @db.Text
+  currency_code      String     @default("AFN")
+  currency_symbol    String     @default("؋")
+  timezone           String     @default("Asia/Kabul")
+  date_format        String     @default("YYYY-MM-DD")
+  fiscal_year_start  String     @default("01-01") // MM-DD format
+  default_work_start String     @default("08:30")
+  default_work_end   String     @default("17:30")
+  default_tax_rate   Decimal    @default(0.00) @db.Decimal(5, 2)
+  created_at         DateTime   @default(now())
+  updated_at         DateTime   @updatedAt
 }
 
 model SystemSetting {

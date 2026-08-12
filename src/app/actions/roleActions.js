@@ -42,6 +42,7 @@ const normalizeRole = role => ({
   displayName: role.display_name,
   description: role.description,
   isSystem: role.is_system,
+  isActive: role.is_active,
   userCount: role._count?.users ?? 0,
   permissions: role.role_permissions?.map(item => normalizePermission(item.permission)) ?? [],
   createdAt: role.created_at.toISOString(),
@@ -54,6 +55,7 @@ const roleDetailsSelect = {
   display_name: true,
   description: true,
   is_system: true,
+  is_active: true,
   created_at: true,
   updated_at: true,
   role_permissions: {
@@ -233,7 +235,8 @@ export const createRole = async payload => {
           name: validation.output.name,
           display_name: validation.output.displayName,
           description: validation.output.description || null,
-          is_system: false
+          is_system: false,
+          is_active: true
         },
         select: { id: true }
       })
@@ -266,5 +269,57 @@ export const createRole = async payload => {
     return { success: true, data: normalizeRole(createdRole), message: context.translations.messages.roleCreated }
   } catch {
     return { success: false, code: 'ROLE_CREATE_FAILED', error: context.translations.messages.operationFailed }
+  }
+}
+
+export const toggleRoleStatus = async payload => {
+  const context = await getActionContext(payload)
+
+  if (!context.authorized) return { success: false, code: context.code, error: context.error }
+
+  const roleId = typeof payload?.roleId === 'string' ? payload.roleId.trim() : ''
+  const isActive = payload?.isActive
+
+  if (!roleId || typeof isActive !== 'boolean') {
+    return { success: false, code: 'INVALID_ROLE_STATUS', error: context.translations.messages.invalidRoleStatus }
+  }
+
+  try {
+    const role = await prisma.role.findUnique({
+      where: { id: roleId },
+      select: { id: true, name: true }
+    })
+
+    if (!role) {
+      return { success: false, code: 'ROLE_NOT_FOUND', error: context.translations.messages.roleNotFound }
+    }
+
+    if (role.name === 'super_admin') {
+      return { success: false, code: 'PROTECTED_ROLE', error: context.translations.messages.protectedRole }
+    }
+
+    await prisma.$transaction([
+      prisma.role.update({ where: { id: role.id }, data: { is_active: isActive } }),
+      prisma.auditLog.create({
+        data: {
+          user_id: context.session.user.id,
+          action: 'ROLE_STATUS_UPDATED',
+          module: 'SETTINGS',
+          details: { roleId: role.id, roleName: role.name, isActive }
+        }
+      })
+    ])
+
+    const updatedRole = await prisma.role.findUnique({ where: { id: role.id }, select: roleDetailsSelect })
+
+    revalidateRolesPage()
+
+    return {
+      success: true,
+      data: normalizeRole(updatedRole),
+      message: isActive ? context.translations.messages.roleActivated : context.translations.messages.roleDeactivated
+    }
+  } catch {
+    return { success: false, code: 'ROLE_STATUS_FAILED', error: context.translations.messages.operationFailed }
   }
 }

@@ -132,6 +132,9 @@
     "lookupOptions": "د مراجعې اختیارونه",
     "contractPolicies": "د قرارداد پالیسۍ",
     "staffPositions": "د کارکوونکو بستونه",
+    "hrManagement": "د بشري سرچینو مدیریت",
+    "hrContractPolicies": "د بشري سرچینو او قرارداد پالیسۍ",
+    "leaveTypes": "د رخصتۍ ډولونه",
     "setupSettings": "سیسټم او امستنې",
     "companySetup": "د شرکت امستنې",
     "systemAuditLogs": "د سیسټم د تفتیش ثبتونه"
@@ -259,6 +262,13 @@
   "setupBranding": {
     "title": "برانډ او نښانونه",
     "description": "هغه نښانونه اداره کړئ چې د ERP په مخپاڼه کې ښودل کېږي.",
+    "letterheadTitle": "د شرکت رسمي سرلیک او برانډ",
+    "letterheadDescription": "د رسمي اسنادو لپاره د شرکت قانوني هویت او مجاز لاسلیک تنظیم کړئ.",
+    "workHoursTitle": "اصلي کاري ساعتونه",
+    "workHoursDescription": "دا وختونه د حاضرۍ د ننوتلو او وتلو په برخو کې په اتومات ډول ډکېږي.",
+    "companyLogo": "د شرکت د رسمي پاڼې نښان",
+    "signatoryStamp": "مجاز لاسلیک / مهر",
+    "saveAll": "د شرکت امستنې خوندي کړئ",
     "lightLogo": "د روښانه حالت نښان",
     "lightLogoDescription": "په روښانه شالیدونو او روښانه حالت کې ښودل کېږي.",
     "darkLogo": "د تیاره حالت نښان",
@@ -273,6 +283,22 @@
     "saved": "د برانډ امستنې په بریالیتوب سره خوندي شوې.",
     "saveFailed": "د برانډ امستنې خوندي نه شوې. مهرباني وکړئ بیا هڅه وکړئ.",
     "invalidLogoPath": "د نښان او براوزر نښان سم پورته شوي فایلونه وټاکئ.",
+    "fields": {
+      "appName": "د پروګرام نوم",
+      "companyName": "د شرکت قانوني نوم",
+      "companyEmail": "د شرکت برېښنالیک",
+      "companyPhone": "د شرکت ټیلیفون",
+      "companyAddress": "د شرکت پته",
+      "companyTaxId": "جواز / مالیاتي شمېره",
+      "signatoryName": "د مجاز لاسلیک کوونکي نوم",
+      "signatoryTitle": "د مجاز لاسلیک کوونکي دنده",
+      "workStart": "د کار پیل وخت",
+      "workEnd": "د کار پای وخت"
+    },
+    "validation": {
+      "companyNameRequired": "د شرکت قانوني نوم اړین دی.",
+      "workEndAfterStart": "د کار پای وخت باید د پیل له وخت وروسته وي."
+    },
     "upload": {
       "drop": "انځور دلته راکش او پرېږدئ، یا فایل وټاکئ.",
       "browse": "انځور وټاکئ",
@@ -288,6 +314,76 @@
       "unauthenticated": "د فایل پورته کولو مخکې ننوځئ.",
       "forbidden": "تاسو د دې فایل د پورته کولو اجازه نه لرئ.",
       "previewAlt": "د پورته شوي انځور مخکتنه"
+    }
+  },
+  "hrmTimesheets": {
+    "title": "ورځنۍ حاضري او وختپاڼې", "description": "ورځنۍ حاضري ثبت او کاري ساعتونه په اتومات ډول محاسبه کړئ.",
+    "date": { "today": "نن", "date": "د حاضرۍ نېټه", "previous": "مخکینۍ ورځ", "next": "بله ورځ", "yesterday": "پرون", "custom": "ټاکلې نېټه" },
+    "summary": { "present": "ټول حاضر", "absent": "ټول غیر حاضر", "leave": "ټولې رخصتۍ", "unmarked": "ناثبت شوي" },
+    "fields": { "date": "د حاضرۍ نېټه", "staff": "کارکوونکی", "position": "دنده", "status": "حالت", "checkIn": "ننوتل", "checkOut": "وتل", "hours": "کاري ساعتونه", "project": "تړلې پروژه", "notes": "یادښتونه" },
+    "status": { "PRESENT": "حاضر", "ABSENT": "غیر حاضر", "LEAVE": "رخصتي" },
+    "filters": { "search": "د کارکوونکي لټون", "searchPlaceholder": "د کارکوونکي نوم ولټوئ", "status": "حالت", "allStatuses": "ټول حالتونه" },
+    "actions": { "mark": "حاضري ثبتول", "bulkAbsent": "پاتې کسان غیر حاضر ثبتول", "export": "CSV ایستل", "print": "چاپ", "edit": "سمول", "delete": "ړنګول", "save": "حاضري خوندي کول", "saveNext": "خوندي او بل کس", "saveChanges": "بدلونونه خوندي کول", "saving": "خوندي کېږي...", "cancel": "لغوه کول" },
+    "table": { "title": "ورځنی حاضري ریکارډ", "description": "د ټاکلې نېټې د حاضرۍ ریکارډونه.", "actions": "کړنې", "emptyTitle": "د حاضرۍ ریکارډ نشته", "emptyDescription": "د یوه فعال کارکوونکي حاضري ثبت کړئ." },
+    "drawer": { "title": "ورځنۍ حاضري ثبتول", "editTitle": "حاضري سمول", "description": "یوازې د دې نېټې ناثبت شوي کارکوونکي ښودل کېږي." },
+    "placeholders": { "selectStaff": "پاتې کارکوونکی وټاکئ", "noProject": "پروژه نشته" }, "hoursShort": "ساعت",
+    "export": { "columns": ["د کارکوونکي نوم", "دنده", "حالت", "ننوتل", "وتل", "ساعتونه", "یادښتونه"] },
+    "messages": { "created": "حاضري په بریالیتوب خوندي شوه.", "updated": "حاضري په بریالیتوب تازه شوه.", "deleted": "د حاضرۍ ریکارډ ړنګ شو.", "bulkAbsent": "{count} پاتې کارکوونکي غیر حاضر ثبت شول.", "noRemainingStaff": "د ټولو فعالو کارکوونکو حاضري ثبت شوې.", "duplicate": "د دې کارکوونکي حاضري په دې نېټه مخکې ثبت شوې.", "staffNotFound": "ټاکل شوی فعال کارکوونکی ونه موندل شو.", "projectNotFound": "ټاکل شوې پروژه ونه موندل شوه.", "notFound": "د حاضرۍ ریکارډ ونه موندل شو.", "loadFailed": "د حاضرۍ ریکارډونه پورته نه شول.", "operationFailed": "کړنه بشپړه نه شوه. بیا هڅه وکړئ.", "unauthenticated": "حاضرۍ ته د لاسرسي لپاره ننوځئ.", "forbidden": "تاسو حاضرۍ ته د لاسرسي اجازه نه لرئ.", "deleteTitle": "د حاضرۍ ریکارډ ړنګول", "deleteDescription": "ایا ډاډه یاست چې دا د حاضرۍ ریکارډ ړنګول غواړئ؟ دا کړنه بېرته نه راګرځي." },
+    "validation": { "invalidSubmission": "نښه شوي ځایونه وګورئ.", "required": "دا ځای اړین دی.", "statusInvalid": "سم حالت وټاکئ.", "dateInvalid": "سمه نېټه وټاکئ.", "timeInvalid": "سم وخت ولیکئ.", "checkoutBeforeCheckin": "د وتلو وخت د ننوتلو څخه مخکې نه شي کېدای.", "notesTooLong": "یادښتونه باید له ۲۰۰۰ تورو زیات نه وي." }
+  },
+  "hrmContracts": {
+    "title": "د کارکوونکو قراردادونه",
+    "description": "د پالیسۍ له ثابت نقل سره د کار قراردادونه جوړ، اداره او چاپ کړئ.",
+    "fields": {
+      "contractNumber": "د قرارداد شمېره", "staffMember": "کارکوونکی", "contractType": "د قرارداد پالیسي",
+      "position": "دنده", "baseSalary": "منل شوی معاش", "startDate": "د پیل نېټه", "endDate": "د پای نېټه",
+      "status": "حالت", "email": "برېښنالیک", "phone": "ټیلیفون", "tazkiraNo": "د تذکرې شمېره"
+    },
+    "filters": {
+      "search": "د قراردادونو لټون", "searchPlaceholder": "د کارکوونکي نوم یا د قرارداد شمېره ولټوئ",
+      "status": "حالت", "allStatuses": "ټول حالتونه", "contractType": "د قرارداد پالیسي",
+      "allContractTypes": "د قرارداد ټولې پالیسۍ"
+    },
+    "actions": {
+      "add": "قرارداد جوړول", "addFirst": "لومړی قرارداد جوړول", "view": "تفصیل کتل",
+      "print": "قرارداد چاپول", "printSavePdf": "چاپ / PDF خوندي کول", "edit": "سمول", "create": "قرارداد جوړول",
+      "saveChanges": "بدلونونه خوندي کول", "saving": "خوندي کېږي...", "cancel": "لغوه کول", "close": "تړل",
+      "back": "قراردادونو ته ستنېدل"
+    },
+    "table": {
+      "contractNumber": "د قرارداد شمېره", "staff": "کارکوونکی", "position": "دنده", "contractType": "د قرارداد پالیسي",
+      "salary": "بنسټیز معاش", "period": "د قرارداد موده", "status": "حالت", "actions": "کړنې",
+      "emptyTitle": "د کارکوونکي قرارداد ونه موندل شو", "emptyDescription": "لومړی کاري قرارداد له یوې فعالې پالیسۍ جوړ کړئ.",
+      "rowsPerPage": "په پاڼه کې کتارونه:", "of": "له"
+    },
+    "status": { "DRAFT": "مسوده", "ACTIVE": "فعال", "EXPIRED": "پای ته رسېدلی", "TERMINATED": "ختم شوی" },
+    "drawer": {
+      "addTitle": "د کارکوونکي قرارداد جوړول", "editTitle": "د کارکوونکي قرارداد سمول",
+      "description": "کارکوونکی او پالیسي وټاکئ؛ قانوني سند د خوندي کولو پر مهال جوړېږي.",
+      "templateHelpTitle": "په اتومات ډول ډکېدونکي ځایونه",
+      "templateHelpSubtitle": "کله چې قرارداد جوړېږي، دا ځایونه د کارکوونکي له پروفایل څخه په اتومات ډول ډکېږي:",
+      "templateFields": { "staffName": "د کارکوونکي نوم", "tazkira": "تذکره / ملي پېژندپاڼه", "position": "د دندې نوم", "salary": "اصلي معاش", "startDate": "د پیل نېټه", "companyName": "د شرکت نوم" }
+    },
+    "placeholders": { "selectStaff": "کارکوونکی وټاکئ", "selectPolicy": "د قرارداد پالیسي وټاکئ", "selectStatus": "د قرارداد حالت وټاکئ" },
+    "details": { "title": "د قرارداد تفصیل", "documentSnapshot": "جوړ شوی قراردادي سند", "noContent": "د قرارداد د سند منځپانګه نشته." },
+    "print": {
+      "title": "د استخدام قرارداد", "taxId": "جواز / مالیاتي شمېره", "employeeSignature": "د کارکوونکي لاسلیک",
+      "employerSignature": "کار ورکوونکی / مجاز لاسلیک کوونکی", "signatoryStamp": "مجاز لاسلیک یا مهر", "date": "نېټه"
+    },
+    "messages": {
+      "created": "د کارکوونکي قرارداد په بریالیتوب جوړ شو.", "updated": "د کارکوونکي قرارداد په بریالیتوب تازه شو.",
+      "statusUpdated": "د قرارداد حالت په بریالیتوب تازه شو.", "loadFailed": "د کارکوونکو قراردادونه پورته نه شول.",
+      "optionsLoadFailed": "د قرارداد د فورم غوراوي پورته نه شول.", "notFound": "ټاکل شوی قرارداد ونه موندل شو.",
+      "staffNotFound": "ټاکل شوی کارکوونکی ونه موندل شو.", "policyNotFound": "ټاکل شوې قراردادي پالیسي ونه موندل شوه.",
+      "statusNotFound": "ټاکل شوی قراردادي حالت ونه موندل شو.", "numberConflict": "د قرارداد د شمېرې ټکر رامنځته شو. بیا یې ولېږئ.",
+      "operationFailed": "کړنه بشپړه نه شوه. مهرباني وکړئ بیا هڅه وکړئ.", "unauthenticated": "قراردادونو ته د لاسرسي لپاره ننوځئ.",
+      "forbidden": "تاسو د کارکوونکو قراردادونو ته د لاسرسي اجازه نه لرئ."
+    },
+    "validation": {
+      "invalidSubmission": "نښه شوي ځایونه وګورئ او بیا هڅه وکړئ.", "required": "دا ځای اړین دی.",
+      "valueTooLong": "دا ارزښت ډېر اوږد دی.", "salaryInvalid": "سم معاش ولیکئ.",
+      "salaryPositive": "معاش باید له صفر څخه زیات وي.", "dateInvalid": "سمه نېټه ولیکئ.",
+      "endDateBeforeStart": "د پای نېټه د پیل له نېټې مخکې نه شي کېدای.", "statusInvalid": "د قرارداد سم حالت وټاکئ."
     }
   },
   "hrmStaff": {
@@ -343,6 +439,7 @@
       "saveChanges": "بدلونونه خوندي کول",
       "saving": "خوندي کېږي...",
       "addPosition": "نوی زیاتول",
+      "selectPosition": "دنده وټاکئ...",
       "loadingPositions": "بستونه پورته کېږي...",
       "noPositions": "فعال بستونه نشته",
       "cancel": "لغوه کول",
@@ -377,8 +474,13 @@
       "description": "د کارکوونکي د شخصي او دندې معلوماتو بشپړ لنډیز.",
       "linkedUser": "سیسټمي حساب تړل شوی",
       "createdAt": "د ریکارډ جوړېدو نېټه",
-      "activeContracts": "فعال قراردادونه",
-      "noActiveContracts": "له دې کارکوونکي سره فعال قرارداد نشته."
+      "profileTab": "پروفایل",
+      "contracts": "قراردادونه",
+      "attendanceTab": "حاضري او وختپاڼې",
+      "attendance": { "month": "میاشت", "date": "نېټه", "statusLabel": "حالت", "checkIn": "د ننوتلو وخت", "checkOut": "د وتلو وخت", "hours": "ساعتونه", "totalHours": "ټول ساعتونه", "emptyTitle": "د حاضرۍ تاریخ نشته", "emptyDescription": "په ټاکل شوې میاشت کې د دې کارکوونکي حاضري نه ده ثبت شوې.", "status": { "PRESENT": "حاضر", "ABSENT": "غیر حاضر", "LEAVE": "رخصتي" } },
+      "noContractsTitle": "د قرارداد تاریخ ونه موندل شو",
+      "noContracts": "له دې کارکوونکي سره د قرارداد تاریخ نشته.",
+      "printContract": "قرارداد چاپول"
     },
     "messages": {
       "created": "کارکوونکی په بریالیتوب سره جوړ شو.",
@@ -408,6 +510,23 @@
       "userInvalid": "یو سم سیسټمي کارن وټاکئ."
     }
   },
+  "hrmLeaves": {
+    "title": "د کارکوونکو د رخصتۍ غوښتنې",
+    "description": "غوښتنې وڅېړئ، رخصتۍ تعقیب او د ورځني تایید بهیر اداره کړئ.",
+    "summary": { "pending": "د ارزونې په تمه", "onLeaveToday": "نن په رخصتۍ", "monthlyDays": "د میاشتې رخصتۍ ورځې" },
+    "filters": { "staff": "کارکوونکی", "allStaff": "ټول کارکوونکي", "leaveType": "د رخصتۍ ډول", "allLeaveTypes": "د رخصتۍ ټول ډولونه", "status": "حالت", "allStatuses": "ټول حالتونه" },
+    "table": { "staff": "کارکوونکی", "leaveType": "د رخصتۍ ډول", "duration": "موده / د نېټو واټن", "reason": "لامل", "status": "حالت", "approvedBy": "تاییدوونکی", "actions": "کړنې", "days": "{count} ورځې" },
+    "drawer": { "title": "د رخصتۍ غوښتنه", "editTitle": "د رخصتۍ غوښتنه سمول", "description": "د غوښتنې معلومات ولیکئ؛ موده په اوتومات ډول حسابېږي.", "calculatedDays": "حساب شوې ورځې" },
+    "fields": { "staff": "کارکوونکی", "leaveType": "د رخصتۍ ډول", "startDate": "د پیل نېټه", "endDate": "د پای نېټه", "reason": "لامل / یادښت", "initialStatus": "لومړنی حالت" },
+    "placeholders": { "selectStaff": "کارکوونکی وټاکئ...", "selectLeaveType": "د رخصتۍ ډول وټاکئ...", "reason": "د رخصتۍ غوښتنې لامل ولیکئ" },
+    "status": { "PENDING": "په تمه", "APPROVED": "تایید شوی", "REJECTED": "رد شوی" },
+    "actions": { "requestLeave": "د رخصتۍ غوښتنه", "approve": "تایید", "reject": "رد", "edit": "سمول", "delete": "ړنګول", "cancel": "لغوه کول", "close": "تړل", "submit": "غوښتنه ثبتول", "saveChanges": "بدلونونه خوندي کول", "saving": "خوندي کېږي..." },
+    "empty": { "title": "د رخصتۍ غوښتنه ونه موندل شوه", "description": "له ټاکل شویو فلټرونو سره کومه غوښتنه برابره نه ده.", "action": "لومړۍ غوښتنه جوړول" },
+    "delete": { "title": "د رخصتۍ غوښتنه ړنګول", "description": "ایا ډاډه یاست چې دا غوښتنه ړنګوئ؟ دا کړنه بېرته نه راګرځي." },
+    "pagination": { "rowsPerPage": "په پاڼه کې کتارونه:", "of": "له" },
+    "messages": { "created": "د رخصتۍ غوښتنه په بریالیتوب ثبت شوه.", "updated": "غوښتنه په بریالیتوب تازه شوه.", "approved": "غوښتنه تایید او حاضري همغږې شوه.", "rejected": "غوښتنه په بریالیتوب رد شوه.", "deleted": "غوښتنه په بریالیتوب ړنګه شوه.", "loadFailed": "د رخصتۍ غوښتنې پورته نه شوې.", "operationFailed": "کړنه بشپړه نه شوه. بیا هڅه وکړئ.", "unauthenticated": "د لاسرسي لپاره ننوځئ.", "forbidden": "تاسو د دې غوښتنې د ادارې اجازه نه لرئ.", "staffProfileRequired": "د رخصتۍ غوښتنې لپاره حساب باید د کارکوونکي له پروفایل سره تړلی وي.", "staffNotFound": "ټاکل شوی کارکوونکی ونه موندل شو.", "leaveTypeNotFound": "د رخصتۍ فعال ډول وټاکئ.", "statusNotFound": "د رخصتۍ حالتونه نه دي تنظیم شوي؛ د ډیټابیس Seed وچلوئ.", "notFound": "ټاکل شوې غوښتنه ونه موندل شوه.", "invalidRelations": "یو یا ډېر ټاکل شوي ارزښتونه ناسم دي." },
+    "validation": { "required": "دا ځای اړین دی.", "dateInvalid": "سمه نېټه وټاکئ.", "dateRangeInvalid": "د پای نېټه باید د پیل له نېټې سره برابره یا وروسته وي.", "reasonTooLong": "لامل باید تر ۲۰۰۰ تورو زیات نه وي.", "statusInvalid": "تایید یا رد وټاکئ." }
+  },
   "optionsManagement": {
     "common": {
       "search": "لټون",
@@ -416,11 +535,13 @@
       "inactive": "غیرفعال",
       "createdDate": "د جوړېدو نېټه",
       "actions": "کړنې",
+      "view": "سند کتل",
       "edit": "سمول",
       "activate": "فعالول",
       "deactivate": "غیرفعالول",
       "delete": "ړنګول",
       "cancel": "لغوه کول",
+      "close": "تړل",
       "create": "جوړول",
       "saveChanges": "بدلونونه خوندي کول",
       "saving": "خوندي کېږي...",
@@ -429,14 +550,38 @@
       "noDescription": "توضیحات نشته"
     },
     "editor": {
+      "paragraph": "پراګراف",
+      "fontFamily": "د لیک ډول",
+      "defaultFont": "اصلي لیک",
+      "fontSize": "د متن کچه",
+      "defaultSize": "کچه",
+      "lineHeight": "د کرښې واټن",
       "bold": "ډبل",
       "italic": "کوږ",
+      "strike": "کرښه پرې ایستل",
+      "textColor": "د متن رنګ",
+      "highlightColor": "د روښانه کولو رنګ",
       "heading": "سرلیک",
       "bulletList": "نښان لرونکی لېست",
       "orderedList": "شمېرل شوی لېست",
       "alignLeft": "چپ برابرول",
       "alignCenter": "منځ ته برابرول",
-      "alignRight": "ښي برابرول"
+      "alignRight": "ښي برابرول",
+      "alignJustify": "دواړو خواوو ته برابرول",
+      "indent": "تش ځای زیاتول",
+      "outdent": "تش ځای کمول",
+      "blockquote": "اقتباس",
+      "horizontalRule": "افقي کرښه",
+      "codeBlock": "د کوډ برخه",
+      "insertTable": "جدول زیاتول",
+      "addColumn": "ستون زیاتول",
+      "deleteColumn": "ستون ړنګول",
+      "addRow": "کتار زیاتول",
+      "deleteRow": "کتار ړنګول",
+      "deleteTable": "جدول ړنګول",
+      "undo": "بېرته ګرځول",
+      "redo": "بیا کول",
+      "sourceCode": "HTML سرچینه"
     },
     "contractPolicies": {
       "title": "د قرارداد پالیسۍ",
@@ -445,6 +590,7 @@
       "addFirst": "لومړۍ د قرارداد پالیسي زیاتول",
       "addTitle": "د قرارداد پالیسي جوړول",
       "editTitle": "د قرارداد پالیسي سمول",
+      "previewTitle": "د پالیسۍ د رسمي سند مخکتنه",
       "searchPlaceholder": "د پالیسۍ په سرلیک یا توضیحاتو کې لټون",
       "emptyTitle": "د قرارداد پالیسۍ ونه موندل شوې",
       "emptyDescription": "د قرارداد د شرایطو د معیاري کولو لپاره لومړۍ پالیسي جوړه کړئ.",
@@ -481,6 +627,10 @@
         "description": "توضیحات"
       }
     },
+    "leaveTypes": {
+      "title": "د رخصتۍ ډولونه", "description": "د کارکوونکو په غوښتنلیکونو کې د رخصتۍ فعال ډولونه اداره کړئ.", "add": "د رخصتۍ ډول زیاتول", "addFirst": "لومړی ډول زیاتول", "addTitle": "د رخصتۍ ډول جوړول", "editTitle": "د رخصتۍ ډول سمول", "searchPlaceholder": "د رخصتۍ ډول یا توضیحات ولټوئ", "emptyTitle": "د رخصتۍ ډول ونه موندل شو", "emptyDescription": "کلنۍ، ناروغۍ، عادي، بې معاشه یا بل منظور شوی ډول زیات کړئ.", "deleteTitle": "د رخصتۍ ډول ړنګول", "deleteDescription": "«{name}» ړنګ شي؟ دا کړنه بېرته نه راګرځي.",
+      "fields": { "name": "د رخصتۍ د ډول نوم", "namePlaceholder": "لکه کلنۍ رخصتي", "description": "توضیحات", "descriptionPlaceholder": "شرایط، بیلانس یا داخلي لارښود" }, "table": { "title": "د رخصتۍ ډول", "description": "توضیحات" }
+    },
     "messages": {
       "unauthenticated": "د سیسټم غوراویو ته د لاسرسي لپاره ننوځئ.",
       "forbidden": "تاسو د سیسټم غوراویو د ادارې اجازه نه لرئ.",
@@ -492,7 +642,7 @@
       "updated": "غوراوی په بریالیتوب تازه شو.",
       "statusUpdated": "د غوراوي حالت په بریالیتوب تازه شو.",
       "deleted": "غوراوی په بریالیتوب ړنګ شو.",
-      "inUse": "دا غوراوی کارول کېږي او نه شي ړنګېدای. پر ځای یې غیرفعال کړئ.",
+      "inUse": "دا غوراوی له فعالو ریکارډونو سره تړلی دی او نه شي ړنګېدای. پر ځای یې غیرفعال کړئ.",
       "operationFailed": "کړنه بشپړه نه شوه. مهرباني وکړئ بیا هڅه وکړئ."
     },
     "validation": {
@@ -519,6 +669,8 @@
     "permissionsAssigned": "{count} اجازې",
     "systemRole": "سیسټمي رول",
     "customRole": "ځانګړی رول",
+    "activeRole": "فعال رول",
+    "inactiveRole": "غیرفعال رول",
     "protectedRole": "د لوی مدیر اجازې خوندي دي.",
     "permissionFallback": "د برخې لاسرسی اداره کول",
     "permissionModules": {
@@ -558,8 +710,10 @@
       "hrm_contract:delete": "د کارکوونکو قراردادونه ړنګول",
       "hrm_leave:read": "د رخصتۍ غوښتنې کتل",
       "hrm_leave:write": "د رخصتۍ غوښتنې جوړول او منظورول",
+      "hrm_leave:delete": "د رخصتۍ غوښتنې ړنګول",
       "hrm_timesheet:read": "وختپاڼې کتل",
       "hrm_timesheet:write": "وختپاڼې جوړول او منظورول",
+      "hrm_timesheet:delete": "د حاضرۍ ریکارډونه ړنګول",
       "projects:read": "پروژې کتل",
       "projects:write": "پروژې جوړول او تازه کول",
       "projects:delete": "پروژې ړنګول",
@@ -666,6 +820,8 @@
     "messages": {
       "permissionsUpdated": "د رول اجازې په بریالیتوب سره تازه شوې.",
       "roleCreated": "رول په بریالیتوب سره جوړ شو.",
+      "roleActivated": "رول په بریالیتوب سره فعال شو.",
+      "roleDeactivated": "رول په بریالیتوب سره غیرفعال شو.",
       "userInvited": "د بلنې برېښنالیک په بریالیتوب سره ولېږل شو.",
       "invitationEmailFailed": "د بلنې برېښنالیک ونه لېږل شو. د کاروونکي حساب جوړ نه شو.",
       "statusUpdated": "د حساب حالت په بریالیتوب سره تازه شو.",
@@ -676,6 +832,7 @@
       "userNotFound": "ټاکل شوی کاروونکی ونه موندل شو.",
       "staffUnavailable": "ټاکل شوی کارکوونکی له مخکې تړل شوی یا نشته.",
       "invalidPermissions": "یوه یا څو ټاکل شوې اجازې ناسمې دي.",
+      "invalidRoleStatus": "د رول سم حالت وټاکئ.",
       "protectedRole": "د لوی مدیر رول نه شي بدلېدای.",
       "protectedUser": "د لوی مدیر حسابونه دلته نه شي بدلېدای.",
       "selfProtected": "تاسو د خپل حساب حالت یا رول نه شئ بدلولی.",
@@ -787,6 +944,15 @@
       "USER_ROLE_ASSIGNED": "د کاروونکي رول وټاکل شو",
       "ROLE_CREATED": "رول جوړ شو",
       "ROLE_PERMISSIONS_UPDATED": "د رول اجازې تازه شوې",
+      "ROLE_STATUS_UPDATED": "د رول حالت تازه شو",
+      "COMPANY_SETUP_UPDATED": "د شرکت امستنې تازه شوې",
+      "HRM_CONTRACT_CREATED": "د کارکوونکي قرارداد جوړ شو",
+      "HRM_CONTRACT_UPDATED": "د کارکوونکي قرارداد تازه شو",
+      "HRM_CONTRACT_STATUS_UPDATED": "د کارکوونکي د قرارداد حالت تازه شو",
+      "ATTENDANCE_CREATED": "حاضري ثبت شوه",
+      "ATTENDANCE_UPDATED": "حاضري تازه شوه",
+      "ATTENDANCE_DELETED": "حاضري ړنګه شوه",
+      "ATTENDANCE_BULK_ABSENT": "پاتې کارکوونکي غیر حاضر ثبت شول",
       "BRANDING_UPDATED": "نښه تازه شوه",
       "HRM_STAFF_CREATED": "نوی کارکوونکی زیات شو",
       "HRM_STAFF_UPDATED": "د کارکوونکي معلومات تازه شول",
