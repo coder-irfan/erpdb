@@ -29,6 +29,7 @@ import StaffContractDrawer from './StaffContractDrawer'
 import tableStyles from '@core/styles/table.module.css'
 
 const localeMap = { en: 'en-US', fa: 'fa-AF', ps: 'ps-AF' }
+const STATUS_COLORS = { ACTIVE: 'success', EXPIRED: 'warning', TERMINATED: 'error', DRAFT: 'secondary' }
 
 const formatDate = (value, locale) =>
   value ? new Intl.DateTimeFormat(localeMap[locale] || 'en-US', { dateStyle: 'medium' }).format(new Date(value)) : '—'
@@ -150,7 +151,7 @@ const StaffContractsView = ({ initialResult, initialError, formOptions, canWrite
             ) : null
           }
         />
-        <CardContent className='flex flex-wrap items-end justify-between gap-4 border-bs pt-5'>
+        <CardContent className='mb-4 flex flex-wrap items-center justify-between gap-4 border-bs pt-5'>
           <CustomTextField
             className='is-full sm:max-is-[280px]'
             value={searchInput}
@@ -159,7 +160,7 @@ const StaffContractsView = ({ initialResult, initialError, formOptions, canWrite
             label={dictionary.filters.search}
             slotProps={{ input: { startAdornment: <i className='tabler-search me-2 text-textSecondary' /> } }}
           />
-          <div className='flex is-full flex-wrap gap-3 sm:is-auto sm:justify-end'>
+          <div className='flex is-full flex-wrap items-center gap-3 sm:is-auto sm:justify-end'>
             <CustomTextField
               select
               className='is-full sm:is-[190px]'
@@ -246,9 +247,12 @@ const StaffContractsView = ({ initialResult, initialError, formOptions, canWrite
                 contracts.map(contract => (
                   <tr key={contract.id}>
                     <td>
-                      <Typography className='font-semibold' color='primary.main'>
-                        {contract.contract_number}
-                      </Typography>
+                      <div className='flex min-is-[170px] items-center gap-3'>
+                        <span className='flex size-9 shrink-0 items-center justify-center rounded-full bg-primaryLighter text-primary'>
+                          <i className='tabler-file-certificate text-xl' />
+                        </span>
+                        <Typography className='font-semibold' color='primary.main'>{contract.contract_number}</Typography>
+                      </div>
                     </td>
                     <td>
                       <Typography color='text.primary'>{contract.staff.full_name}</Typography>
@@ -259,7 +263,7 @@ const StaffContractsView = ({ initialResult, initialError, formOptions, canWrite
                     <td>{contract.position_title}</td>
                     <td>{contract.contract_type.label}</td>
                     <td>
-                      <Typography className='font-semibold'>
+                      <Typography component='span' className='inline-flex rounded bg-successLight px-3 py-1 font-semibold text-success'>
                         {formatCurrency(contract.base_salary, locale, currencyCode)}
                       </Typography>
                     </td>
@@ -269,7 +273,7 @@ const StaffContractsView = ({ initialResult, initialError, formOptions, canWrite
                         {formatDate(contract.end_date, locale)}
                       </Typography>
                     </td>
-                    <td>
+                    <td className='text-right'>
                       {canWrite ? (
                         <CustomTextField
                           select
@@ -288,6 +292,7 @@ const StaffContractsView = ({ initialResult, initialError, formOptions, canWrite
                                   <Chip
                                     size='small'
                                     variant='tonal'
+                                    color={STATUS_COLORS[statusValue] || 'default'}
                                     label={dictionary.status[statusValue] || selectedStatus.label}
                                   />
                                 )
@@ -311,6 +316,7 @@ const StaffContractsView = ({ initialResult, initialError, formOptions, canWrite
                         <Chip
                           size='small'
                           variant='tonal'
+                          color={STATUS_COLORS[contract.status.value] || 'default'}
                           label={dictionary.status[contract.status.value] || contract.status.label}
                         />
                       )}

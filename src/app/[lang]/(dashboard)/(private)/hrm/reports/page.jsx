@@ -1,17 +1,12 @@
-import Card from '@mui/material/Card'
-import CardHeader from '@mui/material/CardHeader'
-
+import { getCompanySetupRecord } from '@/libs/companySetup'
 import { getDictionary } from '@/utils/getDictionary'
+import HrmReportsView from '@/views/hrm/reports/HrmReportsView'
 
 const HrmReportsPage = async props => {
-  const params = await props.params
-  const dictionary = await getDictionary(params.lang)
+  const { lang } = await props.params
+  const [dictionary, setup] = await Promise.all([getDictionary(lang), getCompanySetupRecord()])
 
-  return (
-    <Card>
-      <CardHeader title={dictionary.navigation.hrmReports} />
-    </Card>
-  )
+  return <HrmReportsView locale={lang} dictionary={dictionary.hrmReports} setup={setup} generatedAt={new Date().toISOString()} />
 }
 
 export default HrmReportsPage

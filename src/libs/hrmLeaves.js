@@ -21,6 +21,7 @@ export const leaveSelect = {
   leave_type_id: true,
   status_id: true,
   approved_by_id: true,
+  approved_by_user_id: true,
   start_date: true,
   end_date: true,
   total_days: true,
@@ -30,7 +31,8 @@ export const leaveSelect = {
   staff: { select: { id: true, first_name: true, last_name: true, position: true, email: true } },
   leave_type: { select: { id: true, label: true, value: true, is_active: true } },
   status: { select: { id: true, label: true, value: true, is_active: true } },
-  approved_by: { select: { id: true, first_name: true, last_name: true, position: true } }
+  approved_by: { select: { id: true, first_name: true, last_name: true, position: true } },
+  approved_by_user: { select: { id: true, name: true, email: true } }
 }
 
 export const normalizeLeave = leave => ({
@@ -48,7 +50,12 @@ export const normalizeLeave = leave => ({
         ...leave.approved_by,
         full_name: `${leave.approved_by.first_name} ${leave.approved_by.last_name}`.trim()
       }
-    : null
+    : leave.approved_by_user
+      ? {
+          id: leave.approved_by_user.id,
+          full_name: leave.approved_by_user.name || leave.approved_by_user.email
+        }
+      : null
 })
 
 export const createLeaveAttendance = async (transaction, leave) => {

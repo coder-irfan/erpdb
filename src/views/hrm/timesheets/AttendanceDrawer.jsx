@@ -67,7 +67,11 @@ const AttendanceDrawer = ({ open, record, date, staff, defaultWorkHours, locale,
         const response = await fetch(record ? `/api/hrm/timesheets/${record.id}` : '/api/hrm/timesheets', {
           method: record ? 'PUT' : 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ...values, locale })
+          body: JSON.stringify({
+            ...values,
+            notes: record?.leave_request_id ? `Approved leave request ${record.leave_request_id}` : values.notes,
+            locale
+          })
         })
 
         const result = await response.json()
@@ -170,6 +174,7 @@ const AttendanceDrawer = ({ open, record, date, staff, defaultWorkHours, locale,
           multiline
           minRows={3}
           label={dictionary.fields.notes}
+          disabled={Boolean(record?.leave_request_id)}
           error={Boolean(errors.notes)}
           helperText={errors.notes?.message}
           {...register('notes')}

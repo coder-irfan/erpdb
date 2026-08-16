@@ -1,16 +1,21 @@
 const menu = skin => ({
   MuiMenu: {
     defaultProps: {
-      ...(skin === 'bordered' && {
-        slotProps: {
-          paper: {
-            elevation: 0
+      transitionDuration: 300,
+      slotProps: {
+        paper: {
+          ...(skin === 'bordered' && { elevation: 0 }),
+          sx: {
+            maxHeight: 320,
+            overflowY: 'auto'
           }
         }
-      })
+      }
     },
     styleOverrides: {
       paper: ({ theme }) => ({
+        maxHeight: 320,
+        overflowY: 'auto',
         marginBlockStart: theme.spacing(0.5),
         ...(skin !== 'bordered' && {
           boxShadow: 'var(--mui-customShadows-lg)'

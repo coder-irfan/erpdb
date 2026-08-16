@@ -116,7 +116,7 @@ const UsersTable = ({ users, roles, locale, onInvite, onStatusChange, onRoleChan
           subheader={translations.usersDescription}
         />
         <CardContent className='border-bs border-divider'>
-          <div className='mt-5 flex flex-wrap items-end gap-2 sm:justify-between'>
+          <div className='mb-4 mt-5 flex flex-wrap items-center justify-between gap-4'>
             <CustomTextField
               value={search}
               onChange={event => {
@@ -146,7 +146,7 @@ const UsersTable = ({ users, roles, locale, onInvite, onStatusChange, onRoleChan
                 <th>{translations.table.status}</th>
                 <th>{translations.table.invitedDate}</th>
                 <th>{translations.table.invitedBy}</th>
-                <th>{translations.table.actions}</th>
+                <th className='text-right'>{translations.table.actions}</th>
               </tr>
             </thead>
             <tbody>
@@ -208,8 +208,8 @@ const UsersTable = ({ users, roles, locale, onInvite, onStatusChange, onRoleChan
                       </td>
                       <td>{formatDate(user.createdAt, locale)}</td>
                       <td>{user.invitedBy?.name || translations.table.system}</td>
-                      <td>
-                        <div className='flex min-is-[210px] items-center gap-2'>
+                      <td className='text-right'>
+                        <div className='flex min-is-[210px] items-center justify-end gap-2'>
                           <CustomTextField
                             select
                             value={user.status}

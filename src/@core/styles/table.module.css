@@ -46,6 +46,24 @@
   tbody {
     color: var(--mui-palette-text-secondary);
 
+    tr {
+      background-color: transparent;
+      transition: background-color 200ms ease-in-out;
+    }
+
+    tr:nth-of-type(even) {
+      background-color: rgb(var(--mui-palette-primary-mainChannel) / 0.025);
+    }
+
+    tr:hover {
+      background-color: var(--mui-palette-action-hover);
+    }
+
+    tr[data-empty-state='true'],
+    tr[data-empty-state='true']:hover {
+      background-color: transparent !important;
+    }
+
     th,
     td {
       font-size: 0.9375rem;
@@ -76,6 +94,28 @@
     }
     tr {
       border-block-start: 1px solid var(--border-color);
+    }
+
+    :global(.MuiIconButton-root) {
+      background-color: var(--mui-palette-action-hover);
+      transition: color 200ms ease-in-out, background-color 200ms ease-in-out, transform 200ms ease-in-out;
+
+      &:hover {
+        background-color: rgb(var(--mui-palette-primary-mainChannel) / 0.12);
+        transform: translateY(-1px);
+      }
+
+      &:global(.MuiIconButton-colorSuccess) {
+        background-color: rgb(var(--mui-palette-success-mainChannel) / 0.1);
+      }
+
+      &:global(.MuiIconButton-colorError) {
+        background-color: rgb(var(--mui-palette-error-mainChannel) / 0.1);
+      }
+
+      &:global(.MuiIconButton-colorWarning) {
+        background-color: rgb(var(--mui-palette-warning-mainChannel) / 0.1);
+      }
     }
   }
 }

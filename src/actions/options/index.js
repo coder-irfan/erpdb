@@ -21,7 +21,11 @@ const MAX_PAGE_SIZE = 100
 const CATEGORY_PATHS = {
   CONTRACT_POLICY: '/[lang]/options/hrm/policies',
   STAFF_POSITION: '/[lang]/options/hrm/positions',
-  LEAVE_TYPE: '/[lang]/options/hrm/leave-types'
+  LEAVE_TYPE: '/[lang]/options/hrm/leave-types',
+  PAYROLL_STATUS: '/[lang]/options/hrm/payroll',
+  PAYROLL_PAYMENT_METHOD: '/[lang]/options/hrm/payroll',
+  LEAD_STATUS: '/[lang]/options/crm/leads',
+  LEAD_SOURCE: '/[lang]/options/crm/leads'
 }
 
 const normalizeLocale = locale => (i18n.locales.includes(locale) ? locale : i18n.defaultLocale)
@@ -32,6 +36,8 @@ const getReadPermissions = category => [
   ...OPTIONS_READ_PERMISSIONS,
   ...(category === 'STAFF_POSITION' ? ['hrm:read', 'hrm:write'] : []),
   ...(category === 'LEAVE_TYPE' ? ['hrm:read', 'hrm:write', 'hrm_leave:read', 'hrm_leave:write'] : []),
+  ...(category.startsWith('PAYROLL_') ? ['hrm_payroll:read', 'hrm_payroll:write'] : []),
+  ...(category.startsWith('LEAD_') ? ['crm:read', 'crm:write', 'crm_lead:read', 'crm_lead:write'] : []),
   ...(category === 'CONTRACT_POLICY' ? ['contracts:read', 'hrm:read'] : [])
 ]
 
@@ -71,6 +77,8 @@ const optionDependencyCountSelect = {
   contract_statuses: true,
   leave_types: true,
   leave_statuses: true,
+  payroll_statuses: true,
+  payment_methods: true,
   lead_sources: true,
   lead_statuses: true,
   project_statuses: true,
@@ -171,6 +179,7 @@ const revalidateOptionPaths = category => {
 
   if (category === 'STAFF_POSITION') revalidatePath('/[lang]/hrm/staff', 'page')
   if (category === 'LEAVE_TYPE') revalidatePath('/[lang]/hrm/leaves', 'page')
+  if (category.startsWith('LEAD_')) revalidatePath('/[lang]/crm/leads', 'page')
 }
 
 export const getOptionsByCategory = async (category, payload = {}) => {

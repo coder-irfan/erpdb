@@ -31,6 +31,11 @@ const horizontalMenuData = dictionary => [
         permission: 'hrm_timesheet:read'
       },
       {
+        label: dictionary.navigation.payroll,
+        href: '/hrm/payroll',
+        permission: 'hrm_payroll:read'
+      },
+      {
         label: dictionary.navigation.hrmReports,
         href: '/hrm/reports',
         permission: 'hrm_reports:read'
@@ -185,6 +190,23 @@ const horizontalMenuData = dictionary => [
             label: dictionary.navigation.leaveTypes,
             href: '/options/hrm/leave-types',
             permission: 'hrm_leave:read'
+          },
+          {
+            label: dictionary.navigation.payrollOptions,
+            href: '/options/hrm/payroll',
+            permission: 'options:read'
+          }
+        ]
+      },
+      {
+        label: dictionary.navigation.crmManagement,
+        icon: 'tabler-user-check',
+        permission: 'options:read',
+        children: [
+          {
+            label: dictionary.navigation.crmLeadOptions,
+            href: '/options/crm/leads',
+            permission: 'options:read'
           }
         ]
       }

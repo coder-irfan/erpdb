@@ -14,7 +14,8 @@ import Typography from '@mui/material/Typography'
 import { toast } from 'sonner'
 
 import CustomTextField from '@core/components/mui/TextField'
-import { getOptionsListPaginated, toggleOptionStatus } from '@/actions/options'
+import { deleteOption, getOptionsListPaginated, toggleOptionStatus } from '@/actions/options'
+import ConfirmDeleteModal from '@/components/dialogs/ConfirmDeleteModal'
 import DashboardTablePagination from '@/components/table/DashboardTablePagination'
 import TableEmptyStateRow from '@/components/table/TableEmptyStateRow'
 import TableSkeletonRows from '@/components/table/TableSkeletonRows'
@@ -28,7 +29,7 @@ const localeMap = { en: 'en-US', fa: 'fa-AF', ps: 'ps-AF' }
 const formatDate = (value, locale) =>
   new Intl.DateTimeFormat(localeMap[locale] || 'en-US', { dateStyle: 'medium' }).format(new Date(value))
 
-const PositionTable = ({ initialResult, initialError, canCreate, canUpdate, locale, dictionary }) => {
+const PositionTable = ({ initialResult, initialError, canCreate, canUpdate, canDelete, locale, dictionary }) => {
   const [options, setOptions] = useState(initialResult.options)
   const [totalCount, setTotalCount] = useState(initialResult.totalCount)
   const [page, setPage] = useState(Math.max(0, initialResult.page - 1))
@@ -39,6 +40,7 @@ const PositionTable = ({ initialResult, initialError, canCreate, canUpdate, loca
   const [busyId, setBusyId] = useState(null)
   const [formOpen, setFormOpen] = useState(false)
   const [editingOption, setEditingOption] = useState(null)
+  const [deleteTarget, setDeleteTarget] = useState(null)
 
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -111,6 +113,30 @@ const PositionTable = ({ initialResult, initialError, canCreate, canUpdate, loca
     }
   }
 
+  const confirmDelete = async () => {
+    if (!deleteTarget) return
+
+    setBusyId(deleteTarget.id)
+
+    try {
+      const result = await deleteOption(deleteTarget.id, { locale })
+
+      if (!result.success) {
+        toast.error(result.error)
+
+        return
+      }
+
+      toast.success(result.message)
+      setDeleteTarget(null)
+      await refreshData()
+    } catch {
+      toast.error(dictionary.messages.operationFailed)
+    } finally {
+      setBusyId(null)
+    }
+  }
+
   return (
     <>
       <Card>
@@ -121,7 +147,7 @@ const PositionTable = ({ initialResult, initialError, canCreate, canUpdate, loca
           </CardContent>
         )}
         <CardContent className='border-bs border-divider'>
-          <div className='mt-5 flex flex-wrap items-end gap-2 sm:justify-between'>
+          <div className='mb-4 mt-5 flex flex-wrap items-center justify-between gap-4'>
             <CustomTextField
               value={searchInput}
               onChange={event => setSearchInput(event.target.value)}
@@ -151,7 +177,7 @@ const PositionTable = ({ initialResult, initialError, canCreate, canUpdate, loca
                 <th>{dictionary.positions.table.description}</th>
                 <th>{dictionary.common.status}</th>
                 <th>{dictionary.common.createdDate}</th>
-                <th>{dictionary.common.actions}</th>
+                <th className='text-right'>{dictionary.common.actions}</th>
               </tr>
             </thead>
             <tbody>
@@ -175,7 +201,11 @@ const PositionTable = ({ initialResult, initialError, canCreate, canUpdate, loca
                       </Typography>
                     </td>
                     <td>
-                      <Typography color='text.secondary' className='max-is-[440px] truncate' title={option.description || ''}>
+                      <Typography
+                        color='text.secondary'
+                        className='max-is-[440px] truncate'
+                        title={option.description || ''}
+                      >
                         {option.description || dictionary.common.noDescription}
                       </Typography>
                     </td>
@@ -188,8 +218,8 @@ const PositionTable = ({ initialResult, initialError, canCreate, canUpdate, loca
                       />
                     </td>
                     <td>{formatDate(option.created_at, locale)}</td>
-                    <td>
-                      <div className='flex min-is-[100px] items-center gap-1'>
+                    <td className='text-right'>
+                      <div className='flex min-is-[140px] items-center justify-end gap-1'>
                         {canUpdate && (
                           <>
                             <Tooltip title={dictionary.common.edit}>
@@ -197,12 +227,29 @@ const PositionTable = ({ initialResult, initialError, canCreate, canUpdate, loca
                                 <i className='tabler-edit' />
                               </IconButton>
                             </Tooltip>
-                            <Tooltip title={option.is_active ? dictionary.common.deactivate : dictionary.common.activate}>
-                              <IconButton onClick={() => handleStatusToggle(option)} disabled={busyId === option.id}>
+                            <Tooltip
+                              title={option.is_active ? dictionary.common.deactivate : dictionary.common.activate}
+                            >
+                              <IconButton
+                                color={option.is_active ? 'primary' : 'secondary'}
+                                onClick={() => handleStatusToggle(option)}
+                                disabled={busyId === option.id}
+                              >
                                 <i className={option.is_active ? 'tabler-toggle-right' : 'tabler-toggle-left'} />
                               </IconButton>
                             </Tooltip>
                           </>
+                        )}
+                        {canDelete && (
+                          <Tooltip title={dictionary.common.delete}>
+                            <IconButton
+                              color='error'
+                              onClick={() => setDeleteTarget(option)}
+                              disabled={busyId === option.id}
+                            >
+                              <i className='tabler-trash' />
+                            </IconButton>
+                          </Tooltip>
                         )}
                       </div>
                     </td>
@@ -234,6 +281,17 @@ const PositionTable = ({ initialResult, initialError, canCreate, canUpdate, loca
         dictionary={dictionary}
         onClose={() => setFormOpen(false)}
         onSaved={refreshData}
+      />
+      <ConfirmDeleteModal
+        open={Boolean(deleteTarget)}
+        title={dictionary.positions.deleteTitle || dictionary.common.delete}
+        description={dictionary.positions.deleteDescription || dictionary.contractPolicies.deleteDescription}
+        itemName={deleteTarget?.name}
+        confirmText={dictionary.common.delete}
+        cancelText={dictionary.common.cancel}
+        loading={busyId === deleteTarget?.id}
+        onConfirm={confirmDelete}
+        onClose={() => setDeleteTarget(null)}
       />
     </>
   )

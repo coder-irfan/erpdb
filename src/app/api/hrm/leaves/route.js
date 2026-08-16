@@ -136,6 +136,7 @@ export async function POST(request) {
     leave_type_id: payload?.leave_type_id,
     start_date: payload?.start_date,
     end_date: payload?.end_date,
+    status_id: payload?.status_id || '',
     reason: payload?.reason || ''
   })
 
@@ -146,16 +147,21 @@ export async function POST(request) {
   if (totalDays < 1) return responseError(context.dictionary.validation.dateRangeInvalid, 400, 'INVALID_DATE_RANGE')
 
   try {
-    const requestedStatus = context.canManage && payload?.status === 'APPROVED' ? 'APPROVED' : 'PENDING'
-
-    const [staff, leaveType, status] = await Promise.all([
+    const [staff, leaveType, pendingStatus, selectedStatus] = await Promise.all([
       prisma.hrmStaff.findFirst({ where: { id: validation.output.staff_id, status: { not: 'TERMINATED' } }, select: { id: true } }),
       prisma.option.findFirst({ where: { id: validation.output.leave_type_id, category: 'LEAVE_TYPE', is_active: true }, select: { id: true } }),
-      prisma.option.findFirst({ where: { category: 'LEAVE_STATUS', value: requestedStatus, is_active: true }, select: { id: true } })
+      prisma.option.findFirst({ where: { category: 'LEAVE_STATUS', value: 'PENDING', is_active: true }, select: { id: true, value: true } }),
+      context.canManage && payload?.status_id
+        ? prisma.option.findFirst({ where: { id: payload.status_id, category: 'LEAVE_STATUS', value: { in: ['PENDING', 'APPROVED'] }, is_active: true }, select: { id: true, value: true } })
+        : null
     ])
+
+    const status = selectedStatus || pendingStatus
+    const isApproved = status?.value === 'APPROVED'
 
     if (!staff) return responseError(context.dictionary.messages.staffNotFound, 404, 'STAFF_NOT_FOUND')
     if (!leaveType) return responseError(context.dictionary.messages.leaveTypeNotFound, 404, 'LEAVE_TYPE_NOT_FOUND')
+    if (context.canManage && payload?.status_id && !selectedStatus) return responseError(context.dictionary.validation.statusInvalid, 400, 'INVALID_STATUS')
     if (!status) return responseError(context.dictionary.messages.statusNotFound, 409, 'STATUS_NOT_CONFIGURED')
 
     const created = await prisma.$transaction(async transaction => {
@@ -168,12 +174,13 @@ export async function POST(request) {
           end_date: parseLeaveDate(validation.output.end_date),
           total_days: totalDays,
           reason: validation.output.reason || null,
-          approved_by_id: requestedStatus === 'APPROVED' ? context.staff?.id || null : null
+          approved_by_id: isApproved ? context.staff?.id || null : null,
+          approved_by_user_id: isApproved ? context.authorization.session.user.id : null
         },
         select: leaveSelect
       })
 
-      if (requestedStatus === 'APPROVED') await createLeaveAttendance(transaction, leave)
+      if (isApproved) await createLeaveAttendance(transaction, leave)
 
       await transaction.auditLog.create({ data: { user_id: context.authorization.session.user.id, action: 'LEAVE_CREATED', module: 'HRM', details: { leaveId: leave.id, staffId: leave.staff_id, totalDays } } })
 

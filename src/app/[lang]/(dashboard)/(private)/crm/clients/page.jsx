@@ -1,17 +1,16 @@
-import Card from '@mui/material/Card'
-import CardHeader from '@mui/material/CardHeader'
+import { getServerSession } from 'next-auth'
 
+import { authOptions } from '@/libs/auth'
+import { getCompanySetupRecord } from '@/libs/companySetup'
 import { getDictionary } from '@/utils/getDictionary'
+import { hasAnyPermission } from '@/utils/rbac'
+import CrmClientsView from '@/views/crm/clients/CrmClientsView'
 
 const CrmClientsPage = async props => {
-  const params = await props.params
-  const dictionary = await getDictionary(params.lang)
+  const { lang } = await props.params
+  const [dictionary, setup, session] = await Promise.all([getDictionary(lang), getCompanySetupRecord(), getServerSession(authOptions)])
 
-  return (
-    <Card>
-      <CardHeader title={dictionary.navigation.crmClients} />
-    </Card>
-  )
+  return <CrmClientsView locale={lang} dictionary={dictionary.crmClients} currencyCode={setup.currency_code || 'AFN'} canWrite={hasAnyPermission(session, ['crm:write', 'crm_client:write'])} canDelete={hasAnyPermission(session, ['crm:delete', 'crm_client:delete'])} />
 }
 
 export default CrmClientsPage

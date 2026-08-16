@@ -49,6 +49,8 @@ const autocomplete = skin => ({
         })
       },
       listbox: ({ theme }) => ({
+        maxHeight: 320,
+        overflowY: 'auto',
         '& .MuiAutocomplete-option': {
           paddingBlock: theme.spacing(2),
           marginInline: theme.spacing(2),

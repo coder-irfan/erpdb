@@ -101,7 +101,13 @@ const PositionForm = ({ open, option, locale, dictionary, onClose, onSaved }) =>
             control={control}
             render={({ field }) => (
               <FormControlLabel
-                control={<Switch checked={field.value} onChange={event => field.onChange(event.target.checked)} />}
+                control={
+                  <Switch
+                    color={field.value ? 'primary' : 'secondary'}
+                    checked={field.value}
+                    onChange={event => field.onChange(event.target.checked)}
+                  />
+                }
                 label={field.value ? dictionary.common.active : dictionary.common.inactive}
                 disabled={isSubmitting}
               />

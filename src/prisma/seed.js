@@ -15,6 +15,10 @@ const permissions = [
   { key: 'hrm_leave:read', module: 'HRM', description: 'View leave requests' },
   { key: 'hrm_leave:write', module: 'HRM', description: 'Create and approve leave requests' },
   { key: 'hrm_leave:delete', module: 'HRM', description: 'Delete leave requests' },
+  { key: 'hrm_payroll:read', module: 'HRM', description: 'View payroll and payslips' },
+  { key: 'hrm_payroll:write', module: 'HRM', description: 'Generate and process payroll' },
+  { key: 'hrm_payroll:delete', module: 'HRM', description: 'Delete draft payroll records' },
+  { key: 'hrm_reports:read', module: 'HRM', description: 'View HRM analytical reports' },
   { key: 'projects:read', module: 'Projects', description: 'View projects' },
   { key: 'projects:write', module: 'Projects', description: 'Create and update projects' },
   { key: 'projects:delete', module: 'Projects', description: 'Delete projects' },
@@ -24,6 +28,15 @@ const permissions = [
   { key: 'crm:read', module: 'CRM', description: 'View CRM records' },
   { key: 'crm:write', module: 'CRM', description: 'Create and update CRM records' },
   { key: 'crm:delete', module: 'CRM', description: 'Delete CRM records' },
+  { key: 'crm_lead:read', module: 'CRM', description: 'View leads and pipeline activity' },
+  { key: 'crm_lead:write', module: 'CRM', description: 'Create, update, convert, and log lead activities' },
+  { key: 'crm_lead:delete', module: 'CRM', description: 'Delete unconverted leads' },
+  { key: 'crm_client:read', module: 'CRM', description: 'View clients and their related records' },
+  { key: 'crm_client:write', module: 'CRM', description: 'Create, update, and log client activities' },
+  { key: 'crm_client:delete', module: 'CRM', description: 'Delete clients without active dependencies' },
+  { key: 'crm_visitor:read', module: 'CRM', description: 'View front-desk visitor records' },
+  { key: 'crm_visitor:write', module: 'CRM', description: 'Check in, update, check out, and convert visitors' },
+  { key: 'crm_visitor:delete', module: 'CRM', description: 'Delete visitor records' },
   { key: 'tasks:read', module: 'Tasks', description: 'View tasks' },
   { key: 'tasks:write', module: 'Tasks', description: 'Create and update tasks' },
   { key: 'tasks:delete', module: 'Tasks', description: 'Delete tasks' },
@@ -61,7 +74,11 @@ const roles = [
       'hrm_timesheet:delete',
       'hrm_leave:read',
       'hrm_leave:write',
-      'hrm_leave:delete'
+      'hrm_leave:delete',
+      'hrm_payroll:read',
+      'hrm_payroll:write',
+      'hrm_payroll:delete',
+      'hrm_reports:read'
     ]
   },
   {
@@ -69,7 +86,7 @@ const roles = [
     display_name: 'Finance Manager',
     description: 'Manage income, expenses, salary, loans, and inventory records',
     is_system: false,
-    permissions: ['finance:read', 'finance:write', 'finance:delete', 'hrm_contract:read']
+    permissions: ['finance:read', 'finance:write', 'finance:delete', 'hrm_contract:read', 'hrm_payroll:read', 'hrm_payroll:write', 'hrm_reports:read']
   },
   {
     name: 'project_manager',
@@ -77,6 +94,13 @@ const roles = [
     description: 'Manage projects and their tasks',
     is_system: false,
     permissions: ['projects:read', 'projects:write', 'projects:delete', 'tasks:read', 'tasks:write', 'tasks:delete']
+  },
+  {
+    name: 'sales_manager',
+    display_name: 'Sales Manager',
+    description: 'Manage CRM leads, clients, visitors, activities, and conversions',
+    is_system: false,
+      permissions: ['crm:read', 'crm:write', 'crm:delete', 'crm_lead:read', 'crm_lead:write', 'crm_lead:delete', 'crm_client:read', 'crm_client:write', 'crm_client:delete', 'crm_visitor:read', 'crm_visitor:write', 'crm_visitor:delete', 'options:read']
   }
 ]
 
@@ -115,6 +139,34 @@ const leaveStatuses = [
   { label: 'Pending', value: 'PENDING', sort_order: 1 },
   { label: 'Approved', value: 'APPROVED', sort_order: 2 },
   { label: 'Rejected', value: 'REJECTED', sort_order: 3 }
+]
+
+const payrollStatuses = [
+  { label: 'Draft', value: 'DRAFT', color_code: 'secondary', sort_order: 1 },
+  { label: 'Pending', value: 'PENDING', color_code: 'warning', sort_order: 2 },
+  { label: 'Paid', value: 'PAID', color_code: 'success', sort_order: 3 }
+]
+
+const payrollPaymentMethods = [
+  { label: 'Cash', value: 'CASH', sort_order: 1 },
+  { label: 'Bank Transfer', value: 'BANK_TRANSFER', sort_order: 2 },
+  { label: 'Check', value: 'CHECK', sort_order: 3 }
+]
+
+const leadStatuses = [
+  { label: 'New', value: 'NEW', color_code: 'primary', sort_order: 1 },
+  { label: 'Contacted', value: 'CONTACTED', color_code: 'info', sort_order: 2 },
+  { label: 'Proposal Sent', value: 'PROPOSAL_SENT', color_code: 'warning', sort_order: 3 },
+  { label: 'Won', value: 'WON', color_code: 'success', sort_order: 4 },
+  { label: 'Lost', value: 'LOST', color_code: 'error', sort_order: 5 }
+]
+
+const leadSources = [
+  { label: 'Website', value: 'WEBSITE', color_code: 'primary', sort_order: 1 },
+  { label: 'Referral', value: 'REFERRAL', color_code: 'success', sort_order: 2 },
+  { label: 'Walk-in', value: 'WALK_IN', color_code: 'info', sort_order: 3 },
+  { label: 'Email Campaign', value: 'EMAIL_CAMPAIGN', color_code: 'warning', sort_order: 4 },
+  { label: 'Other', value: 'OTHER', color_code: 'secondary', sort_order: 5 }
 ]
 
 const main = async () => {
@@ -157,6 +209,38 @@ const main = async () => {
         where: { category_value: { category: 'LEAVE_STATUS', value: leaveStatus.value } },
         update: { ...leaveStatus, is_active: true },
         create: { category: 'LEAVE_STATUS', ...leaveStatus, is_active: true }
+      })
+    }
+
+    for (const payrollStatus of payrollStatuses) {
+      await transaction.option.upsert({
+        where: { category_value: { category: 'PAYROLL_STATUS', value: payrollStatus.value } },
+        update: { ...payrollStatus, is_active: true },
+        create: { category: 'PAYROLL_STATUS', ...payrollStatus, is_active: true }
+      })
+    }
+
+    for (const paymentMethod of payrollPaymentMethods) {
+      await transaction.option.upsert({
+        where: { category_value: { category: 'PAYROLL_PAYMENT_METHOD', value: paymentMethod.value } },
+        update: { ...paymentMethod, is_active: true },
+        create: { category: 'PAYROLL_PAYMENT_METHOD', ...paymentMethod, is_active: true }
+      })
+    }
+
+    for (const leadStatus of leadStatuses) {
+      await transaction.option.upsert({
+        where: { category_value: { category: 'LEAD_STATUS', value: leadStatus.value } },
+        update: { ...leadStatus, is_active: true },
+        create: { category: 'LEAD_STATUS', ...leadStatus, is_active: true }
+      })
+    }
+
+    for (const leadSource of leadSources) {
+      await transaction.option.upsert({
+        where: { category_value: { category: 'LEAD_SOURCE', value: leadSource.value } },
+        update: { ...leadSource, is_active: true },
+        create: { category: 'LEAD_SOURCE', ...leadSource, is_active: true }
       })
     }
 

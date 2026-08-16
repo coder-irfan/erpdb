@@ -47,7 +47,13 @@ export const calculateHours = (date, checkIn, checkOut) => {
   return new Prisma.Decimal((difference / 3_600_000).toFixed(2))
 }
 
-export const normalizeAttendance = record => ({
+const leaveRequestPattern = /^Approved leave request (.+)$/i
+
+export const normalizeAttendance = (record, leaveLabels = new Map()) => {
+  const leaveMatch = record.notes?.match(leaveRequestPattern)
+  const leaveLabel = leaveMatch ? leaveLabels.get(leaveMatch[1]) : null
+
+  return {
   ...record,
   date: dateToString(record.date),
   check_in_time: timeToString(record.check_in_time),
@@ -55,11 +61,14 @@ export const normalizeAttendance = record => ({
   hours_worked: record.hours_worked?.toFixed(2) ?? null,
   created_at: record.created_at.toISOString(),
   updated_at: record.updated_at.toISOString(),
+  notes: leaveMatch ? `Approved Leave Request${leaveLabel ? ` (${leaveLabel})` : ''}` : record.notes,
+  leave_request_id: leaveMatch?.[1] || null,
   staff: {
     ...record.staff,
     full_name: `${record.staff.first_name} ${record.staff.last_name}`.trim()
   }
-})
+  }
+}
 
 export const normalizeAttendanceInput = (values, date) => {
   const isPresent = values.status === 'PRESENT'
@@ -75,7 +84,7 @@ export const normalizeAttendanceInput = (values, date) => {
   }
 }
 
-export const getAttendanceDashboard = async ({ date, month, year, staffId, status }) => {
+export const getAttendanceDashboard = async ({ date, month, year, staffId, status, search, page = 1, limit = 10 }) => {
   const selectedDate = date || getKabulToday()
   const dayStart = parseDate(selectedDate)
   const useMonthRange = Number.isInteger(month) && Number.isInteger(year)
@@ -85,13 +94,32 @@ export const getAttendanceDashboard = async ({ date, month, year, staffId, statu
   const recordWhere = {
     date: { gte: rangeStart, lt: rangeEnd },
     ...(staffId && { staff_id: staffId }),
-    ...(status && { status })
+    ...(status && { status }),
+    ...(search && {
+      staff: {
+        is: {
+          OR: [
+            { first_name: { contains: search } },
+            { last_name: { contains: search } },
+            { email: { contains: search } },
+            { position: { contains: search } }
+          ]
+        }
+      }
+    })
   }
 
   const dailyWhere = { date: dayStart }
 
-  const [records, dailyRecords, activeStaff] = await Promise.all([
-    prisma.hrmStaffTimesheet.findMany({ where: recordWhere, select: attendanceSelect, orderBy: [{ date: 'desc' }, { created_at: 'desc' }] }),
+  const [records, totalCount, dailyRecords, activeStaff] = await Promise.all([
+    prisma.hrmStaffTimesheet.findMany({
+      where: recordWhere,
+      select: attendanceSelect,
+      orderBy: [{ date: 'desc' }, { created_at: 'desc' }],
+      skip: (page - 1) * limit,
+      take: limit
+    }),
+    prisma.hrmStaffTimesheet.count({ where: recordWhere }),
     prisma.hrmStaffTimesheet.findMany({ where: dailyWhere, select: { staff_id: true, status: true } }),
     prisma.hrmStaff.findMany({
       where: { status: 'ACTIVE' },
@@ -101,13 +129,31 @@ export const getAttendanceDashboard = async ({ date, month, year, staffId, statu
   ])
 
   const markedIds = new Set(dailyRecords.map(record => record.staff_id))
+  const leaveIds = records.map(record => record.notes?.match(leaveRequestPattern)?.[1]).filter(Boolean)
+
+  const approvedLeaves = leaveIds.length
+    ? await prisma.hrmStaffLeave.findMany({
+        where: { id: { in: [...new Set(leaveIds)] } },
+        select: { id: true, start_date: true, end_date: true, leave_type: { select: { label: true } } }
+      })
+    : []
+
+  const leaveLabels = new Map(
+    approvedLeaves.map(leave => [
+      leave.id,
+      `${leave.leave_type.label}, ${dateToString(leave.start_date)} - ${dateToString(leave.end_date)}`
+    ])
+  )
 
   const unmarkedStaff = activeStaff
     .filter(staff => !markedIds.has(staff.id))
     .map(staff => ({ ...staff, full_name: `${staff.first_name} ${staff.last_name}`.trim() }))
 
   return {
-    records: records.map(normalizeAttendance),
+    records: records.map(record => normalizeAttendance(record, leaveLabels)),
+    totalCount,
+    page,
+    totalPages: Math.max(1, Math.ceil(totalCount / limit)),
     unmarkedStaff,
     summary: {
       total_present: dailyRecords.filter(record => record.status === 'PRESENT').length,

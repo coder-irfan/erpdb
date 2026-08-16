@@ -188,7 +188,12 @@ const ContractPolicyForm = ({ open, option, locale, dictionary, onClose, onSaved
     if (!editor) return
 
     if (value === 'paragraph') editor.chain().focus().setParagraph().run()
-    else editor.chain().focus().toggleHeading({ level: Number(value) }).run()
+    else
+      editor
+        .chain()
+        .focus()
+        .toggleHeading({ level: Number(value) })
+        .run()
   }
 
   const getBlockType = () => {
@@ -230,7 +235,9 @@ const ContractPolicyForm = ({ open, option, locale, dictionary, onClose, onSaved
     <Dialog open={open} onClose={closeForm} fullWidth maxWidth='xl'>
       <form onSubmit={handleSubmit(submitForm)} noValidate>
         <input type='hidden' {...register('category')} />
-        <DialogTitle>{option ? dictionary.contractPolicies.editTitle : dictionary.contractPolicies.addTitle}</DialogTitle>
+        <DialogTitle>
+          {option ? dictionary.contractPolicies.editTitle : dictionary.contractPolicies.addTitle}
+        </DialogTitle>
         <DialogContent dividers className='flex flex-col gap-5'>
           <CustomTextField
             fullWidth
@@ -286,7 +293,9 @@ const ContractPolicyForm = ({ open, option, locale, dictionary, onClose, onSaved
                 >
                   <MenuItem value=''>{dictionary.editor.defaultSize}</MenuItem>
                   {FONT_SIZES.map(size => (
-                    <MenuItem key={size} value={size}>{size}</MenuItem>
+                    <MenuItem key={size} value={size}>
+                      {size}
+                    </MenuItem>
                   ))}
                 </CustomTextField>
                 <CustomTextField
@@ -297,8 +306,11 @@ const ContractPolicyForm = ({ open, option, locale, dictionary, onClose, onSaved
                   aria-label={dictionary.editor.lineHeight}
                   className='is-[80px]'
                 >
+                  <MenuItem value=''>{dictionary.editor.lineHeight}</MenuItem>
                   {LINE_HEIGHTS.map(height => (
-                    <MenuItem key={height} value={height}>{height}</MenuItem>
+                    <MenuItem key={height} value={height}>
+                      {height}
+                    </MenuItem>
                   ))}
                 </CustomTextField>
 
@@ -485,7 +497,13 @@ const ContractPolicyForm = ({ open, option, locale, dictionary, onClose, onSaved
             control={control}
             render={({ field }) => (
               <FormControlLabel
-                control={<Switch checked={field.value} onChange={event => field.onChange(event.target.checked)} />}
+                control={
+                  <Switch
+                    color={field.value ? 'primary' : 'secondary'}
+                    checked={field.value}
+                    onChange={event => field.onChange(event.target.checked)}
+                  />
+                }
                 label={field.value ? dictionary.common.active : dictionary.common.inactive}
                 disabled={isSubmitting}
               />

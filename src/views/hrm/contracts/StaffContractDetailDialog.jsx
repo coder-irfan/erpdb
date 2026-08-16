@@ -12,14 +12,22 @@ import Typography from '@mui/material/Typography'
 import { formatCurrency } from '@/utils/formatCurrency'
 
 const localeMap = { en: 'en-US', fa: 'fa-AF', ps: 'ps-AF' }
+const STATUS_COLORS = { ACTIVE: 'success', EXPIRED: 'warning', TERMINATED: 'error', DRAFT: 'secondary' }
 
 const formatDate = (value, locale) =>
   value
     ? new Intl.DateTimeFormat(localeMap[locale] || 'en-US', { dateStyle: 'medium' }).format(new Date(value))
     : '—'
 
-const DetailItem = ({ label, value }) => (
-  <div>
+const DETAIL_TONES = {
+  primary: 'border-primary/20 bg-primaryLighter text-primary',
+  success: 'border-success/20 bg-successLight text-success',
+  warning: 'border-warning/20 bg-warningLight text-warning'
+}
+
+const DetailItem = ({ label, value, icon, tone }) => (
+  <div className={tone ? `rounded border p-4 ${DETAIL_TONES[tone]}` : 'rounded border border-divider p-4'}>
+    {icon && <i className={`${icon} mb-2 text-xl`} />}
     <Typography variant='caption' color='text.secondary'>
       {label}
     </Typography>
@@ -34,24 +42,30 @@ const StaffContractDetailDialog = ({ contract, open, locale, dictionary, onClose
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth='lg'>
-      <DialogTitle className='flex flex-wrap items-center justify-between gap-3'>
+      <DialogTitle component='div' className='flex flex-wrap items-center justify-between gap-3'>
         <div>
           <Typography variant='h5'>{dictionary.details.title}</Typography>
-          <Typography color='text.secondary'>{contract.contract_number}</Typography>
+          <div className='mt-1 flex items-center gap-2 text-primary'>
+            <span className='flex size-8 items-center justify-center rounded-full bg-primaryLighter'><i className='tabler-file-certificate' /></span>
+            <Typography color='primary.main' className='font-semibold'>{contract.contract_number}</Typography>
+          </div>
         </div>
         <Chip
           variant='tonal'
+          color={STATUS_COLORS[contract.status.value] || 'default'}
           label={dictionary.status[contract.status.value] || contract.status.label}
         />
       </DialogTitle>
       <DialogContent dividers className='flex flex-col gap-6'>
         <div className='grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4'>
-          <DetailItem label={dictionary.fields.staffMember} value={contract.staff.full_name} />
-          <DetailItem label={dictionary.fields.position} value={contract.position_title} />
-          <DetailItem label={dictionary.fields.contractType} value={contract.contract_type.label} />
+          <DetailItem label={dictionary.fields.staffMember} value={contract.staff.full_name} icon='tabler-user' tone='primary' />
+          <DetailItem label={dictionary.fields.position} value={contract.position_title} icon='tabler-briefcase' />
+          <DetailItem label={dictionary.fields.contractType} value={contract.contract_type.label} icon='tabler-file-text' tone='warning' />
           <DetailItem
             label={dictionary.fields.baseSalary}
             value={formatCurrency(contract.base_salary, locale, dictionary.currencyCode || 'AFN')}
+            icon='tabler-cash'
+            tone='success'
           />
           <DetailItem label={dictionary.fields.startDate} value={formatDate(contract.start_date, locale)} />
           <DetailItem label={dictionary.fields.endDate} value={formatDate(contract.end_date, locale)} />

@@ -199,6 +199,7 @@ const StaffDetailModal = ({ open, staffId, locale, dictionary, onClose }) => {
                         <Chip
                           size='small'
                           variant='tonal'
+                          color={STAFF_STATUS_COLORS[contract.status?.value] || 'default'}
                           label={contract.status?.label}
                         />
                       </div>

@@ -22,6 +22,7 @@ const iconStyles = theme => ({
 const select = {
   MuiSelect: {
     defaultProps: {
+      displayEmpty: true,
       IconComponent: SelectIcon
     },
     styleOverrides: {

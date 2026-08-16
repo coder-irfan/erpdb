@@ -76,6 +76,13 @@ When assigned future coding tasks:
 - **Inline Component Allowance**: Do NOT over-engineer single-use abstractions or force minor UI snippets into separate files if used only 2-3 times with minimal code footprint (10-20 lines). Keep simple, localized logic inline unless reusability scales.
 - **Server Action & Validation Consistency**: Use standard helper wrappers for handling Server Action responses, error sanitization, and Valibot schema execution across all backend actions.
 
+### 8. GLOBAL FORM, TABLE & ENTITY UI STANDARDS
+
+- **Select/Dropdown Default Values**: Every Select or Dropdown field in forms and tables must explicitly declare a bound default fallback value, such as “Select Option” or an intentional default state. Never render a Select component with an undefined or unbound value.
+- **Form Validation & Inline Errors**: Do not rely on native HTML `required` validation. All forms must use React Hook Form or explicit custom validation state and render localized inline error text beneath invalid fields using `FormHelperText` or an equivalent red helper message after submission.
+- **Empty Table States**: Empty-state rows inside data tables must never receive row hover highlighting or hover background transitions. Every actionable entity table empty state must include a relevant creation/action button when the current user has permission to perform that action.
+- **Entity Creation UI Pattern**: All entity create/edit forms must open in a slide-over side drawer to maintain consistency with HRM workflows. Options/master-data forms are the explicit exception and may continue using popup dialogs.
+
 ## Master RBAC & Permissions Blueprint
 
 This blueprint defines system-wide Role-Based Access Control (RBAC) rules mapped directly to our `schema.prisma` models. Use this specification as the single source of truth when implementing server actions, API authorization checks, navigation menu visibility, and component-level permission rendering.

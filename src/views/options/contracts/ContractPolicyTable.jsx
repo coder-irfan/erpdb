@@ -160,7 +160,7 @@ const ContractPolicyTable = ({ initialResult, initialError, canCreate, canUpdate
           </CardContent>
         )}
         <CardContent className='border-bs border-divider'>
-          <div className='mt-5 flex flex-wrap items-end gap-2 sm:justify-between'>
+          <div className='mb-4 mt-5 flex flex-wrap items-center justify-between gap-4'>
             <CustomTextField
               value={searchInput}
               onChange={event => setSearchInput(event.target.value)}
@@ -190,7 +190,7 @@ const ContractPolicyTable = ({ initialResult, initialError, canCreate, canUpdate
                 <th>{dictionary.contractPolicies.table.description}</th>
                 <th>{dictionary.common.status}</th>
                 <th>{dictionary.common.createdDate}</th>
-                <th>{dictionary.common.actions}</th>
+                <th className='text-right'>{dictionary.common.actions}</th>
               </tr>
             </thead>
             <tbody>
@@ -230,8 +230,8 @@ const ContractPolicyTable = ({ initialResult, initialError, canCreate, canUpdate
                         />
                       </td>
                       <td>{formatDate(option.created_at, locale)}</td>
-                      <td>
-                        <div className='flex min-is-[150px] items-center gap-1'>
+                      <td className='text-right'>
+                        <div className='flex min-is-[150px] items-center justify-end gap-1'>
                           <Tooltip title={dictionary.common.view}>
                             <IconButton onClick={() => setViewingOption(option)}>
                               <i className='tabler-eye' />
@@ -246,8 +246,14 @@ const ContractPolicyTable = ({ initialResult, initialError, canCreate, canUpdate
                                       <i className='tabler-edit' />
                                     </IconButton>
                                   </Tooltip>
-                                  <Tooltip title={option.is_active ? dictionary.common.deactivate : dictionary.common.activate}>
-                                    <IconButton onClick={() => handleStatusToggle(option)} disabled={busyId === option.id}>
+                                  <Tooltip
+                                    title={option.is_active ? dictionary.common.deactivate : dictionary.common.activate}
+                                  >
+                                    <IconButton
+                                      color={option.is_active ? 'primary' : 'secondary'}
+                                      onClick={() => handleStatusToggle(option)}
+                                      disabled={busyId === option.id}
+                                    >
                                       <i className={option.is_active ? 'tabler-toggle-right' : 'tabler-toggle-left'} />
                                     </IconButton>
                                   </Tooltip>
@@ -255,7 +261,11 @@ const ContractPolicyTable = ({ initialResult, initialError, canCreate, canUpdate
                               )}
                               {canDelete && (
                                 <Tooltip title={dictionary.common.delete}>
-                                  <IconButton color='error' onClick={() => setDeletingOption(option)} disabled={busyId === option.id}>
+                                  <IconButton
+                                    color='error'
+                                    onClick={() => setDeletingOption(option)}
+                                    disabled={busyId === option.id}
+                                  >
                                     <i className='tabler-trash' />
                                   </IconButton>
                                 </Tooltip>

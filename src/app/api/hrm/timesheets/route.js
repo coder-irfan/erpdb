@@ -19,6 +19,7 @@ import { getDictionary } from '@/utils/getDictionary'
 
 const responseError = (error, status, code) => Response.json({ success: false, error, code }, { status })
 const localeFrom = value => (['en', 'fa', 'ps'].includes(value) ? value : 'en')
+const MAX_PAGE_SIZE = 100
 
 export async function GET(request) {
   const authorization = await authorizeAction(ATTENDANCE_READ_PERMISSIONS)
@@ -41,11 +42,14 @@ export async function GET(request) {
   const year = Number.isInteger(yearValue) && yearValue >= 2000 && yearValue <= 2200 ? yearValue : null
   const staffId = params.get('staff_id')?.trim() || ''
   const status = ATTENDANCE_STATUSES.includes(params.get('status')) ? params.get('status') : ''
+  const search = params.get('search')?.trim() || ''
+  const page = Math.max(1, Number.parseInt(params.get('page') || '1', 10) || 1)
+  const limit = Math.min(MAX_PAGE_SIZE, Math.max(1, Number.parseInt(params.get('limit') || '10', 10) || 10))
 
   if (!DATE_PATTERN.test(date)) return responseError(dictionary.validation.dateInvalid, 400, 'INVALID_DATE')
 
   try {
-    const data = await getAttendanceDashboard({ date, month, year, staffId, status })
+    const data = await getAttendanceDashboard({ date, month, year, staffId, status, search, page, limit })
 
     return Response.json({ success: true, data })
   } catch {

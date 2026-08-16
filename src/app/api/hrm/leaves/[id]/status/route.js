@@ -45,7 +45,11 @@ export async function PATCH(request, routeContext) {
 
       const leave = await transaction.hrmStaffLeave.update({
         where: { id },
-        data: { status_id: status.id, approved_by_id: currentStaff?.id || null },
+        data: {
+          status_id: status.id,
+          approved_by_id: currentStaff?.id || null,
+          approved_by_user_id: authorization.session.user.id
+        },
         select: leaveSelect
       })
 

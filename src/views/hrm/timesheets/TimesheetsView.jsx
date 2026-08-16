@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 import Alert from '@mui/material/Alert'
 import Button from '@mui/material/Button'
@@ -16,6 +16,7 @@ import { toast } from 'sonner'
 
 import CustomTextField from '@core/components/mui/TextField'
 import ConfirmDeleteModal from '@/components/dialogs/ConfirmDeleteModal'
+import DashboardTablePagination from '@/components/table/DashboardTablePagination'
 import TableEmptyStateRow from '@/components/table/TableEmptyStateRow'
 import TableSkeletonRows from '@/components/table/TableSkeletonRows'
 
@@ -27,6 +28,9 @@ import tableStyles from '@core/styles/table.module.css'
 const EMPTY_DATA = {
   records: [],
   unmarkedStaff: [],
+  totalCount: 0,
+  page: 1,
+  totalPages: 1,
   summary: { total_present: 0, total_absent: 0, total_leave: 0, unmarked_count: 0 }
 }
 
@@ -54,18 +58,36 @@ const TimesheetsView = ({ initialDate, canWrite, canDelete, defaultWorkHours, lo
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [search, setSearch] = useState('')
+  const [searchInput, setSearchInput] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
+  const [page, setPage] = useState(0)
+  const [rowsPerPage, setRowsPerPage] = useState(10)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [editingRecord, setEditingRecord] = useState(null)
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [deleteLoading, setDeleteLoading] = useState(false)
+
+  const changeDate = nextDate => {
+    setSelectedDate(nextDate)
+    setPage(0)
+  }
 
   const loadData = useCallback(async () => {
     setLoading(true)
     setError('')
 
     try {
-      const response = await fetch(`/api/hrm/timesheets?date=${selectedDate}&locale=${locale}`, { cache: 'no-store' })
+      const params = new URLSearchParams({
+        date: selectedDate,
+        locale,
+        page: String(page + 1),
+        limit: String(rowsPerPage)
+      })
+
+      if (search) params.set('search', search)
+      if (statusFilter) params.set('status', statusFilter)
+
+      const response = await fetch(`/api/hrm/timesheets?${params.toString()}`, { cache: 'no-store' })
       const result = await response.json()
 
       if (!response.ok || !result.success) {
@@ -80,22 +102,20 @@ const TimesheetsView = ({ initialDate, canWrite, canDelete, defaultWorkHours, lo
     } finally {
       setLoading(false)
     }
-  }, [dictionary.messages.loadFailed, locale, selectedDate])
+  }, [dictionary.messages.loadFailed, locale, page, rowsPerPage, search, selectedDate, statusFilter])
 
   useEffect(() => {
     loadData()
   }, [loadData])
 
-  const filteredRecords = useMemo(() => {
-    const query = search.trim().toLowerCase()
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      setSearch(searchInput.trim())
+      setPage(0)
+    }, 350)
 
-    return data.records.filter(record => {
-      const matchesStatus = !statusFilter || record.status === statusFilter
-      const matchesSearch = !query || record.staff.full_name.toLowerCase().includes(query)
-
-      return matchesStatus && matchesSearch
-    })
-  }, [data.records, search, statusFilter])
+    return () => clearTimeout(timeout)
+  }, [searchInput])
 
   const openCreate = () => {
     setEditingRecord(null)
@@ -127,7 +147,7 @@ const TimesheetsView = ({ initialDate, canWrite, canDelete, defaultWorkHours, lo
   const exportCsv = () => {
     const rows = [
       dictionary.export.columns,
-      ...filteredRecords.map(record => [
+      ...data.records.map(record => [
         record.staff.full_name,
         record.staff.position,
         dictionary.status[record.status],
@@ -160,7 +180,7 @@ const TimesheetsView = ({ initialDate, canWrite, canDelete, defaultWorkHours, lo
             <Tooltip title={dictionary.date.previous}>
               <IconButton
                 aria-label={dictionary.date.previous}
-                onClick={() => setSelectedDate(current => shiftDate(current, -1))}
+                onClick={() => changeDate(shiftDate(selectedDate, -1))}
               >
                 <i className='tabler-chevron-left' />
               </IconButton>
@@ -171,19 +191,19 @@ const TimesheetsView = ({ initialDate, canWrite, canDelete, defaultWorkHours, lo
               label={dictionary.date.date}
               value={selectedDate}
               slotProps={{ inputLabel: { shrink: true } }}
-              onChange={event => setSelectedDate(event.target.value)}
+              onChange={event => changeDate(event.target.value)}
             />
             <Tooltip title={dictionary.date.next}>
               <IconButton
                 aria-label={dictionary.date.next}
-                onClick={() => setSelectedDate(current => shiftDate(current, 1))}
+                onClick={() => changeDate(shiftDate(selectedDate, 1))}
               >
                 <i className='tabler-chevron-right' />
               </IconButton>
             </Tooltip>
             <Button
               variant={selectedDate === initialDate ? 'contained' : 'tonal'}
-              onClick={() => setSelectedDate(initialDate)}
+              onClick={() => changeDate(initialDate)}
             >
               {dictionary.date.today}
             </Button>
@@ -213,34 +233,40 @@ const TimesheetsView = ({ initialDate, canWrite, canDelete, defaultWorkHours, lo
             </div>
           }
         />
-        <CardContent className='no-print flex flex-wrap items-end justify-between gap-4 border-bs pt-5'>
+        <CardContent className='no-print mb-4 flex flex-wrap items-center justify-between gap-4 border-bs pt-5'>
           <CustomTextField
             className='is-full sm:max-is-[280px]'
             label={dictionary.filters.search}
             placeholder={dictionary.filters.searchPlaceholder}
-            value={search}
-            onChange={event => setSearch(event.target.value)}
+            value={searchInput}
+            onChange={event => setSearchInput(event.target.value)}
+            slotProps={{ input: { startAdornment: <i className='tabler-search me-2 text-textSecondary' /> } }}
           />
-          <CustomTextField
-            select
-            className='is-full sm:is-[190px]'
-            label={dictionary.filters.status}
-            value={statusFilter}
-            slotProps={{
-              select: {
-                displayEmpty: true,
-                renderValue: selected => selected ? dictionary.status[selected] : dictionary.filters.allStatuses
-              }
-            }}
-            onChange={event => setStatusFilter(event.target.value)}
-          >
-            <MenuItem value=''>{dictionary.filters.allStatuses}</MenuItem>
-            {Object.keys(STATUS_COLORS).map(status => (
-              <MenuItem key={status} value={status}>
-                {dictionary.status[status]}
-              </MenuItem>
-            ))}
-          </CustomTextField>
+          <div className='flex is-full flex-wrap items-center gap-3 sm:is-auto sm:justify-end'>
+            <CustomTextField
+              select
+              className='is-full sm:is-[190px]'
+              label={dictionary.filters.status}
+              value={statusFilter}
+              slotProps={{
+                select: {
+                  displayEmpty: true,
+                  renderValue: selected => selected ? dictionary.status[selected] : dictionary.filters.allStatuses
+                }
+              }}
+              onChange={event => {
+                setStatusFilter(event.target.value)
+                setPage(0)
+              }}
+            >
+              <MenuItem value=''>{dictionary.filters.allStatuses}</MenuItem>
+              {Object.keys(STATUS_COLORS).map(status => (
+                <MenuItem key={status} value={status}>
+                  {dictionary.status[status]}
+                </MenuItem>
+              ))}
+            </CustomTextField>
+          </div>
         </CardContent>
         {error && <Alert severity='error'>{error}</Alert>}
         <div className='overflow-x-auto'>
@@ -259,7 +285,7 @@ const TimesheetsView = ({ initialDate, canWrite, canDelete, defaultWorkHours, lo
             <tbody>
               {loading ? (
                 <TableSkeletonRows columns={7} />
-              ) : filteredRecords.length === 0 ? (
+              ) : data.records.length === 0 ? (
                 <TableEmptyStateRow
                   colSpan={7}
                   icon='tabler-calendar-time'
@@ -269,7 +295,7 @@ const TimesheetsView = ({ initialDate, canWrite, canDelete, defaultWorkHours, lo
                   onAction={canWrite && data.unmarkedStaff.length > 0 ? openCreate : undefined}
                 />
               ) : (
-                filteredRecords.map(record => (
+                data.records.map(record => (
                   <tr key={record.id}>
                     <td>
                       <Typography color='text.primary' className='font-medium'>
@@ -293,7 +319,7 @@ const TimesheetsView = ({ initialDate, canWrite, canDelete, defaultWorkHours, lo
                     <td>
                       {record.hours_worked ? `${Number(record.hours_worked).toFixed(2)} ${dictionary.hoursShort}` : '—'}
                     </td>
-                    <td className='no-print'>
+                    <td className='no-print text-right'>
                       <div className='flex justify-end gap-1'>
                         {record.notes && (
                           <Tooltip title={record.notes} arrow>
@@ -329,6 +355,21 @@ const TimesheetsView = ({ initialDate, canWrite, canDelete, defaultWorkHours, lo
               )}
             </tbody>
           </table>
+        </div>
+        <div className='no-print'>
+          <DashboardTablePagination
+            count={data.totalCount}
+            page={page}
+            rowsPerPage={rowsPerPage}
+            rowsPerPageOptions={[10, 25, 50]}
+            rowsPerPageLabel={dictionary.table.rowsPerPage}
+            ofLabel={dictionary.table.of}
+            onPageChange={(_, nextPage) => setPage(nextPage)}
+            onRowsPerPageChange={event => {
+              setRowsPerPage(Number(event.target.value))
+              setPage(0)
+            }}
+          />
         </div>
       </Card>
 

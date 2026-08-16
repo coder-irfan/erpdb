@@ -72,10 +72,10 @@ model User {
   created_users User[] @relation("UserCreatedBy")
 
   // ERP Core & RBAC Relations
-  staff         HrmStaff?
-  roles         Role[]       @relation("UserRoles")
-  audit_logs    AuditLog[]
-  hosted_visits CrmVisitor[]
+  staff                   HrmStaff?
+  roles                   Role[]          @relation("UserRoles")
+  audit_logs              AuditLog[]
+  approved_leave_requests HrmStaffLeave[] @relation("ApprovedLeaveUsers")
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
@@ -161,6 +161,8 @@ model HrmStaff {
   // CRM Back-Relations
   assigned_leads  CrmLead[]
   managed_clients CrmClient[]
+  hosted_visitors CrmVisitor[]  @relation("HostedVisitors")
+  crm_activities  CrmActivity[]
 
   // Project & Contract Back-Relations
   managed_projects  Project[]  @relation("ProjectManager")
@@ -175,6 +177,8 @@ model HrmStaff {
   spent_expenses     FinanceExpense[]
   salaries           FinanceSalary[]  @relation("StaffSalaries")
   processed_salaries FinanceSalary[]  @relation("ProcessedSalaries")
+  payrolls           HrmPayroll[]     @relation("StaffPayrolls")
+  processed_payrolls HrmPayroll[]     @relation("ProcessedPayrolls")
   loans              FinanceLoan[]    @relation("StaffLoans")
   approved_loans     FinanceLoan[]    @relation("ApprovedLoans")
 
@@ -212,27 +216,30 @@ model HrmStaffContract {
 }
 
 model HrmStaffLeave {
-  id             String   @id @default(cuid())
-  staff_id       String
-  leave_type_id  String
-  start_date     DateTime
-  end_date       DateTime
-  total_days     Int
-  reason         String?  @db.Text
-  status_id      String
-  approved_by_id String?
-  created_at     DateTime @default(now())
-  updated_at     DateTime @updatedAt
+  id                  String   @id @default(cuid())
+  staff_id            String
+  leave_type_id       String
+  start_date          DateTime
+  end_date            DateTime
+  total_days          Int
+  reason              String?  @db.Text
+  status_id           String
+  approved_by_id      String?
+  approved_by_user_id String?
+  created_at          DateTime @default(now())
+  updated_at          DateTime @updatedAt
 
   // Relations
-  staff       HrmStaff  @relation("StaffLeaves", fields: [staff_id], references: [id], onDelete: Cascade)
-  approved_by HrmStaff? @relation("ApprovedLeaves", fields: [approved_by_id], references: [id], onDelete: SetNull)
-  leave_type  Option    @relation("LeaveType", fields: [leave_type_id], references: [id])
-  status      Option    @relation("LeaveStatus", fields: [status_id], references: [id])
+  staff            HrmStaff  @relation("StaffLeaves", fields: [staff_id], references: [id], onDelete: Cascade)
+  approved_by      HrmStaff? @relation("ApprovedLeaves", fields: [approved_by_id], references: [id], onDelete: SetNull)
+  approved_by_user User?     @relation("ApprovedLeaveUsers", fields: [approved_by_user_id], references: [id], onDelete: SetNull)
+  leave_type       Option    @relation("LeaveType", fields: [leave_type_id], references: [id])
+  status           Option    @relation("LeaveStatus", fields: [status_id], references: [id])
 
   @@index([staff_id, start_date])
   @@index([status_id, start_date, end_date])
   @@index([leave_type_id, start_date])
+  @@index([approved_by_user_id])
 }
 
 model HrmStaffTimesheet {
@@ -257,27 +264,59 @@ model HrmStaffTimesheet {
   @@index([date, status])
 }
 
-// CRM
-model CrmLead {
-  id              String   @id @default(cuid())
-  title           String
-  company_name    String?
-  contact_name    String
-  email           String
-  phone           String?
-  source_id       String
-  status_id       String
-  assigned_to_id  String?
-  estimated_value Decimal? @db.Decimal(12, 2)
-  notes           String?  @db.Text
-  created_at      DateTime @default(now())
-  updated_at      DateTime @updatedAt
+model HrmPayroll {
+  id                     String    @id @default(cuid())
+  staff_id               String
+  month                  Int
+  year                   Int
+  base_salary            Decimal   @db.Decimal(12, 2)
+  total_allowance        Decimal   @default(0) @db.Decimal(12, 2)
+  unpaid_leave_deduction Decimal   @default(0) @db.Decimal(12, 2)
+  tax_deduction          Decimal   @default(0) @db.Decimal(12, 2)
+  net_salary             Decimal   @db.Decimal(12, 2)
+  status_id              String
+  payment_method_id      String?
+  payment_date           DateTime?
+  processed_by_id        String?
+  notes                  String?   @db.Text
+  created_at             DateTime  @default(now())
+  updated_at             DateTime  @updatedAt
 
   // Relations
-  source           Option     @relation("LeadSource", fields: [source_id], references: [id])
-  status           Option     @relation("LeadStatus", fields: [status_id], references: [id])
-  assigned_to      HrmStaff?  @relation(fields: [assigned_to_id], references: [id], onDelete: SetNull)
+  staff          HrmStaff  @relation("StaffPayrolls", fields: [staff_id], references: [id], onDelete: Restrict)
+  processed_by   HrmStaff? @relation("ProcessedPayrolls", fields: [processed_by_id], references: [id], onDelete: SetNull)
+  status         Option    @relation("PayrollStatus", fields: [status_id], references: [id])
+  payment_method Option?   @relation("PayrollPaymentMethod", fields: [payment_method_id], references: [id])
+
+  @@unique([staff_id, month, year])
+  @@index([staff_id, month, year])
+  @@index([status_id, month, year])
+}
+
+// CRM
+model CrmLead {
+  id                  String    @id @default(cuid())
+  title               String
+  company_name        String?
+  contact_name        String
+  email               String
+  phone               String?
+  source_id           String
+  status_id           String
+  assigned_to_id      String?
+  estimated_value     Decimal?  @db.Decimal(12, 2)
+  next_follow_up_date DateTime?
+  notes               String?   @db.Text
+  created_at          DateTime  @default(now())
+  updated_at          DateTime  @updatedAt
+
+  // Relations
+  source           Option        @relation("LeadSource", fields: [source_id], references: [id])
+  status           Option        @relation("LeadStatus", fields: [status_id], references: [id])
+  assigned_to      HrmStaff?     @relation(fields: [assigned_to_id], references: [id], onDelete: SetNull)
   converted_client CrmClient?
+  origin_visitor   CrmVisitor?   @relation("VisitorConvertedLead")
+  activities       CrmActivity[]
   contracts        Contract[]
 
   @@index([status_id, created_at])
@@ -292,6 +331,7 @@ model CrmClient {
   phone                String?
   address              String?  @db.Text
   tax_id               String?
+  notes                String?  @db.Text
   account_manager_id   String?
   status               String   @default("ACTIVE")
   created_at           DateTime @default(now())
@@ -304,25 +344,55 @@ model CrmClient {
   projects        Project[]
   incomes         FinanceIncome[]
   invoices        ContractInvoice[]
+  activities      CrmActivity[]
 }
 
 model CrmVisitor {
-  id           String   @id @default(uuid())
-  full_name    String
-  email        String?
-  phone        String
-  company_name String?
-  purpose      String
-  visited_at   DateTime @default(now())
-  host_user_id String?
-  notes        String?  @db.Text
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
+  id                String    @id @default(uuid())
+  full_name         String
+  email             String?
+  phone             String
+  company_name      String?
+  purpose           String
+  visited_at        DateTime  @default(now())
+  host_staff_id     String?
+  converted_lead_id String?   @unique
+  check_out_time    DateTime?
+  status            String    @default("CHECKED_IN")
+  notes             String?   @db.Text
+  created_at        DateTime  @default(now())
+  updated_at        DateTime  @updatedAt
 
-  host_user User? @relation(fields: [host_user_id], references: [id], onDelete: SetNull)
+  host_staff     HrmStaff? @relation("HostedVisitors", fields: [host_staff_id], references: [id], onDelete: SetNull)
+  converted_lead CrmLead?  @relation("VisitorConvertedLead", fields: [converted_lead_id], references: [id], onDelete: SetNull)
 
   @@index([visited_at])
-  @@index([host_user_id])
+  @@index([host_staff_id])
+  @@index([status, visited_at])
+}
+
+model CrmActivity {
+  id            String    @id @default(cuid())
+  lead_id       String?
+  client_id     String?
+  staff_id      String
+  activity_type String
+  title         String
+  description   String?   @db.Text
+  activity_date DateTime  @default(now())
+  due_date      DateTime?
+  is_completed  Boolean   @default(false)
+  created_at    DateTime  @default(now())
+  updated_at    DateTime  @updatedAt
+
+  // Relations
+  lead   CrmLead?   @relation(fields: [lead_id], references: [id], onDelete: Cascade)
+  client CrmClient? @relation(fields: [client_id], references: [id], onDelete: Cascade)
+  staff  HrmStaff   @relation(fields: [staff_id], references: [id], onDelete: Restrict)
+
+  @@index([lead_id, activity_date])
+  @@index([client_id, activity_date])
+  @@index([staff_id])
 }
 
 // PROJECT
@@ -624,6 +694,8 @@ model Option {
   contract_statuses HrmStaffContract[] @relation("ContractStatus")
   leave_types       HrmStaffLeave[]    @relation("LeaveType")
   leave_statuses    HrmStaffLeave[]    @relation("LeaveStatus")
+  payroll_statuses  HrmPayroll[]       @relation("PayrollStatus")
+  payment_methods   HrmPayroll[]       @relation("PayrollPaymentMethod")
 
   // CRM Relations
   lead_sources  CrmLead[] @relation("LeadSource")

@@ -223,6 +223,7 @@ const RolesPermissionsView = ({
                 <FormControlLabel
                   control={
                     <Switch
+                      color={role.isActive ? 'primary' : 'secondary'}
                       checked={role.isActive}
                       onChange={() => handleRoleStatusChange(role)}
                       disabled={isProtected || busyRoleId === role.id}

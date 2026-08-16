@@ -1,5 +1,8 @@
 const popover = skin => ({
   MuiPopover: {
+    defaultProps: {
+      transitionDuration: 300
+    },
     styleOverrides: {
       paper: {
         ...(skin === 'bordered'

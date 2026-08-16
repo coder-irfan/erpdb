@@ -230,7 +230,7 @@ const StaffListTable = ({
           const employee = row.original
 
           return (
-            <div className='flex min-is-[220px] items-center gap-1'>
+            <div className='flex min-is-[220px] items-center justify-end gap-1'>
               <Tooltip title={dictionary.actions.view}>
                 <IconButton onClick={() => setDetailStaffId(employee.id)}>
                   <i className='tabler-eye' />
@@ -282,7 +282,7 @@ const StaffListTable = ({
       <Card>
         <CardHeader title={dictionary.title} subheader={dictionary.description} />
         <CardContent className='border-bs border-divider'>
-          <div className='mt-5 flex flex-wrap items-end gap-2 sm:justify-between'>
+          <div className='mb-4 mt-5 flex flex-wrap items-center justify-between gap-4'>
             <CustomTextField
               value={searchInput}
               onChange={event => setSearchInput(event.target.value)}
@@ -291,62 +291,64 @@ const StaffListTable = ({
               className='is-full sm:is-[260px]'
               slotProps={{ input: { startAdornment: <i className='tabler-search text-textSecondary' /> } }}
             />
-            <CustomTextField
-              select
-              value={status}
-              onChange={event => {
-                setStatus(event.target.value)
-                setPage(0)
-              }}
-              label={dictionary.filters.status}
-              className='is-full sm:is-[180px]'
-              slotProps={{
-                select: {
-                  displayEmpty: true,
-                  renderValue: selected => selected ? dictionary.status[selected] : dictionary.filters.allStatuses
-                }
-              }}
-            >
-              <MenuItem value=''>{dictionary.filters.allStatuses}</MenuItem>
-              {['ACTIVE', 'INACTIVE', 'TERMINATED'].map(statusValue => (
-                <MenuItem key={statusValue} value={statusValue}>
-                  {dictionary.status[statusValue]}
-                </MenuItem>
-              ))}
-            </CustomTextField>
-            <CustomTextField
-              select
-              value={position}
-              onChange={event => {
-                setPosition(event.target.value)
-                setPage(0)
-              }}
-              label={dictionary.filters.position}
-              className='is-full sm:is-[220px]'
-              slotProps={{
-                select: {
-                  displayEmpty: true,
-                  renderValue: selected => selected || dictionary.filters.allPositions
-                }
-              }}
-            >
-              <MenuItem value=''>{dictionary.filters.allPositions}</MenuItem>
-              {positions.map(positionValue => (
-                <MenuItem key={positionValue} value={positionValue}>
-                  {positionValue}
-                </MenuItem>
-              ))}
-            </CustomTextField>
-            {canCreate && (
-              <Button
-                variant='contained'
-                startIcon={<i className='tabler-user-plus' />}
-                onClick={openCreateDrawer}
-                className='is-full sm:ms-auto sm:is-auto'
+            <div className='flex is-full flex-wrap items-center gap-3 sm:is-auto sm:justify-end'>
+              <CustomTextField
+                select
+                value={status}
+                onChange={event => {
+                  setStatus(event.target.value)
+                  setPage(0)
+                }}
+                label={dictionary.filters.status}
+                className='is-full sm:is-[180px]'
+                slotProps={{
+                  select: {
+                    displayEmpty: true,
+                    renderValue: selected => selected ? dictionary.status[selected] : dictionary.filters.allStatuses
+                  }
+                }}
               >
-                {dictionary.actions.add}
-              </Button>
-            )}
+                <MenuItem value=''>{dictionary.filters.allStatuses}</MenuItem>
+                {['ACTIVE', 'INACTIVE', 'TERMINATED'].map(statusValue => (
+                  <MenuItem key={statusValue} value={statusValue}>
+                    {dictionary.status[statusValue]}
+                  </MenuItem>
+                ))}
+              </CustomTextField>
+              <CustomTextField
+                select
+                value={position}
+                onChange={event => {
+                  setPosition(event.target.value)
+                  setPage(0)
+                }}
+                label={dictionary.filters.position}
+                className='is-full sm:is-[220px]'
+                slotProps={{
+                  select: {
+                    displayEmpty: true,
+                    renderValue: selected => selected || dictionary.filters.allPositions
+                  }
+                }}
+              >
+                <MenuItem value=''>{dictionary.filters.allPositions}</MenuItem>
+                {positions.map(positionValue => (
+                  <MenuItem key={positionValue} value={positionValue}>
+                    {positionValue}
+                  </MenuItem>
+                ))}
+              </CustomTextField>
+              {canCreate && (
+                <Button
+                  variant='contained'
+                  startIcon={<i className='tabler-user-plus' />}
+                  onClick={openCreateDrawer}
+                  className='is-full sm:is-auto'
+                >
+                  {dictionary.actions.add}
+                </Button>
+              )}
+            </div>
           </div>
         </CardContent>
 
@@ -356,7 +358,7 @@ const StaffListTable = ({
               {table.getHeaderGroups().map(headerGroup => (
                 <tr key={headerGroup.id}>
                   {headerGroup.headers.map(header => (
-                    <th key={header.id}>
+                    <th key={header.id} className={header.column.id === 'actions' ? 'text-right' : undefined}>
                       {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
                     </th>
                   ))}
@@ -379,7 +381,7 @@ const StaffListTable = ({
                 table.getRowModel().rows.map(row => (
                   <tr key={row.id}>
                     {row.getVisibleCells().map(cell => (
-                      <td key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</td>
+                      <td key={cell.id} className={cell.column.id === 'actions' ? 'text-right' : undefined}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</td>
                     ))}
                   </tr>
                 ))

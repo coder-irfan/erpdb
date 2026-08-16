@@ -20,6 +20,7 @@ const StaffPositionsPage = async props => {
       initialError={result.success ? null : result.error}
       canCreate={hasAnyPermission(session, ['options:write', 'options:create'])}
       canUpdate={hasAnyPermission(session, ['options:write', 'options:update'])}
+      canDelete={hasAnyPermission(session, ['options:write', 'options:delete'])}
       locale={lang}
       dictionary={dictionary.optionsManagement}
     />

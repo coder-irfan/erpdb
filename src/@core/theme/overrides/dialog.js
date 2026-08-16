@@ -1,5 +1,8 @@
 const dialog = skin => ({
   MuiDialog: {
+    defaultProps: {
+      transitionDuration: 300
+    },
     styleOverrides: {
       paper: ({ theme }) => ({
         borderRadius: 'var(--mui-shape-customBorderRadius-lg)',

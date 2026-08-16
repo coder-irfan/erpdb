@@ -50,6 +50,7 @@ export async function PUT(request, routeContext) {
     leave_type_id: payload?.leave_type_id,
     start_date: payload?.start_date,
     end_date: payload?.end_date,
+    status_id: payload?.status_id || '',
     reason: payload?.reason || ''
   })
 

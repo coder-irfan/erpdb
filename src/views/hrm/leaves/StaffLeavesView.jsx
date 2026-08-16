@@ -36,6 +36,7 @@ const EMPTY_DATA = {
 }
 
 const localeMap = { en: 'en-US', fa: 'fa-AF', ps: 'ps-AF' }
+const STATUS_COLORS = { APPROVED: 'success', REJECTED: 'error', PENDING: 'warning' }
 
 const formatDate = (value, locale) =>
   new Intl.DateTimeFormat(localeMap[locale] || 'en-US', { dateStyle: 'medium', timeZone: 'UTC' }).format(
@@ -171,19 +172,37 @@ const StaffLeavesView = ({ locale, dictionary }) => {
             )}
           </div>
 
-          <div className='flex flex-wrap items-end gap-2 sm:justify-between'>
-            <div className='flex flex-1 flex-wrap gap-2'>
+          <div className='mb-4 flex flex-wrap items-center justify-between gap-4'>
+            <div className='ms-auto flex is-full flex-wrap items-center gap-3 sm:is-auto sm:justify-end'>
               {data.canManage && (
-                <CustomTextField select label={dictionary.filters.staff} value={staffId} onChange={event => { setStaffId(event.target.value); setPage(0) }} className='is-full sm:is-[240px]'>
+                <CustomTextField select label={dictionary.filters.staff} value={staffId} onChange={event => { setStaffId(event.target.value); setPage(0) }} className='is-full sm:is-[240px]' slotProps={{ select: { displayEmpty: true, renderValue: selected => data.options.staff.find(staff => staff.id === selected)?.full_name || dictionary.filters.allStaff } }}>
                   <MenuItem value=''>{dictionary.filters.allStaff}</MenuItem>
                   {data.options.staff.map(staff => <MenuItem key={staff.id} value={staff.id}>{staff.full_name}</MenuItem>)}
                 </CustomTextField>
               )}
-              <CustomTextField select label={dictionary.filters.leaveType} value={leaveTypeId} onChange={event => { setLeaveTypeId(event.target.value); setPage(0) }} className='is-full sm:is-[220px]'>
+              <CustomTextField select label={dictionary.filters.leaveType} value={leaveTypeId} onChange={event => { setLeaveTypeId(event.target.value); setPage(0) }} className='is-full sm:is-[220px]' slotProps={{ select: { displayEmpty: true, renderValue: selected => data.options.leaveTypes.find(type => type.id === selected)?.label || dictionary.filters.allLeaveTypes } }}>
                 <MenuItem value=''>{dictionary.filters.allLeaveTypes}</MenuItem>
                 {data.options.leaveTypes.map(type => <MenuItem key={type.id} value={type.id}>{type.label}</MenuItem>)}
               </CustomTextField>
-              <CustomTextField select label={dictionary.filters.status} value={statusId} onChange={event => { setStatusId(event.target.value); setPage(0) }} className='is-full sm:is-[200px]'>
+              <CustomTextField
+                select
+                label={dictionary.filters.status}
+                value={statusId}
+                onChange={event => { setStatusId(event.target.value); setPage(0) }}
+                className='is-full sm:is-[200px]'
+                slotProps={{
+                  select: {
+                    displayEmpty: true,
+                    renderValue: selected => {
+                      const status = data.options.statuses.find(item => item.id === selected)
+
+                      return status
+                        ? dictionary.status[status.value] || status.label
+                        : dictionary.filters.allStatuses
+                    }
+                  }
+                }}
+              >
                 <MenuItem value=''>{dictionary.filters.allStatuses}</MenuItem>
                 {data.options.statuses.map(status => <MenuItem key={status.id} value={status.id}>{dictionary.status[status.value] || status.label}</MenuItem>)}
               </CustomTextField>
@@ -201,7 +220,7 @@ const StaffLeavesView = ({ locale, dictionary }) => {
                 <th>{dictionary.table.reason}</th>
                 <th>{dictionary.table.status}</th>
                 <th>{dictionary.table.approvedBy}</th>
-                <th>{dictionary.table.actions}</th>
+                <th className='text-right'>{dictionary.table.actions}</th>
               </tr>
             </thead>
             <tbody>
@@ -247,10 +266,10 @@ const StaffLeavesView = ({ locale, dictionary }) => {
                           </Tooltip>
                         ) : <Typography color='text.secondary'>—</Typography>}
                       </td>
-                      <td><Chip size='small' variant='tonal' label={dictionary.status[leave.status.value] || leave.status.label} /></td>
+                      <td><Chip size='small' variant='tonal' color={STATUS_COLORS[leave.status.value] || 'default'} label={dictionary.status[leave.status.value] || leave.status.label} /></td>
                       <td>{leave.approved_by?.full_name || '—'}</td>
-                      <td>
-                        <div className='flex min-is-[150px] items-center gap-1'>
+                      <td className='text-right'>
+                        <div className='flex min-is-[150px] items-center justify-end gap-1'>
                           {data.canManage && isPending && (
                             <>
                               <Tooltip title={dictionary.actions.approve}>

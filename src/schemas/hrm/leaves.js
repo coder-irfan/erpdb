@@ -17,6 +17,7 @@ export const createLeaveSchema = customMessages => {
     leave_type_id: pipe(string(messages.required), trim(), nonEmpty(messages.required)),
     start_date: pipe(string(messages.dateInvalid), trim(), regex(DATE_PATTERN, messages.dateInvalid)),
     end_date: pipe(string(messages.dateInvalid), trim(), regex(DATE_PATTERN, messages.dateInvalid)),
+    status_id: optional(pipe(string(), trim()), ''),
     reason: optional(pipe(string(), trim(), maxLength(2000, messages.reasonTooLong)), '')
   })
 }

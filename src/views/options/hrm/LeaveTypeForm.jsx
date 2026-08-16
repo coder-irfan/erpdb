@@ -32,9 +32,16 @@ const LeaveTypeForm = ({ open, option, locale, dictionary, onClose, onSaved }) =
   useEffect(() => {
     if (!open) return
 
-    reset(option
-      ? { name: option.name || '', category: 'LEAVE_TYPE', description: option.description || '', is_active: option.is_active }
-      : DEFAULT_VALUES)
+    reset(
+      option
+        ? {
+            name: option.name || '',
+            category: 'LEAVE_TYPE',
+            description: option.description || '',
+            is_active: option.is_active
+          }
+        : DEFAULT_VALUES
+    )
   }, [open, option, reset])
 
   const closeForm = () => {
@@ -91,7 +98,13 @@ const LeaveTypeForm = ({ open, option, locale, dictionary, onClose, onSaved }) =
             control={control}
             render={({ field }) => (
               <FormControlLabel
-                control={<Switch checked={field.value} onChange={event => field.onChange(event.target.checked)} />}
+                control={
+                  <Switch
+                    color={field.value ? 'primary' : 'secondary'}
+                    checked={field.value}
+                    onChange={event => field.onChange(event.target.checked)}
+                  />
+                }
                 label={field.value ? dictionary.common.active : dictionary.common.inactive}
                 disabled={isSubmitting}
               />
@@ -99,7 +112,9 @@ const LeaveTypeForm = ({ open, option, locale, dictionary, onClose, onSaved }) =
           />
         </DialogContent>
         <DialogActions className='p-5'>
-          <Button variant='tonal' color='secondary' onClick={closeForm} disabled={isSubmitting}>{dictionary.common.cancel}</Button>
+          <Button variant='tonal' color='secondary' onClick={closeForm} disabled={isSubmitting}>
+            {dictionary.common.cancel}
+          </Button>
           <Button type='submit' variant='contained' disabled={isSubmitting}>
             <LoadingButtonContent loading={isSubmitting} loadingLabel={dictionary.common.saving}>
               {option ? dictionary.common.saveChanges : dictionary.common.create}

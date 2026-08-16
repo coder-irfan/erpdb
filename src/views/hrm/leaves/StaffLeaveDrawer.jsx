@@ -25,13 +25,13 @@ const withCurrentOption = (options, current) => {
   return [...options, current]
 }
 
-const getDefaults = (leave, currentStaffId) => ({
+const getDefaults = (leave, currentStaffId, statuses = []) => ({
   staff_id: leave?.staff_id || currentStaffId || '',
   leave_type_id: leave?.leave_type_id || '',
   start_date: leave?.start_date || today(),
   end_date: leave?.end_date || today(),
   reason: leave?.reason || '',
-  status: leave?.status?.value === 'APPROVED' ? 'APPROVED' : 'PENDING'
+  status_id: leave?.status_id || statuses.find(status => status.value === 'PENDING')?.id || ''
 })
 
 const StaffLeaveDrawer = ({ open, leave, options, currentStaffId, canManage, locale, dictionary, onClose, onSaved }) => {
@@ -47,12 +47,12 @@ const StaffLeaveDrawer = ({ open, leave, options, currentStaffId, canManage, loc
     formState: { errors, isSubmitting }
   } = useForm({
     resolver: valibotResolver(createLeaveSchema(dictionary.validation)),
-    defaultValues: getDefaults(leave, currentStaffId)
+    defaultValues: getDefaults(leave, currentStaffId, options.statuses)
   })
 
   useEffect(() => {
-    if (open) reset(getDefaults(leave, currentStaffId))
-  }, [currentStaffId, leave, open, reset])
+    if (open) reset(getDefaults(leave, currentStaffId, options.statuses))
+  }, [currentStaffId, leave, open, options.statuses, reset])
 
   const startDate = watch('start_date')
   const endDate = watch('end_date')
@@ -131,12 +131,14 @@ const StaffLeaveDrawer = ({ open, leave, options, currentStaffId, canManage, loc
         </div>
         {!leave && canManage && (
           <Controller
-            name='status'
+            name='status_id'
             control={control}
             render={({ field }) => (
-              <CustomTextField {...field} select fullWidth label={dictionary.fields.initialStatus} value={field.value || 'PENDING'} disabled={isSubmitting}>
-                <MenuItem value='PENDING'>{dictionary.status.PENDING}</MenuItem>
-                <MenuItem value='APPROVED'>{dictionary.status.APPROVED}</MenuItem>
+              <CustomTextField {...field} select fullWidth label={dictionary.fields.initialStatus} value={field.value || ''} disabled={isSubmitting}>
+                <MenuItem value='' disabled>{dictionary.placeholders.selectStatus}</MenuItem>
+                {options.statuses
+                  .filter(status => ['PENDING', 'APPROVED'].includes(status.value))
+                  .map(status => <MenuItem key={status.id} value={status.id}>{dictionary.status[status.value] || status.label}</MenuItem>)}
               </CustomTextField>
             )}
           />
