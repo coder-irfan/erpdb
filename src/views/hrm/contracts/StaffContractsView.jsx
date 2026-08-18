@@ -8,8 +8,6 @@ import Alert from '@mui/material/Alert'
 import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
-import CardHeader from '@mui/material/CardHeader'
-import Chip from '@mui/material/Chip'
 import IconButton from '@mui/material/IconButton'
 import MenuItem from '@mui/material/MenuItem'
 import Tooltip from '@mui/material/Tooltip'
@@ -20,6 +18,7 @@ import CustomTextField from '@core/components/mui/TextField'
 import { getStaffContracts, updateStaffContractStatus } from '@/actions/hrm/contracts'
 import DashboardTablePagination from '@/components/table/DashboardTablePagination'
 import TableEmptyStateRow from '@/components/table/TableEmptyStateRow'
+import TableFiltersPopover from '@/components/table/TableFiltersPopover'
 import TableSkeletonRows from '@/components/table/TableSkeletonRows'
 import { formatCurrency } from '@/utils/formatCurrency'
 
@@ -29,7 +28,13 @@ import StaffContractDrawer from './StaffContractDrawer'
 import tableStyles from '@core/styles/table.module.css'
 
 const localeMap = { en: 'en-US', fa: 'fa-AF', ps: 'ps-AF' }
-const STATUS_COLORS = { ACTIVE: 'success', EXPIRED: 'warning', TERMINATED: 'error', DRAFT: 'secondary' }
+
+const STATUS_TEXT_CLASSES = {
+  ACTIVE: 'text-success',
+  DRAFT: 'text-textSecondary',
+  EXPIRED: 'text-warning',
+  TERMINATED: 'text-error'
+}
 
 const formatDate = (value, locale) =>
   value ? new Intl.DateTimeFormat(localeMap[locale] || 'en-US', { dateStyle: 'medium' }).format(new Date(value)) : '—'
@@ -138,86 +143,86 @@ const StaffContractsView = ({ initialResult, initialError, formOptions, canWrite
   }
 
   return (
-    <>
+    <div className='flex flex-col md:gap-4 gap-2'>
       <Card>
-        <CardHeader
-          title={dictionary.title}
-          subheader={dictionary.description}
-          action={
-            canWrite ? (
-              <Button variant='contained' startIcon={<i className='tabler-plus' />} onClick={openCreate}>
-                {dictionary.actions.add}
-              </Button>
-            ) : null
-          }
-        />
-        <CardContent className='mb-4 flex flex-wrap items-center justify-between gap-4 border-bs pt-5'>
+        <CardContent className='flex flex-wrap items-center justify-between gap-4 border-be border-divider'>
           <CustomTextField
-            className='is-full sm:max-is-[280px]'
+            className='is-full sm:max-is-[320px]'
             value={searchInput}
             onChange={event => setSearchInput(event.target.value)}
             placeholder={dictionary.filters.searchPlaceholder}
             label={dictionary.filters.search}
-            slotProps={{ input: { startAdornment: <i className='tabler-search me-2 text-textSecondary' /> } }}
+            slotProps={{ input: { startAdornment: <i className='tabler-search text-textSecondary' /> } }}
           />
           <div className='flex is-full flex-wrap items-center gap-3 sm:is-auto sm:justify-end'>
-            <CustomTextField
-              select
-              className='is-full sm:is-[190px]'
-              value={statusId}
-              label={dictionary.filters.status}
-              slotProps={{
-                select: {
-                  displayEmpty: true,
-                  renderValue: selectedId => {
-                    const selected = formOptions.statuses.find(status => status.id === selectedId)
+            <TableFiltersPopover
+              activeCount={Number(Boolean(statusId)) + Number(Boolean(contractTypeId))}
+              locale={locale}
+            >
+              <CustomTextField
+                select
+                className='is-full'
+                value={statusId}
+                label={dictionary.filters.status}
+                slotProps={{
+                  select: {
+                    displayEmpty: true,
+                    renderValue: selectedId => {
+                      const selected = formOptions.statuses.find(status => status.id === selectedId)
 
-                    return selected
-                      ? dictionary.status[selected.value] || selected.label
-                      : dictionary.filters.allStatuses
+                      return selected
+                        ? dictionary.status[selected.value] || selected.label
+                        : dictionary.filters.allStatuses
+                    }
                   }
-                }
-              }}
-              onChange={event => {
-                setStatusId(event.target.value)
-                setPage(0)
-              }}
-            >
-              <MenuItem value=''>{dictionary.filters.allStatuses}</MenuItem>
-              {formOptions.statuses.map(status => (
-                <MenuItem key={status.id} value={status.id}>
-                  {dictionary.status[status.value] || status.label}
-                </MenuItem>
-              ))}
-            </CustomTextField>
-            <CustomTextField
-              select
-              className='is-full sm:is-[220px]'
-              value={contractTypeId}
-              label={dictionary.filters.contractType}
-              slotProps={{
-                select: {
-                  displayEmpty: true,
-                  renderValue: selectedId =>
-                    filterPolicies.find(policy => policy.id === selectedId)?.label || dictionary.filters.allContractTypes
-                }
-              }}
-              onChange={event => {
-                setContractTypeId(event.target.value)
-                setPage(0)
-              }}
-            >
-              <MenuItem value=''>{dictionary.filters.allContractTypes}</MenuItem>
-              {filterPolicies.map(policy => (
-                <MenuItem key={policy.id} value={policy.id}>
-                  {policy.label}
-                </MenuItem>
-              ))}
-            </CustomTextField>
+                }}
+                onChange={event => {
+                  setStatusId(event.target.value)
+                  setPage(0)
+                }}
+              >
+                <MenuItem value=''>{dictionary.filters.allStatuses}</MenuItem>
+                {formOptions.statuses.map(status => (
+                  <MenuItem key={status.id} value={status.id}>
+                    {dictionary.status[status.value] || status.label}
+                  </MenuItem>
+                ))}
+              </CustomTextField>
+              <CustomTextField
+                select
+                className='is-full'
+                value={contractTypeId}
+                label={dictionary.filters.contractType}
+                slotProps={{
+                  select: {
+                    displayEmpty: true,
+                    renderValue: selectedId =>
+                      filterPolicies.find(policy => policy.id === selectedId)?.label ||
+                      dictionary.filters.allContractTypes
+                  }
+                }}
+                onChange={event => {
+                  setContractTypeId(event.target.value)
+                  setPage(0)
+                }}
+              >
+                <MenuItem value=''>{dictionary.filters.allContractTypes}</MenuItem>
+                {filterPolicies.map(policy => (
+                  <MenuItem key={policy.id} value={policy.id}>
+                    {policy.label}
+                  </MenuItem>
+                ))}
+              </CustomTextField>
+            </TableFiltersPopover>
+            {canWrite && (
+              <Button variant='contained' startIcon={<i className='tabler-plus' />} onClick={openCreate}>
+                {dictionary.actions.add}
+              </Button>
+            )}
           </div>
         </CardContent>
         {initialError && <Alert severity='error'>{initialError}</Alert>}
-        <div className='overflow-x-auto'>
+        <div className='no-scrollbar overflow-x-auto scroll-smooth'>
           <table className={tableStyles.table}>
             <thead>
               <tr>
@@ -228,7 +233,7 @@ const StaffContractsView = ({ initialResult, initialError, formOptions, canWrite
                 <th>{dictionary.table.salary}</th>
                 <th>{dictionary.table.period}</th>
                 <th>{dictionary.table.status}</th>
-                <th className='text-right'>{dictionary.table.actions}</th>
+                <th className='text-end'>{dictionary.table.actions}</th>
               </tr>
             </thead>
             <tbody>
@@ -251,7 +256,9 @@ const StaffContractsView = ({ initialResult, initialError, formOptions, canWrite
                         <span className='flex size-9 shrink-0 items-center justify-center rounded-full bg-primaryLighter text-primary'>
                           <i className='tabler-file-certificate text-xl' />
                         </span>
-                        <Typography className='font-semibold' color='primary.main'>{contract.contract_number}</Typography>
+                        <Typography className='font-semibold' color='primary.main'>
+                          {contract.contract_number}
+                        </Typography>
                       </div>
                     </td>
                     <td>
@@ -263,8 +270,11 @@ const StaffContractsView = ({ initialResult, initialError, formOptions, canWrite
                     <td>{contract.position_title}</td>
                     <td>{contract.contract_type.label}</td>
                     <td>
-                      <Typography component='span' className='inline-flex rounded bg-successLight px-3 py-1 font-semibold text-success'>
-                        {formatCurrency(contract.base_salary, locale, currencyCode)}
+                      <Typography
+                        component='span'
+                        className='inline-flex rounded bg-successLighter px-3 py-1 font-semibold text-success'
+                      >
+                        {formatCurrency(contract.base_salary, locale, contract.currency || currencyCode)}
                       </Typography>
                     </td>
                     <td className='whitespace-nowrap'>
@@ -273,13 +283,19 @@ const StaffContractsView = ({ initialResult, initialError, formOptions, canWrite
                         {formatDate(contract.end_date, locale)}
                       </Typography>
                     </td>
-                    <td className='text-right'>
+                    <td className='text-end'>
                       {canWrite ? (
                         <CustomTextField
                           select
                           size='small'
                           value={contract.status_id}
                           disabled={busyId === contract.id}
+                          className='border-none bg-transparent shadow-none outline-none focus:ring-0'
+                          sx={{
+                            '& .MuiInputBase-root': { backgroundColor: 'transparent', boxShadow: 'none' },
+                            '& .MuiOutlinedInput-notchedOutline': { border: 'none' },
+                            '& .MuiInputBase-root::before, & .MuiInputBase-root::after': { display: 'none' }
+                          }}
                           slotProps={{
                             select: {
                               renderValue: selectedId => {
@@ -289,12 +305,11 @@ const StaffContractsView = ({ initialResult, initialError, formOptions, canWrite
                                 const statusValue = selectedStatus.value
 
                                 return (
-                                  <Chip
-                                    size='small'
-                                    variant='tonal'
-                                    color={STATUS_COLORS[statusValue] || 'default'}
-                                    label={dictionary.status[statusValue] || selectedStatus.label}
-                                  />
+                                  <span
+                                    className={`bg-transparent font-medium ${STATUS_TEXT_CLASSES[statusValue] || 'text-info'}`}
+                                  >
+                                    {dictionary.status[statusValue] || selectedStatus.label}
+                                  </span>
                                 )
                               }
                             }
@@ -313,12 +328,11 @@ const StaffContractsView = ({ initialResult, initialError, formOptions, canWrite
                           )}
                         </CustomTextField>
                       ) : (
-                        <Chip
-                          size='small'
-                          variant='tonal'
-                          color={STATUS_COLORS[contract.status.value] || 'default'}
-                          label={dictionary.status[contract.status.value] || contract.status.label}
-                        />
+                        <span
+                          className={`bg-transparent font-medium ${STATUS_TEXT_CLASSES[contract.status.value] || 'text-info'}`}
+                        >
+                          {dictionary.status[contract.status.value] || contract.status.label}
+                        </span>
                       )}
                     </td>
                     <td>
@@ -386,7 +400,7 @@ const StaffContractsView = ({ initialResult, initialError, formOptions, canWrite
         onClose={() => setViewingContract(null)}
         onEdit={openEdit}
       />
-    </>
+    </div>
   )
 }
 

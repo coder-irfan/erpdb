@@ -27,7 +27,12 @@ const PaymentDialog = ({ open, payroll, paymentMethods, locale, dictionary, onCl
     setLoading(true)
 
     try {
-      const response = await fetch(`/api/hrm/payroll/${payroll.id}/pay`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ payment_method_id: paymentMethodId, locale }) })
+      const response = await fetch(`/api/hrm/payroll/${payroll.id}/pay`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ payment_method_id: paymentMethodId, locale })
+      })
+
       const result = await response.json()
 
       if (!response.ok || !result.success) return toast.error(result.error || dictionary.messages.operationFailed)
@@ -46,14 +51,32 @@ const PaymentDialog = ({ open, payroll, paymentMethods, locale, dictionary, onCl
     <Dialog open={open} onClose={loading ? undefined : onClose} fullWidth maxWidth='xs'>
       <DialogTitle>{dictionary.payment.title}</DialogTitle>
       <DialogContent dividers>
-        <CustomTextField select fullWidth label={dictionary.payment.method} value={paymentMethodId} onChange={event => setPaymentMethodId(event.target.value)}>
-          <MenuItem value='' disabled>{dictionary.payment.selectMethod}</MenuItem>
-          {paymentMethods.map(method => <MenuItem key={method.id} value={method.id}>{method.label}</MenuItem>)}
+        <CustomTextField
+          select
+          fullWidth
+          label={dictionary.payment.method}
+          value={paymentMethodId}
+          onChange={event => setPaymentMethodId(event.target.value)}
+        >
+          <MenuItem value='' disabled>
+            {dictionary.payment.selectMethod}
+          </MenuItem>
+          {paymentMethods.map(method => (
+            <MenuItem key={method.id} value={method.id}>
+              {method.label}
+            </MenuItem>
+          ))}
         </CustomTextField>
       </DialogContent>
       <DialogActions className='p-5'>
-        <Button variant='tonal' color='secondary' onClick={onClose} disabled={loading}>{dictionary.actions.cancel}</Button>
-        <Button variant='contained' onClick={submit} disabled={loading || !paymentMethodId}><LoadingButtonContent loading={loading} loadingLabel={dictionary.actions.processing}>{dictionary.actions.confirmPayment}</LoadingButtonContent></Button>
+        <Button variant='tonal' color='secondary' onClick={onClose} disabled={loading}>
+          {dictionary.actions.cancel}
+        </Button>
+        <Button variant='contained' onClick={submit} disabled={loading || !paymentMethodId}>
+          <LoadingButtonContent loading={loading} loadingLabel={dictionary.actions.processing}>
+            {dictionary.actions.confirmPayment}
+          </LoadingButtonContent>
+        </Button>
       </DialogActions>
     </Dialog>
   )

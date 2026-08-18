@@ -52,7 +52,7 @@ const PreviewCard = ({ invoiceData, id }) => {
           <Grid size={{ xs: 12 }}>
             <div className='p-6 bg-actionHover rounded'>
               <div className='flex justify-between gap-y-4 flex-col sm:flex-row'>
-                <div className='flex flex-col gap-6'>
+                <div className='flex flex-col md:gap-4 gap-2'>
                   <div className='flex items-center gap-2.5'>
                     <Logo />
                   </div>
@@ -62,7 +62,7 @@ const PreviewCard = ({ invoiceData, id }) => {
                     <Typography color='text.primary'>+1 (123) 456 7891, +44 (876) 543 2198</Typography>
                   </div>
                 </div>
-                <div className='flex flex-col gap-6'>
+                <div className='flex flex-col md:gap-4 gap-2'>
                   <Typography variant='h5'>{`Invoice #${id}`}</Typography>
                   <div className='flex flex-col gap-1'>
                     <Typography color='text.primary'>{`Date Issued: ${invoiceData?.issuedDate}`}</Typography>
@@ -75,7 +75,7 @@ const PreviewCard = ({ invoiceData, id }) => {
           <Grid size={{ xs: 12 }}>
             <Grid container spacing={6}>
               <Grid size={{ xs: 12, sm: 6 }}>
-                <div className='flex flex-col gap-4'>
+                <div className='flex flex-col md:gap-4 gap-2'>
                   <Typography className='font-medium' color='text.primary'>
                     Invoice To:
                   </Typography>
@@ -89,7 +89,7 @@ const PreviewCard = ({ invoiceData, id }) => {
                 </div>
               </Grid>
               <Grid size={{ xs: 12, sm: 6 }}>
-                <div className='flex flex-col gap-4'>
+                <div className='flex flex-col md:gap-4 gap-2'>
                   <Typography className='font-medium' color='text.primary'>
                     Bill To:
                   </Typography>

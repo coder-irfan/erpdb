@@ -33,8 +33,7 @@ const STATUS_COLORS = {
   SUSPENDED: 'error'
 }
 
-const PROFILE_IMAGE_ACCEPT =
-  'image/avif,image/bmp,image/gif,image/jpeg,image/jpg,image/png,image/webp,image/svg+xml'
+const PROFILE_IMAGE_ACCEPT = 'image/avif,image/bmp,image/gif,image/jpeg,image/jpg,image/png,image/webp,image/svg+xml'
 
 const DetailItem = ({ icon, label, value }) => (
   <div className='flex min-is-0 gap-3 rounded-lg border border-divider p-4'>
@@ -206,12 +205,7 @@ const ProfileView = ({ initialProfile, dictionary, uploadTranslations, locale })
   const staff = profile.staff
 
   return (
-    <div className='flex flex-col gap-6'>
-      <div>
-        <Typography variant='h4'>{dictionary.title}</Typography>
-        <Typography color='text.secondary'>{dictionary.description}</Typography>
-      </div>
-
+    <div className='flex flex-col md:gap-4 gap-2'>
       <div className='grid grid-cols-1 gap-6 xl:grid-cols-3'>
         <Card className='xl:col-span-2'>
           <CardHeader title={dictionary.account.title} subheader={dictionary.account.description} />
@@ -251,7 +245,8 @@ const ProfileView = ({ initialProfile, dictionary, uploadTranslations, locale })
                   label={dictionary.account.email}
                   error={Boolean(accountErrors.email)}
                   helperText={
-                    accountErrors.email?.message || (!profile.canEditEmail ? dictionary.account.emailReadOnly : undefined)
+                    accountErrors.email?.message ||
+                    (!profile.canEditEmail ? dictionary.account.emailReadOnly : undefined)
                   }
                   disabled={isAccountSubmitting}
                   slotProps={{ input: { readOnly: !profile.canEditEmail } }}
@@ -343,9 +338,17 @@ const ProfileView = ({ initialProfile, dictionary, uploadTranslations, locale })
           <CardContent>
             {staff ? (
               <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
-                <DetailItem icon='tabler-briefcase' label={dictionary.employment.position} value={displayValue(staff.position)} />
+                <DetailItem
+                  icon='tabler-briefcase'
+                  label={dictionary.employment.position}
+                  value={displayValue(staff.position)}
+                />
                 <DetailItem icon='tabler-phone' label={dictionary.employment.phone} value={displayValue(staff.phone)} />
-                <DetailItem icon='tabler-map-pin' label={dictionary.employment.address} value={displayValue(staff.address)} />
+                <DetailItem
+                  icon='tabler-map-pin'
+                  label={dictionary.employment.address}
+                  value={displayValue(staff.address)}
+                />
                 <DetailItem
                   icon='tabler-id'
                   label={dictionary.employment.tazkiraNumber}
@@ -447,9 +450,7 @@ const ProfileView = ({ initialProfile, dictionary, uploadTranslations, locale })
                     <div key={activity.id} className='flex items-center gap-3 rounded-lg bg-actionHover p-3'>
                       <i className='tabler-activity text-xl text-primary' />
                       <div className='min-is-0 grow'>
-                        <Typography color='text.primary'>
-                          {getActivityDescription(activity, dictionary)}
-                        </Typography>
+                        <Typography color='text.primary'>{getActivityDescription(activity, dictionary)}</Typography>
                         <Typography variant='caption' color='text.secondary'>
                           {formatRelativeDate(activity.createdAt, locale, dictionary.notAvailable)}
                         </Typography>

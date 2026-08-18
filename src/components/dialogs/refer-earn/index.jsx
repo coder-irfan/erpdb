@@ -90,7 +90,7 @@ const ReferEarn = ({ open, setOpen }) => {
           ))}
         </Grid>
         <Divider className='mbs-6' />
-        <div className='flex flex-col gap-6'>
+        <div className='flex flex-col md:gap-4 gap-2'>
           <Typography variant='h5'>Invite your friends</Typography>
           <div className='flex items-end is-full flex-wrap sm:flex-nowrap gap-4'>
             <CustomTextField
@@ -105,7 +105,7 @@ const ReferEarn = ({ open, setOpen }) => {
             </Button>
           </div>
         </div>
-        <div className='flex flex-col gap-6'>
+        <div className='flex flex-col md:gap-4 gap-2'>
           <Typography variant='h5'>Share the referral link</Typography>
           <div className='flex items-end justify-center sm:justify-initial flex-wrap sm:flex-nowrap gap-4'>
             <CustomTextField

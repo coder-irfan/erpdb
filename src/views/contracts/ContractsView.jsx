@@ -1,0 +1,161 @@
+'use client'
+
+import { useCallback, useEffect, useState } from 'react'
+
+import Autocomplete from '@mui/material/Autocomplete'
+import Button from '@mui/material/Button'
+import Card from '@mui/material/Card'
+import CardContent from '@mui/material/CardContent'
+import MenuItem from '@mui/material/MenuItem'
+import { toast } from 'sonner'
+
+import CustomTextField from '@core/components/mui/TextField'
+import { deleteContract, getContractFormOptions, getContracts, runContractExpirationAudit, updateContractStatus } from '@/actions/contracts'
+import ConfirmDeleteModal from '@/components/dialogs/ConfirmDeleteModal'
+import TableFiltersPopover from '@/components/table/TableFiltersPopover'
+
+import ContractDetailModal from './ContractDetailModal'
+import ContractFormDrawer from './ContractFormDrawer'
+import ContractStatsCards from './ContractStatsCards'
+import ContractTableView from './ContractTableView'
+
+const EMPTY_DATA = {
+  contracts: [], totalCount: 0, statuses: [], baseCurrency: 'AFN',
+  summary: { activeCount: 0, activeValue: 0, expiringCount: 0, expiringValue: 0, monthlyActiveRevenue: 0, draftCount: 0 }
+}
+
+const EMPTY_OPTIONS = {
+  clients: [], staff: [],
+  options: { CONTRACT_TYPE: [], CONTRACT_DURATION: [], CONTRACT_COUNTRY: [], CONTRACT_LEVEL: [], CONTRACT_STATUS: [] },
+  baseCurrency: 'AFN', exchangeRate: '65.0000'
+}
+
+const ContractsView = ({ locale, dictionary, canWrite, canDelete, canRunAudit }) => {
+  const [searchInput, setSearchInput] = useState('')
+  const [search, setSearch] = useState('')
+  const [statusFilter, setStatusFilter] = useState('ALL')
+  const [serviceTypeId, setServiceTypeId] = useState('')
+  const [clientId, setClientId] = useState('')
+  const [fromDate, setFromDate] = useState('')
+  const [toDate, setToDate] = useState('')
+  const [page, setPage] = useState(0)
+  const [rowsPerPage, setRowsPerPage] = useState(10)
+  const [data, setData] = useState(EMPTY_DATA)
+  const [formOptions, setFormOptions] = useState(EMPTY_OPTIONS)
+  const [loading, setLoading] = useState(true)
+  const [formOpen, setFormOpen] = useState(false)
+  const [editingContract, setEditingContract] = useState(null)
+  const [detailId, setDetailId] = useState(null)
+  const [detailRefresh, setDetailRefresh] = useState(0)
+  const [deleteTarget, setDeleteTarget] = useState(null)
+  const [deleting, setDeleting] = useState(false)
+  const [statusUpdating, setStatusUpdating] = useState(null)
+  const [auditRunning, setAuditRunning] = useState(false)
+
+  useEffect(() => {
+    const timeout = setTimeout(() => { setSearch(searchInput.trim()); setPage(0) }, 350)
+
+    return () => clearTimeout(timeout)
+  }, [searchInput])
+
+  const loadData = useCallback(async () => {
+    setLoading(true)
+    const result = await getContracts({ page: page + 1, limit: rowsPerPage, search, statusFilter, serviceTypeId, clientId, fromDate, toDate, locale })
+
+    if (!result.success) toast.error(result.error || dictionary.messages.loadFailed)
+    else setData(result.data)
+    setLoading(false)
+  }, [clientId, dictionary.messages.loadFailed, fromDate, locale, page, rowsPerPage, search, serviceTypeId, statusFilter, toDate])
+
+  const loadOptions = useCallback(async () => {
+    const result = await getContractFormOptions({ locale })
+
+    if (!result.success) toast.error(result.error || dictionary.messages.optionsLoadFailed)
+    else setFormOptions(result.data)
+  }, [dictionary.messages.optionsLoadFailed, locale])
+
+  useEffect(() => { loadData() }, [loadData])
+  useEffect(() => { loadOptions() }, [loadOptions])
+
+  const refresh = async () => {
+    await Promise.all([loadData(), loadOptions()])
+    setDetailRefresh(value => value + 1)
+  }
+
+  const openCreate = () => { setEditingContract(null); setFormOpen(true) }
+  const edit = contract => { setEditingContract(contract); setFormOpen(true) }
+
+  const changeStatus = async (contract, statusId) => {
+    if (statusId === contract.status_id) return
+    setStatusUpdating(contract.id)
+    const result = await updateContractStatus(contract.id, statusId, { locale })
+
+    if (!result.success) toast.error(result.error || dictionary.messages.operationFailed)
+    else { toast.success(result.message); await refresh() }
+
+    setStatusUpdating(null)
+  }
+
+  const remove = async () => {
+    if (!deleteTarget) return
+    setDeleting(true)
+    const result = await deleteContract(deleteTarget.id, { locale })
+
+    if (!result.success) toast.error(result.error || dictionary.messages.operationFailed)
+    else { toast.success(result.message); if (detailId === deleteTarget.id) setDetailId(null); setDeleteTarget(null); await loadData() }
+
+    setDeleting(false)
+  }
+
+  const runAudit = async () => {
+    setAuditRunning(true)
+    const result = await runContractExpirationAudit({ locale })
+
+    if (!result.success) toast.error(result.error || dictionary.messages.auditFailed)
+    else {
+      toast.success(dictionary.messages.auditResult.replace('{sent}', result.data.sent).replace('{skipped}', result.data.skipped).replace('{failed}', result.data.failed))
+      await refresh()
+    }
+
+    setAuditRunning(false)
+  }
+
+  const statusFilters = [['ALL', dictionary.filters.allStatuses], ['ACTIVE', dictionary.tabs.active], ['EXPIRING', dictionary.tabs.expiring], ['DRAFT', dictionary.tabs.draft], ['EXPIRED', dictionary.tabs.expired]]
+  const activeFilterCount = Number(statusFilter !== 'ALL') + Number(Boolean(serviceTypeId)) + Number(Boolean(clientId)) + Number(Boolean(fromDate || toDate))
+
+  return (
+    <div className='flex flex-col gap-4'>
+      <ContractStatsCards summary={data.summary} locale={locale} currency={data.baseCurrency} dictionary={dictionary} />
+      <Card>
+        <CardContent className='flex flex-wrap items-center justify-between gap-4 border-be border-divider'>
+          <CustomTextField label={dictionary.filters.search} placeholder={dictionary.filters.searchPlaceholder} value={searchInput} onChange={event => setSearchInput(event.target.value)} className='is-full sm:is-[360px]' slotProps={{ input: { startAdornment: <i className='tabler-search' /> } }} />
+          <div className='flex is-full flex-wrap items-center gap-3 sm:is-auto sm:justify-end'>
+            <TableFiltersPopover activeCount={activeFilterCount} locale={locale}>
+              <CustomTextField select label={dictionary.filters.status} value={statusFilter} onChange={event => { setStatusFilter(event.target.value); setPage(0) }} className='is-full'>
+                {statusFilters.map(([value, label]) => <MenuItem key={value} value={value}>{label}</MenuItem>)}
+              </CustomTextField>
+              <CustomTextField select label={dictionary.filters.serviceType} value={serviceTypeId} onChange={event => { setServiceTypeId(event.target.value); setPage(0) }} className='is-full' slotProps={{ select: { displayEmpty: true, renderValue: selected => formOptions.options.CONTRACT_TYPE.find(option => option.id === selected)?.label || dictionary.filters.allServices } }}>
+                <MenuItem value=''>{dictionary.filters.allServices}</MenuItem>
+                {formOptions.options.CONTRACT_TYPE.map(option => <MenuItem key={option.id} value={option.id}>{option.label}</MenuItem>)}
+              </CustomTextField>
+              <Autocomplete options={formOptions.clients} value={formOptions.clients.find(client => client.id === clientId) || null} onChange={(_, value) => { setClientId(value?.id || ''); setPage(0) }} getOptionLabel={option => option.company_name} isOptionEqualToValue={(option, value) => option.id === value.id} renderInput={params => <CustomTextField {...params} label={dictionary.filters.client} placeholder={dictionary.filters.allClients} />} />
+              <div className='grid grid-cols-1 gap-3 sm:grid-cols-2'>
+                <CustomTextField type='date' label={dictionary.filters.fromDate} value={fromDate} onChange={event => { setFromDate(event.target.value); setPage(0) }} slotProps={{ inputLabel: { shrink: true } }} />
+                <CustomTextField type='date' label={dictionary.filters.toDate} value={toDate} onChange={event => { setToDate(event.target.value); setPage(0) }} slotProps={{ inputLabel: { shrink: true } }} />
+              </div>
+              {activeFilterCount > 0 && <Button variant='tonal' color='secondary' onClick={() => { setStatusFilter('ALL'); setServiceTypeId(''); setClientId(''); setFromDate(''); setToDate(''); setPage(0) }}>{dictionary.filters.clear}</Button>}
+            </TableFiltersPopover>
+            {canRunAudit && <Button variant='tonal' color='secondary' startIcon={<i className='tabler-mail-cog' />} disabled={auditRunning} onClick={runAudit}>{auditRunning ? dictionary.actions.runningAudit : dictionary.actions.runAudit}</Button>}
+            {canWrite && <Button variant='contained' startIcon={<i className='tabler-plus' />} onClick={openCreate}>{dictionary.actions.add}</Button>}
+          </div>
+        </CardContent>
+        <ContractTableView data={data} loading={loading} statusUpdating={statusUpdating} page={page} rowsPerPage={rowsPerPage} locale={locale} dictionary={dictionary} canWrite={canWrite} canDelete={canDelete} onPageChange={(_, value) => setPage(value)} onRowsPerPageChange={event => { setRowsPerPage(Number(event.target.value)); setPage(0) }} onView={contract => setDetailId(contract.id)} onEdit={edit} onDelete={setDeleteTarget} onStatusChange={changeStatus} onAdd={openCreate} />
+      </Card>
+      <ContractFormDrawer open={formOpen} contract={editingContract} formOptions={formOptions} locale={locale} dictionary={dictionary} onClose={() => setFormOpen(false)} onSaved={refresh} />
+      <ContractDetailModal open={Boolean(detailId)} contractId={detailId} locale={locale} baseCurrency={data.baseCurrency} dictionary={dictionary} canWrite={canWrite} refreshKey={detailRefresh} onClose={() => setDetailId(null)} onEdit={edit} />
+      <ConfirmDeleteModal open={Boolean(deleteTarget)} title={dictionary.delete.title} description={dictionary.delete.description} itemName={deleteTarget?.contract_number} confirmText={dictionary.actions.delete} cancelText={dictionary.actions.cancel} loading={deleting} onConfirm={remove} onClose={() => setDeleteTarget(null)} />
+    </div>
+  )
+}
+
+export default ContractsView

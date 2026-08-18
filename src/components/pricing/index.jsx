@@ -32,7 +32,7 @@ const Pricing = ({ data }) => {
   }
 
   return (
-    <div className='flex flex-col gap-6'>
+    <div className='flex flex-col md:gap-4 gap-2'>
       <div className='flex flex-col justify-center items-center gap-2'>
         <Typography variant='h3'>Pricing Plans</Typography>
         <div className='flex items-center text-center flex-col  sm:mbe-[3.8rem]'>

@@ -11,6 +11,7 @@ import { toast } from 'sonner'
 
 import CustomTextField from '@core/components/mui/TextField'
 import ConfirmDeleteModal from '@/components/dialogs/ConfirmDeleteModal'
+import TableFiltersPopover from '@/components/table/TableFiltersPopover'
 
 import VisitorConvertDialog from './VisitorConvertDialog'
 import VisitorFormDrawer from './VisitorFormDrawer'
@@ -139,98 +140,95 @@ const CrmVisitorsView = ({ locale, dictionary, canWrite, canDelete }) => {
   }
 
   return (
-    <div className='flex flex-col gap-6'>
-      <Card>
-        <CardContent className='flex flex-wrap items-start justify-between gap-4'>
-          <div>
-            <Typography variant='h4'>{dictionary.title}</Typography>
-            <Typography color='text.secondary'>{dictionary.description}</Typography>
-          </div>
-          {canWrite && (
-            <Button
-              variant='contained'
-              startIcon={<i className='tabler-user-plus' />}
-              onClick={() => {
-                setEditingVisitor(null)
-                setFormOpen(true)
-              }}
-            >
-              {dictionary.actions.add}
-            </Button>
-          )}
-        </CardContent>
-      </Card>
+    <div className='flex flex-col md:gap-4 gap-2'>
       <VisitorStatsCards summary={data.summary} dictionary={dictionary} />
       <Card>
-        <CardContent className='mb-4 flex flex-wrap items-center justify-between gap-4 border-be border-divider'>
+        <CardContent className='flex flex-wrap items-center justify-between gap-4 border-be border-divider'>
           <CustomTextField
             label={dictionary.filters.search}
             placeholder={dictionary.filters.searchPlaceholder}
             value={searchInput}
             onChange={event => setSearchInput(event.target.value)}
-            className='is-full sm:is-[260px]'
-            slotProps={{ input: { startAdornment: <i className='tabler-search me-2' /> } }}
+            className='is-full sm:is-[300px]'
+            slotProps={{ input: { startAdornment: <i className='tabler-search' /> } }}
           />
           <div className='flex is-full flex-wrap items-center gap-3 sm:is-auto sm:justify-end'>
-            <CustomTextField
-              select
-              label={dictionary.filters.host}
-              value={hostId || ''}
-              onChange={event => {
-                setHostId(event.target.value)
-                setPage(0)
-              }}
-              className='is-full sm:is-[210px]'
-              slotProps={{
-                select: {
-                  displayEmpty: true,
-                  renderValue: selected =>
-                    data.options.staff.find(item => item.id === selected)?.full_name || dictionary.filters.allHosts
-                }
-              }}
+            <TableFiltersPopover
+              activeCount={Number(Boolean(hostId)) + Number(Boolean(status)) + Number(dateRange !== 'TODAY')}
+              locale={locale}
             >
-              <MenuItem value=''>{dictionary.filters.allHosts}</MenuItem>
-              {data.options.staff.map(item => (
-                <MenuItem key={item.id} value={item.id}>
-                  {item.full_name}
-                </MenuItem>
-              ))}
-            </CustomTextField>
-            <CustomTextField
-              select
-              label={dictionary.filters.status}
-              value={status || ''}
-              onChange={event => {
-                setStatus(event.target.value)
-                setPage(0)
-              }}
-              className='is-full sm:is-[180px]'
-              slotProps={{
-                select: {
-                  displayEmpty: true,
-                  renderValue: selected => (selected ? dictionary.status[selected] : dictionary.filters.allStatuses)
-                }
-              }}
-            >
-              <MenuItem value=''>{dictionary.filters.allStatuses}</MenuItem>
-              <MenuItem value='CHECKED_IN'>{dictionary.status.CHECKED_IN}</MenuItem>
-              <MenuItem value='COMPLETED'>{dictionary.status.COMPLETED}</MenuItem>
-            </CustomTextField>
-            <CustomTextField
-              select
-              label={dictionary.filters.dateRange}
-              value={dateRange || 'TODAY'}
-              onChange={event => {
-                setDateRange(event.target.value)
-                setPage(0)
-              }}
-              className='is-full sm:is-[180px]'
-            >
-              <MenuItem value='TODAY'>{dictionary.ranges.TODAY}</MenuItem>
-              <MenuItem value='LAST_7_DAYS'>{dictionary.ranges.LAST_7_DAYS}</MenuItem>
-              <MenuItem value='LAST_30_DAYS'>{dictionary.ranges.LAST_30_DAYS}</MenuItem>
-              <MenuItem value='ALL'>{dictionary.ranges.ALL}</MenuItem>
-            </CustomTextField>
+              <CustomTextField
+                select
+                label={dictionary.filters.host}
+                value={hostId || ''}
+                onChange={event => {
+                  setHostId(event.target.value)
+                  setPage(0)
+                }}
+                className='is-full'
+                slotProps={{
+                  select: {
+                    displayEmpty: true,
+                    renderValue: selected =>
+                      data.options.staff.find(item => item.id === selected)?.full_name || dictionary.filters.allHosts
+                  }
+                }}
+              >
+                <MenuItem value=''>{dictionary.filters.allHosts}</MenuItem>
+                {data.options.staff.map(item => (
+                  <MenuItem key={item.id} value={item.id}>
+                    {item.full_name}
+                  </MenuItem>
+                ))}
+              </CustomTextField>
+              <CustomTextField
+                select
+                label={dictionary.filters.status}
+                value={status || ''}
+                onChange={event => {
+                  setStatus(event.target.value)
+                  setPage(0)
+                }}
+                className='is-full'
+                slotProps={{
+                  select: {
+                    displayEmpty: true,
+                    renderValue: selected => (selected ? dictionary.status[selected] : dictionary.filters.allStatuses)
+                  }
+                }}
+              >
+                <MenuItem value=''>{dictionary.filters.allStatuses}</MenuItem>
+                <MenuItem value='CHECKED_IN'>{dictionary.status.CHECKED_IN}</MenuItem>
+                <MenuItem value='COMPLETED'>{dictionary.status.COMPLETED}</MenuItem>
+              </CustomTextField>
+              <CustomTextField
+                select
+                label={dictionary.filters.dateRange}
+                value={dateRange || 'TODAY'}
+                onChange={event => {
+                  setDateRange(event.target.value)
+                  setPage(0)
+                }}
+                className='is-full'
+              >
+                <MenuItem value='TODAY'>{dictionary.ranges.TODAY}</MenuItem>
+                <MenuItem value='LAST_7_DAYS'>{dictionary.ranges.LAST_7_DAYS}</MenuItem>
+                <MenuItem value='LAST_30_DAYS'>{dictionary.ranges.LAST_30_DAYS}</MenuItem>
+                <MenuItem value='ALL'>{dictionary.ranges.ALL}</MenuItem>
+              </CustomTextField>
+            </TableFiltersPopover>
+            {canWrite && (
+              <Button
+                variant='contained'
+                startIcon={<i className='tabler-user-plus' />}
+                onClick={() => {
+                  setEditingVisitor(null)
+                  setFormOpen(true)
+                }}
+              >
+                {dictionary.actions.add}
+              </Button>
+            )}
           </div>
         </CardContent>
         <VisitorTableView

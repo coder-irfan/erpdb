@@ -22,7 +22,7 @@ const Billing = ({ activeStep, isLastStep, handleNext, handlePrev }) => {
   })
 
   return (
-    <div className='flex flex-col gap-6'>
+    <div className='flex flex-col md:gap-4 gap-2'>
       <Typography variant='h5'>Payment Details</Typography>
       <Grid container spacing={6}>
         <Grid size={{ xs: 12 }}>

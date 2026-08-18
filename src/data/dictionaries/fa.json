@@ -113,6 +113,8 @@
     "projectMembers": "اعضای پروژه",
     "projectContracts": "قراردادهای پروژه",
     "contractModule": "قرارداد",
+    "contractManagement": "مدیریت قرارداد",
+    "contractOptions": "گزینه‌های قرارداد",
     "contractList": "قراردادها",
     "contractInvoices": "صورت‌حساب‌ها",
     "contractOthers": "سایر",
@@ -264,12 +266,10 @@
     }
   },
   "setupBranding": {
-    "title": "برند و نشان‌ها",
-    "description": "نشان‌هایی را که در رابط ERP نمایش داده می‌شوند مدیریت کنید.",
-    "letterheadTitle": "سربرگ و برند شرکت",
-    "letterheadDescription": "هویت قانونی شرکت و امضای مجاز برای اسناد رسمی را تنظیم کنید.",
     "workHoursTitle": "ساعات کاری پیش‌فرض",
     "workHoursDescription": "این ساعت‌ها به‌صورت خودکار در ورود و خروج حاضری درج می‌شوند.",
+    "currencyTitle": "ارز و نرخ تبادله",
+    "currencyDescription": "ارز گزارش‌دهی و مقدار افغانی برابر با یک دالر را انتخاب کنید.",
     "companyLogo": "لوگوی سربرگ شرکت",
     "signatoryStamp": "امضا / مهر مجاز",
     "saveAll": "ذخیره تنظیمات شرکت",
@@ -296,12 +296,15 @@
       "companyTaxId": "جواز / شماره مالیاتی",
       "signatoryName": "نام امضاکننده مجاز",
       "signatoryTitle": "عنوان امضاکننده مجاز",
+      "baseCurrency": "ارز پایه",
+      "exchangeRate": "نرخ تبادله دالر/افغانی (۱ دالر = افغانی)",
       "workStart": "زمان شروع کار",
       "workEnd": "زمان پایان کار"
     },
     "validation": {
       "companyNameRequired": "نام قانونی شرکت الزامی است.",
-      "workEndAfterStart": "زمان پایان کار باید بعد از زمان شروع باشد."
+      "workEndAfterStart": "زمان پایان کار باید بعد از زمان شروع باشد.",
+      "exchangeRatePositive": "نرخ تبادله دالر/افغانی باید بیشتر از صفر باشد."
     },
     "upload": {
       "drop": "تصویر را اینجا بکشید و رها کنید یا فایل را انتخاب کنید.",
@@ -321,7 +324,6 @@
     }
   },
   "hrmTimesheets": {
-    "title": "حاضری روزانه و تایم‌شیت‌ها", "description": "حاضری روزانه را ثبت و ساعات کاری را خودکار محاسبه کنید.",
     "date": { "today": "امروز", "date": "تاریخ حاضری", "previous": "روز قبل", "next": "روز بعد", "yesterday": "دیروز", "custom": "تاریخ دلخواه" },
     "summary": { "present": "مجموع حاضر", "absent": "مجموع غایب", "leave": "مجموع رخصتی", "unmarked": "ثبت‌نشده" },
     "fields": { "date": "تاریخ حاضری", "staff": "کارمند", "position": "سمت", "status": "وضعیت", "checkIn": "ورود", "checkOut": "خروج", "hours": "ساعات کاری", "project": "پروژه مرتبط", "notes": "یادداشت" },
@@ -336,11 +338,9 @@
     "validation": { "invalidSubmission": "فیلدهای مشخص‌شده را بررسی کنید.", "required": "این فیلد الزامی است.", "statusInvalid": "وضعیت معتبر انتخاب کنید.", "dateInvalid": "تاریخ معتبر انتخاب کنید.", "timeInvalid": "زمان معتبر وارد کنید.", "checkoutBeforeCheckin": "زمان خروج نمی‌تواند پیش از ورود باشد.", "notesTooLong": "یادداشت نباید بیشتر از ۲۰۰۰ حرف باشد." }
   },
   "hrmContracts": {
-    "title": "قراردادهای کارمندان",
-    "description": "قراردادهای استخدام را با نسخه ثابت پالیسی ایجاد، مدیریت و چاپ کنید.",
     "fields": {
       "contractNumber": "شماره قرارداد", "staffMember": "کارمند", "contractType": "پالیسی قرارداد",
-      "position": "سمت", "baseSalary": "معاش توافق‌شده", "startDate": "تاریخ شروع", "endDate": "تاریخ پایان",
+      "position": "سمت", "baseSalary": "معاش توافق‌شده", "currency": "ارز", "startDate": "تاریخ شروع", "endDate": "تاریخ پایان",
       "status": "وضعیت", "email": "ایمیل", "phone": "تلفن", "tazkiraNo": "شماره تذکره"
     },
     "filters": {
@@ -391,8 +391,6 @@
     }
   },
   "hrmStaff": {
-    "title": "مدیریت کارمندان",
-    "description": "پروفایل‌ها، جزئیات وظیفه و پیوند حساب‌های کارمندان را مدیریت کنید.",
     "stats": {
       "total": "مجموع کارمندان",
       "active": "کارمندان فعال",
@@ -415,6 +413,7 @@
       "tazkiraNo": "شماره تذکره",
       "position": "سمت",
       "salary": "معاش",
+      "currency": "واحد پول",
       "joinDate": "تاریخ آغاز کار",
       "contractPeriod": "مدت قرارداد",
       "status": "وضعیت کارمند",
@@ -515,8 +514,8 @@
     }
   },
   "hrmPayroll": {
-    "title": "معاشات ماهوار", "description": "معاشات را محاسبه، پرداخت‌ها را اجرا و فیش معاش چاپ کنید.", "months": ["جنوری", "فبروری", "مارچ", "اپریل", "می", "جون", "جولای", "اگست", "سپتمبر", "اکتوبر", "نومبر", "دسمبر"],
-    "period": { "month": "ماه", "year": "سال" }, "summary": { "totalPayroll": "مجموع معاشات", "totalPaid": "مجموع پرداخت‌شده", "totalPending": "پرداخت‌های در انتظار", "totalDeductions": "مجموع کسورات" }, "filters": { "staff": "کارمند", "allStaff": "همه کارمندان", "status": "وضعیت", "allStatuses": "همه وضعیت‌ها" }, "fields": { "staff": "کارمند", "position": "بست", "baseSalary": "معاش اساسی", "allowances": "امتیازات", "tax": "کسر مالیات" },
+    "months": ["جنوری", "فبروری", "مارچ", "اپریل", "می", "جون", "جولای", "اگست", "سپتمبر", "اکتوبر", "نومبر", "دسمبر"],
+    "period": { "month": "ماه", "year": "سال" }, "summary": { "totalPayroll": "مجموع معاشات", "totalPaid": "مجموع پرداخت‌شده", "totalPending": "پرداخت‌های در انتظار", "totalDeductions": "مجموع کسورات" }, "filters": { "search": "جستجوی معاشات", "searchPlaceholder": "نام، ایمیل یا بست کارمند را جستجو کنید", "staff": "کارمند", "allStaff": "همه کارمندان", "status": "وضعیت", "allStatuses": "همه وضعیت‌ها" }, "fields": { "staff": "کارمند", "position": "بست", "baseSalary": "معاش اساسی", "allowances": "امتیازات", "tax": "کسر مالیات" },
     "table": { "staff": "کارمند", "baseSalary": "معاش اساسی", "deductions": "کسورات", "netSalary": "معاش خالص", "status": "وضعیت", "paymentMethod": "روش پرداخت", "actions": "عملیات", "rowsPerPage": "تعداد سطر در صفحه:", "of": "از" }, "status": { "DRAFT": "پیش‌نویس", "PENDING": "در انتظار", "PAID": "پرداخت‌شده" },
     "actions": { "generate": "ایجاد معاشات ماهوار", "viewPayslip": "مشاهده فیش", "processPayment": "اجرای پرداخت", "confirmPayment": "تأیید پرداخت", "processing": "در حال اجرا...", "delete": "حذف", "cancel": "لغو", "close": "بستن", "print": "چاپ فیش معاش" }, "empty": { "title": "رکورد معاش یافت نشد", "description": "برای قراردادهای فعال این دوره معاش ایجاد کنید." }, "payment": { "title": "اجرای پرداخت معاش", "method": "روش پرداخت", "selectMethod": "روش پرداخت را انتخاب کنید..." },
     "payslip": { "title": "فیش معاش کارمند", "tazkira": "تذکره", "contractNumber": "شماره قرارداد", "payPeriod": "دوره معاش", "paymentDate": "تاریخ پرداخت", "earnings": "عواید", "deductions": "کسورات", "amount": "مبلغ", "unpaidDays": "رخصتی بدون معاش / غیابت ({count} روز)", "netPay": "پرداخت خالص" }, "delete": { "title": "حذف رکورد معاش", "description": "این رکورد معاش حذف شود؟ این عمل قابل بازگشت نیست." },
@@ -524,10 +523,8 @@
   },
   "payrollOptions": { "statuses": { "title": "وضعیت‌های معاش", "description": "وضعیت‌های جریان معاش را مدیریت کنید." }, "paymentMethods": { "title": "روش‌های پرداخت", "description": "روش‌های منظورشده پرداخت معاش را مدیریت کنید." }, "common": { "name": "نام", "description": "توضیحات", "status": "وضعیت", "actions": "عملیات", "active": "فعال", "inactive": "غیرفعال", "activate": "فعال‌سازی", "deactivate": "غیرفعال‌سازی", "add": "افزودن گزینه معاش", "create": "ایجاد", "cancel": "لغو", "empty": "گزینه‌ای تنظیم نشده" }, "messages": { "operationFailed": "عملیات انجام نشد." } },
   "hrmLeaves": {
-    "title": "درخواست‌های رخصتی کارمندان",
-    "description": "درخواست‌ها را بررسی، رخصتی‌ها را پیگیری و جریان تأیید روزانه را مدیریت کنید.",
     "summary": { "pending": "در انتظار بررسی", "onLeaveToday": "امروز در رخصتی", "monthlyDays": "روزهای رخصتی ماه" },
-    "filters": { "staff": "کارمند", "allStaff": "همه کارمندان", "leaveType": "نوع رخصتی", "allLeaveTypes": "همه انواع رخصتی", "status": "وضعیت", "allStatuses": "همه وضعیت‌ها" },
+    "filters": { "search": "جستجوی درخواست رخصتی", "searchPlaceholder": "نام، ایمیل، بست یا دلیل را جستجو کنید", "staff": "کارمند", "allStaff": "همه کارمندان", "leaveType": "نوع رخصتی", "allLeaveTypes": "همه انواع رخصتی", "status": "وضعیت", "allStatuses": "همه وضعیت‌ها" },
     "table": { "staff": "کارمند", "leaveType": "نوع رخصتی", "duration": "مدت / بازه تاریخ", "reason": "دلیل", "status": "وضعیت", "approvedBy": "تأییدکننده", "actions": "عملیات", "days": "{count} روز" },
     "drawer": { "title": "درخواست رخصتی", "editTitle": "ویرایش درخواست رخصتی", "description": "جزئیات درخواست را وارد کنید؛ مدت رخصتی خودکار محاسبه می‌شود.", "calculatedDays": "روزهای محاسبه‌شده" },
     "fields": { "staff": "کارمند", "leaveType": "نوع رخصتی", "startDate": "تاریخ شروع", "endDate": "تاریخ پایان", "reason": "دلیل / یادداشت", "initialStatus": "وضعیت ابتدایی" },
@@ -541,11 +538,10 @@
     "validation": { "required": "این فیلد الزامی است.", "dateInvalid": "یک تاریخ معتبر انتخاب کنید.", "dateRangeInvalid": "تاریخ پایان باید برابر یا بعد از تاریخ شروع باشد.", "reasonTooLong": "دلیل نباید بیشتر از ۲۰۰۰ حرف باشد.", "statusInvalid": "تأیید یا رد را انتخاب کنید." }
   },
   "crmLeads": {
-    "title": "سرنخ‌ها و خط فروش", "description": "فرصت‌ها را ثبت، پیگیری‌ها را مدیریت و سرنخ‌های واجد شرایط را به مشتری تبدیل کنید.",
     "summary": { "totalActive": "سرنخ‌های فعال", "pipelineValue": "ارزش خط فروش", "followUpsToday": "پیگیری‌های امروز", "conversionRate": "نرخ تبدیل" },
     "filters": { "search": "جستجو", "searchPlaceholder": "جستجوی سرنخ، شرکت یا تماس", "source": "منبع", "allSources": "همه منابع", "status": "وضعیت", "allStatuses": "همه وضعیت‌ها", "assigned": "کارمند مسئول", "allStaff": "همه کارمندان" },
     "views": { "table": "جدول", "kanban": "خط فروش" }, "table": { "lead": "عنوان سرنخ / شرکت", "contact": "شخص تماس", "source": "منبع", "status": "وضعیت", "value": "ارزش تخمینی", "assigned": "کارمند مسئول", "followUp": "پیگیری بعدی", "actions": "عملیات" },
-    "fields": { "title": "عنوان سرنخ", "company": "نام شرکت", "contact": "نام تماس", "email": "ایمیل", "phone": "تلفن", "source": "منبع سرنخ", "status": "وضعیت خط فروش", "assigned": "کارمند مسئول", "value": "ارزش تخمینی", "followUp": "پیگیری بعدی", "notes": "یادداشت‌ها" },
+    "fields": { "title": "عنوان سرنخ", "company": "نام شرکت", "contact": "نام تماس", "email": "ایمیل", "phone": "تلفن", "source": "منبع سرنخ", "status": "وضعیت خط فروش", "assigned": "کارمند مسئول", "value": "ارزش تخمینی", "currency": "ارز", "followUp": "پیگیری بعدی", "notes": "یادداشت‌ها" },
     "placeholders": { "source": "منبع را انتخاب کنید...", "status": "وضعیت را انتخاب کنید...", "unassigned": "تعیین نشده" }, "drawer": { "addTitle": "ایجاد سرنخ جدید", "editTitle": "ویرایش سرنخ", "description": "جزئیات فرصت، تماس، مسئول و پیگیری را وارد کنید." },
     "actions": { "newLead": "سرنخ جدید", "activity": "ثبت فعالیت", "convert": "تبدیل به مشتری", "edit": "ویرایش", "delete": "حذف", "cancel": "لغو", "create": "ایجاد سرنخ", "save": "ذخیره تغییرات", "saving": "در حال ذخیره..." },
     "activity": { "title": "فعالیت و تاریخچه سرنخ", "type": "نوع فعالیت", "subject": "عنوان", "description": "توضیحات / یادداشت", "dueDate": "تاریخ سررسید", "add": "افزودن فعالیت", "history": "خط زمانی فعالیت", "empty": "هنوز فعالیتی ثبت نشده است.", "types": { "CALL": "تماس", "MEETING": "جلسه", "EMAIL": "ایمیل", "NOTE": "یادداشت", "FOLLOW_UP": "پیگیری" } },
@@ -555,7 +551,6 @@
     "validation": { "invalid": "اطلاعات ارسال‌شده را بررسی کنید.", "required": "این فیلد الزامی است.", "emailInvalid": "ایمیل معتبر وارد کنید.", "valueInvalid": "ارزش معتبر وارد کنید.", "dateInvalid": "تاریخ معتبر وارد کنید.", "tooLong": "این مقدار بیش از حد طولانی است.", "activityTypeInvalid": "نوع فعالیت معتبر انتخاب کنید." }
   },
   "crmVisitors": {
-    "title": "بازدیدکنندگان پذیرش", "description": "ورود مهمانان، میزبان، زمان خروج و تبدیل بازدیدهای واجد شرایط به سرنخ را مدیریت کنید.",
     "summary": { "totalToday": "بازدیدکنندگان امروز", "activeGuests": "مهمانان حاضر در ساختمان", "completedToday": "بازدیدهای تکمیل‌شده امروز", "convertedCount": "تبدیل بازدیدکننده به سرنخ" },
     "filters": { "search": "جستجو", "searchPlaceholder": "جستجوی نام، شرکت، تلفن یا ایمیل", "host": "کارمند میزبان", "allHosts": "همه میزبان‌ها", "status": "وضعیت", "allStatuses": "همه وضعیت‌ها", "dateRange": "تاریخ بازدید" },
     "ranges": { "TODAY": "امروز", "LAST_7_DAYS": "۷ روز گذشته", "LAST_30_DAYS": "۳۰ روز گذشته", "ALL": "همه تاریخ‌ها" },
@@ -574,7 +569,6 @@
     "validation": { "invalid": "اطلاعات بازدیدکننده را بررسی کنید.", "required": "این فیلد الزامی است.", "emailInvalid": "ایمیل معتبر وارد کنید.", "tooLong": "این مقدار بیش از حد طولانی است." }
   },
   "crmClients": {
-    "title": "مشتریان", "description": "روابط مشتری، مسئول حساب، پروژه‌ها، قراردادها، فاکتورها و تاریخچه فعالیت را مدیریت کنید.",
     "summary": { "totalActive": "مشتریان فعال", "lifetimeRevenue": "ارزش کل مشتریان", "activeProjects": "پروژه‌های فعال مرتبط", "pendingBalance": "فاکتورهای پرداخت‌نشده" },
     "filters": { "search": "جستجو", "searchPlaceholder": "جستجوی شرکت، شخص تماس، ایمیل یا تلفن", "manager": "مسئول حساب", "allManagers": "همه مسئولان حساب", "status": "وضعیت", "allStatuses": "همه وضعیت‌ها" },
     "table": { "company": "شرکت و شخص تماس", "manager": "مسئول حساب", "metrics": "سوابق مرتبط", "status": "وضعیت", "revenue": "درآمد کل", "actions": "عملیات" },
@@ -593,8 +587,6 @@
   },
   "crmLeadOptions": { "statuses": { "title": "وضعیت‌های سرنخ", "description": "مراحل خط فروش را مدیریت کنید." }, "sources": { "title": "منابع سرنخ", "description": "کانال‌های جذب فرصت‌های فروش را مدیریت کنید." }, "common": { "name": "نام", "description": "توضیحات", "status": "وضعیت", "actions": "عملیات", "active": "فعال", "inactive": "غیرفعال", "activate": "فعال‌سازی", "deactivate": "غیرفعال‌سازی", "create": "افزودن گزینه", "add": "ایجاد گزینه CRM", "cancel": "لغو", "empty": "گزینه‌ای تنظیم نشده" } },
   "hrmReports": {
-    "title": "گزارش‌ها و تحلیل منابع بشری",
-    "description": "معاشات، حاضری، استفاده رخصتی و انقضای قراردادها را از سوابق زنده منابع بشری تحلیل کنید.",
     "tabs": {
       "payroll": { "label": "معاشات و امور مالی", "tableTitle": "تاریخچه معاش کارمندان", "icon": "tabler-report-money" },
       "attendance": { "label": "حاضری و غیرحاضری", "tableTitle": "شاخص‌های حاضری کارمندان", "icon": "tabler-calendar-stats" },
@@ -962,8 +954,6 @@
   "profile": {
     "menuLabel": "پروفایل / تنظیمات حساب",
     "logout": "خروج",
-    "title": "تنظیمات پروفایل",
-    "description": "حساب، رمز عبور، زبان و پروفایل شخصی خود را مدیریت کنید.",
     "account": {
       "title": "حساب و امنیت",
       "description": "مشخصات پروفایل و زبان ترجیحی سیستم را به‌روزرسانی کنید.",
@@ -1087,5 +1077,42 @@
       "passwordsDoNotMatch": "رمزهای عبور مطابقت ندارند.",
       "passwordUnchanged": "رمز عبور جدید باید با رمز فعلی متفاوت باشد."
     }
+  },
+  "contractsMain": {
+    "kpis": { "active": "مجموع قراردادهای فعال", "expiring": "در حال انقضا (۳۰ روز)", "monthlyRevenue": "درآمد ماهانه فعال", "drafts": "قراردادهای پیش‌نویس / در انتظار", "baseCurrency": "جمع به {currency}", "awaiting": "در انتظار امضا یا تأیید" },
+    "tabs": { "all": "همه قراردادها", "active": "فعال", "expiring": "در حال انقضا (≤ ۳۰ روز)", "draft": "پیش‌نویس / در انتظار", "expired": "منقضی" },
+    "filters": { "search": "جستجو", "searchPlaceholder": "شماره، مشتری یا عنوان را جستجو کنید", "status": "وضعیت", "allStatuses": "همه وضعیت‌ها", "serviceType": "نوع خدمت", "allServices": "همه خدمات", "client": "مشتری", "allClients": "همه مشتریان", "fromDate": "تاریخ پایان از", "toDate": "تاریخ پایان تا", "clear": "پاک‌کردن فیلترها" },
+    "table": { "number": "شماره قرارداد", "client": "مشتری", "title": "عنوان قرارداد", "service": "نوع خدمت", "dates": "تاریخ شروع و پایان", "remaining": "روزهای باقی‌مانده", "amount": "مبلغ کل", "status": "وضعیت", "actions": "عملیات", "contract": "قرارداد و عنوان", "serviceDuration": "خدمت و مدت", "endRemaining": "پایان و باقی‌مانده" },
+    "remaining": { "days": "{days} روز", "expired": "{days} روز پیش منقضی شد" },
+    "actions": { "add": "افزودن قرارداد", "create": "ایجاد قرارداد", "save": "ذخیره تغییرات", "saving": "در حال ذخیره…", "edit": "ویرایش", "view": "مشاهده", "delete": "حذف", "cancel": "لغو", "runAudit": "بررسی انقضا", "runningAudit": "در حال بررسی…", "changeStatus": "تغییر وضعیت" },
+    "form": { "addTitle": "ایجاد قرارداد", "editTitle": "ویرایش قرارداد", "description": "توافق مشتری، مدت، ارزش و مسئول قرارداد را مدیریت کنید.", "endDateHelp": "از مدت انتخاب‌شده خودکار محاسبه می‌شود.", "selectDurationHelp": "ابتدا تاریخ شروع و مدت را انتخاب کنید." },
+    "fields": { "client": "مشتری", "title": "عنوان قرارداد", "serviceType": "نوع خدمت", "duration": "مدت", "amount": "مبلغ", "currency": "ارز", "exchangeRate": "نرخ تبادله USD/AFN", "startDate": "تاریخ شروع", "endDate": "تاریخ پایان", "status": "وضعیت", "country": "کشور", "level": "سطح خدمت", "manager": "مدیر حساب", "autoRenew": "تمدید خودکار قرارداد", "email": "ایمیل" },
+    "placeholders": { "client": "مشتری را جستجو و انتخاب کنید", "serviceType": "نوع خدمت را انتخاب کنید", "duration": "مدت را انتخاب کنید", "status": "وضعیت را انتخاب کنید", "country": "کشور را انتخاب کنید", "level": "سطح خدمت را انتخاب کنید", "manager": "مدیر حساب را جستجو کنید" },
+    "detail": { "title": "جزئیات قرارداد", "overview": "نمای کلی", "notifications": "تاریخچه اطلاعیه‌ها", "contractDetails": "جزئیات قرارداد", "financial": "جزئیات مالی", "contacts": "مشتری و مدیر حساب", "transactionAmount": "مبلغ تراکنش", "baseAmount": "مبلغ پایه ({currency})", "clientContact": "تماس مشتری", "managerContact": "تماس مدیر", "noNotifications": "اطلاعیه‌ای ارسال نشده", "noNotificationsDescription": "یادآوری‌های انقضای این قرارداد اینجا نمایش داده می‌شود.", "createdAt": "تاریخ ایجاد" },
+    "reminders": { "30_DAY": "یادآوری انقضای ۳۰ روزه", "15_DAY": "یادآوری انقضای ۱۵ روزه", "3_DAY": "یادآوری انقضای ۳ روزه" },
+    "empty": { "title": "قراردادی یافت نشد", "description": "یک قرارداد ایجاد کنید یا جستجو و تب فعلی را تغییر دهید." },
+    "delete": { "title": "حذف قرارداد", "description": "قرارداد {name} حذف شود؟ این عمل قابل بازگشت نیست." },
+    "pagination": { "rowsPerPage": "سطر در هر صفحه", "of": "از" },
+    "common": { "notAvailable": "موجود نیست", "loading": "در حال بارگذاری…", "yes": "بلی", "no": "نخیر" },
+    "messages": { "created": "قرارداد با موفقیت ایجاد شد.", "updated": "قرارداد با موفقیت به‌روزرسانی شد.", "deleted": "قرارداد با موفقیت حذف شد.", "statusUpdated": "وضعیت قرارداد به‌روزرسانی شد.", "loadFailed": "قراردادها بارگذاری نشد.", "optionsLoadFailed": "گزینه‌های فورم قرارداد بارگذاری نشد.", "operationFailed": "عملیات قرارداد انجام نشد.", "notFound": "قرارداد یافت نشد.", "duplicate": "قراردادی با این شماره موجود است.", "inUse": "این قرارداد به پروژه یا صورتحساب وصل است و حذف نمی‌شود.", "unauthenticated": "برای مدیریت قراردادها وارد شوید.", "forbidden": "اجازه مدیریت قراردادها را ندارید.", "auditComplete": "بررسی انقضا تکمیل شد.", "auditFailed": "بررسی انقضا انجام نشد.", "auditResult": "بررسی تکمیل شد: {sent} ارسال، {skipped} رد، {failed} ناموفق." },
+    "validation": { "required": "این فیلد الزامی است.", "amountInvalid": "مبلغ بزرگ‌تر از صفر وارد کنید.", "exchangeRateInvalid": "نرخ تبادله بزرگ‌تر از صفر وارد کنید.", "dateInvalid": "تاریخ شروع معتبر وارد کنید.", "titleTooLong": "عنوان قرارداد نباید بیشتر از ۱۹۱ نویسه باشد.", "invalidOption": "گزینه‌های معتبر قرارداد را انتخاب کنید.", "invalidManager": "یک مدیر حساب معتبر انتخاب کنید.", "durationInvalid": "مدت انتخاب‌شده باید شامل عدد و واحد روز، هفته، ماه یا سال باشد." }
+  },
+  "contractOptions": {
+    "types": { "title": "انواع قرارداد", "description": "خدمات قابل فروش در قرارداد." }, "durations": { "title": "مدت‌های قرارداد", "description": "مدت‌های معیاری برای محاسبه تاریخ پایان." }, "levels": { "title": "سطوح خدمت", "description": "سطوح و درجه‌های قرارداد." }, "countries": { "title": "کشورهای قرارداد", "description": "کشورهای قابل انتخاب در قرارداد." }, "statuses": { "title": "وضعیت‌های قرارداد", "description": "مراحل کاری قراردادهای مشتری." }, "invoiceStatuses": { "title": "وضعیت‌های صورتحساب", "description": "حالت‌های پرداخت صورتحساب قرارداد." }, "paymentMethods": { "title": "روش‌های پرداخت", "description": "روش‌های مجاز ثبت پرداخت صورتحساب." },
+    "durationHint": "از عدد و واحد انگلیسی استفاده کنید؛ مانند 1 Year، 18 Months یا 90 Days.", "deleteDescription": "گزینه {name} حذف شود؟ گزینه مورد استفاده قابل حذف نیست.",
+    "common": { "name": "نام", "description": "توضیحات", "status": "وضعیت", "actions": "عملیات", "active": "فعال", "inactive": "غیرفعال", "activate": "فعال‌سازی", "deactivate": "غیرفعال‌سازی", "add": "افزودن گزینه", "edit": "ویرایش گزینه", "create": "ایجاد", "save": "ذخیره تغییرات", "saving": "در حال ذخیره…", "cancel": "لغو", "empty": "گزینه‌ای تنظیم نشده" }
+  },
+  "contractInvoices": {
+    "kpis": { "totalInvoiced": "مجموع صورتحساب‌ها", "allInvoices": "همه صورتحساب‌های ایجادشده", "paidRevenue": "درآمد پرداخت‌شده", "paidInvoices": "پرداخت‌های ثبت‌شده در مالی", "overdueInvoices": "صورتحساب‌های تأخیری", "overdueCount": "{count} صورتحساب تأخیری", "outstanding": "مانده قابل پرداخت", "pendingInvoices": "پرداخت‌نشده و قسمی پرداخت‌شده" },
+    "filters": { "search": "جستجو", "searchPlaceholder": "صورتحساب، قرارداد یا مشتری را جستجو کنید", "status": "وضعیت صورتحساب", "allStatuses": "همه وضعیت‌ها", "client": "مشتری", "allClients": "همه مشتریان", "contract": "قرارداد", "allContracts": "همه قراردادها", "fromDate": "سررسید از", "toDate": "سررسید تا", "clear": "پاک‌کردن فیلترها" },
+    "table": { "invoiceContract": "صورتحساب و قرارداد", "client": "مشتری", "issueDue": "تاریخ صدور و سررسید", "amountCurrency": "مبلغ و ارز", "baseAmount": "مبلغ پایه", "status": "وضعیت", "actions": "عملیات" }, "status": { "OVERDUE": "تأخیری" },
+    "actions": { "create": "ایجاد صورتحساب", "save": "ذخیره تغییرات", "saving": "در حال ذخیره…", "viewPrint": "مشاهده / چاپ", "recordPayment": "ثبت پرداخت", "edit": "ویرایش", "delete": "حذف", "cancel": "لغو", "close": "بستن", "confirmPayment": "تأیید پرداخت", "printDownload": "چاپ / دانلود PDF" },
+    "form": { "createTitle": "ایجاد صورتحساب", "editTitle": "ویرایش صورتحساب", "description": "صورتحساب قرارداد مشتری را ایجاد و مدیریت کنید.", "selectContractHelp": "برای تکمیل مشتری، قرارداد را انتخاب کنید.", "baseAmount": "مبلغ پایه محاسبه‌شده ({currency})" },
+    "fields": { "contract": "قرارداد", "client": "مشتری", "amount": "مبلغ صورتحساب", "currency": "ارز", "exchangeRate": "نرخ تبادله USD/AFN", "issueDate": "تاریخ صدور", "dueDate": "تاریخ سررسید", "status": "وضعیت", "invoiceNumber": "شماره صورتحساب" }, "placeholders": { "contract": "قرارداد را جستجو و انتخاب کنید" },
+    "payment": { "title": "ثبت پرداخت صورتحساب", "date": "تاریخ پرداخت", "amount": "مبلغ پرداخت", "method": "روش پرداخت", "notes": "یادداشت پرداخت", "ledgerNotice": "با تأیید، صورتحساب پرداخت‌شده می‌شود و سند مرتبط در FinanceIncome ایجاد می‌گردد.", "recording": "در حال ثبت…" },
+    "print": { "title": "صورتحساب قابل چاپ", "invoice": "صورتحساب", "from": "از", "billTo": "صورتحساب برای", "taxId": "شماره مالیاتی", "paymentTerms": "شرایط پرداخت", "netDays": "{days} روز", "item": "قرارداد / مورد", "service": "نوع خدمت", "rate": "نرخ پایه", "total": "مجموع", "amountDue": "مبلغ قابل پرداخت", "thankYou": "از همکاری شما سپاسگزاریم.", "footer": "هنگام پرداخت شماره صورتحساب را ذکر کنید.", "stamp": "مهر شرکت" },
+    "empty": { "title": "صورتحسابی یافت نشد", "description": "صورتحساب ایجاد کنید یا جستجو و فیلترها را تغییر دهید." }, "delete": { "title": "حذف صورتحساب", "description": "صورتحساب {name} حذف شود؟ این عمل قابل بازگشت نیست." }, "pagination": { "rowsPerPage": "سطر در هر صفحه", "of": "از" },
+    "messages": { "created": "صورتحساب با موفقیت ایجاد شد.", "updated": "صورتحساب به‌روزرسانی شد.", "deleted": "صورتحساب حذف شد.", "paymentRecorded": "پرداخت ثبت و FinanceIncome به‌روزرسانی شد.", "loadFailed": "صورتحساب‌ها بارگذاری نشد.", "optionsLoadFailed": "گزینه‌های فورم بارگذاری نشد.", "operationFailed": "عملیات صورتحساب انجام نشد.", "paymentFailed": "پرداخت ثبت نشد.", "notFound": "صورتحساب یافت نشد.", "duplicate": "صورتحساب با این شماره موجود است.", "paidLocked": "صورتحساب پرداخت‌شده به دلیل همگام‌سازی مالی قفل است.", "paidDeleteBlocked": "صورتحساب پرداخت‌شده قابل حذف نیست.", "alreadyPaid": "این صورتحساب قبلاً پرداخت شده است.", "paymentOptionsMissing": "وضعیت پرداخت‌شده، روش پرداخت و نوع درآمد پرداخت قرارداد را تنظیم کنید.", "unauthenticated": "برای مدیریت صورتحساب وارد شوید.", "forbidden": "اجازه مدیریت صورتحساب را ندارید." },
+    "validation": { "required": "این فیلد الزامی است.", "amountInvalid": "مبلغ بزرگ‌تر از صفر وارد کنید.", "dateInvalid": "تاریخ معتبر وارد کنید.", "notesTooLong": "یادداشت نباید بیشتر از ۱۰۰۰ نویسه باشد.", "invalidContract": "قرارداد و مشتری مرتبط معتبر انتخاب کنید.", "invalidStatus": "وضعیت معتبر انتخاب کنید.", "paidViaPaymentOnly": "برای پرداخت‌شده‌کردن از ثبت پرداخت استفاده کنید.", "dateRangeInvalid": "سررسید باید بعد یا برابر تاریخ صدور باشد.", "fullPaymentRequired": "مبلغ پرداخت باید برابر کل صورتحساب باشد." }
   }
 }

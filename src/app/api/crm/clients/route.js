@@ -6,6 +6,7 @@ import { authorizeAction } from '@/libs/actionAuthorization'
 import { CRM_CLIENT_READ_PERMISSIONS, CRM_CLIENT_WRITE_PERMISSIONS, normalizeClientListItem } from '@/libs/crmClients'
 import { prisma } from '@/libs/prisma'
 import { createClientSchema } from '@/schemas/crm/clients'
+import { toFiniteNumber } from '@/utils/formatCurrency'
 import { getDictionary } from '@/utils/getDictionary'
 
 const MAX_PAGE_SIZE = 100
@@ -47,7 +48,7 @@ export async function GET(request) {
         include: {
           account_manager: { select: { id: true, first_name: true, last_name: true, position: true } },
           lead: { select: { id: true, title: true, source: { select: { id: true, label: true, value: true } } } },
-          invoices: { select: { amount: true, status: { select: { value: true } } } },
+          invoices: { select: { amount_base: true, status: { select: { value: true } } } },
           _count: { select: { projects: true, contracts: true, invoices: true, activities: true } }
         },
         orderBy: { created_at: 'desc' },
@@ -55,7 +56,7 @@ export async function GET(request) {
         take: limit
       }),
       prisma.crmClient.count({ where }),
-      prisma.crmClient.findMany({ where, select: { status: true, projects: { select: { status: { select: { value: true } } } }, invoices: { select: { amount: true, status: { select: { value: true } } } } } }),
+      prisma.crmClient.findMany({ where, select: { status: true, projects: { select: { status: { select: { value: true } } } }, invoices: { select: { amount_base: true, status: { select: { value: true } } } } } }),
       prisma.hrmStaff.findMany({ where: { status: 'ACTIVE' }, select: { id: true, first_name: true, last_name: true, position: true }, orderBy: [{ first_name: 'asc' }, { last_name: 'asc' }] })
     ])
 
@@ -72,9 +73,9 @@ export async function GET(request) {
         totalPages: Math.max(1, Math.ceil(totalCount / limit)),
         summary: {
           totalActive: summaryClients.filter(client => client.status === 'ACTIVE').length,
-          lifetimeRevenue: paidInvoices.reduce((total, invoice) => total + Number(invoice.amount), 0).toFixed(2),
+          lifetimeRevenue: paidInvoices.reduce((total, invoice) => total + toFiniteNumber(invoice.amount_base), 0).toFixed(2),
           activeProjects: summaryClients.reduce((total, client) => total + client.projects.filter(project => project.status.value === 'ACTIVE').length, 0),
-          pendingBalance: pendingInvoices.reduce((total, invoice) => total + Number(invoice.amount), 0).toFixed(2)
+          pendingBalance: pendingInvoices.reduce((total, invoice) => total + toFiniteNumber(invoice.amount_base), 0).toFixed(2)
         },
         options: { staff: staff.map(item => ({ ...item, full_name: `${item.first_name} ${item.last_name}`.trim() })) }
       }

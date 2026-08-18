@@ -1,9 +1,11 @@
 import { safeParse } from 'valibot'
 
 import { authorizeAction } from '@/libs/actionAuthorization'
+import { getCompanySetupRecord } from '@/libs/companySetup'
 import { calculatePayrollForStaff, getMonthRange, PAYROLL_WRITE_PERMISSIONS } from '@/libs/hrmPayroll'
 import { prisma } from '@/libs/prisma'
 import { createPayrollPeriodSchema } from '@/schemas/hrm/payroll'
+import { convertToBaseCurrency } from '@/utils/formatCurrency'
 import { getDictionary } from '@/utils/getDictionary'
 
 const localeFrom = value => (['en', 'fa', 'ps'].includes(value) ? value : 'en')
@@ -37,7 +39,7 @@ export async function POST(request) {
   const { start, inclusiveEnd } = getMonthRange(month, year)
 
   try {
-    const [draftStatus, staffMembers] = await Promise.all([
+    const [draftStatus, staffMembers, setup] = await Promise.all([
       prisma.option.findFirst({ where: { category: 'PAYROLL_STATUS', value: { in: ['DRAFT', 'PENDING'] }, is_active: true }, select: { id: true }, orderBy: { sort_order: 'asc' } }),
       prisma.hrmStaff.findMany({
         where: {
@@ -59,12 +61,13 @@ export async function POST(request) {
               OR: [{ end_date: null }, { end_date: { gte: start } }],
               status: { is: { category: 'CONTRACT_STATUS', value: 'ACTIVE' } }
             },
-            select: { contract_number: true, base_salary: true, start_date: true },
+            select: { contract_number: true, base_salary: true, currency: true, exchange_rate: true, start_date: true },
             orderBy: { start_date: 'desc' },
             take: 1
           }
         }
-      })
+      }),
+      getCompanySetupRecord()
     ])
 
     if (!draftStatus) return responseError(dictionary.messages.statusNotFound, 409, 'STATUS_NOT_CONFIGURED')
@@ -79,17 +82,30 @@ export async function POST(request) {
 
         if (!calculation) continue
 
-        const existing = await transaction.hrmPayroll.findUnique({ where: { staff_id_month_year: { staff_id: staff.id, month, year } }, select: { id: true, status: { select: { value: true } } } })
+        const existing = await transaction.hrmPayroll.findUnique({
+          where: { staff_id_month_year: { staff_id: staff.id, month, year } },
+          select: { id: true, exchange_rate: true, status: { select: { value: true } } }
+        })
 
         if (existing?.status.value === 'PAID') {
           skippedPaid += 1
           continue
         }
 
+        const lockedExchangeRate = existing?.exchange_rate || calculation.exchangeRate
+
         const data = {
           base_salary: calculation.baseSalary,
           unpaid_leave_deduction: calculation.deduction,
           net_salary: calculation.netSalary,
+          currency: calculation.currency,
+          exchange_rate: lockedExchangeRate,
+          amount_base: convertToBaseCurrency(
+            calculation.netSalary,
+            calculation.currency,
+            lockedExchangeRate,
+            setup.currency_code
+          ),
           status_id: draftStatus.id,
           notes: JSON.stringify({ unpaidDays: calculation.unpaidDays, contractNumber: calculation.contractNumber })
         }

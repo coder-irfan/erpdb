@@ -1,6 +1,7 @@
 import { authorizeAction } from '@/libs/actionAuthorization'
 import { prisma } from '@/libs/prisma'
 import { getDictionary } from '@/utils/getDictionary'
+import { toFiniteNumber } from '@/utils/formatCurrency'
 
 const REPORT_TYPES = ['payroll', 'attendance', 'leaves', 'contracts']
 const REPORT_PERMISSIONS = ['hrm_reports:read', 'hrm:read']
@@ -14,7 +15,7 @@ const responseError = (error, status, code, details) =>
 
 const toDateKey = date => date.toISOString().slice(0, 10)
 const toMonthKey = date => date.toISOString().slice(0, 7)
-const money = value => Number(value || 0).toFixed(2)
+const money = value => toFiniteNumber(value).toFixed(2)
 
 const parseDate = (value, endOfDay = false) => {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value || '')) return null
@@ -63,6 +64,9 @@ const getPayrollReport = async ({ start, end, staffId, months }) => {
       unpaid_leave_deduction: true,
       tax_deduction: true,
       net_salary: true,
+      currency: true,
+      exchange_rate: true,
+      amount_base: true,
       payment_date: true,
       staff: { select: { id: true, first_name: true, last_name: true, position: true } },
       status: { select: { label: true, value: true } },
@@ -80,21 +84,24 @@ const getPayrollReport = async ({ start, end, staffId, months }) => {
 
   const summary = records.reduce(
     (totals, record) => {
-      const baseSalary = Number(record.base_salary)
-      const allowances = Number(record.total_allowance)
-      const deductions = Number(record.unpaid_leave_deduction) + Number(record.tax_deduction)
-      const netPayout = Number(record.net_salary)
+      const deductions = toFiniteNumber(record.unpaid_leave_deduction) + toFiniteNumber(record.tax_deduction)
+      const transactionNet = toFiniteNumber(record.net_salary)
+      const netPayout = toFiniteNumber(record.amount_base)
+      const baseFactor = transactionNet > 0 ? netPayout / transactionNet : 0
+      const baseSalary = toFiniteNumber(record.base_salary) * baseFactor
+      const allowances = toFiniteNumber(record.total_allowance) * baseFactor
+      const baseDeductions = deductions * baseFactor
       const trend = trendMap.get(`${record.year}-${String(record.month).padStart(2, '0')}`)
 
       totals.total_base_salary += baseSalary
       totals.total_allowances += allowances
-      totals.total_deductions += deductions
+      totals.total_deductions += baseDeductions
       totals.total_net_payout += netPayout
 
       if (trend) {
         trend.base_salary += baseSalary
         trend.allowances += allowances
-        trend.deductions += deductions
+        trend.deductions += baseDeductions
         trend.net_payout += netPayout
       }
 
@@ -120,8 +127,11 @@ const getPayrollReport = async ({ start, end, staffId, months }) => {
       position: record.staff.position,
       base_salary: record.base_salary.toFixed(2),
       allowances: record.total_allowance.toFixed(2),
-      deductions: money(Number(record.unpaid_leave_deduction) + Number(record.tax_deduction)),
+      deductions: money(toFiniteNumber(record.unpaid_leave_deduction) + toFiniteNumber(record.tax_deduction)),
       net_payout: record.net_salary.toFixed(2),
+      currency: record.currency,
+      exchange_rate: record.exchange_rate.toFixed(4),
+      amount_base: record.amount_base.toFixed(2),
       status: record.status.value,
       status_label: record.status.label,
       payment_method: record.payment_method?.label || null,
@@ -304,6 +314,9 @@ const getContractReport = async ({ start, end, staffId, months }) => {
       contract_number: true,
       position_title: true,
       base_salary: true,
+      currency: true,
+      exchange_rate: true,
+      amount_base: true,
       start_date: true,
       end_date: true,
       staff: { select: { id: true, first_name: true, last_name: true, position: true } },
@@ -358,6 +371,9 @@ const getContractReport = async ({ start, end, staffId, months }) => {
         position: contract.position_title || contract.staff.position,
         contract_type: contract.contract_type.label,
         base_salary: contract.base_salary.toFixed(2),
+        currency: contract.currency,
+        exchange_rate: contract.exchange_rate.toFixed(4),
+        amount_base: contract.amount_base.toFixed(2),
         start_date: contract.start_date.toISOString(),
         end_date: contract.end_date.toISOString(),
         days_remaining: daysRemaining,

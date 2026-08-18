@@ -60,7 +60,7 @@ const AddAction = ({ invoiceData }) => {
             <Grid size={{ xs: 12 }}>
               <div className='p-6 bg-actionHover rounded'>
                 <div className='flex justify-between gap-4 flex-col sm:flex-row'>
-                  <div className='flex flex-col gap-6'>
+                  <div className='flex flex-col md:gap-4 gap-2'>
                     <div className='flex items-center gap-2.5'>
                       <Logo />
                     </div>
@@ -119,7 +119,7 @@ const AddAction = ({ invoiceData }) => {
 
             <Grid size={{ xs: 12 }}>
               <div className='flex justify-between flex-col gap-4 flex-wrap sm:flex-row'>
-                <div className='flex flex-col gap-4'>
+                <div className='flex flex-col md:gap-4 gap-2'>
                   <Typography className='font-medium' color='text.primary'>
                     Invoice To:
                   </Typography>
@@ -167,7 +167,7 @@ const AddAction = ({ invoiceData }) => {
                     </div>
                   )}
                 </div>
-                <div className='flex flex-col gap-4'>
+                <div className='flex flex-col md:gap-4 gap-2'>
                   <Typography className='font-medium' color='text.primary'>
                     Bill To:
                   </Typography>

@@ -56,13 +56,23 @@ export const createResetPasswordSchema = messages =>
 
 export const createInvitationTokenSchema = messages =>
   object({
-    token: pipe(string(messages.tokenRequired), trim(), nonEmpty(messages.tokenRequired), minLength(32, messages.tokenInvalid))
+    token: pipe(
+      string(messages.tokenRequired),
+      trim(),
+      nonEmpty(messages.tokenRequired),
+      minLength(32, messages.tokenInvalid)
+    )
   })
 
 export const createAcceptInvitationSchema = messages =>
   pipe(
     object({
-      token: pipe(string(messages.tokenRequired), trim(), nonEmpty(messages.tokenRequired), minLength(32, messages.tokenInvalid)),
+      token: pipe(
+        string(messages.tokenRequired),
+        trim(),
+        nonEmpty(messages.tokenRequired),
+        minLength(32, messages.tokenInvalid)
+      ),
       name: pipe(
         string(messages.nameRequired),
         trim(),
@@ -75,12 +85,10 @@ export const createAcceptInvitationSchema = messages =>
         nonEmpty(messages.passwordRequired),
         minLength(8, messages.passwordMinLength)
       ),
-      confirmPassword: pipe(
-        string(messages.confirmPasswordRequired),
-        nonEmpty(messages.confirmPasswordRequired)
-      )
+      confirmPassword: pipe(string(messages.confirmPasswordRequired), nonEmpty(messages.confirmPasswordRequired))
     }),
-    forward(check(input => input.password === input.confirmPassword, messages.passwordsDoNotMatch), [
-      'confirmPassword'
-    ])
+    forward(
+      check(input => input.password === input.confirmPassword, messages.passwordsDoNotMatch),
+      ['confirmPassword']
+    )
   )

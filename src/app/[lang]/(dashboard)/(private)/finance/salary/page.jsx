@@ -1,17 +1,3 @@
-import Card from '@mui/material/Card'
-import CardHeader from '@mui/material/CardHeader'
-
-import { getDictionary } from '@/utils/getDictionary'
-
-const SalaryPage = async props => {
-  const params = await props.params
-  const dictionary = await getDictionary(params.lang)
-
-  return (
-    <Card>
-      <CardHeader title={dictionary.navigation.salary} />
-    </Card>
-  )
-}
+const SalaryPage = () => null
 
 export default SalaryPage

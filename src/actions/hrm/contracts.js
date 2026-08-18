@@ -11,6 +11,7 @@ import { authorizeAction } from '@/libs/actionAuthorization'
 import { getCompanySetupRecord } from '@/libs/companySetup'
 import { prisma } from '@/libs/prisma'
 import { createStaffContractSchema } from '@/schemas/hrm/contracts'
+import { convertToBaseCurrency } from '@/utils/formatCurrency'
 import { getDictionary } from '@/utils/getDictionary'
 
 const CONTRACT_READ_PERMISSIONS = ['hrm:read', 'hrm_contract:read', 'contracts:read']
@@ -87,7 +88,7 @@ const compileTemplate = ({ template, staff, values, setup }) => {
     STAFF_NAME: `${staff.first_name} ${staff.last_name}`.trim(),
     TAZKIRA_NO: staff.tazkira_no || 'N/A',
     POSITION: values.position_title,
-    BASE_SALARY: `${new Prisma.Decimal(values.base_salary).toFixed(2)} ${setup.currency_code}`,
+    BASE_SALARY: `${new Prisma.Decimal(values.base_salary).toFixed(2)} ${values.currency}`,
     START_DATE: toDateOnly(toDate(values.start_date)),
     COMPANY_NAME: setup.company_name
   }
@@ -109,6 +110,9 @@ const contractSelect = {
   contract_type_id: true,
   position_title: true,
   base_salary: true,
+  currency: true,
+  exchange_rate: true,
+  amount_base: true,
   start_date: true,
   end_date: true,
   document_url: true,
@@ -125,7 +129,9 @@ const contractSelect = {
       phone: true,
       tazkira_no: true,
       position: true,
-      salary: true
+      salary: true,
+      salary_currency: true,
+      salary_exchange_rate: true
     }
   },
   contract_type: { select: { id: true, label: true, value: true, is_active: true } },
@@ -135,6 +141,8 @@ const contractSelect = {
 const normalizeContract = contract => ({
   ...contract,
   base_salary: contract.base_salary.toFixed(2),
+  exchange_rate: contract.exchange_rate.toFixed(4),
+  amount_base: contract.amount_base.toFixed(2),
   start_date: contract.start_date.toISOString(),
   end_date: contract.end_date?.toISOString() ?? null,
   created_at: contract.created_at.toISOString(),
@@ -142,7 +150,8 @@ const normalizeContract = contract => ({
   staff: {
     ...contract.staff,
     full_name: `${contract.staff.first_name} ${contract.staff.last_name}`.trim(),
-    salary: contract.staff.salary.toFixed(2)
+    salary: contract.staff.salary.toFixed(2),
+    salary_exchange_rate: contract.staff.salary_exchange_rate.toFixed(4)
   }
 })
 
@@ -173,6 +182,7 @@ const validateContract = (payload, translations) =>
     contract_type_id: payload?.contract_type_id,
     position_title: payload?.position_title,
     base_salary: payload?.base_salary,
+    currency: payload?.currency,
     start_date: payload?.start_date,
     end_date: payload?.end_date || '',
     document_url: payload?.document_url || '',
@@ -195,7 +205,9 @@ const getValidatedRelations = async (values, currentContract = null) => {
         last_name: true,
         tazkira_no: true,
         position: true,
-        salary: true
+        salary: true,
+        salary_currency: true,
+        salary_exchange_rate: true
       }
     }),
     prisma.option.findFirst({
@@ -305,7 +317,7 @@ export const getContractFormOptions = async (payload = {}) => {
     const [staff, policies, statuses, setup] = await Promise.all([
       prisma.hrmStaff.findMany({
         where: { status: { not: 'TERMINATED' } },
-        select: { id: true, first_name: true, last_name: true, position: true, salary: true, tazkira_no: true },
+        select: { id: true, first_name: true, last_name: true, position: true, salary: true, salary_currency: true, salary_exchange_rate: true, tazkira_no: true },
         orderBy: [{ first_name: 'asc' }, { last_name: 'asc' }]
       }),
       prisma.option.findMany({
@@ -327,7 +339,8 @@ export const getContractFormOptions = async (payload = {}) => {
         staff: staff.map(item => ({
           ...item,
           full_name: `${item.first_name} ${item.last_name}`.trim(),
-          salary: item.salary.toFixed(2)
+          salary: item.salary.toFixed(2),
+          salary_exchange_rate: item.salary_exchange_rate.toFixed(4)
         })),
         policies,
         statuses,
@@ -401,6 +414,16 @@ export const createStaffContract = async (payload = {}) => {
           contract_type_id: validation.output.contract_type_id,
           position_title: validation.output.position_title,
           base_salary: new Prisma.Decimal(validation.output.base_salary),
+          currency: validation.output.currency,
+          exchange_rate: new Prisma.Decimal(relations.setup.usd_afn_exchange_rate),
+          amount_base: new Prisma.Decimal(
+            convertToBaseCurrency(
+              validation.output.base_salary,
+              validation.output.currency,
+              relations.setup.usd_afn_exchange_rate,
+              relations.setup.currency_code
+            )
+          ),
           start_date: toDate(validation.output.start_date),
           end_date: validation.output.end_date ? toDate(validation.output.end_date) : null,
           document_url: nullableText(validation.output.document_url),
@@ -453,7 +476,7 @@ export const updateStaffContract = async (id, payload = {}) => {
   try {
     const existing = await prisma.hrmStaffContract.findUnique({
       where: { id: contractId },
-      select: { id: true, contract_type_id: true, status_id: true }
+      select: { id: true, contract_type_id: true, status_id: true, currency: true, exchange_rate: true }
     })
 
     if (!existing) return { success: false, code: 'CONTRACT_NOT_FOUND', error: context.translations.messages.notFound }
@@ -479,6 +502,15 @@ export const updateStaffContract = async (id, payload = {}) => {
           contract_type_id: validation.output.contract_type_id,
           position_title: validation.output.position_title,
           base_salary: new Prisma.Decimal(validation.output.base_salary),
+          currency: validation.output.currency,
+          amount_base: new Prisma.Decimal(
+            convertToBaseCurrency(
+              validation.output.base_salary,
+              validation.output.currency,
+              existing.exchange_rate,
+              relations.setup.currency_code
+            )
+          ),
           start_date: toDate(validation.output.start_date),
           end_date: validation.output.end_date ? toDate(validation.output.end_date) : null,
           document_url: nullableText(validation.output.document_url),

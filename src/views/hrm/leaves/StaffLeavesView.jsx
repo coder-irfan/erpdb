@@ -17,6 +17,7 @@ import CustomTextField from '@core/components/mui/TextField'
 import ConfirmDeleteModal from '@/components/dialogs/ConfirmDeleteModal'
 import DashboardTablePagination from '@/components/table/DashboardTablePagination'
 import TableEmptyStateRow from '@/components/table/TableEmptyStateRow'
+import TableFiltersPopover from '@/components/table/TableFiltersPopover'
 import TableSkeletonRows from '@/components/table/TableSkeletonRows'
 
 import LeaveStatsCards from './LeaveStatsCards'
@@ -53,6 +54,8 @@ const StaffLeavesView = ({ locale, dictionary }) => {
   const [staffId, setStaffId] = useState('')
   const [leaveTypeId, setLeaveTypeId] = useState('')
   const [statusId, setStatusId] = useState('')
+  const [searchInput, setSearchInput] = useState('')
+  const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)
   const [busyId, setBusyId] = useState(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
@@ -65,6 +68,7 @@ const StaffLeavesView = ({ locale, dictionary }) => {
     try {
       const params = new URLSearchParams({ page: String(page + 1), limit: String(rowsPerPage), locale })
 
+      if (search) params.set('search', search)
       if (staffId) params.set('staff_id', staffId)
       if (leaveTypeId) params.set('leave_type_id', leaveTypeId)
       if (statusId) params.set('status_id', statusId)
@@ -84,11 +88,20 @@ const StaffLeavesView = ({ locale, dictionary }) => {
     } finally {
       setLoading(false)
     }
-  }, [dictionary.messages.loadFailed, leaveTypeId, locale, page, rowsPerPage, staffId, statusId])
+  }, [dictionary.messages.loadFailed, leaveTypeId, locale, page, rowsPerPage, search, staffId, statusId])
 
   useEffect(() => {
     loadLeaves()
   }, [loadLeaves])
+
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      setSearch(searchInput.trim())
+      setPage(0)
+    }, 350)
+
+    return () => clearTimeout(timeout)
+  }, [searchInput])
 
   const openCreate = () => {
     setEditingLeave(null)
@@ -155,62 +168,113 @@ const StaffLeavesView = ({ locale, dictionary }) => {
   const canCreate = data.canManage || Boolean(data.currentStaffId)
 
   return (
-    <div className='flex flex-col gap-6'>
+    <div className='flex flex-col md:gap-4 gap-2'>
       <LeaveStatsCards summary={data.summary} dictionary={dictionary} />
 
       <Card>
-        <CardContent className='flex flex-col gap-5 border-bs border-divider'>
-          <div className='flex flex-wrap items-start justify-between gap-4'>
-            <div>
-              <Typography variant='h5'>{dictionary.title}</Typography>
-              <Typography color='text.secondary'>{dictionary.description}</Typography>
-            </div>
-            {canCreate && (
-              <Button variant='contained' startIcon={<i className='tabler-plus' />} onClick={openCreate} className='is-full sm:is-auto'>
-                {dictionary.actions.requestLeave}
-              </Button>
-            )}
-          </div>
-
-          <div className='mb-4 flex flex-wrap items-center justify-between gap-4'>
-            <div className='ms-auto flex is-full flex-wrap items-center gap-3 sm:is-auto sm:justify-end'>
+        <CardContent className='flex flex-wrap items-center justify-between gap-4 border-be border-divider'>
+          <CustomTextField
+            value={searchInput}
+            onChange={event => setSearchInput(event.target.value)}
+            label={dictionary.filters.search}
+            placeholder={dictionary.filters.searchPlaceholder}
+            className='is-full sm:is-[300px]'
+            slotProps={{ input: { startAdornment: <i className='tabler-search text-textSecondary' /> } }}
+          />
+          <div className='flex is-full flex-wrap items-center gap-3 sm:is-auto sm:justify-end'>
+            <TableFiltersPopover
+              activeCount={Number(Boolean(staffId)) + Number(Boolean(leaveTypeId)) + Number(Boolean(statusId))}
+              locale={locale}
+            >
               {data.canManage && (
-                <CustomTextField select label={dictionary.filters.staff} value={staffId} onChange={event => { setStaffId(event.target.value); setPage(0) }} className='is-full sm:is-[240px]' slotProps={{ select: { displayEmpty: true, renderValue: selected => data.options.staff.find(staff => staff.id === selected)?.full_name || dictionary.filters.allStaff } }}>
+                <CustomTextField
+                  select
+                  label={dictionary.filters.staff}
+                  value={staffId}
+                  onChange={event => {
+                    setStaffId(event.target.value)
+                    setPage(0)
+                  }}
+                  className='is-full'
+                  slotProps={{
+                    select: {
+                      displayEmpty: true,
+                      renderValue: selected =>
+                        data.options.staff.find(staff => staff.id === selected)?.full_name ||
+                        dictionary.filters.allStaff
+                    }
+                  }}
+                >
                   <MenuItem value=''>{dictionary.filters.allStaff}</MenuItem>
-                  {data.options.staff.map(staff => <MenuItem key={staff.id} value={staff.id}>{staff.full_name}</MenuItem>)}
+                  {data.options.staff.map(staff => (
+                    <MenuItem key={staff.id} value={staff.id}>
+                      {staff.full_name}
+                    </MenuItem>
+                  ))}
                 </CustomTextField>
               )}
-              <CustomTextField select label={dictionary.filters.leaveType} value={leaveTypeId} onChange={event => { setLeaveTypeId(event.target.value); setPage(0) }} className='is-full sm:is-[220px]' slotProps={{ select: { displayEmpty: true, renderValue: selected => data.options.leaveTypes.find(type => type.id === selected)?.label || dictionary.filters.allLeaveTypes } }}>
+              <CustomTextField
+                select
+                label={dictionary.filters.leaveType}
+                value={leaveTypeId}
+                onChange={event => {
+                  setLeaveTypeId(event.target.value)
+                  setPage(0)
+                }}
+                className='is-full'
+                slotProps={{
+                  select: {
+                    displayEmpty: true,
+                    renderValue: selected =>
+                      data.options.leaveTypes.find(type => type.id === selected)?.label ||
+                      dictionary.filters.allLeaveTypes
+                  }
+                }}
+              >
                 <MenuItem value=''>{dictionary.filters.allLeaveTypes}</MenuItem>
-                {data.options.leaveTypes.map(type => <MenuItem key={type.id} value={type.id}>{type.label}</MenuItem>)}
+                {data.options.leaveTypes.map(type => (
+                  <MenuItem key={type.id} value={type.id}>
+                    {type.label}
+                  </MenuItem>
+                ))}
               </CustomTextField>
               <CustomTextField
                 select
                 label={dictionary.filters.status}
                 value={statusId}
-                onChange={event => { setStatusId(event.target.value); setPage(0) }}
-                className='is-full sm:is-[200px]'
+                onChange={event => {
+                  setStatusId(event.target.value)
+                  setPage(0)
+                }}
+                className='is-full'
                 slotProps={{
                   select: {
                     displayEmpty: true,
                     renderValue: selected => {
                       const status = data.options.statuses.find(item => item.id === selected)
 
-                      return status
-                        ? dictionary.status[status.value] || status.label
-                        : dictionary.filters.allStatuses
+                      return status ? dictionary.status[status.value] || status.label : dictionary.filters.allStatuses
                     }
                   }
                 }}
               >
                 <MenuItem value=''>{dictionary.filters.allStatuses}</MenuItem>
-                {data.options.statuses.map(status => <MenuItem key={status.id} value={status.id}>{dictionary.status[status.value] || status.label}</MenuItem>)}
+                {data.options.statuses.map(status => (
+                  <MenuItem key={status.id} value={status.id}>
+                    {dictionary.status[status.value] || status.label}
+                  </MenuItem>
+                ))}
               </CustomTextField>
-            </div>
+            </TableFiltersPopover>
+            {canCreate && (
+              <Button variant='contained' startIcon={<i className='tabler-plus' />} onClick={openCreate}>
+                {dictionary.actions.requestLeave}
+              </Button>
+            )}
           </div>
         </CardContent>
 
-        <div className='overflow-x-auto'>
+        <div className='no-scrollbar overflow-x-auto scroll-smooth'>
           <table className={tableStyles.table}>
             <thead>
               <tr>
@@ -220,7 +284,7 @@ const StaffLeavesView = ({ locale, dictionary }) => {
                 <th>{dictionary.table.reason}</th>
                 <th>{dictionary.table.status}</th>
                 <th>{dictionary.table.approvedBy}</th>
-                <th className='text-right'>{dictionary.table.actions}</th>
+                <th className='text-end'>{dictionary.table.actions}</th>
               </tr>
             </thead>
             <tbody>
@@ -245,48 +309,92 @@ const StaffLeavesView = ({ locale, dictionary }) => {
                     <tr key={leave.id}>
                       <td>
                         <div className='flex min-is-[220px] items-center gap-3'>
-                          <Avatar variant='rounded' className='bg-primaryLighter text-primary'>{getInitials(leave.staff)}</Avatar>
+                          <Avatar variant='rounded' className='bg-primaryLighter text-primary'></Avatar>
                           <div>
-                            <Typography color='text.primary' className='font-medium'>{leave.staff.full_name}</Typography>
-                            <Typography variant='body2' color='text.secondary'>{leave.staff.position}</Typography>
+                            <Typography color='text.primary' className='font-medium'>
+                              {leave.staff.full_name}
+                            </Typography>
+                            <Typography variant='body2' color='text.secondary'>
+                              {leave.staff.position}
+                            </Typography>
                           </div>
                         </div>
                       </td>
-                      <td><Typography color='text.primary'>{leave.leave_type.label}</Typography></td>
+                      <td>
+                        <Typography color='text.primary'>{leave.leave_type.label}</Typography>
+                      </td>
                       <td>
                         <div className='min-is-[190px]'>
-                          <Typography color='text.primary'>{formatDate(leave.start_date, locale)} → {formatDate(leave.end_date, locale)}</Typography>
-                          <Chip size='small' variant='tonal' label={dictionary.table.days.replace('{count}', leave.total_days)} className='mt-1' />
+                          <Typography color='text.primary'>
+                            {formatDate(leave.start_date, locale)} → {formatDate(leave.end_date, locale)}
+                          </Typography>
+                          <Chip
+                            size='small'
+                            variant='tonal'
+                            label={dictionary.table.days.replace('{count}', leave.total_days)}
+                            className='mt-1'
+                          />
                         </div>
                       </td>
                       <td>
                         {leave.reason ? (
                           <Tooltip title={leave.reason} arrow>
-                            <Typography color='text.secondary' className='max-is-[220px] truncate'>{leave.reason}</Typography>
+                            <Typography color='text.secondary' className='max-is-[220px] truncate'>
+                              {leave.reason}
+                            </Typography>
                           </Tooltip>
-                        ) : <Typography color='text.secondary'>—</Typography>}
+                        ) : (
+                          <Typography color='text.secondary'>—</Typography>
+                        )}
                       </td>
-                      <td><Chip size='small' variant='tonal' color={STATUS_COLORS[leave.status.value] || 'default'} label={dictionary.status[leave.status.value] || leave.status.label} /></td>
+                      <td>
+                        <Chip
+                          size='small'
+                          variant='tonal'
+                          color={STATUS_COLORS[leave.status.value] || 'default'}
+                          label={dictionary.status[leave.status.value] || leave.status.label}
+                        />
+                      </td>
                       <td>{leave.approved_by?.full_name || '—'}</td>
-                      <td className='text-right'>
+                      <td className='text-end'>
                         <div className='flex min-is-[150px] items-center justify-end gap-1'>
                           {data.canManage && isPending && (
                             <>
                               <Tooltip title={dictionary.actions.approve}>
-                                <IconButton color='success' disabled={busyId === leave.id} onClick={() => updateStatus(leave, 'APPROVED')}><i className='tabler-check' /></IconButton>
+                                <IconButton
+                                  color='success'
+                                  disabled={busyId === leave.id}
+                                  onClick={() => updateStatus(leave, 'APPROVED')}
+                                >
+                                  <i className='tabler-check' />
+                                </IconButton>
                               </Tooltip>
                               <Tooltip title={dictionary.actions.reject}>
-                                <IconButton color='error' disabled={busyId === leave.id} onClick={() => updateStatus(leave, 'REJECTED')}><i className='tabler-x' /></IconButton>
+                                <IconButton
+                                  color='error'
+                                  disabled={busyId === leave.id}
+                                  onClick={() => updateStatus(leave, 'REJECTED')}
+                                >
+                                  <i className='tabler-x' />
+                                </IconButton>
                               </Tooltip>
                             </>
                           )}
                           {canModify && (
                             <>
                               <Tooltip title={dictionary.actions.edit}>
-                                <IconButton disabled={busyId === leave.id} onClick={() => openEdit(leave)}><i className='tabler-edit' /></IconButton>
+                                <IconButton disabled={busyId === leave.id} onClick={() => openEdit(leave)}>
+                                  <i className='tabler-edit' />
+                                </IconButton>
                               </Tooltip>
                               <Tooltip title={dictionary.actions.delete}>
-                                <IconButton color='error' disabled={busyId === leave.id} onClick={() => setDeleteTarget(leave)}><i className='tabler-trash' /></IconButton>
+                                <IconButton
+                                  color='error'
+                                  disabled={busyId === leave.id}
+                                  onClick={() => setDeleteTarget(leave)}
+                                >
+                                  <i className='tabler-trash' />
+                                </IconButton>
                               </Tooltip>
                             </>
                           )}
@@ -307,7 +415,10 @@ const StaffLeavesView = ({ locale, dictionary }) => {
           rowsPerPageLabel={dictionary.pagination.rowsPerPage}
           ofLabel={dictionary.pagination.of}
           onPageChange={(_, nextPage) => setPage(nextPage)}
-          onRowsPerPageChange={event => { setRowsPerPage(Number(event.target.value)); setPage(0) }}
+          onRowsPerPageChange={event => {
+            setRowsPerPage(Number(event.target.value))
+            setPage(0)
+          }}
         />
       </Card>
 

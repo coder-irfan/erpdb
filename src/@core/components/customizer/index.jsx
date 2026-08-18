@@ -178,7 +178,7 @@ const Customizer = ({ breakpoint = 'lg', dir = 'ltr', disableDirection = false }
             : { options: { wheelPropagation: false, suppressScrollX: true } })}
         >
           <div className={styles.customizerBody}>
-            <div className='flex flex-col gap-6'>
+            <div className='flex flex-col md:gap-4 gap-2'>
               <Chip label='Theming' size='small' color='primary' variant='tonal' className='self-start rounded-sm' />
               <div className='flex flex-col gap-2'>
                 <p className='font-medium'>Primary Color</p>
@@ -328,7 +328,7 @@ const Customizer = ({ breakpoint = 'lg', dir = 'ltr', disableDirection = false }
               )}
             </div>
             <hr className={styles.hr} />
-            <div className='flex flex-col gap-6'>
+            <div className='flex flex-col md:gap-4 gap-2'>
               <Chip label='Layout' variant='tonal' size='small' color='primary' className='self-start rounded-sm' />
               <div className='flex flex-col gap-2'>
                 <p className='font-medium'>Layouts</p>

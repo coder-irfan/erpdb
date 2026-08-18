@@ -6,7 +6,6 @@ import Alert from '@mui/material/Alert'
 import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
-import CardHeader from '@mui/material/CardHeader'
 import Chip from '@mui/material/Chip'
 import Dialog from '@mui/material/Dialog'
 import DialogContent from '@mui/material/DialogContent'
@@ -153,7 +152,6 @@ const ContractPolicyTable = ({ initialResult, initialError, canCreate, canUpdate
   return (
     <>
       <Card>
-        <CardHeader title={dictionary.contractPolicies.title} subheader={dictionary.contractPolicies.description} />
         {initialError && (
           <CardContent className='pb-0'>
             <Alert severity='error'>{initialError}</Alert>
@@ -166,8 +164,8 @@ const ContractPolicyTable = ({ initialResult, initialError, canCreate, canUpdate
               onChange={event => setSearchInput(event.target.value)}
               label={dictionary.common.search}
               placeholder={dictionary.contractPolicies.searchPlaceholder}
-              className='is-full sm:is-[260px]'
-              slotProps={{ input: { startAdornment: <i className='tabler-search me-2 text-textSecondary' /> } }}
+              className='is-full sm:is-[300px]'
+              slotProps={{ input: { startAdornment: <i className='tabler-search text-textSecondary' /> } }}
             />
             {canCreate && (
               <Button
@@ -190,7 +188,7 @@ const ContractPolicyTable = ({ initialResult, initialError, canCreate, canUpdate
                 <th>{dictionary.contractPolicies.table.description}</th>
                 <th>{dictionary.common.status}</th>
                 <th>{dictionary.common.createdDate}</th>
-                <th className='text-right'>{dictionary.common.actions}</th>
+                <th className='text-end'>{dictionary.common.actions}</th>
               </tr>
             </thead>
             <tbody>
@@ -230,7 +228,7 @@ const ContractPolicyTable = ({ initialResult, initialError, canCreate, canUpdate
                         />
                       </td>
                       <td>{formatDate(option.created_at, locale)}</td>
-                      <td className='text-right'>
+                      <td className='text-end'>
                         <div className='flex min-is-[150px] items-center justify-end gap-1'>
                           <Tooltip title={dictionary.common.view}>
                             <IconButton onClick={() => setViewingOption(option)}>

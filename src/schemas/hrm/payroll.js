@@ -11,7 +11,11 @@ export const createPayrollPeriodSchema = customMessages => {
 
   return object({
     month: pipe(number(messages.monthInvalid), minValue(1, messages.monthInvalid), maxValue(12, messages.monthInvalid)),
-    year: pipe(number(messages.yearInvalid), minValue(2000, messages.yearInvalid), maxValue(2200, messages.yearInvalid)),
+    year: pipe(
+      number(messages.yearInvalid),
+      minValue(2000, messages.yearInvalid),
+      maxValue(2200, messages.yearInvalid)
+    ),
     staff_id: optional(pipe(string(), trim()), '')
   })
 }

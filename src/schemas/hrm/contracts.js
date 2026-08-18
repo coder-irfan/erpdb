@@ -9,6 +9,7 @@ import {
   number,
   object,
   optional,
+  picklist,
   pipe,
   string,
   transform,
@@ -31,11 +32,18 @@ const optionalText = (messages, length = 2000) =>
   optional(pipe(string(), trim(), maxLength(length, messages.valueTooLong)), '')
 
 const dateValue = messages =>
-  union([pipe(string(messages.dateInvalid), trim(), nonEmpty(messages.dateInvalid), isoDate(messages.dateInvalid)), date(messages.dateInvalid)])
+  union([
+    pipe(string(messages.dateInvalid), trim(), nonEmpty(messages.dateInvalid), isoDate(messages.dateInvalid)),
+    date(messages.dateInvalid)
+  ])
 
 const optionalDateValue = messages =>
   optional(
-    union([literal(''), pipe(string(messages.dateInvalid), trim(), isoDate(messages.dateInvalid)), date(messages.dateInvalid)]),
+    union([
+      literal(''),
+      pipe(string(messages.dateInvalid), trim(), isoDate(messages.dateInvalid)),
+      date(messages.dateInvalid)
+    ]),
     ''
   )
 
@@ -63,6 +71,7 @@ export const createStaffContractSchema = customMessages => {
     contract_type_id: requiredText(messages),
     position_title: requiredText(messages),
     base_salary: salaryValue(messages),
+    currency: picklist(['AFN', 'USD'], messages.required),
     start_date: dateValue(messages),
     end_date: optionalDateValue(messages),
     document_url: optionalText(messages),

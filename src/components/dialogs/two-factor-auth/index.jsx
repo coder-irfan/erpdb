@@ -94,7 +94,7 @@ const AppDialog = handleAuthDialogClose => {
         <div className='flex justify-center'>
           <img alt='qr-code' height={150} width={150} src='/images/misc/barcode.png' />
         </div>
-        <div className='flex flex-col gap-4'>
+        <div className='flex flex-col md:gap-4 gap-2'>
           <Alert severity='warning' icon={false}>
             <AlertTitle>ASDLKNASDA9AHS678dGhASD78AB</AlertTitle>
             If you having trouble using the QR code, select manual entry on your app

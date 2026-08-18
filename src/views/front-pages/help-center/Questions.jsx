@@ -43,7 +43,7 @@ const Questions = () => {
               <Typography>1 month ago - Updated</Typography>
             </div>
             <Divider className='mlb-6' />
-            <div className='flex flex-col gap-6'>
+            <div className='flex flex-col md:gap-4 gap-2'>
               <div>
                 <Typography className='mbe-4'>
                   If you&apos;re after only one item, simply choose the &apos;Buy Now&apos; option on the item page.
@@ -79,11 +79,11 @@ const Questions = () => {
                 }
               }}
             />
-            <div className='flex flex-col gap-4'>
+            <div className='flex flex-col md:gap-4 gap-2'>
               <div className='pli-5 plb-2 bg-actionHover rounded'>
                 <Typography variant='h5'>Articles in this section</Typography>
               </div>
-              <div className='flex flex-col gap-4'>
+              <div className='flex flex-col md:gap-4 gap-2'>
                 {articleList.map((article, index) => (
                   <Typography key={index} component={Link} className='flex gap-2 justify-between hover:text-primary'>
                     <Typography color='inherit'>{article}</Typography>

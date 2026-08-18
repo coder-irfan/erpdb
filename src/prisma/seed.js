@@ -86,7 +86,7 @@ const roles = [
     display_name: 'Finance Manager',
     description: 'Manage income, expenses, salary, loans, and inventory records',
     is_system: false,
-    permissions: ['finance:read', 'finance:write', 'finance:delete', 'hrm_contract:read', 'hrm_payroll:read', 'hrm_payroll:write', 'hrm_reports:read']
+    permissions: ['finance:read', 'finance:write', 'finance:delete', 'contracts:read', 'hrm_contract:read', 'hrm_payroll:read', 'hrm_payroll:write', 'hrm_reports:read']
   },
   {
     name: 'project_manager',
@@ -100,7 +100,7 @@ const roles = [
     display_name: 'Sales Manager',
     description: 'Manage CRM leads, clients, visitors, activities, and conversions',
     is_system: false,
-      permissions: ['crm:read', 'crm:write', 'crm:delete', 'crm_lead:read', 'crm_lead:write', 'crm_lead:delete', 'crm_client:read', 'crm_client:write', 'crm_client:delete', 'crm_visitor:read', 'crm_visitor:write', 'crm_visitor:delete', 'options:read']
+      permissions: ['crm:read', 'crm:write', 'crm:delete', 'crm_lead:read', 'crm_lead:write', 'crm_lead:delete', 'crm_client:read', 'crm_client:write', 'crm_client:delete', 'crm_visitor:read', 'crm_visitor:write', 'crm_visitor:delete', 'contracts:read', 'contracts:write', 'options:read']
   }
 ]
 
@@ -126,6 +126,48 @@ const contractStatuses = [
   { label: 'Active', value: 'ACTIVE', color_code: 'success', sort_order: 2 },
   { label: 'Expired', value: 'EXPIRED', color_code: 'warning', sort_order: 3 },
   { label: 'Terminated', value: 'TERMINATED', color_code: 'error', sort_order: 4 }
+]
+
+const contractTypes = [
+  { label: 'Website', value: 'WEBSITE', sort_order: 1 },
+  { label: 'Digital Marketing', value: 'DIGITAL_MARKETING', sort_order: 2 },
+  { label: 'Maintenance', value: 'MAINTENANCE', sort_order: 3 }
+]
+
+const contractDurations = [
+  { label: '1 Year', value: '1_YEAR', sort_order: 1 },
+  { label: '2 Years', value: '2_YEARS', sort_order: 2 },
+  { label: '3 Years', value: '3_YEARS', sort_order: 3 },
+  { label: '5 Years', value: '5_YEARS', sort_order: 4 }
+]
+
+const contractCountries = [
+  { label: 'Afghanistan', value: 'AFGHANISTAN', sort_order: 1, is_default: true },
+  { label: 'United States', value: 'UNITED_STATES', sort_order: 2 }
+]
+
+const contractLevels = [
+  { label: 'Standard', value: 'STANDARD', sort_order: 1, is_default: true },
+  { label: 'Premium', value: 'PREMIUM', sort_order: 2 },
+  { label: 'Enterprise', value: 'ENTERPRISE', sort_order: 3 }
+]
+
+const invoiceStatuses = [
+  { label: 'Unpaid', value: 'UNPAID', color_code: 'warning', sort_order: 1, is_default: true },
+  { label: 'Partially Paid', value: 'PARTIALLY_PAID', color_code: 'info', sort_order: 2 },
+  { label: 'Paid', value: 'PAID', color_code: 'success', sort_order: 3 },
+  { label: 'Cancelled', value: 'CANCELLED', color_code: 'secondary', sort_order: 4 }
+]
+
+const paymentMethods = [
+  { label: 'Cash', value: 'CASH', sort_order: 1, is_default: true },
+  { label: 'Bank Transfer', value: 'BANK_TRANSFER', sort_order: 2 },
+  { label: 'Card', value: 'CARD', sort_order: 3 },
+  { label: 'Cheque', value: 'CHEQUE', sort_order: 4 }
+]
+
+const incomeTypes = [
+  { label: 'Contract Payment', value: 'CONTRACT_PAYMENT', sort_order: 1, is_default: true }
 ]
 
 const leaveTypes = [
@@ -193,6 +235,62 @@ const main = async () => {
         where: { category_value: { category: 'CONTRACT_STATUS', value: status.value } },
         update: { ...status, is_active: true },
         create: { category: 'CONTRACT_STATUS', ...status, is_active: true }
+      })
+    }
+
+    for (const contractType of contractTypes) {
+      await transaction.option.upsert({
+        where: { category_value: { category: 'CONTRACT_TYPE', value: contractType.value } },
+        update: { ...contractType, is_active: true },
+        create: { category: 'CONTRACT_TYPE', ...contractType, is_active: true }
+      })
+    }
+
+    for (const duration of contractDurations) {
+      await transaction.option.upsert({
+        where: { category_value: { category: 'CONTRACT_DURATION', value: duration.value } },
+        update: { ...duration, is_active: true },
+        create: { category: 'CONTRACT_DURATION', ...duration, is_active: true }
+      })
+    }
+
+    for (const country of contractCountries) {
+      await transaction.option.upsert({
+        where: { category_value: { category: 'CONTRACT_COUNTRY', value: country.value } },
+        update: { ...country, is_active: true },
+        create: { category: 'CONTRACT_COUNTRY', ...country, is_active: true }
+      })
+    }
+
+    for (const level of contractLevels) {
+      await transaction.option.upsert({
+        where: { category_value: { category: 'CONTRACT_LEVEL', value: level.value } },
+        update: { ...level, is_active: true },
+        create: { category: 'CONTRACT_LEVEL', ...level, is_active: true }
+      })
+    }
+
+    for (const status of invoiceStatuses) {
+      await transaction.option.upsert({
+        where: { category_value: { category: 'INVOICE_STATUS', value: status.value } },
+        update: { ...status, is_active: true },
+        create: { category: 'INVOICE_STATUS', ...status, is_active: true }
+      })
+    }
+
+    for (const method of paymentMethods) {
+      await transaction.option.upsert({
+        where: { category_value: { category: 'PAYMENT_METHOD', value: method.value } },
+        update: { ...method, is_active: true },
+        create: { category: 'PAYMENT_METHOD', ...method, is_active: true }
+      })
+    }
+
+    for (const incomeType of incomeTypes) {
+      await transaction.option.upsert({
+        where: { category_value: { category: 'INCOME_TYPE', value: incomeType.value } },
+        update: { ...incomeType, is_active: true },
+        create: { category: 'INCOME_TYPE', ...incomeType, is_active: true }
       })
     }
 

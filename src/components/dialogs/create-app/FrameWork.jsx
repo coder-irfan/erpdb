@@ -19,8 +19,8 @@ const FrameWork = ({ activeStep, isLastStep, handleNext, handlePrev }) => {
   }
 
   return (
-    <div className='flex flex-col gap-6'>
-      <div className='flex flex-col gap-4'>
+    <div className='flex flex-col md:gap-4 gap-2'>
+      <div className='flex flex-col md:gap-4 gap-2'>
         <Typography variant='h5'>Select Framework</Typography>
         <div onClick={() => setValue('react')} className='flex items-center justify-between cursor-pointer gap-4'>
           <div className='flex items-center gap-3'>

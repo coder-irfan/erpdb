@@ -48,7 +48,7 @@ const LeadKanbanBoard = ({
           const color = COLOR_MAP[status.color_code] || 'primary'
 
           return (
-            <section key={status.id} className='flex min-bs-[320px] flex-col rounded-xl bg-actionHover p-3'>
+            <section key={status.id} className='flex min-bs-[320px] flex-col rounded-xl bg-actionHover p-3 mt-3'>
               <div className='mb-3 flex items-center justify-between'>
                 <div className='flex items-center gap-2'>
                   <span className={`size-2.5 rounded-full ${DOT_CLASSES[color]}`} />
@@ -85,8 +85,8 @@ const LeadKanbanBoard = ({
                               {lead.company_name || lead.contact_name}
                             </Typography>
                           </div>
-                          <Typography className='text-right font-semibold text-success'>
-                            {formatCurrency(lead.estimated_value, locale, currencyCode)}
+                          <Typography className='text-end font-semibold text-success'>
+                            {formatCurrency(lead.estimated_value, locale, lead.currency || currencyCode)}
                           </Typography>
                           {lead.next_follow_up_date && (
                             <Chip

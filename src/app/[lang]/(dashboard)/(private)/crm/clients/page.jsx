@@ -8,9 +8,22 @@ import CrmClientsView from '@/views/crm/clients/CrmClientsView'
 
 const CrmClientsPage = async props => {
   const { lang } = await props.params
-  const [dictionary, setup, session] = await Promise.all([getDictionary(lang), getCompanySetupRecord(), getServerSession(authOptions)])
 
-  return <CrmClientsView locale={lang} dictionary={dictionary.crmClients} currencyCode={setup.currency_code || 'AFN'} canWrite={hasAnyPermission(session, ['crm:write', 'crm_client:write'])} canDelete={hasAnyPermission(session, ['crm:delete', 'crm_client:delete'])} />
+  const [dictionary, setup, session] = await Promise.all([
+    getDictionary(lang),
+    getCompanySetupRecord(),
+    getServerSession(authOptions)
+  ])
+
+  return (
+    <CrmClientsView
+      locale={lang}
+      dictionary={dictionary.crmClients}
+      currencyCode={setup.currency_code || 'AFN'}
+      canWrite={hasAnyPermission(session, ['crm:write', 'crm_client:write'])}
+      canDelete={hasAnyPermission(session, ['crm:delete', 'crm_client:delete'])}
+    />
+  )
 }
 
 export default CrmClientsPage

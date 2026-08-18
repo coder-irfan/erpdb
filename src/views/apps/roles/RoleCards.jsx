@@ -44,7 +44,7 @@ const RoleCards = () => {
         </Grid>
         <Grid size={{ xs: 7 }}>
           <CardContent>
-            <div className='flex flex-col items-end gap-4 text-right'>
+            <div className='flex flex-col items-end gap-4 text-end'>
               <Button variant='contained' size='small'>
                 Add Role
               </Button>

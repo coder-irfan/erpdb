@@ -134,7 +134,7 @@ const StepConfirmation = () => {
             <Typography color='text.primary' className='font-medium'>
               Price Details
             </Typography>
-            <div className='flex flex-col gap-4'>
+            <div className='flex flex-col md:gap-4 gap-2'>
               <div className='flex items-center justify-between gap-2'>
                 <Typography color='text.primary'>Order Total</Typography>
                 <Typography color='text.primary'>$1198.00</Typography>

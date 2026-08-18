@@ -6,7 +6,6 @@ import Alert from '@mui/material/Alert'
 import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
-import CardHeader from '@mui/material/CardHeader'
 import Chip from '@mui/material/Chip'
 import IconButton from '@mui/material/IconButton'
 import MenuItem from '@mui/material/MenuItem'
@@ -15,19 +14,15 @@ import Typography from '@mui/material/Typography'
 import { createColumnHelper, flexRender, getCoreRowModel, useReactTable } from '@tanstack/react-table'
 import { toast } from 'sonner'
 
-import CustomAvatar from '@core/components/mui/Avatar'
+import { Avatar } from '@mui/material'
+
 import CustomTextField from '@core/components/mui/TextField'
 import DashboardTablePagination from '@/components/table/DashboardTablePagination'
 import TableEmptyStateRow from '@/components/table/TableEmptyStateRow'
+import TableFiltersPopover from '@/components/table/TableFiltersPopover'
 import TableSkeletonRows from '@/components/table/TableSkeletonRows'
 import { formatCurrency } from '@/utils/formatCurrency'
-import {
-  getAvailableStaffUsers,
-  getStaffList,
-  getStaffStats,
-  updateStaffStatus
-} from '@/actions/hrm/staff'
-import { getInitials } from '@/utils/getInitials'
+import { getAvailableStaffUsers, getStaffList, getStaffStats, updateStaffStatus } from '@/actions/hrm/staff'
 
 import StaffDetailModal from './StaffDetailModal'
 import StaffDrawer from './StaffDrawer'
@@ -49,6 +44,7 @@ const StaffListTable = ({
   initialError,
   canCreate,
   canUpdate,
+  baseCurrency,
   locale,
   dictionary
 }) => {
@@ -144,7 +140,18 @@ const StaffListTable = ({
     } finally {
       setLoading(false)
     }
-  }, [canCreate, canUpdate, dictionary.messages.operationFailed, locale, page, position, rowsPerPage, search, status, users])
+  }, [
+    canCreate,
+    canUpdate,
+    dictionary.messages.operationFailed,
+    locale,
+    page,
+    position,
+    rowsPerPage,
+    search,
+    status,
+    users
+  ])
 
   const openCreateDrawer = () => {
     setEditingStaff(null)
@@ -156,26 +163,29 @@ const StaffListTable = ({
     setDrawerOpen(true)
   }, [])
 
-  const handleStatusChange = useCallback(async (staffId, nextStatus) => {
-    setBusyStaffId(staffId)
+  const handleStatusChange = useCallback(
+    async (staffId, nextStatus) => {
+      setBusyStaffId(staffId)
 
-    try {
-      const result = await updateStaffStatus(staffId, nextStatus, { locale })
+      try {
+        const result = await updateStaffStatus(staffId, nextStatus, { locale })
 
-      if (!result.success) {
-        toast.error(result.error)
+        if (!result.success) {
+          toast.error(result.error)
 
-        return
+          return
+        }
+
+        toast.success(result.message)
+        await refreshData()
+      } catch {
+        toast.error(dictionary.messages.operationFailed)
+      } finally {
+        setBusyStaffId(null)
       }
-
-      toast.success(result.message)
-      await refreshData()
-    } catch {
-      toast.error(dictionary.messages.operationFailed)
-    } finally {
-      setBusyStaffId(null)
-    }
-  }, [dictionary.messages.operationFailed, locale, refreshData])
+    },
+    [dictionary.messages.operationFailed, locale, refreshData]
+  )
 
   const columns = useMemo(
     () => [
@@ -187,9 +197,7 @@ const StaffListTable = ({
 
           return (
             <div className='flex min-is-[250px] items-center gap-3'>
-              <CustomAvatar src={employee.user?.image || undefined} skin='light' color='primary' size={38}>
-                {!employee.user?.image && getInitials(employee.full_name)}
-              </CustomAvatar>
+              <Avatar variant='rounded' className='bg-primaryLighter text-primary'></Avatar>
               <div className='flex min-is-0 flex-col'>
                 <Typography color='text.primary' className='truncate font-medium'>
                   {employee.full_name}
@@ -210,7 +218,7 @@ const StaffListTable = ({
       }),
       columnHelper.accessor('salary', {
         header: dictionary.table.salary,
-        cell: info => formatCurrency(info.getValue(), locale)
+        cell: info => formatCurrency(info.getValue(), locale, info.row.original.salary_currency || baseCurrency)
       }),
       columnHelper.accessor('status', {
         header: dictionary.table.status,
@@ -262,7 +270,7 @@ const StaffListTable = ({
         }
       })
     ],
-    [busyStaffId, canUpdate, dictionary, handleStatusChange, locale, openEditDrawer]
+    [baseCurrency, busyStaffId, canUpdate, dictionary, handleStatusChange, locale, openEditDrawer]
   )
 
   const table = useReactTable({
@@ -274,70 +282,71 @@ const StaffListTable = ({
   })
 
   return (
-    <div className='flex flex-col gap-6'>
+    <div className='flex flex-col md:gap-4 gap-2'>
       <StaffStatsCards stats={stats} dictionary={dictionary} />
 
       {initialError && <Alert severity='error'>{initialError}</Alert>}
 
       <Card>
-        <CardHeader title={dictionary.title} subheader={dictionary.description} />
-        <CardContent className='border-bs border-divider'>
-          <div className='mb-4 mt-5 flex flex-wrap items-center justify-between gap-4'>
+        <CardContent className='border-be border-divider'>
+          <div className='flex flex-wrap items-center justify-between gap-4'>
             <CustomTextField
               value={searchInput}
               onChange={event => setSearchInput(event.target.value)}
               label={dictionary.filters.search}
               placeholder={dictionary.filters.searchPlaceholder}
-              className='is-full sm:is-[260px]'
+              className='is-full sm:is-[300px]'
               slotProps={{ input: { startAdornment: <i className='tabler-search text-textSecondary' /> } }}
             />
             <div className='flex is-full flex-wrap items-center gap-3 sm:is-auto sm:justify-end'>
-              <CustomTextField
-                select
-                value={status}
-                onChange={event => {
-                  setStatus(event.target.value)
-                  setPage(0)
-                }}
-                label={dictionary.filters.status}
-                className='is-full sm:is-[180px]'
-                slotProps={{
-                  select: {
-                    displayEmpty: true,
-                    renderValue: selected => selected ? dictionary.status[selected] : dictionary.filters.allStatuses
-                  }
-                }}
-              >
-                <MenuItem value=''>{dictionary.filters.allStatuses}</MenuItem>
-                {['ACTIVE', 'INACTIVE', 'TERMINATED'].map(statusValue => (
-                  <MenuItem key={statusValue} value={statusValue}>
-                    {dictionary.status[statusValue]}
-                  </MenuItem>
-                ))}
-              </CustomTextField>
-              <CustomTextField
-                select
-                value={position}
-                onChange={event => {
-                  setPosition(event.target.value)
-                  setPage(0)
-                }}
-                label={dictionary.filters.position}
-                className='is-full sm:is-[220px]'
-                slotProps={{
-                  select: {
-                    displayEmpty: true,
-                    renderValue: selected => selected || dictionary.filters.allPositions
-                  }
-                }}
-              >
-                <MenuItem value=''>{dictionary.filters.allPositions}</MenuItem>
-                {positions.map(positionValue => (
-                  <MenuItem key={positionValue} value={positionValue}>
-                    {positionValue}
-                  </MenuItem>
-                ))}
-              </CustomTextField>
+              <TableFiltersPopover activeCount={Number(Boolean(status)) + Number(Boolean(position))} locale={locale}>
+                <CustomTextField
+                  select
+                  value={status}
+                  onChange={event => {
+                    setStatus(event.target.value)
+                    setPage(0)
+                  }}
+                  label={dictionary.filters.status}
+                  className='is-full'
+                  slotProps={{
+                    select: {
+                      displayEmpty: true,
+                      renderValue: selected => (selected ? dictionary.status[selected] : dictionary.filters.allStatuses)
+                    }
+                  }}
+                >
+                  <MenuItem value=''>{dictionary.filters.allStatuses}</MenuItem>
+                  {['ACTIVE', 'INACTIVE', 'TERMINATED'].map(statusValue => (
+                    <MenuItem key={statusValue} value={statusValue}>
+                      {dictionary.status[statusValue]}
+                    </MenuItem>
+                  ))}
+                </CustomTextField>
+                <CustomTextField
+                  select
+                  value={position}
+                  onChange={event => {
+                    setPosition(event.target.value)
+                    setPage(0)
+                  }}
+                  label={dictionary.filters.position}
+                  className='is-full'
+                  slotProps={{
+                    select: {
+                      displayEmpty: true,
+                      renderValue: selected => selected || dictionary.filters.allPositions
+                    }
+                  }}
+                >
+                  <MenuItem value=''>{dictionary.filters.allPositions}</MenuItem>
+                  {positions.map(positionValue => (
+                    <MenuItem key={positionValue} value={positionValue}>
+                      {positionValue}
+                    </MenuItem>
+                  ))}
+                </CustomTextField>
+              </TableFiltersPopover>
               {canCreate && (
                 <Button
                   variant='contained'
@@ -352,13 +361,13 @@ const StaffListTable = ({
           </div>
         </CardContent>
 
-        <div className='overflow-x-auto'>
+        <div className='no-scrollbar overflow-x-auto scroll-smooth'>
           <table className={tableStyles.table}>
             <thead>
               {table.getHeaderGroups().map(headerGroup => (
                 <tr key={headerGroup.id}>
                   {headerGroup.headers.map(header => (
-                    <th key={header.id} className={header.column.id === 'actions' ? 'text-right' : undefined}>
+                    <th key={header.id} className={header.column.id === 'actions' ? 'text-end' : undefined}>
                       {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
                     </th>
                   ))}
@@ -381,7 +390,9 @@ const StaffListTable = ({
                 table.getRowModel().rows.map(row => (
                   <tr key={row.id}>
                     {row.getVisibleCells().map(cell => (
-                      <td key={cell.id} className={cell.column.id === 'actions' ? 'text-right' : undefined}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</td>
+                      <td key={cell.id} className={cell.column.id === 'actions' ? 'text-end' : undefined}>
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </td>
                     ))}
                   </tr>
                 ))
@@ -411,6 +422,7 @@ const StaffListTable = ({
         users={users}
         locale={locale}
         dictionary={dictionary}
+        baseCurrency={baseCurrency}
         onClose={() => setDrawerOpen(false)}
         onSaved={refreshData}
       />

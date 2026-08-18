@@ -1,16 +1,22 @@
-import Card from '@mui/material/Card'
-import CardHeader from '@mui/material/CardHeader'
+import { getServerSession } from 'next-auth'
 
+import { authOptions } from '@/libs/auth'
 import { getDictionary } from '@/utils/getDictionary'
+import { hasAnyPermission } from '@/utils/rbac'
+import ContractsView from '@/views/contracts/ContractsView'
 
 const ContractsPage = async props => {
-  const params = await props.params
-  const dictionary = await getDictionary(params.lang)
+  const { lang } = await props.params
+  const [dictionary, session] = await Promise.all([getDictionary(lang), getServerSession(authOptions)])
 
   return (
-    <Card>
-      <CardHeader title={dictionary.navigation.contractList} />
-    </Card>
+    <ContractsView
+      locale={lang}
+      dictionary={dictionary.contractsMain}
+      canWrite={hasAnyPermission(session, ['contracts:write'])}
+      canDelete={hasAnyPermission(session, ['contracts:delete'])}
+      canRunAudit={process.env.NODE_ENV !== 'production' && hasAnyPermission(session, ['contracts:write'])}
+    />
   )
 }
 

@@ -118,3 +118,55 @@ export const sendUserInvitationEmail = async (toEmail, invitationToken, requeste
     throw new Error('Unable to deliver the user invitation email.', { cause: error })
   }
 }
+
+export const sendContractExpirationEmail = async ({
+  toEmail,
+  clientName,
+  contractNumber,
+  contractTitle,
+  endDate,
+  remainingDays,
+  companyName
+}) => {
+  const emailUser = getRequiredEnvironmentValue('EMAIL_USER')
+  const fromName = process.env.EMAIL_FROM_NAME || companyName || 'ERP System'
+  const safeCompanyName = escapeHtml(companyName || fromName)
+  const safeClientName = escapeHtml(clientName || toEmail)
+  const safeContractNumber = escapeHtml(contractNumber)
+  const safeContractTitle = escapeHtml(contractTitle)
+
+  const formattedEndDate = new Intl.DateTimeFormat('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    timeZone: 'UTC'
+  }).format(endDate)
+
+  const subject = `${contractNumber} expires in ${remainingDays} days`
+
+  await getTransporter().sendMail({
+    from: `"${fromName.replaceAll('"', '')}" <${emailUser}>`,
+    to: toEmail,
+    subject,
+    text: `Hello ${clientName || ''},\n\nContract ${contractNumber} (${contractTitle}) expires on ${formattedEndDate}, in ${remainingDays} days. Please contact ${companyName || fromName} to discuss renewal.`,
+    html: `
+      <div style="background:#f4f5fa;padding:32px 16px;font-family:Arial,sans-serif;color:#2f2b3d;">
+        <div style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:14px;overflow:hidden;box-shadow:0 8px 30px rgba(47,43,61,.08);">
+          <div style="background:#022483;color:#ffffff;padding:24px 30px;">
+            <div style="font-size:13px;opacity:.82;text-transform:uppercase;letter-spacing:.08em;">Contract expiration notice</div>
+            <h1 style="margin:8px 0 0;font-size:24px;line-height:1.3;">${safeContractNumber}</h1>
+          </div>
+          <div style="padding:30px;">
+            <p style="margin:0 0 16px;line-height:1.7;">Hello ${safeClientName},</p>
+            <p style="margin:0 0 22px;line-height:1.7;">Your contract <strong>${safeContractTitle}</strong> will expire in <strong>${remainingDays} days</strong>.</p>
+            <div style="background:#f8f8fb;border:1px solid #e7e7ef;border-radius:10px;padding:18px 20px;">
+              <div style="font-size:12px;color:#6d6b77;text-transform:uppercase;letter-spacing:.06em;">Expiration date</div>
+              <div style="margin-top:6px;font-size:18px;font-weight:700;">${escapeHtml(formattedEndDate)}</div>
+            </div>
+            <p style="margin:22px 0 0;line-height:1.7;color:#6d6b77;">Please contact ${safeCompanyName} if you would like to discuss renewal or changes to your service.</p>
+          </div>
+        </div>
+      </div>
+    `
+  })
+}

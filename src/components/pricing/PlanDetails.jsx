@@ -54,7 +54,7 @@ const PlanDetails = ({ data, pricingPlan }) => {
           >{`USD ${data?.yearlyPlan.annually}/year`}</Typography>
         ) : null}
       </div>
-      <div className='flex flex-col gap-4'>
+      <div className='flex flex-col md:gap-4 gap-2'>
         {data?.planBenefits.map((item, index) => (
           <div key={index} className='flex items-center gap-2'>
             <span className='inline-flex'>

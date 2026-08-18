@@ -83,6 +83,49 @@ When assigned future coding tasks:
 - **Empty Table States**: Empty-state rows inside data tables must never receive row hover highlighting or hover background transitions. Every actionable entity table empty state must include a relevant creation/action button when the current user has permission to perform that action.
 - **Entity Creation UI Pattern**: All entity create/edit forms must open in a slide-over side drawer to maintain consistency with HRM workflows. Options/master-data forms are the explicit exception and may continue using popup dialogs.
 
+### 9. MANDATORY PAGE LAYOUT, FILTER, KPI & TABLE DENSITY RULES
+
+1. **Clean Page Header Layout (No Top Header Cards)**:
+   - Do NOT wrap page titles and descriptions inside isolated top Card wrappers.
+   - Titles and descriptions must sit directly at the top-left of the page content area.
+   - The primary action button (for example, "Log New Visitor" or "Add Staff") must sit cleanly integrated beside the filter bar, eliminating redundant header card containers.
+
+2. **Mobile KPI Horizontal Scroll (`overflow-x-auto`)**:
+   - KPI summary cards must NEVER stack vertically on mobile screens and consume the entire viewport height.
+   - Wrap top KPI summary grids in a responsive horizontal scroll container each KPI card so users can scroll horizontally across metrics on mobile and tablet screens.
+
+3. **Collapsed Filters Popover Button**:
+   - Do NOT display multiple loose filter dropdowns side-by-side where they consume excessive horizontal or vertical space.
+   - Keep the main search input visible on the left. Group every secondary filter dropdown (Status, Position, Department, Date Range, and similar controls) inside a single **Filters** popover/dropdown button using `<Button startIcon={<IconFilter />}>Filters (Count)</Button>`. Clicking the button must open a clean popover menu containing the current filter inputs.
+
+4. **Strict Table Cell Content Density (Maximum 1-2 Lines)**:
+   - Table rows must remain compact and low-density. Never stack three or four lines of text (for example, Name, Role, Phone, and Email) vertically in a single cell.
+   - Limit cell content strictly to one or two clean lines. Move secondary details such as full addresses, exact durations, or internal notes into a hover tooltip, an entity detail drawer, or a separate table column.
+
+5. **Hidden Table Scrollbar Track**:
+   - Table scroll containers must preserve smooth horizontal scrolling without rendering visible scrollbar tracks or native scrollbar chrome.
+   - Apply the global `no-scrollbar` utility to table wrappers so they use `scrollbar-width: none`, `-ms-overflow-style: none`, and `&::-webkit-scrollbar { display: none; }` behavior.
+
+### 10. MANDATORY BREADCRUMB, INLINE SELECT & MULTI-CURRENCY ARCHITECTURE RULES
+
+1. **Breadcrumb Header Standard**:
+   - Replace heavy header card banners with a clean, lightweight reusable `<Breadcrumbs />` component across all dashboard pages.
+   - Breadcrumb text must be responsive: extra-small on mobile (`text-xs`) and medium on desktop (`md:text-sm`), with clear path separators (`/` or `>`) and the active page title rendered with `font-semibold text-foreground`.
+
+2. **Inline Table Select Styling**:
+   - Status and other inline dropdown selectors placed directly inside data table cells must NEVER render browser-default gray backgrounds or hard borders.
+   - Inline table selects must explicitly use transparent, borderless, shadowless styling equivalent to `bg-transparent border-none outline-none focus:ring-0 shadow-none`. This is mandatory for the HRM contracts table status dropdown.
+   - Active selections must render as clean, soft-tinted status badges (for example, `bg-success/10 text-success`).
+
+3. **Multi-Currency System Architecture**:
+   - **System Base Currency**: Setup (`/setup`) manages the system base currency (`AFN` or `USD`, default `AFN`) and the default USD/AFN exchange rate (for example, `1 USD = 65 AFN`) so administrators can change the baseline later.
+   - **Transaction-Level Currency**: Every monetary input form, including Leads Estimated Value, Invoices, Contracts, Payroll, Expenses, and future financial modules, must include a currency selector (`USD` or `AFN`) beside the amount field. New records default to the configured system base currency.
+   - **Database Persistence & Rate Locking**: Every monetary Prisma model must persist the original transaction amount, `currency`, transaction `exchange_rate`, and a pre-calculated `amount_base`. Existing domain-specific amount fields may remain, but `amount_base` must contain that transaction's primary amount converted to the configured system base currency at submission time. The captured transaction exchange rate is historical data and must remain locked even if the global Setup rate changes later.
+   - **Display & KPIs**: Tables display each record in its stored transaction currency. KPI totals aggregate the stored `amount_base` values directly in the System Base Currency rather than recalculating from the current global exchange rate.
+   - **Conversion Semantics**: The configured exchange rate represents AFN per one USD (`1 USD = exchange_rate AFN`). Converting USD to AFN multiplies by the rate; converting AFN to USD divides by the rate.
+   - **AFN Precision**: Afghan Afghani values display with zero decimal places and round to whole integers (for example, `1,000 AFN`). Never display `.00` or sub-units for AFN.
+   - **USD Precision**: US Dollar values display with exactly two decimal places (for example, `$1,000.00`).
+
 ## Master RBAC & Permissions Blueprint
 
 This blueprint defines system-wide Role-Based Access Control (RBAC) rules mapped directly to our `schema.prisma` models. Use this specification as the single source of truth when implementing server actions, API authorization checks, navigation menu visibility, and component-level permission rendering.

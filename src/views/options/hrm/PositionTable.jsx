@@ -6,12 +6,13 @@ import Alert from '@mui/material/Alert'
 import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
-import CardHeader from '@mui/material/CardHeader'
 import Chip from '@mui/material/Chip'
 import IconButton from '@mui/material/IconButton'
 import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
 import { toast } from 'sonner'
+
+import { Avatar } from '@mui/material'
 
 import CustomTextField from '@core/components/mui/TextField'
 import { deleteOption, getOptionsListPaginated, toggleOptionStatus } from '@/actions/options'
@@ -140,7 +141,6 @@ const PositionTable = ({ initialResult, initialError, canCreate, canUpdate, canD
   return (
     <>
       <Card>
-        <CardHeader title={dictionary.positions.title} subheader={dictionary.positions.description} />
         {initialError && (
           <CardContent className='pb-0'>
             <Alert severity='error'>{initialError}</Alert>
@@ -153,8 +153,8 @@ const PositionTable = ({ initialResult, initialError, canCreate, canUpdate, canD
               onChange={event => setSearchInput(event.target.value)}
               label={dictionary.common.search}
               placeholder={dictionary.positions.searchPlaceholder}
-              className='is-full sm:is-[260px]'
-              slotProps={{ input: { startAdornment: <i className='tabler-search me-2 text-textSecondary' /> } }}
+              className='is-full sm:is-[300px]'
+              slotProps={{ input: { startAdornment: <i className='tabler-search text-textSecondary' /> } }}
             />
             {canCreate && (
               <Button
@@ -177,7 +177,7 @@ const PositionTable = ({ initialResult, initialError, canCreate, canUpdate, canD
                 <th>{dictionary.positions.table.description}</th>
                 <th>{dictionary.common.status}</th>
                 <th>{dictionary.common.createdDate}</th>
-                <th className='text-right'>{dictionary.common.actions}</th>
+                <th className='text-end'>{dictionary.common.actions}</th>
               </tr>
             </thead>
             <tbody>
@@ -196,9 +196,12 @@ const PositionTable = ({ initialResult, initialError, canCreate, canUpdate, canD
                 options.map(option => (
                   <tr key={option.id}>
                     <td>
-                      <Typography color='text.primary' className='min-is-[210px] font-medium'>
-                        {option.name}
-                      </Typography>
+                      <div className='flex min-is-[250px] items-center gap-3'>
+                        <Avatar variant='rounded' className='bg-primaryLighter text-primary'></Avatar>
+                        <Typography color='text.primary' className='min-is-[210px] font-medium'>
+                          {option.name}
+                        </Typography>
+                      </div>
                     </td>
                     <td>
                       <Typography
@@ -218,7 +221,7 @@ const PositionTable = ({ initialResult, initialError, canCreate, canUpdate, canD
                       />
                     </td>
                     <td>{formatDate(option.created_at, locale)}</td>
-                    <td className='text-right'>
+                    <td className='text-end'>
                       <div className='flex min-is-[140px] items-center justify-end gap-1'>
                         {canUpdate && (
                           <>

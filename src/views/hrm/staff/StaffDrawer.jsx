@@ -30,6 +30,7 @@ const DEFAULT_VALUES = {
   tazkira_no: '',
   position: '',
   salary: '',
+  salary_currency: 'AFN',
   join_date: '',
   contract_period: '',
   user_id: '',
@@ -40,8 +41,8 @@ const DEFAULT_VALUES = {
   educations: ''
 }
 
-const getFormValues = staff => {
-  if (!staff) return DEFAULT_VALUES
+const getFormValues = (staff, baseCurrency) => {
+  if (!staff) return { ...DEFAULT_VALUES, salary_currency: baseCurrency }
 
   return {
     first_name: staff.first_name || '',
@@ -53,6 +54,7 @@ const getFormValues = staff => {
     tazkira_no: staff.tazkira_no || '',
     position: staff.position || '',
     salary: staff.salary || '',
+    salary_currency: staff.salary_currency || baseCurrency,
     join_date: staff.join_date?.slice(0, 10) || '',
     contract_period: staff.contract_period || '',
     user_id: staff.user_id || '',
@@ -71,7 +73,7 @@ const SectionTitle = ({ children }) => (
   </div>
 )
 
-const StaffDrawer = ({ open, staff, users, locale, dictionary, onClose, onSaved }) => {
+const StaffDrawer = ({ open, staff, users, locale, dictionary, baseCurrency, onClose, onSaved }) => {
   const [positionOptions, setPositionOptions] = useState([])
   const [positionsLoading, setPositionsLoading] = useState(false)
 
@@ -101,8 +103,8 @@ const StaffDrawer = ({ open, staff, users, locale, dictionary, onClose, onSaved 
   })
 
   useEffect(() => {
-    if (open) reset(getFormValues(staff))
-  }, [open, reset, staff])
+    if (open) reset(getFormValues(staff, baseCurrency))
+  }, [baseCurrency, open, reset, staff])
 
   useEffect(() => {
     if (!open) return undefined
@@ -257,13 +259,39 @@ const StaffDrawer = ({ open, staff, users, locale, dictionary, onClose, onSaved 
               slotProps={{ htmlInput: { min: 0.01, step: 0.01 } }}
               {...fieldProps('salary')}
             />
+            <Controller
+              name='salary_currency'
+              control={control}
+              render={({ field }) => (
+                <CustomTextField
+                  {...field}
+                  fullWidth
+                  select
+                  label={dictionary.fields.currency}
+                  value={field.value || baseCurrency}
+                  error={Boolean(errors.salary_currency)}
+                  helperText={errors.salary_currency?.message}
+                  disabled={isSubmitting}
+                >
+                  <MenuItem value='AFN'>AFN</MenuItem>
+                  <MenuItem value='USD'>USD</MenuItem>
+                </CustomTextField>
+              )}
+            />
             <CustomTextField fullWidth type='date' label={dictionary.fields.joinDate} {...fieldProps('join_date')} />
             <CustomTextField fullWidth label={dictionary.fields.contractPeriod} {...fieldProps('contract_period')} />
             <Controller
               name='status'
               control={control}
               render={({ field }) => (
-                <CustomTextField {...field} fullWidth select label={dictionary.fields.status} value={field.value || 'ACTIVE'} disabled={isSubmitting}>
+                <CustomTextField
+                  {...field}
+                  fullWidth
+                  select
+                  label={dictionary.fields.status}
+                  value={field.value || 'ACTIVE'}
+                  disabled={isSubmitting}
+                >
                   {STAFF_STATUSES.map(status => (
                     <MenuItem key={status} value={status}>
                       {dictionary.status[status]}
@@ -276,7 +304,14 @@ const StaffDrawer = ({ open, staff, users, locale, dictionary, onClose, onSaved 
               name='user_id'
               control={control}
               render={({ field }) => (
-                <CustomTextField {...field} fullWidth select label={dictionary.fields.systemUser} value={field.value || ''} disabled={isSubmitting}>
+                <CustomTextField
+                  {...field}
+                  fullWidth
+                  select
+                  label={dictionary.fields.systemUser}
+                  value={field.value || ''}
+                  disabled={isSubmitting}
+                >
                   <MenuItem value=''>{dictionary.fields.noSystemUser}</MenuItem>
                   {availableUsers.map(user => (
                     <MenuItem key={user.id} value={user.id}>

@@ -39,6 +39,8 @@ const normalizeStaff = staff =>
 export const normalizeLead = lead => ({
   ...lead,
   estimated_value: lead.estimated_value?.toFixed(2) || '0.00',
+  exchange_rate: lead.exchange_rate.toFixed(4),
+  amount_base: lead.amount_base.toFixed(2),
   next_follow_up_date: lead.next_follow_up_date?.toISOString() || null,
   created_at: lead.created_at.toISOString(),
   updated_at: lead.updated_at.toISOString(),

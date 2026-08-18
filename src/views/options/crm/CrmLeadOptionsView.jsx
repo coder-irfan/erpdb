@@ -4,7 +4,6 @@ import { useState } from 'react'
 
 import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
-import CardHeader from '@mui/material/CardHeader'
 import Chip from '@mui/material/Chip'
 import Dialog from '@mui/material/Dialog'
 import DialogActions from '@mui/material/DialogActions'
@@ -172,34 +171,31 @@ const CrmLeadOptionsView = ({ initialData, canWrite, canDelete, locale, dictiona
     <div className='grid grid-cols-1 gap-6 xl:grid-cols-2'>
       {SECTIONS.map(section => (
         <Card key={section.category}>
-          <CardHeader
-            title={dictionary[section.key].title}
-            subheader={dictionary[section.key].description}
-            avatar={
+          <div className='flex items-center justify-between gap-4 p-5'>
+            <div className='flex items-center gap-3'>
               <span className='flex size-10 items-center justify-center rounded bg-primaryLighter text-primary'>
                 <i className={`${section.icon} text-2xl`} />
               </span>
-            }
-            action={
-              canWrite ? (
-                <Button
-                  variant='contained'
-                  size='small'
-                  startIcon={<i className='tabler-plus' />}
-                  onClick={() => openCreate(section.category)}
-                >
-                  {dictionary.common.create}
-                </Button>
-              ) : null
-            }
-          />
+              <Typography variant='h6'>{dictionary[section.key].title}</Typography>
+            </div>
+            {canWrite && (
+              <Button
+                variant='contained'
+                size='small'
+                startIcon={<i className='tabler-plus' />}
+                onClick={() => openCreate(section.category)}
+              >
+                {dictionary.common.create}
+              </Button>
+            )}
+          </div>
           <div className='overflow-x-auto'>
             <table className={tableStyles.table}>
               <thead>
                 <tr>
                   <th>{dictionary.common.name}</th>
                   <th>{dictionary.common.status}</th>
-                  <th className='text-right'>{dictionary.common.actions}</th>
+                  <th className='text-end'>{dictionary.common.actions}</th>
                 </tr>
               </thead>
               <tbody>
@@ -230,7 +226,7 @@ const CrmLeadOptionsView = ({ initialData, canWrite, canDelete, locale, dictiona
                           label={option.is_active ? dictionary.common.active : dictionary.common.inactive}
                         />
                       </td>
-                      <td className='text-right'>
+                      <td className='text-end'>
                         <div className='flex items-center justify-end gap-1'>
                           {canWrite && (
                             <>

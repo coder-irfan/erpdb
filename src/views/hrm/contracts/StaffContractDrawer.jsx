@@ -21,11 +21,12 @@ import { createStaffContractSchema } from '@/schemas/hrm/contracts'
 
 const toInputDate = value => (value ? new Date(value).toISOString().slice(0, 10) : '')
 
-const getDefaultValues = (contract, statuses) => ({
+const getDefaultValues = (contract, statuses, baseCurrency) => ({
   staff_id: contract?.staff_id || '',
   contract_type_id: contract?.contract_type_id || '',
   position_title: contract?.position_title || '',
   base_salary: contract?.base_salary || '',
+  currency: contract?.currency || baseCurrency,
   start_date: toInputDate(contract?.start_date) || new Date().toISOString().slice(0, 10),
   end_date: toInputDate(contract?.end_date),
   document_url: contract?.document_url || '',
@@ -72,12 +73,12 @@ const StaffContractDrawer = ({ open, contract, options, locale, dictionary, onCl
     formState: { errors, isSubmitting }
   } = useForm({
     resolver: valibotResolver(createStaffContractSchema(dictionary.validation)),
-    defaultValues: getDefaultValues(contract, statusOptions)
+    defaultValues: getDefaultValues(contract, statusOptions, options.setup.currency_code || 'AFN')
   })
 
   useEffect(() => {
-    if (open) reset(getDefaultValues(contract, statusOptions))
-  }, [contract, open, reset, statusOptions])
+    if (open) reset(getDefaultValues(contract, statusOptions, options.setup.currency_code || 'AFN'))
+  }, [contract, open, options.setup.currency_code, reset, statusOptions])
 
   const handleStaffChange = event => {
     const selectedId = event.target.value
@@ -88,6 +89,10 @@ const StaffContractDrawer = ({ open, contract, options, locale, dictionary, onCl
     if (staff) {
       setValue('position_title', staff.position, { shouldDirty: true, shouldValidate: true })
       setValue('base_salary', staff.salary, { shouldDirty: true, shouldValidate: true })
+      setValue('currency', staff.salary_currency || options.setup.currency_code || 'AFN', {
+        shouldDirty: true,
+        shouldValidate: true
+      })
     }
   }
 
@@ -206,6 +211,25 @@ const StaffContractDrawer = ({ open, contract, options, locale, dictionary, onCl
             error={Boolean(errors.base_salary)}
             helperText={errors.base_salary?.message}
             {...register('base_salary')}
+          />
+          <Controller
+            name='currency'
+            control={control}
+            render={({ field }) => (
+              <CustomTextField
+                {...field}
+                select
+                fullWidth
+                required
+                label={dictionary.fields.currency}
+                value={field.value || options.setup.currency_code || 'AFN'}
+                error={Boolean(errors.currency)}
+                helperText={errors.currency?.message}
+              >
+                <MenuItem value='AFN'>AFN</MenuItem>
+                <MenuItem value='USD'>USD</MenuItem>
+              </CustomTextField>
+            )}
           />
           <CustomTextField
             fullWidth

@@ -7,8 +7,10 @@ import { safeParse } from 'valibot'
 
 import { i18n } from '@/configs/i18n'
 import { authorizeAction } from '@/libs/actionAuthorization'
+import { getCompanySetupRecord } from '@/libs/companySetup'
 import { prisma } from '@/libs/prisma'
 import { createStaffSchema, STAFF_STATUSES } from '@/schemas/hrm/staff'
+import { convertToBaseCurrency } from '@/utils/formatCurrency'
 import { getDictionary } from '@/utils/getDictionary'
 
 const STAFF_READ_PERMISSIONS = ['hrm:read', 'hrm_staff:read']
@@ -35,6 +37,9 @@ const normalizeStaff = staff => ({
   tazkira_no: staff.tazkira_no,
   position: staff.position,
   salary: staff.salary.toFixed(2),
+  salary_currency: staff.salary_currency,
+  salary_exchange_rate: staff.salary_exchange_rate.toFixed(4),
+  amount_base: staff.amount_base.toFixed(2),
   guarantor_name: staff.guarantor_name,
   guarantor_phone: staff.guarantor_phone,
   guarantor_license: staff.guarantor_license,
@@ -59,6 +64,9 @@ const normalizeStaff = staff => ({
       contract_number: contract.contract_number,
       position_title: contract.position_title,
       base_salary: contract.base_salary.toFixed(2),
+      currency: contract.currency,
+      exchange_rate: contract.exchange_rate.toFixed(4),
+      amount_base: contract.amount_base.toFixed(2),
       start_date: contract.start_date.toISOString(),
       end_date: contract.end_date?.toISOString() ?? null,
       document_url: contract.document_url,
@@ -84,6 +92,9 @@ const staffListSelect = {
   tazkira_no: true,
   position: true,
   salary: true,
+  salary_currency: true,
+  salary_exchange_rate: true,
+  amount_base: true,
   guarantor_name: true,
   guarantor_phone: true,
   guarantor_license: true,
@@ -128,6 +139,7 @@ const validateStaff = (payload, translations) =>
     tazkira_no: payload?.tazkira_no ?? '',
     position: payload?.position,
     salary: payload?.salary,
+    salary_currency: payload?.salary_currency,
     guarantor_name: payload?.guarantor_name ?? '',
     guarantor_phone: payload?.guarantor_phone ?? '',
     guarantor_license: payload?.guarantor_license ?? '',
@@ -137,7 +149,7 @@ const validateStaff = (payload, translations) =>
     status: payload?.status || 'ACTIVE'
   })
 
-const toStaffData = values => ({
+const toStaffData = (values, exchangeRate, baseCurrency) => ({
   first_name: values.first_name,
   last_name: values.last_name,
   father_name: nullableText(values.father_name),
@@ -148,6 +160,11 @@ const toStaffData = values => ({
   tazkira_no: nullableText(values.tazkira_no),
   position: values.position,
   salary: new Prisma.Decimal(values.salary),
+  salary_currency: values.salary_currency,
+  salary_exchange_rate: new Prisma.Decimal(exchangeRate),
+  amount_base: new Prisma.Decimal(
+    convertToBaseCurrency(values.salary, values.salary_currency, exchangeRate, baseCurrency)
+  ),
   guarantor_name: nullableText(values.guarantor_name),
   guarantor_phone: nullableText(values.guarantor_phone),
   guarantor_license: nullableText(values.guarantor_license),
@@ -283,9 +300,10 @@ export const createStaff = async payload => {
   }
 
   try {
-    const [existingStaff, userAvailable] = await Promise.all([
+    const [existingStaff, userAvailable, setup] = await Promise.all([
       prisma.hrmStaff.findUnique({ where: { email: validation.output.email }, select: { id: true } }),
-      ensureUserAvailable(validation.output.user_id)
+      ensureUserAvailable(validation.output.user_id),
+      getCompanySetupRecord()
     ])
 
     if (existingStaff) {
@@ -297,7 +315,10 @@ export const createStaff = async payload => {
     }
 
     const createdStaff = await prisma.$transaction(async transaction => {
-      const staff = await transaction.hrmStaff.create({ data: toStaffData(validation.output), select: staffListSelect })
+      const staff = await transaction.hrmStaff.create({
+        data: toStaffData(validation.output, setup.usd_afn_exchange_rate, setup.currency_code),
+        select: staffListSelect
+      })
 
       await transaction.auditLog.create({
         data: {
@@ -355,13 +376,17 @@ export const updateStaff = async (id, payload = {}) => {
   }
 
   try {
-    const [currentStaff, duplicateEmail, userAvailable] = await Promise.all([
-      prisma.hrmStaff.findUnique({ where: { id: staffId }, select: { id: true } }),
+    const [currentStaff, duplicateEmail, userAvailable, setup] = await Promise.all([
+      prisma.hrmStaff.findUnique({
+        where: { id: staffId },
+        select: { id: true, salary_exchange_rate: true }
+      }),
       prisma.hrmStaff.findFirst({
         where: { email: validation.output.email, NOT: { id: staffId } },
         select: { id: true }
       }),
-      ensureUserAvailable(validation.output.user_id, staffId)
+      ensureUserAvailable(validation.output.user_id, staffId),
+      getCompanySetupRecord()
     ])
 
     if (!currentStaff) {
@@ -379,7 +404,7 @@ export const updateStaff = async (id, payload = {}) => {
     const updatedStaff = await prisma.$transaction(async transaction => {
       const staff = await transaction.hrmStaff.update({
         where: { id: staffId },
-        data: toStaffData(validation.output),
+        data: toStaffData(validation.output, currentStaff.salary_exchange_rate, setup.currency_code),
         select: staffListSelect
       })
 
@@ -480,6 +505,9 @@ export const getStaffById = async (id, payload = {}) => {
             contract_number: true,
             position_title: true,
             base_salary: true,
+            currency: true,
+            exchange_rate: true,
+            amount_base: true,
             start_date: true,
             end_date: true,
             document_url: true,

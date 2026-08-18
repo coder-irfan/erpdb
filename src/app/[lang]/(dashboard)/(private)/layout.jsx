@@ -10,6 +10,7 @@ import Providers from '@components/Providers'
 import Header from '@components/layout/horizontal/Header'
 import HorizontalFooter from '@components/layout/horizontal/Footer'
 import ScrollToTop from '@core/components/scroll-to-top'
+import Breadcrumbs from '@/components/Breadcrumbs'
 
 // Config Imports
 import { i18n } from '@configs/i18n'
@@ -34,6 +35,7 @@ const Layout = async props => {
     <Providers direction={direction}>
       <LayoutWrapper systemMode={systemMode}>
         <HorizontalLayout header={<Header dictionary={dictionary} />} footer={<HorizontalFooter />}>
+          <Breadcrumbs />
           {children}
         </HorizontalLayout>
       </LayoutWrapper>

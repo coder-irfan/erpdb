@@ -25,8 +25,8 @@
     margin-inline: auto;
     margin-block-start: 1rem;
     pointer-events: auto;
-    background-color: rgb(var(--mui-palette-background-paperChannel) / 0.38);
-    border: 2px solid rgb(var(--mui-palette-background-paperChannel) / 0.68);
+    background-color: rgb(var(--mui-palette-background-paperChannel));
+    border: 2px solid rgb(var(--mui-palette-background-paperChannel));
     border-radius: var(--mui-shape-borderRadius);
 
     &.headerScrolled {

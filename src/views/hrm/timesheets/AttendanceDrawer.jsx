@@ -93,13 +93,20 @@ const AttendanceDrawer = ({ open, record, date, staff, defaultWorkHours, locale,
     })()
 
   return (
-    <Drawer anchor='right' open={open} onClose={isSubmitting ? undefined : onClose} PaperProps={{ className: 'is-full sm:is-[520px]' }}>
+    <Drawer
+      anchor='right'
+      open={open}
+      onClose={isSubmitting ? undefined : onClose}
+      PaperProps={{ className: 'is-full sm:is-[520px]' }}
+    >
       <div className='flex items-start justify-between gap-4 p-6'>
         <div>
           <Typography variant='h5'>{record ? dictionary.drawer.editTitle : dictionary.drawer.title}</Typography>
           <Typography color='text.secondary'>{dictionary.drawer.description}</Typography>
         </div>
-        <IconButton onClick={onClose} disabled={isSubmitting}><i className='tabler-x' /></IconButton>
+        <IconButton onClick={onClose} disabled={isSubmitting}>
+          <i className='tabler-x' />
+        </IconButton>
       </div>
       <Divider />
       <div className='flex flex-1 flex-col gap-5 overflow-y-auto p-6'>
@@ -124,26 +131,44 @@ const AttendanceDrawer = ({ open, record, date, staff, defaultWorkHours, locale,
                 error={Boolean(errors.staff_id)}
                 helperText={errors.staff_id?.message}
               >
-                <MenuItem value='' disabled>{dictionary.placeholders.selectStaff}</MenuItem>
-                {staff.map(item => <MenuItem key={item.id} value={item.id}>{item.full_name} — {item.position}</MenuItem>)}
+                <MenuItem value='' disabled>
+                  {dictionary.placeholders.selectStaff}
+                </MenuItem>
+                {staff.map(item => (
+                  <MenuItem key={item.id} value={item.id}>
+                    {item.full_name} — {item.position}
+                  </MenuItem>
+                ))}
               </CustomTextField>
             )}
           />
         )}
         <div>
-          <Typography variant='body2' color='text.primary' className='mb-2'>{dictionary.fields.status}</Typography>
+          <Typography variant='body2' color='text.primary' className='mb-2'>
+            {dictionary.fields.status}
+          </Typography>
           <Controller
             name='status'
             control={control}
             render={() => (
               <ToggleButtonGroup exclusive fullWidth value={status} onChange={(_, value) => setStatus(value)}>
-                <ToggleButton color='success' value='PRESENT'>{dictionary.status.PRESENT}</ToggleButton>
-                <ToggleButton color='error' value='ABSENT'>{dictionary.status.ABSENT}</ToggleButton>
-                <ToggleButton color='info' value='LEAVE'>{dictionary.status.LEAVE}</ToggleButton>
+                <ToggleButton color='success' value='PRESENT'>
+                  {dictionary.status.PRESENT}
+                </ToggleButton>
+                <ToggleButton color='error' value='ABSENT'>
+                  {dictionary.status.ABSENT}
+                </ToggleButton>
+                <ToggleButton color='info' value='LEAVE'>
+                  {dictionary.status.LEAVE}
+                </ToggleButton>
               </ToggleButtonGroup>
             )}
           />
-          {errors.status && <Typography variant='caption' color='error'>{errors.status.message}</Typography>}
+          {errors.status && (
+            <Typography variant='caption' color='error'>
+              {errors.status.message}
+            </Typography>
+          )}
         </div>
         {status === 'PRESENT' && (
           <>
@@ -180,13 +205,21 @@ const AttendanceDrawer = ({ open, record, date, staff, defaultWorkHours, locale,
           {...register('notes')}
         />
         <div className='mt-auto flex flex-wrap justify-end gap-3 pt-4'>
-          <Button variant='tonal' color='secondary' onClick={onClose} disabled={isSubmitting}>{dictionary.actions.cancel}</Button>
+          <Button variant='tonal' color='secondary' onClick={onClose} disabled={isSubmitting}>
+            {dictionary.actions.cancel}
+          </Button>
           {!record && (
             <Button variant='tonal' onClick={() => submit(true)} disabled={isSubmitting || staff.length === 0}>
-              <LoadingButtonContent loading={isSubmitting} loadingLabel={dictionary.actions.saving}>{dictionary.actions.saveNext}</LoadingButtonContent>
+              <LoadingButtonContent loading={isSubmitting} loadingLabel={dictionary.actions.saving}>
+                {dictionary.actions.saveNext}
+              </LoadingButtonContent>
             </Button>
           )}
-          <Button variant='contained' onClick={() => submit(false)} disabled={isSubmitting || (!record && staff.length === 0)}>
+          <Button
+            variant='contained'
+            onClick={() => submit(false)}
+            disabled={isSubmitting || (!record && staff.length === 0)}
+          >
             <LoadingButtonContent loading={isSubmitting} loadingLabel={dictionary.actions.saving}>
               {record ? dictionary.actions.saveChanges : dictionary.actions.save}
             </LoadingButtonContent>

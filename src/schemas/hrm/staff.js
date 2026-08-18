@@ -35,12 +35,7 @@ const defaultMessages = {
 }
 
 const requiredText = (messages, maxLengthValue = 191) =>
-  pipe(
-    string(messages.required),
-    trim(),
-    nonEmpty(messages.required),
-    maxLength(maxLengthValue, messages.valueTooLong)
-  )
+  pipe(string(messages.required), trim(), nonEmpty(messages.required), maxLength(maxLengthValue, messages.valueTooLong))
 
 const optionalText = (messages, maxLengthValue = 500) =>
   optional(pipe(string(), trim(), maxLength(maxLengthValue, messages.valueTooLong)), '')
@@ -63,7 +58,12 @@ const salaryValue = messages =>
 
 const joinDateValue = messages =>
   union([
-    pipe(string(messages.joinDateInvalid), trim(), nonEmpty(messages.joinDateInvalid), isoDate(messages.joinDateInvalid)),
+    pipe(
+      string(messages.joinDateInvalid),
+      trim(),
+      nonEmpty(messages.joinDateInvalid),
+      isoDate(messages.joinDateInvalid)
+    ),
     date(messages.joinDateInvalid)
   ])
 
@@ -88,6 +88,7 @@ export const createStaffSchema = customMessages => {
     tazkira_no: optionalText(messages, 100),
     position: requiredText(messages, 150),
     salary: salaryValue(messages),
+    salary_currency: picklist(['AFN', 'USD'], messages.currencyInvalid || messages.required),
     guarantor_name: optionalText(messages, 100),
     guarantor_phone: optionalText(messages, 50),
     guarantor_license: optionalText(messages, 150),

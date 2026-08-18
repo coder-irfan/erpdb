@@ -45,6 +45,8 @@ export async function GET(request) {
   const page = Math.max(1, Number.parseInt(params.get('page') || '1', 10) || 1)
   const limit = Math.min(MAX_PAGE_SIZE, Math.max(1, Number.parseInt(params.get('limit') || String(PAGE_SIZE), 10) || PAGE_SIZE))
   const staffId = context.canManage ? params.get('staff_id') || '' : context.staff.id
+  const search = params.get('search')?.trim() || ''
+  const searchTokens = search.split(/\s+/).filter(Boolean)
   const leaveTypeId = params.get('leave_type_id') || ''
   const statusId = params.get('status_id') || ''
   const startDate = params.get('start_date') || ''
@@ -55,6 +57,25 @@ export async function GET(request) {
   const monthEnd = new Date(Date.UTC(monthStart.getUTCFullYear(), monthStart.getUTCMonth() + 1, 0))
 
   const where = {
+    ...(search && {
+      OR: [
+        { reason: { contains: search } },
+        {
+          staff: {
+            is: {
+              AND: searchTokens.map(token => ({
+                OR: [
+                  { first_name: { contains: token } },
+                  { last_name: { contains: token } },
+                  { email: { contains: token } },
+                  { position: { contains: token } }
+                ]
+              }))
+            }
+          }
+        }
+      ]
+    }),
     ...(staffId && { staff_id: staffId }),
     ...(leaveTypeId && { leave_type_id: leaveTypeId }),
     ...(statusId && { status_id: statusId }),

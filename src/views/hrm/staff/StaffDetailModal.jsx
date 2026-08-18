@@ -110,7 +110,7 @@ const StaffDetailModal = ({ open, staffId, locale, dictionary, onClose }) => {
         ) : error ? (
           <Alert severity='error'>{error}</Alert>
         ) : staff ? (
-          <div className='flex flex-col gap-6'>
+          <div className='flex flex-col md:gap-4 gap-2'>
             <div className='flex flex-col items-start gap-4 sm:flex-row sm:items-center'>
               <CustomAvatar src={staff.user?.image || undefined} skin='light' color='primary' size={72}>
                 {!staff.user?.image && getInitials(staff.full_name)}
@@ -125,7 +125,9 @@ const StaffDetailModal = ({ open, staffId, locale, dictionary, onClose }) => {
                     color={STAFF_STATUS_COLORS[staff.status] || 'default'}
                     label={dictionary.status[staff.status] || staff.status}
                   />
-                  {staff.user && <Chip size='small' variant='tonal' color='info' label={dictionary.details.linkedUser} />}
+                  {staff.user && (
+                    <Chip size='small' variant='tonal' color='info' label={dictionary.details.linkedUser} />
+                  )}
                 </div>
               </div>
             </div>
@@ -137,14 +139,20 @@ const StaffDetailModal = ({ open, staffId, locale, dictionary, onClose }) => {
                 iconPosition='start'
                 label={`${dictionary.details.contracts} (${staff.contracts.length})`}
               />
-              <Tab icon={<i className='tabler-calendar-time' />} iconPosition='start' label={dictionary.details.attendanceTab} />
+              <Tab
+                icon={<i className='tabler-calendar-time' />}
+                iconPosition='start'
+                label={dictionary.details.attendanceTab}
+              />
             </Tabs>
 
             {activeTab === 0 ? (
-              <div className='flex flex-col gap-6'>
+              <div className='flex flex-col md:gap-4 gap-2'>
                 <Divider />
                 <div>
-                  <Typography variant='h6' className='mb-4'>{dictionary.sections.personal}</Typography>
+                  <Typography variant='h6' className='mb-4'>
+                    {dictionary.sections.personal}
+                  </Typography>
                   <div className='grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3'>
                     <DetailItem label={dictionary.fields.fatherName} value={staff.father_name} />
                     <DetailItem label={dictionary.fields.email} value={staff.email} />
@@ -156,10 +164,15 @@ const StaffDetailModal = ({ open, staffId, locale, dictionary, onClose }) => {
                 </div>
                 <Divider />
                 <div>
-                  <Typography variant='h6' className='mb-4'>{dictionary.sections.employment}</Typography>
+                  <Typography variant='h6' className='mb-4'>
+                    {dictionary.sections.employment}
+                  </Typography>
                   <div className='grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3'>
                     <DetailItem label={dictionary.fields.position} value={staff.position} />
-                    <DetailItem label={dictionary.fields.salary} value={formatCurrency(staff.salary, locale)} />
+                    <DetailItem
+                      label={dictionary.fields.salary}
+                      value={formatCurrency(staff.salary, locale, staff.salary_currency)}
+                    />
                     <DetailItem label={dictionary.fields.joinDate} value={formatDate(staff.join_date, locale)} />
                     <DetailItem label={dictionary.fields.contractPeriod} value={staff.contract_period} />
                     <DetailItem label={dictionary.fields.systemUser} value={staff.user?.name || staff.user?.email} />
@@ -168,7 +181,9 @@ const StaffDetailModal = ({ open, staffId, locale, dictionary, onClose }) => {
                 </div>
                 <Divider />
                 <div>
-                  <Typography variant='h6' className='mb-4'>{dictionary.sections.guarantor}</Typography>
+                  <Typography variant='h6' className='mb-4'>
+                    {dictionary.sections.guarantor}
+                  </Typography>
                   <div className='grid grid-cols-1 gap-5 sm:grid-cols-3'>
                     <DetailItem label={dictionary.fields.guarantorName} value={staff.guarantor_name} />
                     <DetailItem label={dictionary.fields.guarantorPhone} value={staff.guarantor_phone} />
@@ -207,13 +222,20 @@ const StaffDetailModal = ({ open, staffId, locale, dictionary, onClose }) => {
                       <Typography color='text.secondary'>
                         {`${formatDate(contract.start_date, locale)} — ${formatDate(contract.end_date, locale)}`}
                       </Typography>
-                      <Typography className='font-medium'>{formatCurrency(contract.base_salary, locale)}</Typography>
+                      <Typography className='font-medium'>
+                        {formatCurrency(contract.base_salary, locale, contract.currency)}
+                      </Typography>
                       <Link
                         href={`/${locale}/hrm/contracts/${contract.id}/print`}
                         target='_blank'
                         rel='noopener noreferrer'
                       >
-                        <Button component='span' variant='tonal' size='small' startIcon={<i className='tabler-printer' />}>
+                        <Button
+                          component='span'
+                          variant='tonal'
+                          size='small'
+                          startIcon={<i className='tabler-printer' />}
+                        >
                           {dictionary.details.printContract}
                         </Button>
                       </Link>

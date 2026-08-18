@@ -39,22 +39,20 @@ export const createProfileAccountSchema = messages =>
 export const createChangePasswordSchema = messages =>
   pipe(
     object({
-      currentPassword: pipe(
-        string(messages.currentPasswordRequired),
-        nonEmpty(messages.currentPasswordRequired)
-      ),
+      currentPassword: pipe(string(messages.currentPasswordRequired), nonEmpty(messages.currentPasswordRequired)),
       newPassword: pipe(
         string(messages.newPasswordRequired),
         nonEmpty(messages.newPasswordRequired),
         minLength(8, messages.passwordMinLength)
       ),
-      confirmPassword: pipe(
-        string(messages.confirmPasswordRequired),
-        nonEmpty(messages.confirmPasswordRequired)
-      )
+      confirmPassword: pipe(string(messages.confirmPasswordRequired), nonEmpty(messages.confirmPasswordRequired))
     }),
-    forward(check(input => input.newPassword === input.confirmPassword, messages.passwordsDoNotMatch), [
-      'confirmPassword'
-    ]),
-    forward(check(input => input.newPassword !== input.currentPassword, messages.passwordUnchanged), ['newPassword'])
+    forward(
+      check(input => input.newPassword === input.confirmPassword, messages.passwordsDoNotMatch),
+      ['confirmPassword']
+    ),
+    forward(
+      check(input => input.newPassword !== input.currentPassword, messages.passwordUnchanged),
+      ['newPassword']
+    )
   )

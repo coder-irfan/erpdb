@@ -13,7 +13,10 @@ const defaults = {
 }
 
 const optionalTime = messages =>
-  optional(union([literal(''), pipe(string(messages.timeInvalid), trim(), regex(TIME_PATTERN, messages.timeInvalid))]), '')
+  optional(
+    union([literal(''), pipe(string(messages.timeInvalid), trim(), regex(TIME_PATTERN, messages.timeInvalid))]),
+    ''
+  )
 
 export const createTimesheetSchema = customMessages => {
   const messages = { ...defaults, ...customMessages }

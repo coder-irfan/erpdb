@@ -25,7 +25,9 @@ const CATEGORY_PATHS = {
   PAYROLL_STATUS: '/[lang]/options/hrm/payroll',
   PAYROLL_PAYMENT_METHOD: '/[lang]/options/hrm/payroll',
   LEAD_STATUS: '/[lang]/options/crm/leads',
-  LEAD_SOURCE: '/[lang]/options/crm/leads'
+  LEAD_SOURCE: '/[lang]/options/crm/leads',
+  INVOICE_STATUS: '/[lang]/options/contracts',
+  PAYMENT_METHOD: '/[lang]/options/contracts'
 }
 
 const normalizeLocale = locale => (i18n.locales.includes(locale) ? locale : i18n.defaultLocale)
@@ -38,7 +40,7 @@ const getReadPermissions = category => [
   ...(category === 'LEAVE_TYPE' ? ['hrm:read', 'hrm:write', 'hrm_leave:read', 'hrm_leave:write'] : []),
   ...(category.startsWith('PAYROLL_') ? ['hrm_payroll:read', 'hrm_payroll:write'] : []),
   ...(category.startsWith('LEAD_') ? ['crm:read', 'crm:write', 'crm_lead:read', 'crm_lead:write'] : []),
-  ...(category === 'CONTRACT_POLICY' ? ['contracts:read', 'hrm:read'] : [])
+  ...(category.startsWith('CONTRACT_') ? ['contracts:read', 'contracts:write', 'hrm:read'] : [])
 ]
 
 const getActionContext = async (payload, permissions) => {
@@ -180,6 +182,11 @@ const revalidateOptionPaths = category => {
   if (category === 'STAFF_POSITION') revalidatePath('/[lang]/hrm/staff', 'page')
   if (category === 'LEAVE_TYPE') revalidatePath('/[lang]/hrm/leaves', 'page')
   if (category.startsWith('LEAD_')) revalidatePath('/[lang]/crm/leads', 'page')
+  if (category.startsWith('CONTRACT_')) revalidatePath('/[lang]/contracts', 'page')
+
+  if (category === 'INVOICE_STATUS' || category === 'PAYMENT_METHOD') {
+    revalidatePath('/[lang]/contracts/invoices', 'page')
+  }
 }
 
 export const getOptionsByCategory = async (category, payload = {}) => {
@@ -479,7 +486,12 @@ export const deleteOption = async (id, payload = {}) => {
         ? await prisma.hrmStaff.count({ where: { position: option.label } })
         : 0
 
-    if (relationCount + staffPositionCount > 0) {
+    const durationContractCount =
+      option.category === 'CONTRACT_DURATION'
+        ? await prisma.contract.count({ where: { contract_duration: option.id } })
+        : 0
+
+    if (relationCount + staffPositionCount + durationContractCount > 0) {
       return { success: false, code: 'OPTION_IN_USE', error: context.translations.messages.inUse }
     }
 

@@ -13,9 +13,25 @@ export const createClientSchema = customMessages => {
   const messages = { ...defaults, ...customMessages }
 
   return object({
-    company_name: pipe(string(messages.required), trim(), nonEmpty(messages.required), maxLength(191, messages.tooLong)),
-    primary_contact_name: pipe(string(messages.required), trim(), nonEmpty(messages.required), maxLength(191, messages.tooLong)),
-    email: pipe(string(messages.required), trim(), nonEmpty(messages.required), email(messages.emailInvalid), maxLength(191, messages.tooLong)),
+    company_name: pipe(
+      string(messages.required),
+      trim(),
+      nonEmpty(messages.required),
+      maxLength(191, messages.tooLong)
+    ),
+    primary_contact_name: pipe(
+      string(messages.required),
+      trim(),
+      nonEmpty(messages.required),
+      maxLength(191, messages.tooLong)
+    ),
+    email: pipe(
+      string(messages.required),
+      trim(),
+      nonEmpty(messages.required),
+      email(messages.emailInvalid),
+      maxLength(191, messages.tooLong)
+    ),
     phone: pipe(string(messages.required), trim(), nonEmpty(messages.required), maxLength(50, messages.tooLong)),
     address: optional(pipe(string(), trim(), maxLength(5000, messages.tooLong)), ''),
     tax_number: optional(pipe(string(), trim(), maxLength(191, messages.tooLong)), ''),
@@ -24,4 +40,3 @@ export const createClientSchema = customMessages => {
     notes: optional(pipe(string(), trim(), maxLength(10000, messages.tooLong)), '')
   })
 }
-

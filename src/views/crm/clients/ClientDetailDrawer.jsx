@@ -14,7 +14,7 @@ import Tabs from '@mui/material/Tabs'
 import Typography from '@mui/material/Typography'
 import { toast } from 'sonner'
 
-import { formatCurrency } from '@/utils/formatCurrency'
+import { formatCurrency, toFiniteNumber } from '@/utils/formatCurrency'
 
 const localeMap = { en: 'en-US', fa: 'fa-AF', ps: 'ps-AF' }
 
@@ -85,12 +85,12 @@ const ClientProfileModal = ({
   const invoicePaid =
     client?.invoices
       .filter(invoice => invoice.status.value === 'PAID')
-      .reduce((sum, invoice) => sum + Number(invoice.amount), 0) || 0
+      .reduce((sum, invoice) => sum + toFiniteNumber(invoice.amount_base), 0) || 0
 
   const invoicePending =
     client?.invoices
       .filter(invoice => invoice.status.value !== 'PAID')
-      .reduce((sum, invoice) => sum + Number(invoice.amount), 0) || 0
+      .reduce((sum, invoice) => sum + toFiniteNumber(invoice.amount_base), 0) || 0
 
   return (
     <Dialog
@@ -105,7 +105,7 @@ const ClientProfileModal = ({
       <div className='flex items-start justify-between gap-4 border-be border-divider p-5'>
         {client ? (
           <div className='flex min-w-0 items-center gap-3'>
-            <Avatar className='size-12 bg-primaryLighter text-primary'>{client.company_name.slice(0, 1)}</Avatar>
+            <Avatar className='size-14 bg-primaryLighter text-primary'>{client.company_name.slice(0, 1)}</Avatar>
             <div>
               <div className='flex flex-wrap items-center gap-2'>
                 <Typography variant='h5'>{client.company_name}</Typography>
@@ -164,7 +164,7 @@ const ClientProfileModal = ({
             </Tabs>
             <div className='flex-1 overflow-y-auto p-5'>
               {tab === 0 && (
-                <div className='flex flex-col gap-6'>
+                <div className='flex flex-col md:gap-4 gap-2'>
                   <div className='grid grid-cols-1 gap-5 rounded border border-divider p-5 sm:grid-cols-2'>
                     <Info label={dictionary.fields.contact}>{client.primary_contact_name}</Info>
                     <Info label={dictionary.fields.email}>{client.email}</Info>
@@ -178,10 +178,8 @@ const ClientProfileModal = ({
                       {dictionary.detail.manager}
                     </Typography>
                     {client.account_manager ? (
-                      <div className='flex items-center gap-3'>
-                        <Avatar className='bg-infoLight text-info'>
-                          {client.account_manager.full_name.slice(0, 1)}
-                        </Avatar>
+                      <div className='flex min-is-[220px] items-center gap-3'>
+                        <Avatar variant='rounded' className='bg-primaryLighter text-primary'></Avatar>
                         <div>
                           <Typography className='font-medium'>{client.account_manager.full_name}</Typography>
                           <Typography variant='body2' color='text.secondary'>
@@ -217,7 +215,7 @@ const ClientProfileModal = ({
                 </div>
               )}
               {tab === 1 && (
-                <div className='flex flex-col gap-6'>
+                <div className='flex flex-col md:gap-4 gap-2'>
                   <section>
                     <Typography variant='h6' className='mb-3'>
                       {dictionary.detail.projects}
@@ -236,10 +234,10 @@ const ClientProfileModal = ({
                                 {formatDate(project.end_date, locale)}
                               </Typography>
                             </div>
-                            <div className='text-right'>
+                            <div className='text-end'>
                               <Chip size='small' variant='tonal' color='primary' label={project.status.label} />
                               <Typography className='mt-1 font-medium text-success'>
-                                {formatCurrency(project.budget, locale, currencyCode)}
+                                {formatCurrency(project.budget, locale, project.currency || currencyCode)}
                               </Typography>
                             </div>
                           </div>
@@ -267,10 +265,10 @@ const ClientProfileModal = ({
                                 {formatDate(contract.end_date, locale)}
                               </Typography>
                             </div>
-                            <div className='text-right'>
+                            <div className='text-end'>
                               <Chip size='small' variant='tonal' color='info' label={contract.status.label} />
                               <Typography className='mt-1 font-medium'>
-                                {formatCurrency(contract.total_amount, locale, currencyCode)}
+                                {formatCurrency(contract.total_amount, locale, contract.currency || currencyCode)}
                               </Typography>
                             </div>
                           </div>
@@ -285,13 +283,13 @@ const ClientProfileModal = ({
               {tab === 2 && (
                 <div className='flex flex-col gap-5'>
                   <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
-                    <div className='rounded bg-successLight p-4'>
+                    <div className='rounded bg-successLighter p-4'>
                       <Typography color='success.main'>{dictionary.detail.paidRevenue}</Typography>
                       <Typography variant='h5' className='mt-1 text-success'>
                         {formatCurrency(invoicePaid, locale, currencyCode)}
                       </Typography>
                     </div>
-                    <div className='rounded bg-warningLight p-4'>
+                    <div className='rounded bg-errorLighter p-4'>
                       <Typography color='warning.main'>{dictionary.detail.pendingInvoices}</Typography>
                       <Typography variant='h5' className='mt-1 text-warning'>
                         {formatCurrency(invoicePending, locale, currencyCode)}
@@ -299,14 +297,14 @@ const ClientProfileModal = ({
                     </div>
                   </div>
                   {client.invoices.length ? (
-                    <div className='overflow-x-auto rounded border border-divider'>
+                    <div className='no-scrollbar overflow-x-auto scroll-smooth rounded border border-divider'>
                       <table className='w-full'>
                         <thead>
                           <tr className='border-be border-divider bg-actionHover'>
-                            <th className='p-3 text-left'>{dictionary.detail.invoice}</th>
-                            <th className='p-3 text-left'>{dictionary.table.status}</th>
-                            <th className='p-3 text-left'>{dictionary.detail.dueDate}</th>
-                            <th className='p-3 text-right'>{dictionary.detail.amount}</th>
+                            <th className='p-3 text-start'>{dictionary.detail.invoice}</th>
+                            <th className='p-3 text-start'>{dictionary.table.status}</th>
+                            <th className='p-3 text-start'>{dictionary.detail.dueDate}</th>
+                            <th className='p-3 text-end'>{dictionary.detail.amount}</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -325,8 +323,8 @@ const ClientProfileModal = ({
                                 />
                               </td>
                               <td className='p-3'>{formatDate(invoice.due_date, locale)}</td>
-                              <td className='p-3 text-right font-semibold'>
-                                {formatCurrency(invoice.amount, locale, currencyCode)}
+                              <td className='p-3 text-end font-semibold'>
+                                {formatCurrency(invoice.amount, locale, invoice.currency || currencyCode)}
                               </td>
                             </tr>
                           ))}
@@ -341,13 +339,13 @@ const ClientProfileModal = ({
               {tab === 3 && (
                 <div>
                   {client.activities.length ? (
-                    <div className='flex flex-col gap-4'>
+                    <div className='flex flex-col md:gap-4 gap-2'>
                       {client.activities.map(activity => (
                         <div key={activity.id} className='flex gap-3 border-bs-2 border-primary/20 ps-4 pt-4'>
                           <span className='flex size-10 shrink-0 items-center justify-center rounded-full bg-primaryLighter text-primary'>
                             <i className='tabler-activity' />
                           </span>
-                          <div className='pb-4'>
+                          <div className=''>
                             <div className='flex flex-wrap items-center gap-2'>
                               <Typography className='font-semibold'>{activity.title}</Typography>
                               <Chip
@@ -376,7 +374,7 @@ const ClientProfileModal = ({
           </>
         )}
       </DialogContent>
-      <div className='border-bs border-divider p-4 text-right'>
+      <div className='border-bs border-divider p-4 text-end'>
         <Button variant='tonal' color='secondary' onClick={onClose}>
           {dictionary.actions.close}
         </Button>

@@ -161,7 +161,7 @@ const ShareProject = ({ open, setOpen }) => {
             }}
           />
         </div>
-        <div className='flex flex-col gap-4'>
+        <div className='flex flex-col md:gap-4 gap-2'>
           <Typography variant='h5'>{`${data.length} Members`}</Typography>
           <div className='flex flex-col flex-wrap gap-4'>
             {data.map((member, index) => (

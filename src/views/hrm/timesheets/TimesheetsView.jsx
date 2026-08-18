@@ -6,7 +6,6 @@ import Alert from '@mui/material/Alert'
 import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
-import CardHeader from '@mui/material/CardHeader'
 import Chip from '@mui/material/Chip'
 import IconButton from '@mui/material/IconButton'
 import MenuItem from '@mui/material/MenuItem'
@@ -14,10 +13,13 @@ import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
 import { toast } from 'sonner'
 
+import { Avatar } from '@mui/material'
+
 import CustomTextField from '@core/components/mui/TextField'
 import ConfirmDeleteModal from '@/components/dialogs/ConfirmDeleteModal'
 import DashboardTablePagination from '@/components/table/DashboardTablePagination'
 import TableEmptyStateRow from '@/components/table/TableEmptyStateRow'
+import TableFiltersPopover from '@/components/table/TableFiltersPopover'
 import TableSkeletonRows from '@/components/table/TableSkeletonRows'
 
 import AttendanceDrawer from './AttendanceDrawer'
@@ -170,106 +172,88 @@ const TimesheetsView = ({ initialDate, canWrite, canDelete, defaultWorkHours, lo
 
   return (
     <div className='attendance-print-report flex flex-col gap-6'>
-      <Card>
-        <CardContent className='flex flex-wrap items-center justify-between gap-4'>
-          <div>
-            <Typography variant='h4'>{dictionary.title}</Typography>
-            <Typography color='text.secondary'>{formatDate(selectedDate, locale)}</Typography>
-          </div>
-          <div className='no-print flex flex-wrap items-end gap-2'>
-            <Tooltip title={dictionary.date.previous}>
-              <IconButton
-                aria-label={dictionary.date.previous}
-                onClick={() => changeDate(shiftDate(selectedDate, -1))}
-              >
-                <i className='tabler-chevron-left' />
-              </IconButton>
-            </Tooltip>
-            <CustomTextField
-              type='date'
-              size='small'
-              label={dictionary.date.date}
-              value={selectedDate}
-              slotProps={{ inputLabel: { shrink: true } }}
-              onChange={event => changeDate(event.target.value)}
-            />
-            <Tooltip title={dictionary.date.next}>
-              <IconButton
-                aria-label={dictionary.date.next}
-                onClick={() => changeDate(shiftDate(selectedDate, 1))}
-              >
-                <i className='tabler-chevron-right' />
-              </IconButton>
-            </Tooltip>
-            <Button
-              variant={selectedDate === initialDate ? 'contained' : 'tonal'}
-              onClick={() => changeDate(initialDate)}
-            >
-              {dictionary.date.today}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
       <AttendanceStatsCards summary={data.summary} dictionary={dictionary} />
 
       <Card>
-        <CardHeader
-          title={dictionary.table.title}
-          subheader={dictionary.table.description}
-          action={
-            <div className='no-print flex flex-wrap gap-2'>
-              <Button variant='tonal' startIcon={<i className='tabler-file-download' />} onClick={exportCsv}>
-                {dictionary.actions.export}
-              </Button>
-              <Button variant='tonal' startIcon={<i className='tabler-printer' />} onClick={() => window.print()}>
-                {dictionary.actions.print}
-              </Button>
-              {canWrite && (
-                <Button variant='contained' startIcon={<i className='tabler-user-plus' />} onClick={openCreate}>
-                  {dictionary.actions.mark}
-                </Button>
-              )}
-            </div>
-          }
-        />
-        <CardContent className='no-print mb-4 flex flex-wrap items-center justify-between gap-4 border-bs pt-5'>
+        <CardContent className='no-print flex flex-wrap items-center justify-between gap-4 border-be border-divider'>
           <CustomTextField
-            className='is-full sm:max-is-[280px]'
+            className='is-full sm:max-is-[300px]'
             label={dictionary.filters.search}
             placeholder={dictionary.filters.searchPlaceholder}
             value={searchInput}
             onChange={event => setSearchInput(event.target.value)}
-            slotProps={{ input: { startAdornment: <i className='tabler-search me-2 text-textSecondary' /> } }}
+            slotProps={{ input: { startAdornment: <i className='tabler-search text-textSecondary' /> } }}
           />
-          <div className='flex is-full flex-wrap items-center gap-3 sm:is-auto sm:justify-end'>
-            <CustomTextField
-              select
-              className='is-full sm:is-[190px]'
-              label={dictionary.filters.status}
-              value={statusFilter}
-              slotProps={{
-                select: {
-                  displayEmpty: true,
-                  renderValue: selected => selected ? dictionary.status[selected] : dictionary.filters.allStatuses
-                }
-              }}
-              onChange={event => {
-                setStatusFilter(event.target.value)
-                setPage(0)
-              }}
+          <div className='flex is-full flex-wrap items-center gap-2 sm:is-auto sm:justify-end'>
+            <TableFiltersPopover
+              activeCount={Number(Boolean(statusFilter)) + Number(selectedDate !== initialDate)}
+              locale={locale}
             >
-              <MenuItem value=''>{dictionary.filters.allStatuses}</MenuItem>
-              {Object.keys(STATUS_COLORS).map(status => (
-                <MenuItem key={status} value={status}>
-                  {dictionary.status[status]}
-                </MenuItem>
-              ))}
-            </CustomTextField>
+              <div className='flex items-end gap-2'>
+                <Tooltip title={dictionary.date.previous}>
+                  <IconButton
+                    aria-label={dictionary.date.previous}
+                    onClick={() => changeDate(shiftDate(selectedDate, -1))}
+                  >
+                    <i className='tabler-chevron-left' />
+                  </IconButton>
+                </Tooltip>
+                <CustomTextField
+                  type='date'
+                  label={dictionary.date.date}
+                  value={selectedDate}
+                  className='is-full'
+                  slotProps={{ inputLabel: { shrink: true } }}
+                  onChange={event => changeDate(event.target.value)}
+                />
+                <Tooltip title={dictionary.date.next}>
+                  <IconButton aria-label={dictionary.date.next} onClick={() => changeDate(shiftDate(selectedDate, 1))}>
+                    <i className='tabler-chevron-right' />
+                  </IconButton>
+                </Tooltip>
+              </div>
+              <Button variant='tonal' onClick={() => changeDate(initialDate)}>
+                {dictionary.date.today}
+              </Button>
+              <CustomTextField
+                select
+                className='is-full'
+                label={dictionary.filters.status}
+                value={statusFilter}
+                slotProps={{
+                  select: {
+                    displayEmpty: true,
+                    renderValue: selected => (selected ? dictionary.status[selected] : dictionary.filters.allStatuses)
+                  }
+                }}
+                onChange={event => {
+                  setStatusFilter(event.target.value)
+                  setPage(0)
+                }}
+              >
+                <MenuItem value=''>{dictionary.filters.allStatuses}</MenuItem>
+                {Object.keys(STATUS_COLORS).map(status => (
+                  <MenuItem key={status} value={status}>
+                    {dictionary.status[status]}
+                  </MenuItem>
+                ))}
+              </CustomTextField>
+            </TableFiltersPopover>
+            <Button variant='tonal' startIcon={<i className='tabler-file-download' />} onClick={exportCsv}>
+              {dictionary.actions.export}
+            </Button>
+            <Button variant='tonal' startIcon={<i className='tabler-printer' />} onClick={() => window.print()}>
+              {dictionary.actions.print}
+            </Button>
+            {canWrite && (
+              <Button variant='contained' startIcon={<i className='tabler-user-plus' />} onClick={openCreate}>
+                {dictionary.actions.mark}
+              </Button>
+            )}
           </div>
         </CardContent>
         {error && <Alert severity='error'>{error}</Alert>}
-        <div className='overflow-x-auto'>
+        <div className='no-scrollbar overflow-x-auto scroll-smooth'>
           <table className={tableStyles.table}>
             <thead>
               <tr>
@@ -279,7 +263,7 @@ const TimesheetsView = ({ initialDate, canWrite, canDelete, defaultWorkHours, lo
                 <th>{dictionary.fields.checkIn}</th>
                 <th>{dictionary.fields.checkOut}</th>
                 <th>{dictionary.fields.hours}</th>
-                <th className='no-print text-right'>{dictionary.table.actions}</th>
+                <th className='no-print text-end'>{dictionary.table.actions}</th>
               </tr>
             </thead>
             <tbody>
@@ -298,12 +282,17 @@ const TimesheetsView = ({ initialDate, canWrite, canDelete, defaultWorkHours, lo
                 data.records.map(record => (
                   <tr key={record.id}>
                     <td>
-                      <Typography color='text.primary' className='font-medium'>
-                        {record.staff.full_name}
-                      </Typography>
-                      <Typography variant='body2' color='text.secondary'>
-                        {record.staff.email}
-                      </Typography>
+                      <div className='flex min-is-[250px] items-center gap-3'>
+                        <Avatar variant='rounded' className='bg-primaryLighter text-primary'></Avatar>
+                        <div className='flex min-is-0 flex-col'>
+                          <Typography color='text.primary' className='font-medium'>
+                            {record.staff.full_name}
+                          </Typography>
+                          <Typography variant='body2' color='text.secondary'>
+                            {record.staff.email}
+                          </Typography>
+                        </div>
+                      </div>
                     </td>
                     <td>{record.staff.position}</td>
                     <td>
@@ -319,7 +308,7 @@ const TimesheetsView = ({ initialDate, canWrite, canDelete, defaultWorkHours, lo
                     <td>
                       {record.hours_worked ? `${Number(record.hours_worked).toFixed(2)} ${dictionary.hoursShort}` : '—'}
                     </td>
-                    <td className='no-print text-right'>
+                    <td className='no-print text-end'>
                       <div className='flex justify-end gap-1'>
                         {record.notes && (
                           <Tooltip title={record.notes} arrow>

@@ -1,6 +1,22 @@
 import { boolean, maxLength, nonEmpty, object, optional, pipe, regex, string, trim } from 'valibot'
 
-export const OPTION_CATEGORIES = ['CONTRACT_POLICY', 'STAFF_POSITION', 'LEAVE_TYPE', 'PAYROLL_STATUS', 'PAYROLL_PAYMENT_METHOD', 'LEAD_STATUS', 'LEAD_SOURCE']
+export const OPTION_CATEGORIES = [
+  'CONTRACT_POLICY',
+  'CONTRACT_TYPE',
+  'CONTRACT_DURATION',
+  'CONTRACT_COUNTRY',
+  'CONTRACT_LEVEL',
+  'CONTRACT_STATUS',
+  'INVOICE_STATUS',
+  'PAYMENT_METHOD',
+  'INCOME_TYPE',
+  'STAFF_POSITION',
+  'LEAVE_TYPE',
+  'PAYROLL_STATUS',
+  'PAYROLL_PAYMENT_METHOD',
+  'LEAD_STATUS',
+  'LEAD_SOURCE'
+]
 export const OPTION_CATEGORY_PATTERN = /^[A-Z][A-Z0-9_]*$/
 
 const defaultMessages = {

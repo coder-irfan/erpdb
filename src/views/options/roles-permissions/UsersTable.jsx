@@ -5,7 +5,6 @@ import { useMemo, useState } from 'react'
 import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
-import CardHeader from '@mui/material/CardHeader'
 import Chip from '@mui/material/Chip'
 import Dialog from '@mui/material/Dialog'
 import DialogActions from '@mui/material/DialogActions'
@@ -16,12 +15,12 @@ import MenuItem from '@mui/material/MenuItem'
 import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
 
-import CustomAvatar from '@core/components/mui/Avatar'
+import { Avatar } from '@mui/material'
+
 import CustomTextField from '@core/components/mui/TextField'
 import LoadingButtonContent from '@/components/LoadingButtonContent'
 import DashboardTablePagination from '@/components/table/DashboardTablePagination'
 import TableEmptyStateRow from '@/components/table/TableEmptyStateRow'
-import { getInitials } from '@/utils/getInitials'
 
 import tableStyles from '@core/styles/table.module.css'
 
@@ -111,10 +110,6 @@ const UsersTable = ({ users, roles, locale, onInvite, onStatusChange, onRoleChan
   return (
     <>
       <Card>
-        <CardHeader
-          title={translations.usersTitle}
-          subheader={translations.usersDescription}
-        />
         <CardContent className='border-bs border-divider'>
           <div className='mb-4 mt-5 flex flex-wrap items-center justify-between gap-4'>
             <CustomTextField
@@ -124,8 +119,8 @@ const UsersTable = ({ users, roles, locale, onInvite, onStatusChange, onRoleChan
                 setPage(0)
               }}
               placeholder={translations.searchUsers}
-              className='is-full sm:is-[260px]'
-              slotProps={{ input: { startAdornment: <i className='tabler-search me-2 text-textSecondary' /> } }}
+              className='is-full sm:is-[300px]'
+              slotProps={{ input: { startAdornment: <i className='tabler-search text-textSecondary' /> } }}
             />
             <Button
               variant='contained'
@@ -146,7 +141,7 @@ const UsersTable = ({ users, roles, locale, onInvite, onStatusChange, onRoleChan
                 <th>{translations.table.status}</th>
                 <th>{translations.table.invitedDate}</th>
                 <th>{translations.table.invitedBy}</th>
-                <th className='text-right'>{translations.table.actions}</th>
+                <th className='text-end'>{translations.table.actions}</th>
               </tr>
             </thead>
             <tbody>
@@ -167,10 +162,8 @@ const UsersTable = ({ users, roles, locale, onInvite, onStatusChange, onRoleChan
                   return (
                     <tr key={user.id}>
                       <td>
-                        <div className='flex min-is-[220px] items-center gap-3'>
-                          <CustomAvatar src={user.image || undefined} skin='light' color='primary' size={38}>
-                            {!user.image && getInitials(user.name || user.email || '?')}
-                          </CustomAvatar>
+                        <div className='flex min-is-[250px] items-center gap-3'>
+                          <Avatar variant='rounded' className='bg-primaryLighter text-primary'></Avatar>
                           <div className='flex flex-col'>
                             <Typography color='text.primary' className='font-medium'>
                               {user.name || translations.table.notAssigned}
@@ -208,7 +201,7 @@ const UsersTable = ({ users, roles, locale, onInvite, onStatusChange, onRoleChan
                       </td>
                       <td>{formatDate(user.createdAt, locale)}</td>
                       <td>{user.invitedBy?.name || translations.table.system}</td>
-                      <td className='text-right'>
+                      <td className='text-end'>
                         <div className='flex min-is-[210px] items-center justify-end gap-2'>
                           <CustomTextField
                             select

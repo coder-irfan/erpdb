@@ -26,7 +26,7 @@ const PrintLayout = ({ contract, setup, dictionary, locale = 'en' }) => {
             <Typography className='text-xl font-bold text-black'>{setup.company_name}</Typography>
           )}
         </div>
-        <div className='max-w-[115mm] text-right'>
+        <div className='max-w-[115mm] text-end'>
           <Typography component='h1' className='text-xl font-bold text-black'>
             {setup.company_name}
           </Typography>

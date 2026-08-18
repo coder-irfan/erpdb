@@ -15,6 +15,7 @@ export const DEFAULT_COMPANY_SETUP = {
   signatory_title: null,
   signatory_stamp: null,
   currency_code: 'AFN',
+  usd_afn_exchange_rate: '65.0000',
   currency_symbol: '؋',
   timezone: 'Asia/Kabul',
   date_format: 'YYYY-MM-DD',
@@ -29,6 +30,7 @@ export const normalizeCompanySetup = setup =>
     ? {
         ...setup,
         default_tax_rate: setup.default_tax_rate.toFixed(2),
+        usd_afn_exchange_rate: setup.usd_afn_exchange_rate.toFixed(4),
         created_at: setup.created_at.toISOString(),
         updated_at: setup.updated_at.toISOString()
       }

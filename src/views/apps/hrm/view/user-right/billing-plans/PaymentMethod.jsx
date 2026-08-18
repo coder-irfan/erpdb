@@ -103,7 +103,7 @@ const PaymentMethod = () => {
                   {item.cardNumber && item.cardNumber.slice(0, -4).replace(/[0-9]/g, '*') + item.cardNumber.slice(-4)}
                 </Typography>
               </div>
-              <div className='flex flex-col gap-4'>
+              <div className='flex flex-col md:gap-4 gap-2'>
                 <div className='flex items-center justify-end gap-4'>
                   <OpenDialogOnElementClick
                     element={Button}

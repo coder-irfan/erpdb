@@ -7,8 +7,7 @@ import { useRouter } from 'next/navigation'
 import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
-import CardHeader from '@mui/material/CardHeader'
-import Divider from '@mui/material/Divider'
+import MenuItem from '@mui/material/MenuItem'
 import Typography from '@mui/material/Typography'
 import { toast } from 'sonner'
 
@@ -36,6 +35,8 @@ const getInitialForm = settings => ({
   company_tax_id: settings.company_tax_id || '',
   signatory_name: settings.signatory_name || '',
   signatory_title: settings.signatory_title || '',
+  currency_code: settings.currency_code || 'AFN',
+  usd_afn_exchange_rate: settings.usd_afn_exchange_rate || '65.0000',
   default_work_start: settings.default_work_start || '08:30',
   default_work_end: settings.default_work_end || '17:30'
 })
@@ -61,6 +62,12 @@ const SetupView = ({ dictionary, initialSettings, locale }) => {
 
     if (form.default_work_end <= form.default_work_start) {
       toast.error(dictionary.validation.workEndAfterStart)
+
+      return
+    }
+
+    if (Number(form.usd_afn_exchange_rate) <= 0) {
+      toast.error(dictionary.validation.exchangeRatePositive)
 
       return
     }
@@ -106,10 +113,8 @@ const SetupView = ({ dictionary, initialSettings, locale }) => {
   }
 
   return (
-    <div className='flex flex-col gap-6'>
+    <div className='flex flex-col md:gap-4 gap-2'>
       <Card>
-        <CardHeader title={dictionary.letterheadTitle} subheader={dictionary.letterheadDescription} />
-        <Divider />
         <CardContent className='flex flex-col gap-8'>
           <div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
             <CustomTextField
@@ -174,6 +179,35 @@ const SetupView = ({ dictionary, initialSettings, locale }) => {
             />
           </div>
           <div className='rounded border p-5'>
+            <Typography variant='h6'>{dictionary.currencyTitle}</Typography>
+            <Typography variant='body2' color='text.secondary' className='mb-5'>
+              {dictionary.currencyDescription}
+            </Typography>
+            <div className='grid grid-cols-1 gap-5 sm:grid-cols-2'>
+              <CustomTextField
+                select
+                fullWidth
+                name='currency_code'
+                label={dictionary.fields.baseCurrency}
+                value={form.currency_code}
+                onChange={updateField}
+              >
+                <MenuItem value='AFN'>AFN</MenuItem>
+                <MenuItem value='USD'>USD</MenuItem>
+              </CustomTextField>
+              <CustomTextField
+                fullWidth
+                required
+                type='number'
+                name='usd_afn_exchange_rate'
+                label={dictionary.fields.exchangeRate}
+                value={form.usd_afn_exchange_rate}
+                slotProps={{ htmlInput: { min: 0.0001, step: 0.0001 } }}
+                onChange={updateField}
+              />
+            </div>
+          </div>
+          <div className='rounded border p-5'>
             <Typography variant='h6'>{dictionary.workHoursTitle}</Typography>
             <Typography variant='body2' color='text.secondary' className='mb-5'>
               {dictionary.workHoursDescription}
@@ -227,8 +261,6 @@ const SetupView = ({ dictionary, initialSettings, locale }) => {
       </Card>
 
       <Card>
-        <CardHeader title={dictionary.title} subheader={dictionary.description} />
-        <Divider />
         <CardContent className='flex flex-col gap-8'>
           <div className='grid grid-cols-1 gap-8 lg:grid-cols-2 xl:grid-cols-3'>
             <div className='flex flex-col gap-3'>

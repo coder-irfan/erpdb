@@ -13,6 +13,7 @@ import { toast } from 'sonner'
 
 import CustomTextField from '@core/components/mui/TextField'
 import ConfirmDeleteModal from '@/components/dialogs/ConfirmDeleteModal'
+import TableFiltersPopover from '@/components/table/TableFiltersPopover'
 
 import LeadActivityDrawer from './LeadActivityDrawer'
 import LeadDrawer from './LeadDrawer'
@@ -133,90 +134,19 @@ const CrmLeadsView = ({ locale, dictionary, currencyCode, canWrite, canDelete })
   }
 
   return (
-    <div className='flex flex-col gap-6'>
-      <Card>
-        <CardContent className='flex flex-wrap items-start justify-between gap-4'>
-          <div>
-            <Typography variant='h4'>{dictionary.title}</Typography>
-            <Typography color='text.secondary'>{dictionary.description}</Typography>
-          </div>
-          {canWrite && (
-            <Button
-              variant='contained'
-              startIcon={<i className='tabler-plus' />}
-              onClick={() => {
-                setEditingLead(null)
-                setDrawerOpen(true)
-              }}
-            >
-              {dictionary.actions.newLead}
-            </Button>
-          )}
-        </CardContent>
-      </Card>
+    <div className='flex flex-col md:gap-4 gap-2'>
       <LeadStatsCards summary={data.summary} locale={locale} currencyCode={currencyCode} dictionary={dictionary} />
       <Card>
-        <CardContent className='mb-4 flex flex-wrap items-center justify-between gap-4 border-be border-divider'>
+        <CardContent className='flex flex-wrap items-center justify-between gap-4 border-be border-divider'>
           <CustomTextField
             label={dictionary.filters.search}
             placeholder={dictionary.filters.searchPlaceholder}
             value={searchInput}
             onChange={event => setSearchInput(event.target.value)}
-            className='is-full sm:is-[260px]'
-            slotProps={{ input: { startAdornment: <i className='tabler-search me-2' /> } }}
+            className='is-full sm:is-[320px]'
+            slotProps={{ input: { startAdornment: <i className='tabler-search' /> } }}
           />
           <div className='flex is-full flex-wrap items-center gap-3 sm:is-auto sm:justify-end'>
-            <CustomTextField
-              select
-              label={dictionary.filters.source}
-              value={sourceId || ''}
-              onChange={event => {
-                setSourceId(event.target.value)
-                setPage(0)
-              }}
-              className='is-full sm:is-[190px]'
-            >
-              <MenuItem value=''>{dictionary.filters.allSources}</MenuItem>
-              {data.options.sources.map(item => (
-                <MenuItem key={item.id} value={item.id}>
-                  {item.label}
-                </MenuItem>
-              ))}
-            </CustomTextField>
-            <CustomTextField
-              select
-              label={dictionary.filters.status}
-              value={statusId || ''}
-              onChange={event => {
-                setStatusId(event.target.value)
-                setPage(0)
-              }}
-              className='is-full sm:is-[190px]'
-            >
-              <MenuItem value=''>{dictionary.filters.allStatuses}</MenuItem>
-              {data.options.statuses.map(item => (
-                <MenuItem key={item.id} value={item.id}>
-                  {item.label}
-                </MenuItem>
-              ))}
-            </CustomTextField>
-            <CustomTextField
-              select
-              label={dictionary.filters.assigned}
-              value={assignedId || ''}
-              onChange={event => {
-                setAssignedId(event.target.value)
-                setPage(0)
-              }}
-              className='is-full sm:is-[220px]'
-            >
-              <MenuItem value=''>{dictionary.filters.allStaff}</MenuItem>
-              {data.options.staff.map(item => (
-                <MenuItem key={item.id} value={item.id}>
-                  {item.full_name}
-                </MenuItem>
-              ))}
-            </CustomTextField>
             <ToggleButtonGroup
               exclusive
               value={view}
@@ -236,6 +166,74 @@ const CrmLeadsView = ({ locale, dictionary, currencyCode, canWrite, canDelete })
                 {dictionary.views.kanban}
               </ToggleButton>
             </ToggleButtonGroup>
+            <TableFiltersPopover
+              activeCount={Number(Boolean(sourceId)) + Number(Boolean(statusId)) + Number(Boolean(assignedId))}
+              locale={locale}
+            >
+              <CustomTextField
+                select
+                label={dictionary.filters.source}
+                value={sourceId || ''}
+                onChange={event => {
+                  setSourceId(event.target.value)
+                  setPage(0)
+                }}
+                className='is-full'
+              >
+                <MenuItem value=''>{dictionary.filters.allSources}</MenuItem>
+                {data.options.sources.map(item => (
+                  <MenuItem key={item.id} value={item.id}>
+                    {item.label}
+                  </MenuItem>
+                ))}
+              </CustomTextField>
+              <CustomTextField
+                select
+                label={dictionary.filters.status}
+                value={statusId || ''}
+                onChange={event => {
+                  setStatusId(event.target.value)
+                  setPage(0)
+                }}
+                className='is-full'
+              >
+                <MenuItem value=''>{dictionary.filters.allStatuses}</MenuItem>
+                {data.options.statuses.map(item => (
+                  <MenuItem key={item.id} value={item.id}>
+                    {item.label}
+                  </MenuItem>
+                ))}
+              </CustomTextField>
+              <CustomTextField
+                select
+                label={dictionary.filters.assigned}
+                value={assignedId || ''}
+                onChange={event => {
+                  setAssignedId(event.target.value)
+                  setPage(0)
+                }}
+                className='is-full'
+              >
+                <MenuItem value=''>{dictionary.filters.allStaff}</MenuItem>
+                {data.options.staff.map(item => (
+                  <MenuItem key={item.id} value={item.id}>
+                    {item.full_name}
+                  </MenuItem>
+                ))}
+              </CustomTextField>
+            </TableFiltersPopover>
+            {canWrite && (
+              <Button
+                variant='contained'
+                startIcon={<i className='tabler-plus' />}
+                onClick={() => {
+                  setEditingLead(null)
+                  setDrawerOpen(true)
+                }}
+              >
+                {dictionary.actions.newLead}
+              </Button>
+            )}
           </div>
         </CardContent>
         {view === 'table' ? (
@@ -285,6 +283,7 @@ const CrmLeadsView = ({ locale, dictionary, currencyCode, canWrite, canDelete })
         open={drawerOpen}
         lead={editingLead}
         options={data.options}
+        baseCurrency={currencyCode}
         locale={locale}
         dictionary={dictionary}
         onClose={() => setDrawerOpen(false)}

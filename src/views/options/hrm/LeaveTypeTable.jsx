@@ -6,7 +6,6 @@ import Alert from '@mui/material/Alert'
 import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
-import CardHeader from '@mui/material/CardHeader'
 import Chip from '@mui/material/Chip'
 import IconButton from '@mui/material/IconButton'
 import Tooltip from '@mui/material/Tooltip'
@@ -122,7 +121,6 @@ const LeaveTypeTable = ({ initialResult, initialError, canCreate, canUpdate, can
   return (
     <>
       <Card>
-        <CardHeader title={dictionary.leaveTypes.title} subheader={dictionary.leaveTypes.description} />
         {initialError && (
           <CardContent className='pb-0'>
             <Alert severity='error'>{initialError}</Alert>
@@ -135,8 +133,8 @@ const LeaveTypeTable = ({ initialResult, initialError, canCreate, canUpdate, can
               onChange={event => setSearchInput(event.target.value)}
               label={dictionary.common.search}
               placeholder={dictionary.leaveTypes.searchPlaceholder}
-              className='is-full sm:is-[260px]'
-              slotProps={{ input: { startAdornment: <i className='tabler-search me-2 text-textSecondary' /> } }}
+              className='is-full sm:is-[320px]'
+              slotProps={{ input: { startAdornment: <i className='tabler-search text-textSecondary' /> } }}
             />
             {canCreate && (
               <Button
@@ -161,7 +159,7 @@ const LeaveTypeTable = ({ initialResult, initialError, canCreate, canUpdate, can
                 <th>{dictionary.leaveTypes.table.description}</th>
                 <th>{dictionary.common.status}</th>
                 <th>{dictionary.common.createdDate}</th>
-                <th className='text-right'>{dictionary.common.actions}</th>
+                <th className='text-end'>{dictionary.common.actions}</th>
               </tr>
             </thead>
             <tbody>
@@ -209,7 +207,7 @@ const LeaveTypeTable = ({ initialResult, initialError, canCreate, canUpdate, can
                       />
                     </td>
                     <td>{formatDate(option.created_at, locale)}</td>
-                    <td className='text-right'>
+                    <td className='text-end'>
                       <div className='flex min-is-[120px] items-center justify-end gap-1'>
                         {canUpdate && (
                           <>

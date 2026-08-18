@@ -15,22 +15,22 @@ const localeMap = { en: 'en-US', fa: 'fa-AF', ps: 'ps-AF' }
 const STATUS_COLORS = { ACTIVE: 'success', EXPIRED: 'warning', TERMINATED: 'error', DRAFT: 'secondary' }
 
 const formatDate = (value, locale) =>
-  value
-    ? new Intl.DateTimeFormat(localeMap[locale] || 'en-US', { dateStyle: 'medium' }).format(new Date(value))
-    : '—'
+  value ? new Intl.DateTimeFormat(localeMap[locale] || 'en-US', { dateStyle: 'medium' }).format(new Date(value)) : '—'
 
 const DETAIL_TONES = {
   primary: 'border-primary/20 bg-primaryLighter text-primary',
-  success: 'border-success/20 bg-successLight text-success',
-  warning: 'border-warning/20 bg-warningLight text-warning'
+  success: 'border-success/20 bg-successLighter text-success',
+  warning: 'border-warning/20 bg-secondaryLighter text-warning'
 }
 
 const DetailItem = ({ label, value, icon, tone }) => (
   <div className={tone ? `rounded border p-4 ${DETAIL_TONES[tone]}` : 'rounded border border-divider p-4'}>
-    {icon && <i className={`${icon} mb-2 text-xl`} />}
-    <Typography variant='caption' color='text.secondary'>
-      {label}
-    </Typography>
+    <div className='flex items-center gap-1'>
+      {icon && <i className={`${icon} text-xl`} />}
+      <Typography variant='caption' color='text.secondary'>
+        {label}
+      </Typography>
+    </div>
     <Typography className='mt-1' color='text.primary'>
       {value || '—'}
     </Typography>
@@ -46,8 +46,12 @@ const StaffContractDetailDialog = ({ contract, open, locale, dictionary, onClose
         <div>
           <Typography variant='h5'>{dictionary.details.title}</Typography>
           <div className='mt-1 flex items-center gap-2 text-primary'>
-            <span className='flex size-8 items-center justify-center rounded-full bg-primaryLighter'><i className='tabler-file-certificate' /></span>
-            <Typography color='primary.main' className='font-semibold'>{contract.contract_number}</Typography>
+            <span className='flex size-8 items-center justify-center rounded-full bg-primaryLighter'>
+              <i className='tabler-file-certificate' />
+            </span>
+            <Typography color='primary.main' className='font-semibold'>
+              {contract.contract_number}
+            </Typography>
           </div>
         </div>
         <Chip
@@ -58,12 +62,22 @@ const StaffContractDetailDialog = ({ contract, open, locale, dictionary, onClose
       </DialogTitle>
       <DialogContent dividers className='flex flex-col gap-6'>
         <div className='grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4'>
-          <DetailItem label={dictionary.fields.staffMember} value={contract.staff.full_name} icon='tabler-user' tone='primary' />
+          <DetailItem
+            label={dictionary.fields.staffMember}
+            value={contract.staff.full_name}
+            icon='tabler-user'
+            tone='primary'
+          />
           <DetailItem label={dictionary.fields.position} value={contract.position_title} icon='tabler-briefcase' />
-          <DetailItem label={dictionary.fields.contractType} value={contract.contract_type.label} icon='tabler-file-text' tone='warning' />
+          <DetailItem
+            label={dictionary.fields.contractType}
+            value={contract.contract_type.label}
+            icon='tabler-file-text'
+            tone='warning'
+          />
           <DetailItem
             label={dictionary.fields.baseSalary}
-            value={formatCurrency(contract.base_salary, locale, dictionary.currencyCode || 'AFN')}
+            value={formatCurrency(contract.base_salary, locale, contract.currency || dictionary.currencyCode || 'AFN')}
             icon='tabler-cash'
             tone='success'
           />
@@ -83,7 +97,7 @@ const StaffContractDetailDialog = ({ contract, open, locale, dictionary, onClose
           />
         </div>
       </DialogContent>
-      <DialogActions>
+      <DialogActions className='pt-4'>
         <Button color='secondary' variant='tonal' onClick={onClose}>
           {dictionary.actions.close}
         </Button>

@@ -105,7 +105,7 @@ const ChangePasswordCard = () => {
             </Grid>
             <Grid size={{ xs: 12 }} className='flex flex-col gap-4'>
               <Typography variant='h6'>Password Requirements:</Typography>
-              <div className='flex flex-col gap-4'>
+              <div className='flex flex-col md:gap-4 gap-2'>
                 <div className='flex items-center gap-2.5'>
                   <i className='tabler-circle-filled text-[8px]' />
                   Minimum 8 characters long - the more, the better

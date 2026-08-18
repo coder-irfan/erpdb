@@ -24,7 +24,7 @@ const TwoFactorAuthenticationCard = () => {
       <Card>
         <CardHeader title='Two-steps verification' />
         <CardContent className='flex flex-col items-start gap-6'>
-          <div className='flex flex-col gap-4'>
+          <div className='flex flex-col md:gap-4 gap-2'>
             <Typography variant='h5' color='text.secondary'>
               Two factor authentication is not enabled yet.
             </Typography>

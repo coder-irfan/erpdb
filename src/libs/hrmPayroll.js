@@ -18,6 +18,9 @@ export const payrollSelect = {
   unpaid_leave_deduction: true,
   tax_deduction: true,
   net_salary: true,
+  currency: true,
+  exchange_rate: true,
+  amount_base: true,
   status_id: true,
   payment_method_id: true,
   payment_date: true,
@@ -52,6 +55,8 @@ export const normalizePayroll = payroll => ({
   unpaid_leave_deduction: payroll.unpaid_leave_deduction.toFixed(2),
   tax_deduction: payroll.tax_deduction.toFixed(2),
   net_salary: payroll.net_salary.toFixed(2),
+  exchange_rate: payroll.exchange_rate.toFixed(4),
+  amount_base: payroll.amount_base.toFixed(2),
   payment_date: payroll.payment_date?.toISOString() || null,
   created_at: payroll.created_at.toISOString(),
   updated_at: payroll.updated_at.toISOString(),
@@ -104,7 +109,9 @@ export const calculatePayrollForStaff = async (transaction, staff, month, year) 
     deduction,
     netSalary: baseSalary.sub(deduction).toDecimalPlaces(2),
     unpaidDays,
-    contractNumber: contract.contract_number
+    contractNumber: contract.contract_number,
+    currency: contract.currency,
+    exchangeRate: contract.exchange_rate
   }
 }
 

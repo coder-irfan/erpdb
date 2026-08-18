@@ -20,12 +20,15 @@
   --color-primaryLight: var(--mui-palette-primary-lightOpacity);
   --color-primaryLighter: var(--mui-palette-primary-lighterOpacity);
   --color-secondary: var(--mui-palette-secondary-main);
+  --color-secondaryLighter: var(--mui-palette-secondary-lighterOpacity);
   --color-error: var(--mui-palette-error-main);
   --color-errorLight: var(--mui-palette-error-lightOpacity);
   --color-errorLighter: var(--mui-palette-error-lighterOpacity);
   --color-warning: var(--mui-palette-warning-main);
   --color-info: var(--mui-palette-info-main);
+  --color-infoLighter: var(--mui-palette-info-lighterOpacity);
   --color-success: var(--mui-palette-success-main);
+  --color-successLighter: var(--mui-palette-success-lighterOpacity);
   --color-textPrimary: var(--mui-palette-text-primary);
   --color-textSecondary: var(--mui-palette-text-secondary);
   --color-textDisabled: var(--mui-palette-text-disabled);
@@ -269,6 +272,39 @@ body,
 }
 
 @media print {
+  body:has(.invoice-print-container) > *:not(.MuiDialog-root),
+  body:has(.invoice-print-container) .MuiBackdrop-root,
+  body:has(.invoice-print-container) .no-print {
+    display: none !important;
+  }
+
+  body:has(.invoice-print-container) .MuiDialog-root,
+  body:has(.invoice-print-container) .MuiDialog-container,
+  body:has(.invoice-print-container) .MuiDialog-paper,
+  body:has(.invoice-print-container) .MuiDialogContent-root {
+    position: static !important;
+    display: block !important;
+    inline-size: 100% !important;
+    max-inline-size: none !important;
+    block-size: auto !important;
+    max-block-size: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    box-shadow: none !important;
+  }
+
+  .invoice-print-container {
+    inline-size: 190mm !important;
+    min-block-size: 0 !important;
+    margin-block: 0 !important;
+    margin-inline: auto !important;
+    padding: 10mm !important;
+    color: black !important;
+    background: white !important;
+    page-break-after: avoid !important;
+  }
+
   body:has(.payslip-print-container) > *:not(.MuiDialog-root),
   body:has(.payslip-print-container) .MuiBackdrop-root,
   body:has(.payslip-print-container) .no-print {
@@ -281,10 +317,10 @@ body,
   body:has(.payslip-print-container) .MuiDialogContent-root {
     position: static !important;
     display: block !important;
-    width: 100% !important;
-    max-width: none !important;
-    height: auto !important;
-    max-height: none !important;
+    inline-size: 100% !important;
+    max-inline-size: none !important;
+    block-size: auto !important;
+    max-block-size: none !important;
     margin: 0 !important;
     padding: 0 !important;
     overflow: visible !important;
@@ -292,9 +328,10 @@ body,
   }
 
   .payslip-print-container {
-    width: 190mm !important;
-    min-height: 0 !important;
-    margin: 0 auto !important;
+    inline-size: 190mm !important;
+    min-block-size: 0 !important;
+    margin-block: 0 !important;
+    margin-inline: auto !important;
     padding: 10mm !important;
     color: black !important;
     background: white !important;
@@ -427,7 +464,8 @@ body,
   .hrm-report-print th,
   .hrm-report-print td {
     block-size: auto !important;
-    padding: 5px 7px !important;
+    padding-block: 5px !important;
+    padding-inline: 7px !important;
     white-space: normal !important;
     overflow-wrap: anywhere;
     vertical-align: top;
@@ -497,5 +535,15 @@ body,
 }
 
 .no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Preserve horizontal table scrolling while removing native scrollbar chrome. */
+.overflow-x-auto:has(> table) {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.overflow-x-auto:has(> table)::-webkit-scrollbar {
   display: none;
 }

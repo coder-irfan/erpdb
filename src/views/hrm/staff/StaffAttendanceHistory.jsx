@@ -79,7 +79,7 @@ const StaffAttendanceHistory = ({ active, staffId, locale, dictionary }) => {
       {loading ? (
         <div className='flex min-h-40 items-center justify-center'><CircularProgress /></div>
       ) : error ? <Alert severity='error'>{error}</Alert> : (
-        <div className='overflow-x-auto rounded border border-divider'>
+        <div className='no-scrollbar overflow-x-auto scroll-smooth rounded border border-divider'>
           <table className={tableStyles.table}>
             <thead><tr><th>{attendanceDictionary.date}</th><th>{attendanceDictionary.statusLabel}</th><th>{attendanceDictionary.checkIn}</th><th>{attendanceDictionary.checkOut}</th><th>{attendanceDictionary.hours}</th></tr></thead>
             <tbody>

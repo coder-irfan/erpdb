@@ -2,6 +2,7 @@ import { revalidatePath } from 'next/cache'
 
 import { getServerSession } from 'next-auth'
 import { safeParse } from 'valibot'
+import { Prisma } from '@prisma/client'
 
 import { SYSTEM_SETTING_ID } from '@/configs/branding'
 import { authOptions } from '@/libs/auth'
@@ -26,6 +27,25 @@ const getAuthorizedSession = async () => {
 }
 
 const nullableText = value => value?.trim() || null
+
+const rebaseStoredAmounts = async (transaction, baseCurrency) => {
+  const statements = [
+    Prisma.sql`UPDATE HrmStaff SET amount_base = CASE WHEN salary_currency = ${baseCurrency} THEN salary WHEN salary_currency = 'USD' THEN salary * salary_exchange_rate ELSE salary / salary_exchange_rate END`,
+    Prisma.sql`UPDATE HrmStaffContract SET amount_base = CASE WHEN currency = ${baseCurrency} THEN base_salary WHEN currency = 'USD' THEN base_salary * exchange_rate ELSE base_salary / exchange_rate END`,
+    Prisma.sql`UPDATE HrmPayroll SET amount_base = CASE WHEN currency = ${baseCurrency} THEN net_salary WHEN currency = 'USD' THEN net_salary * exchange_rate ELSE net_salary / exchange_rate END`,
+    Prisma.sql`UPDATE CrmLead SET amount_base = CASE WHEN currency = ${baseCurrency} THEN COALESCE(estimated_value, 0) WHEN currency = 'USD' THEN COALESCE(estimated_value, 0) * exchange_rate ELSE COALESCE(estimated_value, 0) / exchange_rate END`,
+    Prisma.sql`UPDATE Project SET amount_base = CASE WHEN currency = ${baseCurrency} THEN budget WHEN currency = 'USD' THEN budget * exchange_rate ELSE budget / exchange_rate END`,
+    Prisma.sql`UPDATE Contract SET amount_base = CASE WHEN currency = ${baseCurrency} THEN total_amount WHEN currency = 'USD' THEN total_amount * exchange_rate ELSE total_amount / exchange_rate END`,
+    Prisma.sql`UPDATE ContractInvoice SET amount_base = CASE WHEN currency = ${baseCurrency} THEN amount WHEN currency = 'USD' THEN amount * exchange_rate ELSE amount / exchange_rate END`,
+    Prisma.sql`UPDATE FinanceIncome SET amount_base = CASE WHEN currency = ${baseCurrency} THEN total_amount WHEN currency = 'USD' THEN total_amount * exchange_rate ELSE total_amount / exchange_rate END`,
+    Prisma.sql`UPDATE FinanceExpense SET amount_base = CASE WHEN currency = ${baseCurrency} THEN sub_total WHEN currency = 'USD' THEN sub_total * exchange_rate ELSE sub_total / exchange_rate END`,
+    Prisma.sql`UPDATE FinanceSalary SET amount_base = CASE WHEN currency = ${baseCurrency} THEN payable_amount WHEN currency = 'USD' THEN payable_amount * exchange_rate ELSE payable_amount / exchange_rate END`,
+    Prisma.sql`UPDATE FinanceLoan SET amount_base = CASE WHEN currency = ${baseCurrency} THEN total_amount WHEN currency = 'USD' THEN total_amount * exchange_rate ELSE total_amount / exchange_rate END`,
+    Prisma.sql`UPDATE Inventory SET amount_base = CASE WHEN currency = ${baseCurrency} THEN unit_price WHEN currency = 'USD' THEN unit_price * exchange_rate ELSE unit_price / exchange_rate END`
+  ]
+
+  for (const statement of statements) await transaction.$executeRaw(statement)
+}
 
 const normalizeLocalPath = (value, pattern) => {
   if (!value) return null
@@ -84,6 +104,10 @@ export async function PUT(request) {
     signatory_name: payload?.signatory_name || '',
     signatory_title: payload?.signatory_title || '',
     signatory_stamp: payload?.signatory_stamp || '',
+    currency_code: payload?.currency_code || DEFAULT_COMPANY_SETUP.currency_code,
+    usd_afn_exchange_rate: String(
+      payload?.usd_afn_exchange_rate || DEFAULT_COMPANY_SETUP.usd_afn_exchange_rate
+    ),
     default_work_start: payload?.default_work_start || DEFAULT_COMPANY_SETUP.default_work_start,
     default_work_end: payload?.default_work_end || DEFAULT_COMPANY_SETUP.default_work_end,
     lightLogoUrl: payload?.lightLogoUrl || '',
@@ -110,9 +134,18 @@ export async function PUT(request) {
     return jsonError('Work end time must be later than work start time.', 400, 'INVALID_WORK_HOURS')
   }
 
+  if (Number(validation.output.usd_afn_exchange_rate) <= 0) {
+    return jsonError('The USD/AFN exchange rate must be greater than zero.', 400, 'INVALID_EXCHANGE_RATE')
+  }
+
   try {
-    await prisma.$transaction([
-      prisma.setup.upsert({
+    const currentSetup = await prisma.setup.findUnique({
+      where: { scope: 'GLOBAL' },
+      select: { currency_code: true }
+    })
+
+    await prisma.$transaction(async transaction => {
+      await transaction.setup.upsert({
         where: { scope: 'GLOBAL' },
         update: {
           app_name: validation.output.app_name,
@@ -125,6 +158,9 @@ export async function PUT(request) {
           signatory_name: nullableText(validation.output.signatory_name),
           signatory_title: nullableText(validation.output.signatory_title),
           signatory_stamp: signatoryStamp,
+          currency_code: validation.output.currency_code,
+          currency_symbol: validation.output.currency_code === 'USD' ? '$' : '؋',
+          usd_afn_exchange_rate: validation.output.usd_afn_exchange_rate,
           default_work_start: validation.output.default_work_start,
           default_work_end: validation.output.default_work_end
         },
@@ -139,24 +175,37 @@ export async function PUT(request) {
           signatory_name: nullableText(validation.output.signatory_name),
           signatory_title: nullableText(validation.output.signatory_title),
           signatory_stamp: signatoryStamp,
+          currency_code: validation.output.currency_code,
+          currency_symbol: validation.output.currency_code === 'USD' ? '$' : '؋',
+          usd_afn_exchange_rate: validation.output.usd_afn_exchange_rate,
           default_work_start: validation.output.default_work_start,
           default_work_end: validation.output.default_work_end
         }
-      }),
-      prisma.systemSetting.upsert({
+      })
+
+      await transaction.systemSetting.upsert({
         where: { id: SYSTEM_SETTING_ID },
         update: { lightLogoUrl, darkLogoUrl, faviconUrl },
         create: { id: SYSTEM_SETTING_ID, lightLogoUrl, darkLogoUrl, faviconUrl }
-      }),
-      prisma.auditLog.create({
+      })
+
+      if ((currentSetup?.currency_code || DEFAULT_COMPANY_SETUP.currency_code) !== validation.output.currency_code) {
+        await rebaseStoredAmounts(transaction, validation.output.currency_code)
+      }
+
+      await transaction.auditLog.create({
         data: {
           user_id: session.user.id,
           action: 'COMPANY_SETUP_UPDATED',
           module: 'SETUP',
-          details: { companyName: validation.output.company_name }
+          details: {
+            companyName: validation.output.company_name,
+            baseCurrency: validation.output.currency_code,
+            usdAfnExchangeRate: validation.output.usd_afn_exchange_rate
+          }
         }
       })
-    ])
+    })
 
     revalidatePath('/', 'layout')
     revalidatePath('/[lang]/setup', 'page')

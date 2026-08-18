@@ -39,7 +39,7 @@ const UserDetails = () => {
     <>
       <Card>
         <CardContent className='flex flex-col pbs-12 gap-6'>
-          <div className='flex flex-col gap-6'>
+          <div className='flex flex-col md:gap-4 gap-2'>
             <div className='flex items-center justify-center flex-col gap-4'>
               <div className='flex flex-col items-center gap-4'>
                 <CustomAvatar alt='user-profile' src='/images/avatars/1.png' variant='rounded' size={120} />

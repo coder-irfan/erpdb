@@ -88,7 +88,7 @@ const LastTransaction = ({ serverMode }) => {
               <th className='leading-6 plb-4 pis-6 pli-2'>Card</th>
               <th className='leading-6 plb-4 pli-2'>Date</th>
               <th className='leading-6 plb-4 pli-2'>Status</th>
-              <th className='leading-6 plb-4 pie-6 pli-2 text-right'>Trend</th>
+              <th className='leading-6 plb-4 pie-6 pli-2 text-end'>Trend</th>
             </tr>
           </thead>
           <tbody>
@@ -129,7 +129,7 @@ const LastTransaction = ({ serverMode }) => {
                     color={statusObj[row.status].color}
                   />
                 </td>
-                <td className='pli-2 plb-3 pie-6 text-right'>
+                <td className='pli-2 plb-3 pie-6 text-end'>
                   <Typography color='text.primary'>{row.trend}</Typography>
                 </td>
               </tr>

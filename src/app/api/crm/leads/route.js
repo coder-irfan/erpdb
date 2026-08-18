@@ -3,6 +3,7 @@ import sanitizeHtml from 'sanitize-html'
 import { safeParse } from 'valibot'
 
 import { authorizeAction } from '@/libs/actionAuthorization'
+import { getCompanySetupRecord } from '@/libs/companySetup'
 import {
   CRM_READ_PERMISSIONS,
   CRM_WRITE_PERMISSIONS,
@@ -13,6 +14,7 @@ import {
 } from '@/libs/crmLeads'
 import { prisma } from '@/libs/prisma'
 import { createLeadSchema } from '@/schemas/crm/leads'
+import { convertToBaseCurrency, toFiniteNumber } from '@/utils/formatCurrency'
 import { getDictionary } from '@/utils/getDictionary'
 
 const MAX_PAGE_SIZE = 200
@@ -74,7 +76,15 @@ export async function GET(request) {
         take: limit
       }),
       prisma.crmLead.count({ where }),
-      prisma.crmLead.findMany({ where, select: { estimated_value: true, next_follow_up_date: true, converted_client: { select: { id: true } }, status: { select: { value: true } } } }),
+      prisma.crmLead.findMany({
+        where,
+        select: {
+          amount_base: true,
+          next_follow_up_date: true,
+          converted_client: { select: { id: true } },
+          status: { select: { value: true } }
+        }
+      }),
       prisma.option.findMany({ where: { category: 'LEAD_STATUS', is_active: true }, select: { id: true, label: true, value: true, color_code: true }, orderBy: { sort_order: 'asc' } }),
       prisma.option.findMany({ where: { category: 'LEAD_SOURCE', is_active: true }, select: { id: true, label: true, value: true, color_code: true }, orderBy: { sort_order: 'asc' } }),
       prisma.hrmStaff.findMany({ where: { status: 'ACTIVE' }, select: { id: true, first_name: true, last_name: true, position: true }, orderBy: [{ first_name: 'asc' }, { last_name: 'asc' }] })
@@ -95,7 +105,7 @@ export async function GET(request) {
         totalPages: Math.max(1, Math.ceil(totalCount / limit)),
         summary: {
           totalActive: activeLeads.length,
-          pipelineValue: activeLeads.reduce((total, lead) => total + Number(lead.estimated_value || 0), 0).toFixed(2),
+          pipelineValue: activeLeads.reduce((total, lead) => total + toFiniteNumber(lead.amount_base), 0).toFixed(2),
           followUpsToday: activeLeads.filter(lead => lead.next_follow_up_date && lead.next_follow_up_date >= startOfToday && lead.next_follow_up_date <= endOfToday).length,
           wonDeals: summaryLeads.filter(lead => lead.status.value === 'WON').length,
           conversionRate: summaryLeads.length ? Number(((convertedCount / summaryLeads.length) * 100).toFixed(2)) : 0
@@ -137,11 +147,12 @@ export async function POST(request) {
 
     const values = parsed.output
 
-    const [source, status, assignedStaff, currentStaffId] = await Promise.all([
+    const [source, status, assignedStaff, currentStaffId, setup] = await Promise.all([
       prisma.option.findFirst({ where: { id: values.source_id, category: 'LEAD_SOURCE', is_active: true }, select: { id: true } }),
       prisma.option.findFirst({ where: { id: values.status_id, category: 'LEAD_STATUS', is_active: true }, select: { id: true } }),
       values.assigned_to_id ? prisma.hrmStaff.findFirst({ where: { id: values.assigned_to_id, status: 'ACTIVE' }, select: { id: true } }) : null,
-      getCurrentStaffId(authorization.session.user.id)
+      getCurrentStaffId(authorization.session.user.id),
+      getCompanySetupRecord()
     ])
 
     if (!source || !status || (values.assigned_to_id && !assignedStaff)) return errorResponse(dictionary.messages.invalidRelations, 400, 'INVALID_RELATIONS')
@@ -162,6 +173,16 @@ export async function POST(request) {
           status_id: values.status_id,
           assigned_to_id: values.assigned_to_id || null,
           estimated_value: new Prisma.Decimal(values.estimated_value),
+          currency: values.currency,
+          exchange_rate: new Prisma.Decimal(setup.usd_afn_exchange_rate),
+          amount_base: new Prisma.Decimal(
+            convertToBaseCurrency(
+              values.estimated_value,
+              values.currency,
+              setup.usd_afn_exchange_rate,
+              setup.currency_code
+            )
+          ),
           next_follow_up_date: parseOptionalDate(values.next_follow_up_date),
           notes: cleanText(values.notes) || null,
           activities: { create: { staff_id: activityStaffId, activity_type: 'NOTE', title: dictionary.activities.leadCreated } }

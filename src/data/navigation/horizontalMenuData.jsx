@@ -76,8 +76,8 @@ const horizontalMenuData = dictionary => [
       },
       {
         label: dictionary.navigation.contractInvoices,
-        href: '/contract/invoices',
-        permission: 'contracts_invoice:read'
+        href: '/contracts/invoices',
+        permission: 'contracts:read'
       },
       {
         label: dictionary.navigation.contractOthers,
@@ -206,6 +206,18 @@ const horizontalMenuData = dictionary => [
           {
             label: dictionary.navigation.crmLeadOptions,
             href: '/options/crm/leads',
+            permission: 'options:read'
+          }
+        ]
+      },
+      {
+        label: dictionary.navigation.contractManagement,
+        icon: 'tabler-file-settings',
+        permission: 'options:read',
+        children: [
+          {
+            label: dictionary.navigation.contractOptions,
+            href: '/options/contracts',
             permission: 'options:read'
           }
         ]

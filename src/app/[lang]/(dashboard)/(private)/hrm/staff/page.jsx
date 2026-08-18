@@ -2,6 +2,7 @@ import { getServerSession } from 'next-auth'
 
 import { getAvailableStaffUsers, getStaffList, getStaffStats } from '@/actions/hrm/staff'
 import { authOptions } from '@/libs/auth'
+import { getCompanySetupRecord } from '@/libs/companySetup'
 import { getDictionary } from '@/utils/getDictionary'
 import { hasAnyPermission } from '@/utils/rbac'
 import StaffListTable from '@/views/hrm/staff/StaffListTable'
@@ -17,10 +18,11 @@ const StaffPage = async props => {
   const canUpdate = hasAnyPermission(session, ['hrm:write', 'hrm_staff:update'])
   const requestContext = { locale: lang }
 
-  const [listResult, statsResult, usersResult] = await Promise.all([
+  const [listResult, statsResult, usersResult, setup] = await Promise.all([
     getStaffList(requestContext),
     getStaffStats(requestContext),
-    canCreate || canUpdate ? getAvailableStaffUsers(requestContext) : Promise.resolve({ success: true, data: [] })
+    canCreate || canUpdate ? getAvailableStaffUsers(requestContext) : Promise.resolve({ success: true, data: [] }),
+    getCompanySetupRecord()
   ])
 
   const failedResult = [listResult, statsResult, usersResult].find(result => !result.success)
@@ -33,6 +35,7 @@ const StaffPage = async props => {
       initialError={failedResult?.error || null}
       canCreate={canCreate}
       canUpdate={canUpdate}
+      baseCurrency={setup.currency_code}
       locale={lang}
       dictionary={dictionary.hrmStaff}
     />

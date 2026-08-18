@@ -23,13 +23,13 @@ const DataBase = ({ activeStep, isLastStep, handleNext, handlePrev }) => {
   }
 
   return (
-    <div className='flex flex-col gap-6'>
+    <div className='flex flex-col md:gap-4 gap-2'>
       <CustomTextField
         fullWidth
         label='Database Name'
         placeholder={`${themeConfig.templateName.toLowerCase().replace(/\s+/g, '_')}_database`}
       />
-      <div className='flex flex-col gap-4'>
+      <div className='flex flex-col md:gap-4 gap-2'>
         <Typography variant='h5'>Select Database Engine</Typography>
         <div onClick={() => setValue('firebase')} className='flex items-center justify-between cursor-pointer gap-4'>
           <div className='flex items-center gap-3'>

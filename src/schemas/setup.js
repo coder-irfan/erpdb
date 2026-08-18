@@ -1,11 +1,12 @@
-import { boolean, email, literal, maxLength, nonEmpty, object, optional, pipe, regex, string, trim, union } from 'valibot'
+import { boolean, email, literal, maxLength, nonEmpty, object, optional, picklist, pipe, regex, string, trim, union } from 'valibot'
 
 const defaultMessages = {
   required: 'This field is required.',
   emailInvalid: 'Enter a valid company email address.',
   valueTooLong: 'This value is too long.',
   invalidImagePath: 'Select a valid locally uploaded image.',
-  invalidTime: 'Enter a valid time in HH:mm format.'
+  invalidTime: 'Enter a valid time in HH:mm format.',
+  invalidExchangeRate: 'Enter a valid USD/AFN exchange rate.'
 }
 
 const TIME_PATTERN = /^(?:[01]\d|2[0-3]):[0-5]\d$/
@@ -42,6 +43,12 @@ export const createCompanySetupSchema = customMessages => {
     signatory_name: optionalText(messages, 191),
     signatory_title: optionalText(messages, 191),
     signatory_stamp: optionalText(messages, 2000),
+    currency_code: picklist(['AFN', 'USD'], messages.required),
+    usd_afn_exchange_rate: pipe(
+      string(messages.invalidExchangeRate),
+      trim(),
+      regex(/^\d+(?:\.\d{1,4})?$/, messages.invalidExchangeRate)
+    ),
     default_work_start: requiredTime(messages),
     default_work_end: requiredTime(messages),
     lightLogoUrl: optionalText(messages, 2000),

@@ -239,7 +239,7 @@ const DropdownMenu = props => {
         isMounted={isMounted}
         styles={styles}
       >
-        <div className='flex flex-col gap-4'>
+        <div className='flex flex-col md:gap-4 gap-2'>
           <div className='flex gap-3 items-center'>
             <CustomAvatar variant='rounded' color='primary' skin='light'>
               <i className='tabler-layout-grid' />
@@ -260,7 +260,7 @@ const DropdownMenu = props => {
             </Link>
           ))}
         </div>
-        <div className='flex flex-col gap-4'>
+        <div className='flex flex-col md:gap-4 gap-2'>
           <div className='flex items-center gap-3'>
             <CustomAvatar variant='rounded' color='primary' skin='light'>
               <i className='tabler-photo' />

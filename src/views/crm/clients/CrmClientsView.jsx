@@ -11,6 +11,7 @@ import { toast } from 'sonner'
 
 import CustomTextField from '@core/components/mui/TextField'
 import ConfirmDeleteModal from '@/components/dialogs/ConfirmDeleteModal'
+import TableFiltersPopover from '@/components/table/TableFiltersPopover'
 
 import ClientActivityDialog from './ClientActivityDialog'
 import ClientFormDrawer from './ClientFormDrawer'
@@ -108,83 +109,77 @@ const CrmClientsView = ({ locale, dictionary, currencyCode, canWrite, canDelete 
   }
 
   return (
-    <div className='flex flex-col gap-6'>
-      <Card>
-        <CardContent className='flex flex-wrap items-start justify-between gap-4'>
-          <div>
-            <Typography variant='h4'>{dictionary.title}</Typography>
-            <Typography color='text.secondary'>{dictionary.description}</Typography>
-          </div>
-          {canWrite && (
-            <Button
-              variant='contained'
-              startIcon={<i className='tabler-plus' />}
-              onClick={() => {
-                setEditingClient(null)
-                setFormOpen(true)
-              }}
-            >
-              {dictionary.actions.add}
-            </Button>
-          )}
-        </CardContent>
-      </Card>
+    <div className='flex flex-col md:gap-4 gap-2'>
       <ClientStatsCards summary={data.summary} locale={locale} currencyCode={currencyCode} dictionary={dictionary} />
       <Card>
-        <CardContent className='mb-4 flex flex-wrap items-center justify-between gap-4 border-be border-divider'>
+        <CardContent className='flex flex-wrap items-center justify-between gap-4 border-be border-divider'>
           <CustomTextField
             label={dictionary.filters.search}
             placeholder={dictionary.filters.searchPlaceholder}
             value={searchInput}
             onChange={event => setSearchInput(event.target.value)}
-            className='is-full sm:is-[280px]'
-            slotProps={{ input: { startAdornment: <i className='tabler-search me-2' /> } }}
+            className='is-full sm:is-[360px]'
+            slotProps={{ input: { startAdornment: <i className='tabler-search' /> } }}
           />
           <div className='flex is-full flex-wrap items-center gap-3 sm:is-auto sm:justify-end'>
-            <CustomTextField
-              select
-              label={dictionary.filters.manager}
-              value={managerId || ''}
-              onChange={event => {
-                setManagerId(event.target.value)
-                setPage(0)
-              }}
-              className='is-full sm:is-[220px]'
-              slotProps={{
-                select: {
-                  displayEmpty: true,
-                  renderValue: selected =>
-                    data.options.staff.find(item => item.id === selected)?.full_name || dictionary.filters.allManagers
-                }
-              }}
-            >
-              <MenuItem value=''>{dictionary.filters.allManagers}</MenuItem>
-              {data.options.staff.map(item => (
-                <MenuItem key={item.id} value={item.id}>
-                  {item.full_name}
-                </MenuItem>
-              ))}
-            </CustomTextField>
-            <CustomTextField
-              select
-              label={dictionary.filters.status}
-              value={status || ''}
-              onChange={event => {
-                setStatus(event.target.value)
-                setPage(0)
-              }}
-              className='is-full sm:is-[180px]'
-              slotProps={{
-                select: {
-                  displayEmpty: true,
-                  renderValue: selected => (selected ? dictionary.status[selected] : dictionary.filters.allStatuses)
-                }
-              }}
-            >
-              <MenuItem value=''>{dictionary.filters.allStatuses}</MenuItem>
-              <MenuItem value='ACTIVE'>{dictionary.status.ACTIVE}</MenuItem>
-              <MenuItem value='INACTIVE'>{dictionary.status.INACTIVE}</MenuItem>
-            </CustomTextField>
+            <TableFiltersPopover activeCount={Number(Boolean(managerId)) + Number(Boolean(status))} locale={locale}>
+              <CustomTextField
+                select
+                label={dictionary.filters.manager}
+                value={managerId || ''}
+                onChange={event => {
+                  setManagerId(event.target.value)
+                  setPage(0)
+                }}
+                className='is-full'
+                slotProps={{
+                  select: {
+                    displayEmpty: true,
+                    renderValue: selected =>
+                      data.options.staff.find(item => item.id === selected)?.full_name || dictionary.filters.allManagers
+                  }
+                }}
+              >
+                <MenuItem value=''>{dictionary.filters.allManagers}</MenuItem>
+                {data.options.staff.map(item => (
+                  <MenuItem key={item.id} value={item.id}>
+                    {item.full_name}
+                  </MenuItem>
+                ))}
+              </CustomTextField>
+              <CustomTextField
+                select
+                label={dictionary.filters.status}
+                value={status || ''}
+                onChange={event => {
+                  setStatus(event.target.value)
+                  setPage(0)
+                }}
+                className='is-full'
+                slotProps={{
+                  select: {
+                    displayEmpty: true,
+                    renderValue: selected => (selected ? dictionary.status[selected] : dictionary.filters.allStatuses)
+                  }
+                }}
+              >
+                <MenuItem value=''>{dictionary.filters.allStatuses}</MenuItem>
+                <MenuItem value='ACTIVE'>{dictionary.status.ACTIVE}</MenuItem>
+                <MenuItem value='INACTIVE'>{dictionary.status.INACTIVE}</MenuItem>
+              </CustomTextField>
+            </TableFiltersPopover>
+            {canWrite && (
+              <Button
+                variant='contained'
+                startIcon={<i className='tabler-plus' />}
+                onClick={() => {
+                  setEditingClient(null)
+                  setFormOpen(true)
+                }}
+              >
+                {dictionary.actions.add}
+              </Button>
+            )}
           </div>
         </CardContent>
         <ClientTableView

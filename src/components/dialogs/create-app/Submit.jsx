@@ -7,7 +7,7 @@ import DirectionalIcon from '@components/DirectionalIcon'
 
 const Submit = ({ activeStep, isLastStep, handleNext, handlePrev }) => {
   return (
-    <div className='flex flex-col gap-6'>
+    <div className='flex flex-col md:gap-4 gap-2'>
       <div className='flex flex-col items-center gap-4'>
         <div className='flex flex-col items-center gap-1'>
           <Typography variant='h5'>Submit</Typography>

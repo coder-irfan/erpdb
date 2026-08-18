@@ -1,6 +1,7 @@
 import sanitizeHtml from 'sanitize-html'
 
 import { authorizeAction } from '@/libs/actionAuthorization'
+import { getCompanySetupRecord } from '@/libs/companySetup'
 import { CRM_VISITOR_WRITE_PERMISSIONS } from '@/libs/crmVisitors'
 import { prisma } from '@/libs/prisma'
 import { getDictionary } from '@/utils/getDictionary'
@@ -25,9 +26,10 @@ export async function POST(request, context) {
     if (!visitor.email) return errorResponse(dictionary.messages.emailRequiredForLead, 409, 'EMAIL_REQUIRED')
     if (!visitor.host_staff_id) return errorResponse(dictionary.messages.invalidHost, 409, 'HOST_REQUIRED')
 
-    const [source, status] = await Promise.all([
+    const [source, status, setup] = await Promise.all([
       prisma.option.findFirst({ where: { category: 'LEAD_SOURCE', value: 'WALK_IN', is_active: true }, select: { id: true } }),
-      prisma.option.findFirst({ where: { category: 'LEAD_STATUS', value: 'NEW', is_active: true }, select: { id: true } })
+      prisma.option.findFirst({ where: { category: 'LEAD_STATUS', value: 'NEW', is_active: true }, select: { id: true } }),
+      getCompanySetupRecord()
     ])
 
     if (!source || !status) return errorResponse(dictionary.messages.pipelineOptionsMissing, 409, 'PIPELINE_OPTIONS_MISSING')
@@ -45,6 +47,9 @@ export async function POST(request, context) {
         source_id: source.id,
         status_id: status.id,
         assigned_to_id: visitor.host_staff_id,
+        currency: setup.currency_code,
+        exchange_rate: setup.usd_afn_exchange_rate,
+        amount_base: 0,
         notes: leadNotes || null,
         activities: { create: { staff_id: visitor.host_staff_id, activity_type: 'NOTE', title: dictionary.conversion.activityTitle, description: dictionary.conversion.activityDescription } }
       }, select: { id: true, title: true } })

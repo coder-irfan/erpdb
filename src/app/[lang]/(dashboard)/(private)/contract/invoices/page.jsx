@@ -1,17 +1,9 @@
-import Card from '@mui/material/Card'
-import CardHeader from '@mui/material/CardHeader'
-
-import { getDictionary } from '@/utils/getDictionary'
+import { redirect } from 'next/navigation'
 
 const ContractInvoicesPage = async props => {
-  const params = await props.params
-  const dictionary = await getDictionary(params.lang)
+  const { lang } = await props.params
 
-  return (
-    <Card>
-      <CardHeader title={dictionary.navigation.contractInvoices} />
-    </Card>
-  )
+  redirect(`/${lang}/contracts/invoices`)
 }
 
 export default ContractInvoicesPage

@@ -16,12 +16,12 @@ const StyledHeader = styled.header`
   }
 
   &:not(.${horizontalLayoutClasses.headerBlur}) {
-    background-color: var(--mui-palette-background-paper);
+    background-color: var(--mui-palette-background-backgroundDefault);
   }
 
   &.${horizontalLayoutClasses.headerBlur} {
     backdrop-filter: blur(6px);
-    background-color: rgb(var(--background-color-rgb) / 0.88);
+    background-color: rgb(var(--background-color-rgb) / 0.3);
   }
 
   &.${horizontalLayoutClasses.headerFixed} {

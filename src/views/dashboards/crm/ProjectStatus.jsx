@@ -126,7 +126,7 @@ const ProjectStatus = () => {
           </div>
         </div>
         <AppReactApexCharts type='area' height={198} width='100%' series={series} options={options} />
-        <div className='flex flex-col gap-4'>
+        <div className='flex flex-col md:gap-4 gap-2'>
           {data.map((item, index) => (
             <div key={index} className='flex items-center justify-between gap-4'>
               <Typography className='font-medium' color='text.primary'>

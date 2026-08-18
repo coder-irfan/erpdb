@@ -3,9 +3,11 @@ import sanitizeHtml from 'sanitize-html'
 import { safeParse } from 'valibot'
 
 import { authorizeAction } from '@/libs/actionAuthorization'
+import { getCompanySetupRecord } from '@/libs/companySetup'
 import { CRM_DELETE_PERMISSIONS, CRM_WRITE_PERMISSIONS, leadInclude, normalizeLead, parseOptionalDate } from '@/libs/crmLeads'
 import { prisma } from '@/libs/prisma'
 import { createLeadSchema } from '@/schemas/crm/leads'
+import { convertToBaseCurrency } from '@/utils/formatCurrency'
 import { getDictionary } from '@/utils/getDictionary'
 
 const localeFrom = value => (['en', 'fa', 'ps'].includes(value) ? value : 'en')
@@ -33,11 +35,12 @@ export async function PUT(request, context) {
 
     const values = parsed.output
 
-    const [existing, source, status, assignedStaff] = await Promise.all([
-      prisma.crmLead.findUnique({ where: { id }, select: { id: true } }),
+    const [existing, source, status, assignedStaff, setup] = await Promise.all([
+      prisma.crmLead.findUnique({ where: { id }, select: { id: true, currency: true, exchange_rate: true } }),
       prisma.option.findFirst({ where: { id: values.source_id, category: 'LEAD_SOURCE', is_active: true }, select: { id: true } }),
       prisma.option.findFirst({ where: { id: values.status_id, category: 'LEAD_STATUS', is_active: true }, select: { id: true } }),
-      values.assigned_to_id ? prisma.hrmStaff.findFirst({ where: { id: values.assigned_to_id, status: 'ACTIVE' }, select: { id: true } }) : null
+      values.assigned_to_id ? prisma.hrmStaff.findFirst({ where: { id: values.assigned_to_id, status: 'ACTIVE' }, select: { id: true } }) : null,
+      getCompanySetupRecord()
     ])
 
     if (!existing) return errorResponse(dictionary.messages.notFound, 404, 'LEAD_NOT_FOUND')
@@ -56,6 +59,15 @@ export async function PUT(request, context) {
           status_id: values.status_id,
           assigned_to_id: values.assigned_to_id || null,
           estimated_value: new Prisma.Decimal(values.estimated_value),
+          currency: values.currency,
+          amount_base: new Prisma.Decimal(
+            convertToBaseCurrency(
+              values.estimated_value,
+              values.currency,
+              existing.exchange_rate,
+              setup.currency_code
+            )
+          ),
           next_follow_up_date: parseOptionalDate(values.next_follow_up_date),
           notes: cleanText(values.notes) || null
         },

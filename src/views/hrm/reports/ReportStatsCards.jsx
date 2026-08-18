@@ -5,18 +5,18 @@ import Typography from '@mui/material/Typography'
 
 const ACCENTS = [
   'bg-primaryLight text-primary',
-  'bg-successLight text-success',
-  'bg-warningLight text-warning',
-  'bg-infoLight text-info'
+  'bg-successLighter text-success',
+  'bg-secondaryLighter text-warning',
+  'bg-infoLighter text-info'
 ]
 
 const ReportStatsCards = ({ items, loading }) => (
-  <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4'>
+  <div className='no-scrollbar flex w-full snap-x items-center gap-4 overflow-x-auto xl:grid xl:grid-cols-4 xl:overflow-visible'>
     {items.map((item, index) => {
       const accentClasses = ACCENTS[index % ACCENTS.length]
 
       return (
-        <Card key={item.label} className='report-summary-card'>
+        <Card key={item.label} className='report-summary-card min-w-[380px] snap-start xl:min-w-0'>
           <CardContent className='flex items-center justify-between gap-4'>
             <div className='min-w-0'>
               <Typography color='text.secondary' className='truncate'>

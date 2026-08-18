@@ -2,6 +2,7 @@ import { authorizeAction } from '@/libs/actionAuthorization'
 import { getCurrentStaffId, normalizePayroll, payrollSelect, PAYROLL_READ_PERMISSIONS, PAYROLL_WRITE_PERMISSIONS } from '@/libs/hrmPayroll'
 import { prisma } from '@/libs/prisma'
 import { getDictionary } from '@/utils/getDictionary'
+import { toFiniteNumber } from '@/utils/formatCurrency'
 import { hasAnyPermission } from '@/utils/rbac'
 
 const MAX_PAGE_SIZE = 100
@@ -29,14 +30,37 @@ export async function GET(request) {
   const limit = Math.min(MAX_PAGE_SIZE, Math.max(1, Number.parseInt(params.get('limit') || '10', 10) || 10))
   const staffId = canReadAll ? params.get('staff_id') || '' : currentStaffId
   const statusId = params.get('status_id') || ''
-  const where = { month, year, ...(staffId && { staff_id: staffId }), ...(statusId && { status_id: statusId }) }
+  const search = params.get('search')?.trim() || ''
+  const searchTokens = search.split(/\s+/).filter(Boolean)
+
+  const where = {
+    month,
+    year,
+    ...(search && {
+      staff: {
+        is: {
+          AND: searchTokens.map(token => ({
+            OR: [
+              { first_name: { contains: token } },
+              { last_name: { contains: token } },
+              { email: { contains: token } },
+              { position: { contains: token } }
+            ]
+          }))
+        }
+      }
+    }),
+    ...(staffId && { staff_id: staffId }),
+    ...(statusId && { status_id: statusId })
+  }
+
   const periodWhere = { month, year, ...(canReadAll ? {} : { staff_id: currentStaffId }) }
 
   try {
     const [payrolls, totalCount, periodPayrolls, statuses, paymentMethods, staff] = await Promise.all([
       prisma.hrmPayroll.findMany({ where, select: payrollSelect, orderBy: [{ created_at: 'desc' }], skip: (page - 1) * limit, take: limit }),
       prisma.hrmPayroll.count({ where }),
-      prisma.hrmPayroll.findMany({ where: periodWhere, select: { net_salary: true, unpaid_leave_deduction: true, tax_deduction: true, status: { select: { value: true } } } }),
+      prisma.hrmPayroll.findMany({ where: periodWhere, select: { amount_base: true, net_salary: true, unpaid_leave_deduction: true, tax_deduction: true, status: { select: { value: true } } } }),
       prisma.option.findMany({ where: { category: 'PAYROLL_STATUS', is_active: true }, select: { id: true, label: true, value: true }, orderBy: { sort_order: 'asc' } }),
       prisma.option.findMany({ where: { category: 'PAYROLL_PAYMENT_METHOD', is_active: true }, select: { id: true, label: true, value: true }, orderBy: { sort_order: 'asc' } }),
       prisma.hrmStaff.findMany({ where: canReadAll ? { status: 'ACTIVE' } : { id: currentStaffId }, select: { id: true, first_name: true, last_name: true, position: true }, orderBy: [{ first_name: 'asc' }, { last_name: 'asc' }] })
@@ -44,10 +68,16 @@ export async function GET(request) {
 
     const summary = periodPayrolls.reduce(
       (totals, payroll) => {
-        const net = Number(payroll.net_salary)
+        const net = toFiniteNumber(payroll.amount_base)
+        const netSalary = toFiniteNumber(payroll.net_salary)
+
+        const transactionDeductions =
+          toFiniteNumber(payroll.unpaid_leave_deduction) + toFiniteNumber(payroll.tax_deduction)
+
+        const deductions = netSalary > 0 ? (transactionDeductions / netSalary) * net : 0
 
         totals.totalPayroll += net
-        totals.totalDeductions += Number(payroll.unpaid_leave_deduction) + Number(payroll.tax_deduction)
+        totals.totalDeductions += deductions
 
         if (payroll.status.value === 'PAID') totals.totalPaid += net
         else totals.totalPending += net

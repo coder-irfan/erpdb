@@ -162,7 +162,7 @@ const LeadActivityDrawer = ({ open, lead, locale, dictionary, onClose, onSaved }
           <Typography variant='h6' className='mb-5'>
             {dictionary.activity.history}
           </Typography>
-          <div className='flex flex-col gap-4'>
+          <div className='flex flex-col md:gap-4 gap-2'>
             {lead.activities.length === 0 ? (
               <div className='rounded border border-dashed border-divider p-8 text-center text-textSecondary'>
                 <i className='tabler-history text-4xl' />

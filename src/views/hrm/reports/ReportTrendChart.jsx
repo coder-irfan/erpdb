@@ -4,7 +4,6 @@ import dynamic from 'next/dynamic'
 
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
-import CardHeader from '@mui/material/CardHeader'
 import Skeleton from '@mui/material/Skeleton'
 import Typography from '@mui/material/Typography'
 import { useTheme } from '@mui/material/styles'
@@ -51,8 +50,10 @@ const ReportTrendChart = ({ title, trend, series, categories, loading, valueForm
 
   return (
     <Card className='report-chart-card'>
-      <CardHeader title={title} />
       <CardContent>
+        <Typography variant='h6' className='mb-4'>
+          {title}
+        </Typography>
         {loading ? (
           <Skeleton variant='rounded' height={310} />
         ) : !hasChartData ? (

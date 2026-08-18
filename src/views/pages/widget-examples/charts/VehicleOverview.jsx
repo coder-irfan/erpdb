@@ -61,7 +61,7 @@ const VehicleOverview = () => {
     <Card>
       <CardHeader title='Vehicle Overview' action={<OptionMenu options={['Refresh', 'Update', 'Share']} />} />
       <CardContent>
-        <div className='flex flex-col gap-6'>
+        <div className='flex flex-col md:gap-4 gap-2'>
           <div className='flex is-full'>
             {data.map((item, index) => (
               <div

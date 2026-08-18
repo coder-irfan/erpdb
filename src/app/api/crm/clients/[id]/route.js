@@ -34,9 +34,9 @@ export async function GET(request, context) {
       include: {
         account_manager: { select: { id: true, first_name: true, last_name: true, position: true, email: true, phone: true } },
         lead: { include: { source: { select: optionSelect }, activities: { include: { staff: { select: { id: true, first_name: true, last_name: true, position: true } } } } } },
-        projects: { select: { id: true, project_code: true, title: true, budget: true, start_date: true, end_date: true, status: { select: optionSelect } }, orderBy: { created_at: 'desc' } },
-        contracts: { select: { id: true, contract_number: true, title: true, total_amount: true, start_date: true, end_date: true, status: { select: optionSelect } }, orderBy: { created_at: 'desc' } },
-        invoices: { select: { id: true, invoice_number: true, amount: true, issued_date: true, due_date: true, status: { select: optionSelect } }, orderBy: { issued_date: 'desc' } },
+        projects: { select: { id: true, project_code: true, title: true, budget: true, currency: true, exchange_rate: true, amount_base: true, start_date: true, end_date: true, status: { select: optionSelect } }, orderBy: { created_at: 'desc' } },
+        contracts: { select: { id: true, contract_number: true, title: true, total_amount: true, currency: true, exchange_rate: true, amount_base: true, start_date: true, end_date: true, status: { select: optionSelect } }, orderBy: { created_at: 'desc' } },
+        invoices: { select: { id: true, invoice_number: true, amount: true, currency: true, exchange_rate: true, amount_base: true, issued_date: true, due_date: true, status: { select: optionSelect } }, orderBy: { issued_date: 'desc' } },
         activities: { include: { staff: { select: { id: true, first_name: true, last_name: true, position: true } } }, orderBy: { activity_date: 'desc' } }
       }
     })
@@ -134,4 +134,3 @@ export async function DELETE(request, context) {
     return errorResponse(dictionary.messages.operationFailed, 500, 'CLIENT_DELETE_FAILED')
   }
 }
-

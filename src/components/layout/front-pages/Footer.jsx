@@ -84,7 +84,7 @@ const Footer = ({ mode }) => {
               <Typography color='white' className='font-medium mbe-6 opacity-[0.92]'>
                 Pages
               </Typography>
-              <div className='flex flex-col gap-4'>
+              <div className='flex flex-col md:gap-4 gap-2'>
                 <Typography component={Link} href='/front-pages/pricing' color='white' className='opacity-[0.78]'>
                   Pricing
                 </Typography>
@@ -111,7 +111,7 @@ const Footer = ({ mode }) => {
               <Typography color='white' className='font-medium mbe-6 opacity-[0.92]'>
                 Products
               </Typography>
-              <div className='flex flex-col gap-4'>
+              <div className='flex flex-col md:gap-4 gap-2'>
                 <Typography component={Link} href='/front-pages/landing-page' color='white' className='opacity-[0.78]'>
                   Page builder
                 </Typography>
@@ -130,7 +130,7 @@ const Footer = ({ mode }) => {
               <Typography color='white' className='font-medium mbe-6 opacity-[0.92]'>
                 Download our App
               </Typography>
-              <div className='flex flex-col gap-4'>
+              <div className='flex flex-col md:gap-4 gap-2'>
                 <Link className='bg-[#282C3E] bs-[56px] is-[211px] rounded'>
                   <div className='flex items-center pli-5 plb-[7px] gap-6'>
                     <img src='/images/front-pages/apple-icon.png' alt='apple store' className='bs-[34px]' />
