@@ -160,11 +160,7 @@ const RolesPermissionsView = ({
     <div className='flex flex-col md:gap-4 gap-2'>
       {initialError && <Alert severity='error'>{initialError}</Alert>}
 
-      <div className='flex items-center justify-between gap-4'>
-        <div>
-          <Typography variant='h5'>{dictionary.rolesTitle}</Typography>
-          <Typography color='text.secondary'>{dictionary.rolesDescription}</Typography>
-        </div>
+      <div className='flex justify-end'>
         <Button
           variant='contained'
           startIcon={<i className='tabler-shield-plus' />}

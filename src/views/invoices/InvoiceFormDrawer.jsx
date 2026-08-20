@@ -27,7 +27,7 @@ const addDays = (value, days) => {
   return toDateInputValue(date)
 }
 
-const defaultStatus = statuses => statuses.find(status => status.is_default)?.id || statuses.find(status => status.value === 'UNPAID')?.id || statuses.find(status => status.value !== 'PAID')?.id || ''
+const defaultStatus = statuses => statuses.find(status => status.value === 'UNPAID')?.id || statuses.find(status => status.is_default)?.id || statuses.find(status => status.value !== 'PAID')?.id || ''
 
 const emptyValues = options => {
   const issuedDate = toDateInputValue(new Date())

@@ -18,6 +18,7 @@ import { Avatar } from '@mui/material'
 import CustomTextField from '@core/components/mui/TextField'
 import ConfirmDeleteModal from '@/components/dialogs/ConfirmDeleteModal'
 import DashboardTablePagination from '@/components/table/DashboardTablePagination'
+import EntityActionsMenu from '@/components/table/EntityActionsMenu'
 import TableEmptyStateRow from '@/components/table/TableEmptyStateRow'
 import TableFiltersPopover from '@/components/table/TableFiltersPopover'
 import TableSkeletonRows from '@/components/table/TableSkeletonRows'
@@ -263,15 +264,16 @@ const TimesheetsView = ({ initialDate, canWrite, canDelete, defaultWorkHours, lo
                 <th>{dictionary.fields.checkIn}</th>
                 <th>{dictionary.fields.checkOut}</th>
                 <th>{dictionary.fields.hours}</th>
+                <th>{dictionary.fields.notes}</th>
                 <th className='no-print text-end'>{dictionary.table.actions}</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <TableSkeletonRows columns={7} />
+                <TableSkeletonRows columns={8} />
               ) : data.records.length === 0 ? (
                 <TableEmptyStateRow
-                  colSpan={7}
+                  colSpan={8}
                   icon='tabler-calendar-time'
                   title={dictionary.table.emptyTitle}
                   description={dictionary.table.emptyDescription}
@@ -308,36 +310,32 @@ const TimesheetsView = ({ initialDate, canWrite, canDelete, defaultWorkHours, lo
                     <td>
                       {record.hours_worked ? `${Number(record.hours_worked).toFixed(2)} ${dictionary.hoursShort}` : '—'}
                     </td>
+                    <td>
+                      {record.notes ? (
+                        <Tooltip title={record.notes} arrow>
+                          <Typography variant='body2' className='max-is-[180px] truncate'>
+                            {record.notes}
+                          </Typography>
+                        </Tooltip>
+                      ) : (
+                        '—'
+                      )}
+                    </td>
                     <td className='no-print text-end'>
-                      <div className='flex justify-end gap-1'>
-                        {record.notes && (
-                          <Tooltip title={record.notes} arrow>
-                            <IconButton size='small' aria-label={dictionary.fields.notes}>
-                              <i className='tabler-note' />
-                            </IconButton>
-                          </Tooltip>
-                        )}
-                        {canWrite && (
-                          <Tooltip title={dictionary.actions.edit}>
-                            <IconButton
-                              size='small'
-                              onClick={() => {
-                                setEditingRecord(record)
-                                setDrawerOpen(true)
-                              }}
-                            >
-                              <i className='tabler-edit' />
-                            </IconButton>
-                          </Tooltip>
-                        )}
-                        {canDelete && (
-                          <Tooltip title={dictionary.actions.delete}>
-                            <IconButton size='small' color='error' onClick={() => setDeleteTarget(record)}>
-                              <i className='tabler-trash' />
-                            </IconButton>
-                          </Tooltip>
-                        )}
-                      </div>
+                      <EntityActionsMenu
+                        actions={[
+                          canWrite && {
+                            label: dictionary.actions.edit,
+                            icon: 'tabler-edit',
+                            onClick: () => {
+                              setEditingRecord(record)
+                              setDrawerOpen(true)
+                            }
+                          },
+                          canDelete && { label: dictionary.actions.delete, icon: 'tabler-trash', color: 'error', onClick: () => setDeleteTarget(record) }
+                        ]}
+                        moreActionsLabel={dictionary.table.actions}
+                      />
                     </td>
                   </tr>
                 ))

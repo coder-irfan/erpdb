@@ -1,11 +1,10 @@
 'use client'
 
 import Chip from '@mui/material/Chip'
-import IconButton from '@mui/material/IconButton'
-import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
 
 import DashboardTablePagination from '@/components/table/DashboardTablePagination'
+import EntityActionsMenu from '@/components/table/EntityActionsMenu'
 import TableEmptyStateRow from '@/components/table/TableEmptyStateRow'
 import TableSkeletonRows from '@/components/table/TableSkeletonRows'
 import { toDateInputValue } from '@/utils/contractDuration'
@@ -15,7 +14,7 @@ import tableStyles from '@core/styles/table.module.css'
 
 const STATUS_COLORS = { PAID: 'success', UNPAID: 'warning', PARTIALLY_PAID: 'info', CANCELLED: 'secondary', OVERDUE: 'error' }
 
-const InvoiceTableView = ({ data, loading, page, rowsPerPage, locale, dictionary, canWrite, canDelete, onPageChange, onRowsPerPageChange, onView, onPay, onEdit, onDelete, onAdd }) => (
+const InvoiceTableView = ({ data, loading, statusUpdating, page, rowsPerPage, locale, dictionary, canWrite, canDelete, onPageChange, onRowsPerPageChange, onView, onPay, onEdit, onDelete, onStatusChange, onAdd }) => (
   <>
     <div className='no-scrollbar overflow-x-auto scroll-smooth'>
       <table className={tableStyles.table}>
@@ -58,13 +57,25 @@ const InvoiceTableView = ({ data, loading, page, rowsPerPage, locale, dictionary
                 </td>
                 <td className='whitespace-nowrap text-right font-semibold'>{formatCurrency(invoice.amount_base, locale, data.baseCurrency)}</td>
                 <td><Chip size='small' variant='tonal' color={STATUS_COLORS[displayStatus] || 'default'} label={invoice.is_overdue ? dictionary.status.OVERDUE : invoice.status.label} /></td>
-                <td className='text-right'>
-                  <div className='flex min-is-[175px] justify-end gap-1'>
-                    <Tooltip title={dictionary.actions.viewPrint}><IconButton onClick={() => onView(invoice)}><i className='tabler-printer' /></IconButton></Tooltip>
-                    {canWrite && !invoice.payment_income && !['PAID', 'CANCELLED'].includes(invoice.status.value) && <Tooltip title={dictionary.actions.recordPayment}><IconButton color='success' onClick={() => onPay(invoice)}><i className='tabler-cash' /></IconButton></Tooltip>}
-                    {canWrite && !invoice.payment_income && invoice.status.value !== 'PAID' && <Tooltip title={dictionary.actions.edit}><IconButton onClick={() => onEdit(invoice)}><i className='tabler-edit' /></IconButton></Tooltip>}
-                    {canDelete && !invoice.payment_income && invoice.status.value !== 'PAID' && <Tooltip title={dictionary.actions.delete}><IconButton color='error' onClick={() => onDelete(invoice)}><i className='tabler-trash' /></IconButton></Tooltip>}
-                  </div>
+                <td className='text-right' onClick={event => event.stopPropagation()}>
+                  <EntityActionsMenu
+                    actions={[
+                      { label: dictionary.actions.viewPrint, icon: 'tabler-printer', onClick: () => onView(invoice) },
+                      canWrite && !invoice.payment_income && !['PAID', 'CANCELLED'].includes(invoice.status.value) && { label: dictionary.actions.recordPayment, icon: 'tabler-cash', onClick: () => onPay(invoice) },
+                      canWrite && !invoice.payment_income && invoice.status.value !== 'PAID' && { label: dictionary.actions.edit, icon: 'tabler-edit', onClick: () => onEdit(invoice) },
+                      canDelete && !invoice.payment_income && invoice.status.value !== 'PAID' && { label: dictionary.actions.delete, icon: 'tabler-trash', color: 'error', onClick: () => onDelete(invoice) }
+                    ]}
+                    statusOptions={
+                      canWrite && !invoice.payment_income && invoice.status.value !== 'PAID'
+                        ? data.statuses.filter(status => status.value !== 'PAID')
+                        : []
+                    }
+                    currentStatus={invoice.status_id}
+                    statusDisabled={statusUpdating === invoice.id}
+                    changeStatusLabel={dictionary.actions.changeStatus}
+                    moreActionsLabel={dictionary.table.actions}
+                    onStatusChange={statusId => onStatusChange(invoice, statusId)}
+                  />
                 </td>
               </tr>
             )

@@ -161,10 +161,10 @@ export const updateRolePermissions = async payload => {
     }
 
     await prisma.$transaction(async transaction => {
-      await transaction.rolePermission.deleteMany({ where: { role_id: role.id } })
+      await transaction.rolepermission.deleteMany({ where: { role_id: role.id } })
 
       if (validation.output.permissionIds.length > 0) {
-        await transaction.rolePermission.createMany({
+        await transaction.rolepermission.createMany({
           data: validation.output.permissionIds.map(permissionId => ({
             role_id: role.id,
             permission_id: permissionId
@@ -172,7 +172,7 @@ export const updateRolePermissions = async payload => {
         })
       }
 
-      await transaction.auditLog.create({
+      await transaction.auditlog.create({
         data: {
           user_id: context.session.user.id,
           action: 'ROLE_PERMISSIONS_UPDATED',
@@ -242,7 +242,7 @@ export const createRole = async payload => {
       })
 
       if (validation.output.permissionIds.length > 0) {
-        await transaction.rolePermission.createMany({
+        await transaction.rolepermission.createMany({
           data: validation.output.permissionIds.map(permissionId => ({
             role_id: role.id,
             permission_id: permissionId
@@ -250,7 +250,7 @@ export const createRole = async payload => {
         })
       }
 
-      await transaction.auditLog.create({
+      await transaction.auditlog.create({
         data: {
           user_id: context.session.user.id,
           action: 'ROLE_CREATED',
@@ -300,7 +300,7 @@ export const toggleRoleStatus = async payload => {
 
     await prisma.$transaction([
       prisma.role.update({ where: { id: role.id }, data: { is_active: isActive } }),
-      prisma.auditLog.create({
+      prisma.auditlog.create({
         data: {
           user_id: context.session.user.id,
           action: 'ROLE_STATUS_UPDATED',

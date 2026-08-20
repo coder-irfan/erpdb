@@ -8,7 +8,7 @@ export const CRM_DELETE_PERMISSIONS = ['crm:delete', 'crm_lead:delete']
 export const CRM_ACTIVITY_TYPES = ['CALL', 'MEETING', 'EMAIL', 'NOTE', 'FOLLOW_UP']
 
 export const getCurrentStaffId = async userId => {
-  const staff = await prisma.hrmStaff.findUnique({ where: { user_id: userId }, select: { id: true } })
+  const staff = await prisma.hrmstaff.findUnique({ where: { user_id: userId }, select: { id: true } })
 
   return staff?.id || null
 }

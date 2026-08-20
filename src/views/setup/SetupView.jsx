@@ -8,6 +8,8 @@ import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import MenuItem from '@mui/material/MenuItem'
+import Tab from '@mui/material/Tab'
+import Tabs from '@mui/material/Tabs'
 import Typography from '@mui/material/Typography'
 import { toast } from 'sonner'
 
@@ -41,8 +43,23 @@ const getInitialForm = settings => ({
   default_work_end: settings.default_work_end || '17:30'
 })
 
+const SettingsCard = ({ title, description, children }) => (
+  <Card>
+    <CardContent className='flex flex-col gap-5'>
+      <div>
+        <Typography variant='h6'>{title}</Typography>
+        <Typography variant='body2' color='text.secondary'>
+          {description}
+        </Typography>
+      </div>
+      {children}
+    </CardContent>
+  </Card>
+)
+
 const SetupView = ({ dictionary, initialSettings, locale }) => {
   const router = useRouter()
+  const [activeTab, setActiveTab] = useState('general')
   const [form, setForm] = useState(() => getInitialForm(initialSettings))
   const [companyLogo, setCompanyLogo] = useState(initialSettings.company_logo)
   const [signatoryStamp, setSignatoryStamp] = useState(initialSettings.signatory_stamp)
@@ -113,13 +130,47 @@ const SetupView = ({ dictionary, initialSettings, locale }) => {
   }
 
   return (
-    <div className='flex flex-col md:gap-4 gap-2'>
+    <div className='flex flex-col gap-4'>
       <Card>
-        <CardContent className='flex flex-col gap-8'>
-          <div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
+        <Tabs
+          value={activeTab}
+          onChange={(_, value) => setActiveTab(value)}
+          variant='scrollable'
+          scrollButtons='auto'
+          className='border-be border-divider px-2'
+        >
+          <Tab
+            value='general'
+            icon={<i className='tabler-building' />}
+            iconPosition='start'
+            label={dictionary.tabs.general}
+          />
+          <Tab
+            value='localization'
+            icon={<i className='tabler-world-cog' />}
+            iconPosition='start'
+            label={dictionary.tabs.localization}
+          />
+          <Tab
+            value='branding'
+            icon={<i className='tabler-photo-cog' />}
+            iconPosition='start'
+            label={dictionary.tabs.branding}
+          />
+          <Tab
+            value='signatories'
+            icon={<i className='tabler-signature' />}
+            iconPosition='start'
+            label={dictionary.tabs.signatories}
+          />
+        </Tabs>
+      </Card>
+
+      {activeTab === 'general' && (
+        <SettingsCard title={dictionary.sections.generalTitle} description={dictionary.sections.generalDescription}>
+          <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
             <CustomTextField
               fullWidth
-              required
               name='company_name'
               label={dictionary.fields.companyName}
               value={form.company_name}
@@ -156,6 +207,139 @@ const SetupView = ({ dictionary, initialSettings, locale }) => {
             />
             <CustomTextField
               fullWidth
+              name='company_address'
+              label={dictionary.fields.companyAddress}
+              value={form.company_address}
+              onChange={updateField}
+            />
+          </div>
+        </SettingsCard>
+      )}
+
+      {activeTab === 'localization' && (
+        <SettingsCard
+          title={dictionary.sections.localizationTitle}
+          description={dictionary.sections.localizationDescription}
+        >
+          <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+            <CustomTextField
+              select
+              fullWidth
+              name='currency_code'
+              label={dictionary.fields.baseCurrency}
+              value={form.currency_code}
+              onChange={updateField}
+              sx={{ '& .MuiInputBase-root': { backgroundColor: 'transparent' } }}
+            >
+              <MenuItem value='AFN'>AFN</MenuItem>
+              <MenuItem value='USD'>USD</MenuItem>
+            </CustomTextField>
+            <CustomTextField
+              fullWidth
+              type='number'
+              name='usd_afn_exchange_rate'
+              label={dictionary.fields.exchangeRate}
+              value={form.usd_afn_exchange_rate}
+              slotProps={{ htmlInput: { min: 0.0001, step: 0.0001 } }}
+              onChange={updateField}
+              sx={{ '& .MuiInputBase-root': { backgroundColor: 'transparent' } }}
+            />
+            <CustomTextField
+              fullWidth
+              type='time'
+              name='default_work_start'
+              label={dictionary.fields.workStart}
+              value={form.default_work_start}
+              slotProps={{ inputLabel: { shrink: true } }}
+              onChange={updateField}
+            />
+            <CustomTextField
+              fullWidth
+              type='time'
+              name='default_work_end'
+              label={dictionary.fields.workEnd}
+              value={form.default_work_end}
+              slotProps={{ inputLabel: { shrink: true } }}
+              onChange={updateField}
+            />
+          </div>
+        </SettingsCard>
+      )}
+
+      {activeTab === 'branding' && (
+        <SettingsCard title={dictionary.sections.brandingTitle} description={dictionary.sections.brandingDescription}>
+          <div className='flex flex-col gap-6 md:gap-10 lg:gap-12'>
+            <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+              <FileUpload
+                compact
+                value={companyLogo}
+                onChange={setCompanyLogo}
+                label={dictionary.companyLogo}
+                accept={LOGO_ACCEPT}
+                maxSizeMB={2}
+                uploadType='logo'
+                translations={dictionary.upload}
+              />
+              <FileUpload
+                compact
+                value={signatoryStamp}
+                onChange={setSignatoryStamp}
+                label={dictionary.signatoryStamp}
+                accept={LOGO_ACCEPT}
+                maxSizeMB={2}
+                uploadType='image'
+                translations={dictionary.upload}
+              />
+            </div>
+            <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
+              <FileUpload
+                compact
+                value={lightLogoUrl}
+                onChange={setLightLogoUrl}
+                label={dictionary.lightLogo}
+                accept={LOGO_ACCEPT}
+                maxSizeMB={2}
+                uploadType='logo'
+                translations={dictionary.upload}
+              />
+              <FileUpload
+                compact
+                value={darkLogoUrl}
+                onChange={setDarkLogoUrl}
+                label={dictionary.darkLogo}
+                accept={LOGO_ACCEPT}
+                maxSizeMB={2}
+                uploadType='logo'
+                translations={dictionary.upload}
+              />
+              <FileUpload
+                compact
+                value={faviconUrl}
+                onChange={setFaviconUrl}
+                label={dictionary.favicon}
+                accept={FAVICON_ACCEPT}
+                maxSizeMB={1}
+                uploadType='favicon'
+                translations={{
+                  ...dictionary.upload,
+                  fileHint: dictionary.faviconFileHint,
+                  previewAlt: dictionary.faviconPreviewAlt,
+                  unsupportedType: dictionary.faviconUnsupportedType
+                }}
+              />
+            </div>
+          </div>
+        </SettingsCard>
+      )}
+
+      {activeTab === 'signatories' && (
+        <SettingsCard
+          title={dictionary.sections.signatoriesTitle}
+          description={dictionary.sections.signatoriesDescription}
+        >
+          <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+            <CustomTextField
+              fullWidth
               name='signatory_name'
               label={dictionary.fields.signatoryName}
               value={form.signatory_name}
@@ -168,154 +352,9 @@ const SetupView = ({ dictionary, initialSettings, locale }) => {
               value={form.signatory_title}
               onChange={updateField}
             />
-            <CustomTextField
-              fullWidth
-              multiline
-              minRows={3}
-              name='company_address'
-              label={dictionary.fields.companyAddress}
-              value={form.company_address}
-              onChange={updateField}
-            />
           </div>
-          <div className='rounded border p-5'>
-            <Typography variant='h6'>{dictionary.currencyTitle}</Typography>
-            <Typography variant='body2' color='text.secondary' className='mb-5'>
-              {dictionary.currencyDescription}
-            </Typography>
-            <div className='grid grid-cols-1 gap-5 sm:grid-cols-2'>
-              <CustomTextField
-                select
-                fullWidth
-                name='currency_code'
-                label={dictionary.fields.baseCurrency}
-                value={form.currency_code}
-                onChange={updateField}
-              >
-                <MenuItem value='AFN'>AFN</MenuItem>
-                <MenuItem value='USD'>USD</MenuItem>
-              </CustomTextField>
-              <CustomTextField
-                fullWidth
-                required
-                type='number'
-                name='usd_afn_exchange_rate'
-                label={dictionary.fields.exchangeRate}
-                value={form.usd_afn_exchange_rate}
-                slotProps={{ htmlInput: { min: 0.0001, step: 0.0001 } }}
-                onChange={updateField}
-              />
-            </div>
-          </div>
-          <div className='rounded border p-5'>
-            <Typography variant='h6'>{dictionary.workHoursTitle}</Typography>
-            <Typography variant='body2' color='text.secondary' className='mb-5'>
-              {dictionary.workHoursDescription}
-            </Typography>
-            <div className='grid grid-cols-1 gap-5 sm:grid-cols-2'>
-              <CustomTextField
-                fullWidth
-                required
-                type='time'
-                name='default_work_start'
-                label={dictionary.fields.workStart}
-                value={form.default_work_start}
-                slotProps={{ inputLabel: { shrink: true } }}
-                onChange={updateField}
-              />
-              <CustomTextField
-                fullWidth
-                required
-                type='time'
-                name='default_work_end'
-                label={dictionary.fields.workEnd}
-                value={form.default_work_end}
-                slotProps={{ inputLabel: { shrink: true } }}
-                onChange={updateField}
-              />
-            </div>
-          </div>
-          <div className='grid grid-cols-1 gap-8 lg:grid-cols-2'>
-            <FileUpload
-              value={companyLogo}
-              onChange={setCompanyLogo}
-              label={dictionary.companyLogo}
-              accept={LOGO_ACCEPT}
-              maxSizeMB={2}
-              previewHeight={180}
-              uploadType='logo'
-              translations={dictionary.upload}
-            />
-            <FileUpload
-              value={signatoryStamp}
-              onChange={setSignatoryStamp}
-              label={dictionary.signatoryStamp}
-              accept={LOGO_ACCEPT}
-              maxSizeMB={2}
-              previewHeight={180}
-              uploadType='image'
-              translations={dictionary.upload}
-            />
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardContent className='flex flex-col gap-8'>
-          <div className='grid grid-cols-1 gap-8 lg:grid-cols-2 xl:grid-cols-3'>
-            <div className='flex flex-col gap-3'>
-              <FileUpload
-                value={lightLogoUrl}
-                onChange={setLightLogoUrl}
-                label={dictionary.lightLogo}
-                accept={LOGO_ACCEPT}
-                maxSizeMB={2}
-                previewHeight={200}
-                uploadType='logo'
-                translations={dictionary.upload}
-              />
-              <Typography variant='body2' color='text.secondary'>
-                {dictionary.lightLogoDescription}
-              </Typography>
-            </div>
-            <div className='flex flex-col gap-3'>
-              <FileUpload
-                value={darkLogoUrl}
-                onChange={setDarkLogoUrl}
-                label={dictionary.darkLogo}
-                accept={LOGO_ACCEPT}
-                maxSizeMB={2}
-                previewHeight={200}
-                uploadType='logo'
-                translations={dictionary.upload}
-              />
-              <Typography variant='body2' color='text.secondary'>
-                {dictionary.darkLogoDescription}
-              </Typography>
-            </div>
-            <div className='flex flex-col gap-3'>
-              <FileUpload
-                value={faviconUrl}
-                onChange={setFaviconUrl}
-                label={dictionary.favicon}
-                accept={FAVICON_ACCEPT}
-                maxSizeMB={1}
-                previewHeight={200}
-                uploadType='favicon'
-                translations={{
-                  ...dictionary.upload,
-                  fileHint: dictionary.faviconFileHint,
-                  previewAlt: dictionary.faviconPreviewAlt,
-                  unsupportedType: dictionary.faviconUnsupportedType
-                }}
-              />
-              <Typography variant='body2' color='text.secondary'>
-                {dictionary.faviconDescription}
-              </Typography>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+        </SettingsCard>
+      )}
 
       <div className='sticky bottom-4 z-10 flex justify-end rounded bg-backgroundPaper/90 p-4 shadow-md backdrop-blur'>
         <Button variant='contained' onClick={handleSave} disabled={isSaving}>

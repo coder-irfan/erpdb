@@ -7,15 +7,14 @@ import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import Chip from '@mui/material/Chip'
-import IconButton from '@mui/material/IconButton'
 import MenuItem from '@mui/material/MenuItem'
-import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
 import { toast } from 'sonner'
 
 import CustomTextField from '@core/components/mui/TextField'
 import ConfirmDeleteModal from '@/components/dialogs/ConfirmDeleteModal'
 import DashboardTablePagination from '@/components/table/DashboardTablePagination'
+import EntityActionsMenu from '@/components/table/EntityActionsMenu'
 import TableEmptyStateRow from '@/components/table/TableEmptyStateRow'
 import TableFiltersPopover from '@/components/table/TableFiltersPopover'
 import TableSkeletonRows from '@/components/table/TableSkeletonRows'
@@ -327,27 +326,14 @@ const PayrollView = ({ initialMonth, initialYear, setup, locale, dictionary }) =
                     </td>
                     <td>{payroll.payment_method?.label || '—'}</td>
                     <td className='text-end'>
-                      <div className='flex justify-end gap-1'>
-                        <Tooltip title={dictionary.actions.viewPayslip}>
-                          <IconButton onClick={() => setPayslip(payroll)}>
-                            <i className='tabler-receipt' />
-                          </IconButton>
-                        </Tooltip>
-                        {data.canManage && payroll.status.value !== 'PAID' && (
-                          <Tooltip title={dictionary.actions.processPayment}>
-                            <IconButton color='success' onClick={() => setPaymentTarget(payroll)}>
-                              <i className='tabler-cash-banknote' />
-                            </IconButton>
-                          </Tooltip>
-                        )}
-                        {data.canManage && payroll.status.value !== 'PAID' && (
-                          <Tooltip title={dictionary.actions.delete}>
-                            <IconButton color='error' onClick={() => setDeleteTarget(payroll)}>
-                              <i className='tabler-trash' />
-                            </IconButton>
-                          </Tooltip>
-                        )}
-                      </div>
+                      <EntityActionsMenu
+                        actions={[
+                          { label: dictionary.actions.viewPayslip, icon: 'tabler-receipt', onClick: () => setPayslip(payroll) },
+                          data.canManage && payroll.status.value !== 'PAID' && { label: dictionary.actions.processPayment, icon: 'tabler-cash-banknote', onClick: () => setPaymentTarget(payroll) },
+                          data.canManage && payroll.status.value !== 'PAID' && { label: dictionary.actions.delete, icon: 'tabler-trash', color: 'error', onClick: () => setDeleteTarget(payroll) }
+                        ]}
+                        moreActionsLabel={dictionary.table.actions}
+                      />
                     </td>
                   </tr>
                 ))

@@ -7,7 +7,6 @@ import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import Chip from '@mui/material/Chip'
-import IconButton from '@mui/material/IconButton'
 import MenuItem from '@mui/material/MenuItem'
 import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
@@ -16,6 +15,7 @@ import { toast } from 'sonner'
 import CustomTextField from '@core/components/mui/TextField'
 import ConfirmDeleteModal from '@/components/dialogs/ConfirmDeleteModal'
 import DashboardTablePagination from '@/components/table/DashboardTablePagination'
+import EntityActionsMenu from '@/components/table/EntityActionsMenu'
 import TableEmptyStateRow from '@/components/table/TableEmptyStateRow'
 import TableFiltersPopover from '@/components/table/TableFiltersPopover'
 import TableSkeletonRows from '@/components/table/TableSkeletonRows'
@@ -357,48 +357,15 @@ const StaffLeavesView = ({ locale, dictionary }) => {
                       </td>
                       <td>{leave.approved_by?.full_name || '—'}</td>
                       <td className='text-end'>
-                        <div className='flex min-is-[150px] items-center justify-end gap-1'>
-                          {data.canManage && isPending && (
-                            <>
-                              <Tooltip title={dictionary.actions.approve}>
-                                <IconButton
-                                  color='success'
-                                  disabled={busyId === leave.id}
-                                  onClick={() => updateStatus(leave, 'APPROVED')}
-                                >
-                                  <i className='tabler-check' />
-                                </IconButton>
-                              </Tooltip>
-                              <Tooltip title={dictionary.actions.reject}>
-                                <IconButton
-                                  color='error'
-                                  disabled={busyId === leave.id}
-                                  onClick={() => updateStatus(leave, 'REJECTED')}
-                                >
-                                  <i className='tabler-x' />
-                                </IconButton>
-                              </Tooltip>
-                            </>
-                          )}
-                          {canModify && (
-                            <>
-                              <Tooltip title={dictionary.actions.edit}>
-                                <IconButton disabled={busyId === leave.id} onClick={() => openEdit(leave)}>
-                                  <i className='tabler-edit' />
-                                </IconButton>
-                              </Tooltip>
-                              <Tooltip title={dictionary.actions.delete}>
-                                <IconButton
-                                  color='error'
-                                  disabled={busyId === leave.id}
-                                  onClick={() => setDeleteTarget(leave)}
-                                >
-                                  <i className='tabler-trash' />
-                                </IconButton>
-                              </Tooltip>
-                            </>
-                          )}
-                        </div>
+                        <EntityActionsMenu
+                          actions={[
+                            data.canManage && isPending && { label: dictionary.actions.approve, icon: 'tabler-check', disabled: busyId === leave.id, onClick: () => updateStatus(leave, 'APPROVED') },
+                            data.canManage && isPending && { label: dictionary.actions.reject, icon: 'tabler-x', color: 'error', disabled: busyId === leave.id, onClick: () => updateStatus(leave, 'REJECTED') },
+                            canModify && { label: dictionary.actions.edit, icon: 'tabler-edit', disabled: busyId === leave.id, onClick: () => openEdit(leave) },
+                            canModify && { label: dictionary.actions.delete, icon: 'tabler-trash', color: 'error', disabled: busyId === leave.id, onClick: () => setDeleteTarget(leave) }
+                          ]}
+                          moreActionsLabel={dictionary.table.actions}
+                        />
                       </td>
                     </tr>
                   )

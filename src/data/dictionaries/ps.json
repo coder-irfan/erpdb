@@ -109,17 +109,11 @@
     "payroll": "میاشتني معاشونه",
     "hrmReports": "راپورونه",
     "projects": "پروژې",
-    "projectsList": "د پروژو لېست",
-    "projectMembers": "د پروژې غړي",
-    "projectContracts": "د پروژې قراردادونه",
     "contractModule": "قرارداد",
     "contractManagement": "د قرارداد اداره",
     "contractOptions": "د قرارداد انتخابونه",
     "contractList": "قراردادونه",
     "contractInvoices": "صورتحسابونه",
-    "contractOthers": "نور",
-    "contractCustomers": "پېرېدونکی",
-    "contractNotifications": "د قرارداد خبرتیاوې",
     "crmLeads": "احتمالي پېرېدونکي",
     "crmClients": "مراجعین",
     "visitors": "لیدونکي",
@@ -132,7 +126,6 @@
     "inventory": "زېرمه",
     "financeReports": "راپورونه",
     "options": "اختیارونه",
-    "lookupOptions": "د مراجعې اختیارونه",
     "contractPolicies": "د قرارداد پالیسۍ",
     "staffPositions": "د کارکوونکو بستونه",
     "hrManagement": "د بشري سرچینو مدیریت",
@@ -266,6 +259,8 @@
     }
   },
   "setupBranding": {
+    "tabs": { "general": "عمومي معلومات", "localization": "ځایي کول او تګلاره", "branding": "نښه او شتمنۍ", "signatories": "قانوني لاسلیک کوونکي" },
+    "sections": { "generalTitle": "د شرکت معلومات", "generalDescription": "په سیسټم کې کارېدونکي قانوني هویت او اصلي اړیکې اداره کړئ.", "localizationTitle": "ځایي کول او عملیاتي تګلاره", "localizationDescription": "د راپور اسعار، د تبادلې نرخ او اصلي کاري ساعتونه تنظیم کړئ.", "brandingTitle": "نښه او رسنیزې شتمنۍ", "brandingDescription": "د رسمي پاڼو، منو، براوزر او اسنادو انځورونه اداره کړئ.", "signatoriesTitle": "مجاز لاسلیک کوونکی", "signatoriesDescription": "هغه کس وټاکئ چې د شرکت اسناد لاسلیکولی شي." },
     "workHoursTitle": "اصلي کاري ساعتونه",
     "workHoursDescription": "دا وختونه د حاضرۍ د ننوتلو او وتلو په برخو کې په اتومات ډول ډکېږي.",
     "currencyTitle": "اسعار او د تبادلې نرخ",
@@ -309,6 +304,7 @@
     "upload": {
       "drop": "انځور دلته راکش او پرېږدئ، یا فایل وټاکئ.",
       "browse": "انځور وټاکئ",
+      "upload": "پورته کول",
       "replace": "بدلول",
       "remove": "لرې کول",
       "uploading": "د پورته کولو په حال کې...",
@@ -350,7 +346,7 @@
     },
     "actions": {
       "add": "قرارداد جوړول", "addFirst": "لومړی قرارداد جوړول", "view": "تفصیل کتل",
-      "print": "قرارداد چاپول", "printSavePdf": "چاپ / PDF خوندي کول", "edit": "سمول", "create": "قرارداد جوړول",
+      "print": "قرارداد چاپول", "changeStatus": "حالت بدلول", "printSavePdf": "چاپ / PDF خوندي کول", "edit": "سمول", "create": "قرارداد جوړول",
       "saveChanges": "بدلونونه خوندي کول", "saving": "خوندي کېږي...", "cancel": "لغوه کول", "close": "تړل",
       "back": "قراردادونو ته ستنېدل"
     },
@@ -579,10 +575,10 @@
     "tabs": { "overview": "لنډیز او اړیکه", "relationships": "پروژې او قراردادونه", "finance": "رسیدونه او عاید", "activity": "فعالیت او تاریخ" },
     "detail": { "title": "د پېرودونکي پېژندپاڼه", "manager": "د حساب مسؤل", "leadOrigin": "د بدل شوي سرنخ سرچینه", "projects": "تړلې پروژې", "contracts": "تړلي قراردادونه", "paidRevenue": "ورکړل شوی عاید", "pendingInvoices": "د پاتې رسیدونو کچه", "invoice": "رسید", "dueDate": "د ورکړې نېټه", "amount": "اندازه" },
     "activity": { "addTitle": "د پېرودونکي فعالیت ثبت کړئ", "type": "د فعالیت ډول", "subject": "سرلیک", "description": "تشریح / یادښت", "dueDate": "د تعقیب نېټه", "add": "فعالیت زیات کړئ", "types": { "CALL": "اړیکه", "MEETING": "غونډه", "EMAIL": "برېښنالیک", "NOTE": "یادښت", "FOLLOW_UP": "تعقیب" } },
-    "actions": { "add": "پېرودونکی زیات کړئ", "view": "پېژندپاڼه وګورئ", "activity": "فعالیت ثبت کړئ", "edit": "سمول", "delete": "ړنګول", "cancel": "لغوه", "close": "تړل", "create": "پېرودونکی جوړ کړئ", "save": "بدلونونه خوندي کړئ", "saving": "خوندي کېږي..." },
+    "actions": { "add": "پېرودونکی زیات کړئ", "view": "پېژندپاڼه وګورئ", "activity": "فعالیت ثبت کړئ", "edit": "سمول", "delete": "ړنګول", "changeStatus": "حالت بدل کړئ", "cancel": "لغوه", "close": "تړل", "create": "پېرودونکی جوړ کړئ", "save": "بدلونونه خوندي کړئ", "saving": "خوندي کېږي..." },
     "empty": { "title": "پېرودونکي ونه موندل شول", "description": "له ټاکلو فلټرونو سره پېرودونکي نشته.", "projects": "دې پېرودونکي ته کومه پروژه نه ده تړلې.", "contracts": "دې پېرودونکي ته کوم قرارداد نه دی تړلی.", "invoices": "دې پېرودونکي ته کوم رسید نه دی تړلی.", "activities": "د پېرودونکي یا اصلي سرنخ فعالیت نه دی ثبت شوی." },
     "pagination": { "rowsPerPage": "په پاڼه کې کرښې:", "of": "له" }, "delete": { "title": "پېرودونکی ړنګ کړئ", "description": "دا پېرودونکی ړنګ شي؟ دا کړنه بېرته نه راګرځي." },
-    "messages": { "created": "پېرودونکی په بریالیتوب جوړ شو.", "updated": "پېرودونکی په بریالیتوب تازه شو.", "deleted": "پېرودونکی په بریالیتوب ړنګ شو.", "activityAdded": "د پېرودونکي فعالیت ثبت شو.", "loadFailed": "پېرودونکي پورته نه شول.", "operationFailed": "د پېرودونکي کړنه بشپړه نه شوه.", "unauthenticated": "د پېرودونکو لپاره ننوزئ.", "forbidden": "تاسو د پېرودونکو د ادارې اجازه نه لرئ.", "notFound": "ټاکل شوی پېرودونکی ونه موندل شو.", "emailExists": "په دې برېښنالیک بل پېرودونکی شته.", "invalidManager": "یو معتبر فعال حساب مسؤل وټاکئ.", "staffProfileRequired": "د فعالیت ثبتولو لپاره حساب باید د کارکوونکي له پېژندپاڼې سره تړلی وي.", "deleteBlocked": "دا پېرودونکی فعالې پروژې یا قراردادونه لري. لومړی یې غیرفعال یا فعال ریکارډونه وتړئ." },
+    "messages": { "created": "پېرودونکی په بریالیتوب جوړ شو.", "updated": "پېرودونکی په بریالیتوب تازه شو.", "statusUpdated": "د پېرودونکي حالت تازه شو.", "deleted": "پېرودونکی په بریالیتوب ړنګ شو.", "activityAdded": "د پېرودونکي فعالیت ثبت شو.", "loadFailed": "پېرودونکي پورته نه شول.", "operationFailed": "د پېرودونکي کړنه بشپړه نه شوه.", "unauthenticated": "د پېرودونکو لپاره ننوزئ.", "forbidden": "تاسو د پېرودونکو د ادارې اجازه نه لرئ.", "notFound": "ټاکل شوی پېرودونکی ونه موندل شو.", "emailExists": "په دې برېښنالیک بل پېرودونکی شته.", "invalidManager": "یو معتبر فعال حساب مسؤل وټاکئ.", "staffProfileRequired": "د فعالیت ثبتولو لپاره حساب باید د کارکوونکي له پېژندپاڼې سره تړلی وي.", "deleteBlocked": "دا پېرودونکی فعالې پروژې یا قراردادونه لري. لومړی یې غیرفعال یا فعال ریکارډونه وتړئ." },
     "validation": { "invalid": "د پېرودونکي معلومات وګورئ.", "required": "دا برخه اړینه ده.", "emailInvalid": "معتبر برېښنالیک ولیکئ.", "statusInvalid": "معتبر حالت وټاکئ.", "tooLong": "دا ارزښت ډېر اوږد دی.", "activityTypeInvalid": "معتبر فعالیت وټاکئ.", "dateInvalid": "د تعقیب معتبره نېټه ولیکئ." }
   },
   "crmLeadOptions": { "statuses": { "title": "د فرصت حالتونه", "description": "د پلور پایپ لاین پړاوونه اداره کړئ." }, "sources": { "title": "د فرصت سرچینې", "description": "د پلور فرصتونو د ترلاسه کولو چینلونه اداره کړئ." }, "common": { "name": "نوم", "description": "تشریح", "status": "حالت", "actions": "کړنې", "active": "فعال", "inactive": "غیرفعال", "activate": "فعالول", "deactivate": "غیرفعالول", "create": "اختیار زیاتول", "add": "د CRM اختیار جوړول", "cancel": "لغوه", "empty": "اختیار نه دی تنظیم شوی" } },
@@ -740,6 +736,7 @@
     "createRole": "رول جوړول",
     "inviteUser": "نوی کاروونکی رابلل",
     "editUserRole": "د کاروونکي رول سمول",
+    "changeStatus": "حالت بدلول",
     "saveRole": "رول خوندي کول",
     "rowsPerPage": "په پاڼه کې کتارونه:",
     "of": "له",
@@ -1106,13 +1103,13 @@
     "kpis": { "totalInvoiced": "ټول بلونه", "allInvoices": "ټول جوړ شوي بلونه", "paidRevenue": "ورکړل شوی عاید", "paidInvoices": "په مالي برخه کې ثبت شوې ورکړې", "overdueInvoices": "ناوخته بلونه", "overdueCount": "{count} ناوخته بلونه", "outstanding": "پاتې اندازه", "pendingInvoices": "ناورکړل شوي او نیمګړي ورکړل شوي" },
     "filters": { "search": "لټون", "searchPlaceholder": "بل، قرارداد یا پېرودونکی ولټوئ", "status": "د بل حالت", "allStatuses": "ټول حالتونه", "client": "پېرودونکی", "allClients": "ټول پېرودونکي", "contract": "قرارداد", "allContracts": "ټول قراردادونه", "fromDate": "د ورکړې نېټه له", "toDate": "د ورکړې نېټه تر", "clear": "فلټرونه پاک کړئ" },
     "table": { "invoiceContract": "بل او قرارداد", "client": "پېرودونکی", "issueDue": "د جوړېدو او ورکړې نېټه", "amountCurrency": "اندازه او اسعار", "baseAmount": "بنسټیزه اندازه", "status": "حالت", "actions": "کړنې" }, "status": { "OVERDUE": "ناوخته" },
-    "actions": { "create": "بل جوړ کړئ", "save": "بدلونونه وساتئ", "saving": "ساتل کېږي…", "viewPrint": "کتل / چاپ", "recordPayment": "ورکړه ثبت کړئ", "edit": "سمون", "delete": "ړنګول", "cancel": "لغوه", "close": "تړل", "confirmPayment": "ورکړه تایید کړئ", "printDownload": "چاپ / PDF ښکته کول" },
+    "actions": { "create": "بل جوړ کړئ", "save": "بدلونونه وساتئ", "saving": "ساتل کېږي…", "viewPrint": "کتل / چاپ", "recordPayment": "ورکړه ثبت کړئ", "edit": "سمون", "delete": "ړنګول", "changeStatus": "حالت بدل کړئ", "cancel": "لغوه", "close": "تړل", "confirmPayment": "ورکړه تایید کړئ", "printDownload": "چاپ / PDF ښکته کول" },
     "form": { "createTitle": "بل جوړ کړئ", "editTitle": "بل سم کړئ", "description": "د پېرودونکي د قرارداد بل جوړ او اداره کړئ.", "selectContractHelp": "د پېرودونکي د ډکولو لپاره قرارداد وټاکئ.", "baseAmount": "محاسبه شوې بنسټیزه اندازه ({currency})" },
     "fields": { "contract": "قرارداد", "client": "پېرودونکی", "amount": "د بل اندازه", "currency": "اسعار", "exchangeRate": "د USD/AFN تبادلې نرخ", "issueDate": "د جوړېدو نېټه", "dueDate": "د ورکړې نېټه", "status": "حالت", "invoiceNumber": "د بل شمېره" }, "placeholders": { "contract": "قرارداد ولټوئ او وټاکئ" },
     "payment": { "title": "د بل ورکړه ثبت کړئ", "date": "د ورکړې نېټه", "amount": "د ورکړې اندازه", "method": "د ورکړې لاره", "notes": "د ورکړې یادښت", "ledgerNotice": "په تایید سره بل ورکړل شوی کېږي او په FinanceIncome کې تړلې لیکنه جوړېږي.", "recording": "ثبتېږي…" },
     "print": { "title": "د چاپ وړ بل", "invoice": "بل", "from": "له", "billTo": "بل د", "taxId": "مالیاتي شمېره", "paymentTerms": "د ورکړې شرایط", "netDays": "{days} ورځې", "item": "قرارداد / توکی", "service": "د خدمت ډول", "rate": "بنسټیز نرخ", "total": "ټول", "amountDue": "د ورکړې اندازه", "thankYou": "ستاسو له همکارۍ مننه.", "footer": "د ورکړې پر مهال د بل شمېره ولیکئ.", "stamp": "د شرکت مهر" },
     "empty": { "title": "بل ونه موندل شو", "description": "بل جوړ کړئ یا لټون او فلټرونه بدل کړئ." }, "delete": { "title": "بل ړنګ کړئ", "description": "بل {name} ړنګ شي؟ دا کړنه بېرته نه راګرځي." }, "pagination": { "rowsPerPage": "په هر مخ کې کتارونه", "of": "له" },
-    "messages": { "created": "بل په بریالیتوب جوړ شو.", "updated": "بل تازه شو.", "deleted": "بل ړنګ شو.", "paymentRecorded": "ورکړه ثبت او FinanceIncome تازه شو.", "loadFailed": "بلونه بار نه شول.", "optionsLoadFailed": "د فورم انتخابونه بار نه شول.", "operationFailed": "د بل کړنه بشپړه نه شوه.", "paymentFailed": "ورکړه ثبت نه شوه.", "notFound": "بل ونه موندل شو.", "duplicate": "په دې شمېره بل شته.", "paidLocked": "ورکړل شوی بل د مالي همغږۍ له امله تړلی دی.", "paidDeleteBlocked": "ورکړل شوی بل نه ړنګېږي.", "alreadyPaid": "دا بل مخکې ورکړل شوی.", "paymentOptionsMissing": "ورکړل شوی حالت، د ورکړې لارې او د قرارداد د ورکړې عاید ډول تنظیم کړئ.", "unauthenticated": "د بلونو د ادارې لپاره ننوځئ.", "forbidden": "د بلونو د ادارې اجازه نه لرئ." },
+    "messages": { "created": "بل په بریالیتوب جوړ شو.", "updated": "بل تازه شو.", "statusUpdated": "د بل حالت تازه شو.", "deleted": "بل ړنګ شو.", "paymentRecorded": "ورکړه ثبت او FinanceIncome تازه شو.", "loadFailed": "بلونه بار نه شول.", "optionsLoadFailed": "د فورم انتخابونه بار نه شول.", "operationFailed": "د بل کړنه بشپړه نه شوه.", "paymentFailed": "ورکړه ثبت نه شوه.", "paymentRequired": "د بل د ورکړل شوي کولو او FinanceIncome سند جوړولو لپاره ورکړه ثبت کړئ.", "notFound": "بل ونه موندل شو.", "duplicate": "په دې شمېره بل شته.", "paidLocked": "ورکړل شوی بل د مالي همغږۍ له امله تړلی دی.", "paidDeleteBlocked": "ورکړل شوی بل نه ړنګېږي.", "alreadyPaid": "دا بل مخکې ورکړل شوی.", "paymentOptionsMissing": "ورکړل شوی حالت، د ورکړې لارې او د قرارداد د ورکړې عاید ډول تنظیم کړئ.", "unauthenticated": "د بلونو د ادارې لپاره ننوځئ.", "forbidden": "د بلونو د ادارې اجازه نه لرئ." },
     "validation": { "required": "دا برخه اړینه ده.", "amountInvalid": "له صفر څخه لویه اندازه ولیکئ.", "dateInvalid": "سمه نېټه ولیکئ.", "notesTooLong": "یادښت باید تر ۱۰۰۰ تورو زیات نه وي.", "invalidContract": "سم قرارداد او تړلی پېرودونکی وټاکئ.", "invalidStatus": "سم حالت وټاکئ.", "paidViaPaymentOnly": "د ورکړل شوي حالت لپاره ورکړه ثبت کړئ.", "dateRangeInvalid": "د ورکړې نېټه باید د جوړېدو له نېټې سره برابره یا وروسته وي.", "fullPaymentRequired": "د ورکړې اندازه باید د ټول بل سره برابره وي." }
   }
 }

@@ -20,7 +20,8 @@ const formatDate = (value, locale) =>
 const DETAIL_TONES = {
   primary: 'border-primary/20 bg-primaryLighter text-primary',
   success: 'border-success/20 bg-successLighter text-success',
-  warning: 'border-warning/20 bg-secondaryLighter text-warning'
+  warning: 'border-warning/20 bg-secondaryLighter text-warning',
+  info: 'border-info/20 bg-infoLighter text-info'
 }
 
 const DetailItem = ({ label, value, icon, tone }) => (
@@ -68,12 +69,17 @@ const StaffContractDetailDialog = ({ contract, open, locale, dictionary, onClose
             icon='tabler-user'
             tone='primary'
           />
-          <DetailItem label={dictionary.fields.position} value={contract.position_title} icon='tabler-briefcase' />
+          <DetailItem
+            label={dictionary.fields.position}
+            value={contract.position_title}
+            icon='tabler-briefcase'
+            tone='warning'
+          />
           <DetailItem
             label={dictionary.fields.contractType}
             value={contract.contract_type.label}
             icon='tabler-file-text'
-            tone='warning'
+            tone='info'
           />
           <DetailItem
             label={dictionary.fields.baseSalary}

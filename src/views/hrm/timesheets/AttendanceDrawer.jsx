@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 
 import Button from '@mui/material/Button'
 import Divider from '@mui/material/Divider'
@@ -18,8 +18,8 @@ import CustomTextField from '@core/components/mui/TextField'
 import LoadingButtonContent from '@/components/LoadingButtonContent'
 import { createTimesheetSchema } from '@/schemas/hrm/timesheets'
 
-const getDefaults = (record, date, defaultWorkHours) => ({
-  staff_id: record?.staff_id || '',
+const getDefaults = (record, date, defaultWorkHours, defaultStaffId = '') => ({
+  staff_id: record?.staff_id || defaultStaffId,
   status: record?.status || 'PRESENT',
   date,
   check_in_time: record?.check_in_time || defaultWorkHours.start,
@@ -28,6 +28,8 @@ const getDefaults = (record, date, defaultWorkHours) => ({
 })
 
 const AttendanceDrawer = ({ open, record, date, staff, defaultWorkHours, locale, dictionary, onClose, onSaved }) => {
+  const [staffQueue, setStaffQueue] = useState(staff)
+
   const {
     control,
     register,
@@ -44,8 +46,11 @@ const AttendanceDrawer = ({ open, record, date, staff, defaultWorkHours, locale,
   const status = watch('status')
 
   useEffect(() => {
-    if (open) reset(getDefaults(record, date, defaultWorkHours))
-  }, [date, defaultWorkHours, open, record, reset])
+    if (!open) return
+
+    setStaffQueue(staff)
+    reset(getDefaults(record, date, defaultWorkHours, record ? '' : staff[0]?.id || ''))
+  }, [date, defaultWorkHours, open, record, reset, staff])
 
   const setStatus = nextStatus => {
     if (!nextStatus) return
@@ -85,8 +90,14 @@ const AttendanceDrawer = ({ open, record, date, staff, defaultWorkHours, locale,
         toast.success(result.message)
         await onSaved(result.data)
 
-        if (stayOpen && !record) reset(getDefaults(null, date, defaultWorkHours))
-        else onClose()
+        if (stayOpen && !record) {
+          const nextQueue = staffQueue.filter(item => item.id !== values.staff_id)
+
+          setStaffQueue(nextQueue)
+
+          if (nextQueue.length > 0) reset(getDefaults(null, date, defaultWorkHours, nextQueue[0].id))
+          else onClose()
+        } else onClose()
       } catch {
         toast.error(dictionary.messages.operationFailed)
       }
@@ -134,7 +145,7 @@ const AttendanceDrawer = ({ open, record, date, staff, defaultWorkHours, locale,
                 <MenuItem value='' disabled>
                   {dictionary.placeholders.selectStaff}
                 </MenuItem>
-                {staff.map(item => (
+                {staffQueue.map(item => (
                   <MenuItem key={item.id} value={item.id}>
                     {item.full_name} — {item.position}
                   </MenuItem>
@@ -209,7 +220,7 @@ const AttendanceDrawer = ({ open, record, date, staff, defaultWorkHours, locale,
             {dictionary.actions.cancel}
           </Button>
           {!record && (
-            <Button variant='tonal' onClick={() => submit(true)} disabled={isSubmitting || staff.length === 0}>
+            <Button variant='tonal' onClick={() => submit(true)} disabled={isSubmitting || staffQueue.length === 0}>
               <LoadingButtonContent loading={isSubmitting} loadingLabel={dictionary.actions.saving}>
                 {dictionary.actions.saveNext}
               </LoadingButtonContent>
@@ -218,7 +229,7 @@ const AttendanceDrawer = ({ open, record, date, staff, defaultWorkHours, locale,
           <Button
             variant='contained'
             onClick={() => submit(false)}
-            disabled={isSubmitting || (!record && staff.length === 0)}
+            disabled={isSubmitting || (!record && staffQueue.length === 0)}
           >
             <LoadingButtonContent loading={isSubmitting} loadingLabel={dictionary.actions.saving}>
               {record ? dictionary.actions.saveChanges : dictionary.actions.save}

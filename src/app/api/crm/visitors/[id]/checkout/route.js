@@ -15,15 +15,15 @@ export async function PATCH(request, context) {
 
   try {
     const { id } = await context.params
-    const visitor = await prisma.crmVisitor.findUnique({ where: { id }, select: { id: true, status: true } })
+    const visitor = await prisma.crmvisitor.findUnique({ where: { id }, select: { id: true, status: true } })
 
     if (!visitor) return errorResponse(dictionary.messages.notFound, 404, 'VISITOR_NOT_FOUND')
     if (visitor.status === 'COMPLETED') return errorResponse(dictionary.messages.alreadyCheckedOut, 409, 'ALREADY_CHECKED_OUT')
 
     const updated = await prisma.$transaction(async transaction => {
-      const record = await transaction.crmVisitor.update({ where: { id }, data: { status: 'COMPLETED', check_out_time: new Date() }, include: visitorInclude })
+      const record = await transaction.crmvisitor.update({ where: { id }, data: { status: 'COMPLETED', check_out_time: new Date() }, include: visitorInclude })
 
-      await transaction.auditLog.create({ data: { user_id: authorization.session.user.id, action: 'CRM_VISITOR_CHECKED_OUT', module: 'CRM', details: { visitorId: id } } })
+      await transaction.auditlog.create({ data: { user_id: authorization.session.user.id, action: 'CRM_VISITOR_CHECKED_OUT', module: 'CRM', details: { visitorId: id } } })
 
       return record
     })

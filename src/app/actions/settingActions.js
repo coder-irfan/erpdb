@@ -58,7 +58,7 @@ export const updateLogoSettings = async payload => {
 
   try {
     await prisma.$transaction([
-      prisma.systemSetting.upsert({
+      prisma.systemsetting.upsert({
         where: { id: SYSTEM_SETTING_ID },
         update: { lightLogoUrl, darkLogoUrl, faviconUrl },
         create: {
@@ -68,7 +68,7 @@ export const updateLogoSettings = async payload => {
           faviconUrl
         }
       }),
-      prisma.auditLog.create({
+      prisma.auditlog.create({
         data: {
           user_id: authorization.session.user.id,
           action: 'BRANDING_UPDATED',

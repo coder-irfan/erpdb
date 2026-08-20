@@ -10,7 +10,7 @@ export const LEAVE_WRITE_PERMISSIONS = ['hrm:write', 'hrm_leave:write']
 export const LEAVE_DELETE_PERMISSIONS = ['hrm:delete', 'hrm_leave:delete']
 
 export const getCurrentStaff = userId =>
-  prisma.hrmStaff.findUnique({
+  prisma.hrmstaff.findUnique({
     where: { user_id: userId },
     select: { id: true, first_name: true, last_name: true, position: true, email: true }
   })
@@ -71,7 +71,7 @@ export const createLeaveAttendance = async (transaction, leave) => {
 
   if (dates.length === 0) return 0
 
-  const result = await transaction.hrmStaffTimesheet.createMany({
+  const result = await transaction.hrmstafftimesheet.createMany({
     data: dates.map(date => ({
       staff_id: leave.staff_id,
       date,

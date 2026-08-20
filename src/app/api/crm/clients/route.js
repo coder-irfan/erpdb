@@ -43,7 +43,7 @@ export async function GET(request) {
 
   try {
     const [clients, totalCount, summaryClients, staff] = await Promise.all([
-      prisma.crmClient.findMany({
+      prisma.crmclient.findMany({
         where,
         include: {
           account_manager: { select: { id: true, first_name: true, last_name: true, position: true } },
@@ -55,9 +55,9 @@ export async function GET(request) {
         skip: (page - 1) * limit,
         take: limit
       }),
-      prisma.crmClient.count({ where }),
-      prisma.crmClient.findMany({ where, select: { status: true, projects: { select: { status: { select: { value: true } } } }, invoices: { select: { amount_base: true, status: { select: { value: true } } } } } }),
-      prisma.hrmStaff.findMany({ where: { status: 'ACTIVE' }, select: { id: true, first_name: true, last_name: true, position: true }, orderBy: [{ first_name: 'asc' }, { last_name: 'asc' }] })
+      prisma.crmclient.count({ where }),
+      prisma.crmclient.findMany({ where, select: { status: true, projects: { select: { status: { select: { value: true } } } }, invoices: { select: { amount_base: true, status: { select: { value: true } } } } } }),
+      prisma.hrmstaff.findMany({ where: { status: 'ACTIVE' }, select: { id: true, first_name: true, last_name: true, position: true }, orderBy: [{ first_name: 'asc' }, { last_name: 'asc' }] })
     ])
 
     const allInvoices = summaryClients.flatMap(client => client.invoices)
@@ -103,15 +103,15 @@ export async function POST(request) {
     const values = parsed.output
 
     const [existing, manager] = await Promise.all([
-      prisma.crmClient.findUnique({ where: { email: values.email.toLowerCase() }, select: { id: true } }),
-      values.account_manager_id ? prisma.hrmStaff.findFirst({ where: { id: values.account_manager_id, status: 'ACTIVE' }, select: { id: true } }) : null
+      prisma.crmclient.findUnique({ where: { email: values.email.toLowerCase() }, select: { id: true } }),
+      values.account_manager_id ? prisma.hrmstaff.findFirst({ where: { id: values.account_manager_id, status: 'ACTIVE' }, select: { id: true } }) : null
     ])
 
     if (existing) return errorResponse(dictionary.messages.emailExists, 409, 'EMAIL_EXISTS')
     if (values.account_manager_id && !manager) return errorResponse(dictionary.messages.invalidManager, 400, 'INVALID_MANAGER')
 
     const client = await prisma.$transaction(async transaction => {
-      const created = await transaction.crmClient.create({ data: {
+      const created = await transaction.crmclient.create({ data: {
         company_name: cleanText(values.company_name),
         primary_contact_name: cleanText(values.primary_contact_name),
         email: values.email.toLowerCase(),
@@ -123,7 +123,7 @@ export async function POST(request) {
         notes: cleanText(values.notes) || null
       } })
 
-      await transaction.auditLog.create({ data: { user_id: authorization.session.user.id, action: 'CRM_CLIENT_CREATED', module: 'CRM', details: { clientId: created.id } } })
+      await transaction.auditlog.create({ data: { user_id: authorization.session.user.id, action: 'CRM_CLIENT_CREATED', module: 'CRM', details: { clientId: created.id } } })
 
       return created
     })

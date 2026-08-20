@@ -63,7 +63,7 @@ export async function GET() {
   try {
     const [company, branding] = await Promise.all([
       getCompanySetupRecord(),
-      prisma.systemSetting.findUnique({ where: { id: SYSTEM_SETTING_ID } })
+      prisma.systemsetting.findUnique({ where: { id: SYSTEM_SETTING_ID } })
     ])
 
     return Response.json({
@@ -183,7 +183,7 @@ export async function PUT(request) {
         }
       })
 
-      await transaction.systemSetting.upsert({
+      await transaction.systemsetting.upsert({
         where: { id: SYSTEM_SETTING_ID },
         update: { lightLogoUrl, darkLogoUrl, faviconUrl },
         create: { id: SYSTEM_SETTING_ID, lightLogoUrl, darkLogoUrl, faviconUrl }
@@ -193,7 +193,7 @@ export async function PUT(request) {
         await rebaseStoredAmounts(transaction, validation.output.currency_code)
       }
 
-      await transaction.auditLog.create({
+      await transaction.auditlog.create({
         data: {
           user_id: session.user.id,
           action: 'COMPANY_SETUP_UPDATED',

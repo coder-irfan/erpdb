@@ -80,7 +80,7 @@ export const calculatePayrollForStaff = async (transaction, staff, month, year) 
   if (!contract) return null
 
   const [approvedUnpaidLeaves, absentDays] = await Promise.all([
-    transaction.hrmStaffLeave.findMany({
+    transaction.hrmstaffleave.findMany({
       where: {
         staff_id: staff.id,
         start_date: { lte: inclusiveEnd },
@@ -90,7 +90,7 @@ export const calculatePayrollForStaff = async (transaction, staff, month, year) 
       },
       select: { start_date: true, end_date: true }
     }),
-    transaction.hrmStaffTimesheet.count({ where: { staff_id: staff.id, date: { gte: start, lt: end }, status: 'ABSENT' } })
+    transaction.hrmstafftimesheet.count({ where: { staff_id: staff.id, date: { gte: start, lt: end }, status: 'ABSENT' } })
   ])
 
   const leaveDays = approvedUnpaidLeaves.reduce((total, leave) => {
@@ -116,7 +116,7 @@ export const calculatePayrollForStaff = async (transaction, staff, month, year) 
 }
 
 export const getCurrentStaffId = async userId => {
-  const staff = await prisma.hrmStaff.findUnique({ where: { user_id: userId }, select: { id: true } })
+  const staff = await prisma.hrmstaff.findUnique({ where: { user_id: userId }, select: { id: true } })
 
   return staff?.id || null
 }

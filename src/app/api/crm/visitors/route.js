@@ -63,13 +63,13 @@ export async function GET(request) {
 
   try {
     const [visitors, totalCount, totalToday, activeGuests, completedToday, convertedCount, staff] = await Promise.all([
-      prisma.crmVisitor.findMany({ where, include: visitorInclude, orderBy: { visited_at: 'desc' }, skip: (page - 1) * limit, take: limit }),
-      prisma.crmVisitor.count({ where }),
-      prisma.crmVisitor.count({ where: todayWhere }),
-      prisma.crmVisitor.count({ where: { ...sharedWhere, status: 'CHECKED_IN', check_out_time: null } }),
-      prisma.crmVisitor.count({ where: { ...todayWhere, status: 'COMPLETED' } }),
-      prisma.crmVisitor.count({ where: { ...sharedWhere, converted_lead_id: { not: null } } }),
-      prisma.hrmStaff.findMany({ where: { status: 'ACTIVE' }, select: { id: true, first_name: true, last_name: true, position: true }, orderBy: [{ first_name: 'asc' }, { last_name: 'asc' }] })
+      prisma.crmvisitor.findMany({ where, include: visitorInclude, orderBy: { visited_at: 'desc' }, skip: (page - 1) * limit, take: limit }),
+      prisma.crmvisitor.count({ where }),
+      prisma.crmvisitor.count({ where: todayWhere }),
+      prisma.crmvisitor.count({ where: { ...sharedWhere, status: 'CHECKED_IN', check_out_time: null } }),
+      prisma.crmvisitor.count({ where: { ...todayWhere, status: 'COMPLETED' } }),
+      prisma.crmvisitor.count({ where: { ...sharedWhere, converted_lead_id: { not: null } } }),
+      prisma.hrmstaff.findMany({ where: { status: 'ACTIVE' }, select: { id: true, first_name: true, last_name: true, position: true }, orderBy: [{ first_name: 'asc' }, { last_name: 'asc' }] })
     ])
 
     return Response.json({ success: true, data: {
@@ -99,12 +99,12 @@ export async function POST(request) {
     if (!parsed.success) return errorResponse(parsed.issues[0]?.message || dictionary.validation.invalid, 400, 'VALIDATION_ERROR')
 
     const values = parsed.output
-    const host = await prisma.hrmStaff.findFirst({ where: { id: values.host_staff_id, status: 'ACTIVE' }, select: { id: true } })
+    const host = await prisma.hrmstaff.findFirst({ where: { id: values.host_staff_id, status: 'ACTIVE' }, select: { id: true } })
 
     if (!host) return errorResponse(dictionary.messages.invalidHost, 400, 'INVALID_HOST')
 
     const visitor = await prisma.$transaction(async transaction => {
-      const created = await transaction.crmVisitor.create({ data: {
+      const created = await transaction.crmvisitor.create({ data: {
         full_name: cleanText(values.full_name),
         phone: cleanText(values.phone),
         email: values.email.toLowerCase() || null,
@@ -116,7 +116,7 @@ export async function POST(request) {
         visited_at: new Date()
       }, include: visitorInclude })
 
-      await transaction.auditLog.create({ data: { user_id: authorization.session.user.id, action: 'CRM_VISITOR_CHECKED_IN', module: 'CRM', details: { visitorId: created.id } } })
+      await transaction.auditlog.create({ data: { user_id: authorization.session.user.id, action: 'CRM_VISITOR_CHECKED_IN', module: 'CRM', details: { visitorId: created.id } } })
 
       return created
     })

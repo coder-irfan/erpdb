@@ -14,7 +14,7 @@ export async function POST(request, context) {
 
   try {
     const [lead, wonStatus, currentStaffId] = await Promise.all([
-      prisma.crmLead.findUnique({ where: { id }, include: { converted_client: { select: { id: true } } } }),
+      prisma.crmlead.findUnique({ where: { id }, include: { converted_client: { select: { id: true } } } }),
       prisma.option.findFirst({ where: { category: 'LEAD_STATUS', value: 'WON', is_active: true }, select: { id: true } }),
       getCurrentStaffId(authorization.session.user.id)
     ])
@@ -27,12 +27,12 @@ export async function POST(request, context) {
 
     if (!activityStaffId) return Response.json({ success: false, error: dictionary.messages.staffProfileRequired }, { status: 409 })
 
-    const existingClient = await prisma.crmClient.findUnique({ where: { email: lead.email }, select: { id: true } })
+    const existingClient = await prisma.crmclient.findUnique({ where: { email: lead.email }, select: { id: true } })
 
     if (existingClient) return Response.json({ success: false, error: dictionary.messages.clientEmailExists }, { status: 409 })
 
     const client = await prisma.$transaction(async transaction => {
-      const created = await transaction.crmClient.create({
+      const created = await transaction.crmclient.create({
         data: {
           lead_id: lead.id,
           company_name: lead.company_name || lead.title,
@@ -44,9 +44,9 @@ export async function POST(request, context) {
         }
       })
 
-      await transaction.crmLead.update({ where: { id }, data: { status_id: wonStatus.id } })
-      await transaction.crmActivity.create({ data: { lead_id: id, client_id: created.id, staff_id: activityStaffId, activity_type: 'FOLLOW_UP', title: dictionary.activities.converted, is_completed: true } })
-      await transaction.auditLog.create({ data: { user_id: authorization.session.user.id, action: 'CRM_LEAD_CONVERTED', module: 'CRM', details: { leadId: id, clientId: created.id } } })
+      await transaction.crmlead.update({ where: { id }, data: { status_id: wonStatus.id } })
+      await transaction.crmactivity.create({ data: { lead_id: id, client_id: created.id, staff_id: activityStaffId, activity_type: 'FOLLOW_UP', title: dictionary.activities.converted, is_completed: true } })
+      await transaction.auditlog.create({ data: { user_id: authorization.session.user.id, action: 'CRM_LEAD_CONVERTED', module: 'CRM', details: { leadId: id, clientId: created.id } } })
 
       return created
     })

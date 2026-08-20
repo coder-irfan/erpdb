@@ -87,8 +87,8 @@ export async function POST(request) {
       const day = parseDate(date)
 
       const [activeStaff, marked] = await Promise.all([
-        prisma.hrmStaff.findMany({ where: { status: 'ACTIVE' }, select: { id: true } }),
-        prisma.hrmStaffTimesheet.findMany({ where: { date: day }, select: { staff_id: true } })
+        prisma.hrmstaff.findMany({ where: { status: 'ACTIVE' }, select: { id: true } }),
+        prisma.hrmstafftimesheet.findMany({ where: { date: day }, select: { staff_id: true } })
       ])
 
       const markedIds = new Set(marked.map(record => record.staff_id))
@@ -99,11 +99,11 @@ export async function POST(request) {
       }
 
       await prisma.$transaction(async transaction => {
-        await transaction.hrmStaffTimesheet.createMany({
+        await transaction.hrmstafftimesheet.createMany({
           data: remaining.map(staff => ({ staff_id: staff.id, date: day, status: 'ABSENT' })),
           skipDuplicates: true
         })
-        await transaction.auditLog.create({
+        await transaction.auditlog.create({
           data: {
             user_id: authorization.session.user.id,
             action: 'ATTENDANCE_BULK_ABSENT',
@@ -141,7 +141,7 @@ export async function POST(request) {
   if (Number.isNaN(hours)) return responseError(dictionary.validation.checkoutBeforeCheckin, 400, 'INVALID_TIME_RANGE')
 
   try {
-    const staff = await prisma.hrmStaff.findFirst({
+    const staff = await prisma.hrmstaff.findFirst({
       where: { id: validation.output.staff_id, status: 'ACTIVE' },
       select: { id: true }
     })
@@ -149,7 +149,7 @@ export async function POST(request) {
     if (!staff) return responseError(dictionary.messages.staffNotFound, 404, 'STAFF_NOT_FOUND')
 
     const record = await prisma.$transaction(async transaction => {
-      const created = await transaction.hrmStaffTimesheet.create({
+      const created = await transaction.hrmstafftimesheet.create({
         data: {
           staff_id: validation.output.staff_id,
           date: parseDate(date),
@@ -158,7 +158,7 @@ export async function POST(request) {
         select: attendanceSelect
       })
 
-      await transaction.auditLog.create({
+      await transaction.auditlog.create({
         data: {
           user_id: authorization.session.user.id,
           action: 'ATTENDANCE_CREATED',

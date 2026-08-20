@@ -310,7 +310,7 @@ export const createOption = async (payload = {}) => {
         }
       })
 
-      await transaction.auditLog.create({
+      await transaction.auditlog.create({
         data: {
           user_id: context.session.user.id,
           action: 'OPTION_CREATED',
@@ -390,7 +390,7 @@ export const updateOption = async (id, payload = {}) => {
         }
       })
 
-      await transaction.auditLog.create({
+      await transaction.auditlog.create({
         data: {
           user_id: context.session.user.id,
           action: 'OPTION_UPDATED',
@@ -435,7 +435,7 @@ export const toggleOptionStatus = async (id, isActive, payload = {}) => {
     const option = await prisma.$transaction(async transaction => {
       const updatedOption = await transaction.option.update({ where: { id: optionId }, data: { is_active: isActive } })
 
-      await transaction.auditLog.create({
+      await transaction.auditlog.create({
         data: {
           user_id: context.session.user.id,
           action: 'OPTION_STATUS_UPDATED',
@@ -483,7 +483,7 @@ export const deleteOption = async (id, payload = {}) => {
 
     const staffPositionCount =
       option.category === 'STAFF_POSITION'
-        ? await prisma.hrmStaff.count({ where: { position: option.label } })
+        ? await prisma.hrmstaff.count({ where: { position: option.label } })
         : 0
 
     const durationContractCount =
@@ -497,7 +497,7 @@ export const deleteOption = async (id, payload = {}) => {
 
     await prisma.$transaction(async transaction => {
       await transaction.option.delete({ where: { id: option.id } })
-      await transaction.auditLog.create({
+      await transaction.auditlog.create({
         data: {
           user_id: context.session.user.id,
           action: 'OPTION_DELETED',

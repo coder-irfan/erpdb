@@ -41,7 +41,7 @@ const buildMonths = (start, end) => {
 const staffName = staff => `${staff.first_name} ${staff.last_name}`.trim()
 
 const getStaffOptions = () =>
-  prisma.hrmStaff.findMany({
+  prisma.hrmstaff.findMany({
     select: { id: true, first_name: true, last_name: true, position: true, status: true },
     orderBy: [{ first_name: 'asc' }, { last_name: 'asc' }]
   })
@@ -53,7 +53,7 @@ const getPayrollReport = async ({ start, end, staffId, months }) => {
     return { year, month }
   })
 
-  const records = await prisma.hrmPayroll.findMany({
+  const records = await prisma.hrmpayroll.findMany({
     where: { ...(staffId && { staff_id: staffId }), OR: monthFilters },
     select: {
       id: true,
@@ -141,7 +141,7 @@ const getPayrollReport = async ({ start, end, staffId, months }) => {
 }
 
 const getAttendanceReport = async ({ start, end, staffId, months }) => {
-  const records = await prisma.hrmStaffTimesheet.findMany({
+  const records = await prisma.hrmstafftimesheet.findMany({
     where: { date: { gte: start, lte: end }, ...(staffId && { staff_id: staffId }) },
     select: {
       id: true,
@@ -206,7 +206,7 @@ const getAttendanceReport = async ({ start, end, staffId, months }) => {
 }
 
 const getLeaveReport = async ({ start, end, staffId }) => {
-  const records = await prisma.hrmStaffLeave.findMany({
+  const records = await prisma.hrmstaffleave.findMany({
     where: {
       start_date: { lte: end },
       end_date: { gte: start },
@@ -233,7 +233,7 @@ const getLeaveReport = async ({ start, end, staffId }) => {
   ]
 
   const staffRecords = staffIds.length
-    ? await prisma.hrmStaff.findMany({
+    ? await prisma.hrmstaff.findMany({
         where: { id: { in: staffIds } },
         select: { id: true, first_name: true, last_name: true, position: true }
       })
@@ -307,7 +307,7 @@ const getContractReport = async ({ start, end, staffId, months }) => {
   const thirtyDays = new Date(today.getTime() + 30 * DAY_IN_MS)
   const ninetyDays = new Date(today.getTime() + 90 * DAY_IN_MS)
 
-  const contracts = await prisma.hrmStaffContract.findMany({
+  const contracts = await prisma.hrmstaffcontract.findMany({
     where: { ...(staffId && { staff_id: staffId }) },
     select: {
       id: true,
@@ -415,7 +415,7 @@ export async function GET(request) {
 
   try {
     if (staffId) {
-      const staffExists = await prisma.hrmStaff.count({ where: { id: staffId } })
+      const staffExists = await prisma.hrmstaff.count({ where: { id: staffId } })
 
       if (!staffExists) return responseError(dictionary.messages.staffNotFound, 404, 'STAFF_NOT_FOUND')
     }

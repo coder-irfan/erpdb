@@ -14,14 +14,14 @@ export async function DELETE(request, routeContext) {
   if (!authorization.authorized) return responseError(authorization.code === 'UNAUTHENTICATED' ? dictionary.messages.unauthenticated : dictionary.messages.forbidden, authorization.code === 'UNAUTHENTICATED' ? 401 : 403, authorization.code)
 
   try {
-    const payroll = await prisma.hrmPayroll.findUnique({ where: { id }, select: { id: true, staff_id: true, status: { select: { value: true } } } })
+    const payroll = await prisma.hrmpayroll.findUnique({ where: { id }, select: { id: true, staff_id: true, status: { select: { value: true } } } })
 
     if (!payroll) return responseError(dictionary.messages.notFound, 404, 'PAYROLL_NOT_FOUND')
     if (payroll.status.value === 'PAID') return responseError(dictionary.messages.paidDeleteBlocked, 409, 'PAID_PAYROLL_PROTECTED')
 
     await prisma.$transaction([
-      prisma.hrmPayroll.delete({ where: { id } }),
-      prisma.auditLog.create({ data: { user_id: authorization.session.user.id, action: 'PAYROLL_DELETED', module: 'HRM', details: { payrollId: id, staffId: payroll.staff_id } } })
+      prisma.hrmpayroll.delete({ where: { id } }),
+      prisma.auditlog.create({ data: { user_id: authorization.session.user.id, action: 'PAYROLL_DELETED', module: 'HRM', details: { payrollId: id, staffId: payroll.staff_id } } })
     ])
 
     return Response.json({ success: true, message: dictionary.messages.deleted })

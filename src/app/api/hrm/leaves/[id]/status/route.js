@@ -33,7 +33,7 @@ export async function PATCH(request, routeContext) {
   const [status, currentStaff, existing] = await Promise.all([
     prisma.option.findFirst({ where: { category: 'LEAVE_STATUS', value: payload.status, is_active: true }, select: { id: true } }),
     getCurrentStaff(authorization.session.user.id),
-    prisma.hrmStaffLeave.findUnique({ where: { id }, select: leaveSelect })
+    prisma.hrmstaffleave.findUnique({ where: { id }, select: leaveSelect })
   ])
 
   if (!status) return responseError(dictionary.messages.statusNotFound, 409, 'STATUS_NOT_CONFIGURED')
@@ -41,9 +41,9 @@ export async function PATCH(request, routeContext) {
 
   try {
     const updated = await prisma.$transaction(async transaction => {
-      await transaction.hrmStaffTimesheet.deleteMany({ where: { notes: `Approved leave request ${id}`, status: 'LEAVE' } })
+      await transaction.hrmstafftimesheet.deleteMany({ where: { notes: `Approved leave request ${id}`, status: 'LEAVE' } })
 
-      const leave = await transaction.hrmStaffLeave.update({
+      const leave = await transaction.hrmstaffleave.update({
         where: { id },
         data: {
           status_id: status.id,
@@ -55,7 +55,7 @@ export async function PATCH(request, routeContext) {
 
       if (payload.status === 'APPROVED') await createLeaveAttendance(transaction, leave)
 
-      await transaction.auditLog.create({ data: { user_id: authorization.session.user.id, action: `LEAVE_${payload.status}`, module: 'HRM', details: { leaveId: id, staffId: leave.staff_id, approvedByStaffId: currentStaff?.id || null } } })
+      await transaction.auditlog.create({ data: { user_id: authorization.session.user.id, action: `LEAVE_${payload.status}`, module: 'HRM', details: { leaveId: id, staffId: leave.staff_id, approvedByStaffId: currentStaff?.id || null } } })
 
       return leave
     })

@@ -9,8 +9,6 @@ import Dialog from '@mui/material/Dialog'
 import DialogActions from '@mui/material/DialogActions'
 import DialogContent from '@mui/material/DialogContent'
 import DialogTitle from '@mui/material/DialogTitle'
-import IconButton from '@mui/material/IconButton'
-import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
 import { toast } from 'sonner'
 
@@ -24,6 +22,7 @@ import {
 } from '@/actions/options'
 import ConfirmDeleteModal from '@/components/dialogs/ConfirmDeleteModal'
 import LoadingButtonContent from '@/components/LoadingButtonContent'
+import EntityActionsMenu from '@/components/table/EntityActionsMenu'
 import TableEmptyStateRow from '@/components/table/TableEmptyStateRow'
 
 import tableStyles from '@core/styles/table.module.css'
@@ -191,35 +190,14 @@ const ContractOptionsView = ({ initialData, canWrite, canDelete, locale, diction
                         />
                       </td>
                       <td className='text-end'>
-                        <div className='flex justify-end gap-1'>
-                          {canWrite && (
-                            <Tooltip title={managementDictionary.common.edit}>
-                              <IconButton disabled={busyId === option.id} onClick={() => openEdit(option)}>
-                                <i className='tabler-edit' />
-                              </IconButton>
-                            </Tooltip>
-                          )}
-                          {canWrite && (
-                            <Tooltip
-                              title={option.is_active ? dictionary.common.deactivate : dictionary.common.activate}
-                            >
-                              <IconButton disabled={busyId === option.id} onClick={() => toggle(option)}>
-                                <i className={option.is_active ? 'tabler-toggle-right' : 'tabler-toggle-left'} />
-                              </IconButton>
-                            </Tooltip>
-                          )}
-                          {canDelete && (
-                            <Tooltip title={managementDictionary.common.delete}>
-                              <IconButton
-                                color='error'
-                                disabled={busyId === option.id}
-                                onClick={() => setDeleteTarget(option)}
-                              >
-                                <i className='tabler-trash' />
-                              </IconButton>
-                            </Tooltip>
-                          )}
-                        </div>
+                        <EntityActionsMenu
+                          actions={[
+                            canWrite && { label: managementDictionary.common.edit, icon: 'tabler-edit', disabled: busyId === option.id, onClick: () => openEdit(option) },
+                            canWrite && { label: option.is_active ? dictionary.common.deactivate : dictionary.common.activate, icon: option.is_active ? 'tabler-toggle-right' : 'tabler-toggle-left', disabled: busyId === option.id, onClick: () => toggle(option) },
+                            canDelete && { label: managementDictionary.common.delete, icon: 'tabler-trash', color: 'error', disabled: busyId === option.id, onClick: () => setDeleteTarget(option) }
+                          ]}
+                          moreActionsLabel={dictionary.common.actions}
+                        />
                       </td>
                     </tr>
                   ))

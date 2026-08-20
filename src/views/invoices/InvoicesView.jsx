@@ -10,7 +10,7 @@ import MenuItem from '@mui/material/MenuItem'
 import { toast } from 'sonner'
 
 import CustomTextField from '@core/components/mui/TextField'
-import { deleteInvoice, getInvoiceFormOptions, getInvoices } from '@/actions/invoices'
+import { deleteInvoice, getInvoiceFormOptions, getInvoices, updateInvoiceStatus } from '@/actions/invoices'
 import ConfirmDeleteModal from '@/components/dialogs/ConfirmDeleteModal'
 import TableFiltersPopover from '@/components/table/TableFiltersPopover'
 
@@ -46,6 +46,7 @@ const InvoicesView = ({ locale, dictionary, setup, canWrite, canDelete }) => {
   const [paymentInvoice, setPaymentInvoice] = useState(null)
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [deleting, setDeleting] = useState(false)
+  const [statusUpdating, setStatusUpdating] = useState(null)
 
   useEffect(() => {
     const timeout = setTimeout(() => { setSearch(searchInput.trim()); setPage(0) }, 350)
@@ -87,6 +88,21 @@ const InvoicesView = ({ locale, dictionary, setup, canWrite, canDelete }) => {
     setDeleting(false)
   }
 
+  const changeStatus = async (invoice, nextStatusId) => {
+    if (!nextStatusId || nextStatusId === invoice.status_id) return
+    setStatusUpdating(invoice.id)
+
+    const result = await updateInvoiceStatus(invoice.id, nextStatusId, { locale })
+
+    if (!result.success) toast.error(result.error || dictionary.messages.operationFailed)
+    else {
+      toast.success(result.message)
+      await loadData()
+    }
+
+    setStatusUpdating(null)
+  }
+
   const activeFilterCount = Number(Boolean(statusId)) + Number(Boolean(clientId)) + Number(Boolean(contractId)) + Number(Boolean(fromDate || toDate))
 
   return (
@@ -111,7 +127,7 @@ const InvoicesView = ({ locale, dictionary, setup, canWrite, canDelete }) => {
             {canWrite && <Button variant='contained' startIcon={<i className='tabler-plus' />} onClick={openCreate}>{dictionary.actions.create}</Button>}
           </div>
         </CardContent>
-        <InvoiceTableView data={data} loading={loading} page={page} rowsPerPage={rowsPerPage} locale={locale} dictionary={dictionary} canWrite={canWrite} canDelete={canDelete} onPageChange={(_, value) => setPage(value)} onRowsPerPageChange={event => { setRowsPerPage(Number(event.target.value)); setPage(0) }} onView={setPrintInvoice} onPay={setPaymentInvoice} onEdit={edit} onDelete={setDeleteTarget} onAdd={openCreate} />
+        <InvoiceTableView data={data} loading={loading} statusUpdating={statusUpdating} page={page} rowsPerPage={rowsPerPage} locale={locale} dictionary={dictionary} canWrite={canWrite} canDelete={canDelete} onPageChange={(_, value) => setPage(value)} onRowsPerPageChange={event => { setRowsPerPage(Number(event.target.value)); setPage(0) }} onView={setPrintInvoice} onPay={setPaymentInvoice} onEdit={edit} onDelete={setDeleteTarget} onStatusChange={changeStatus} onAdd={openCreate} />
       </Card>
       <InvoiceFormDrawer open={formOpen} invoice={editingInvoice} options={options} locale={locale} dictionary={dictionary} onClose={() => setFormOpen(false)} onSaved={refresh} />
       <InvoicePaymentDialog open={Boolean(paymentInvoice)} invoice={paymentInvoice} paymentMethods={options.paymentMethods} locale={locale} dictionary={dictionary} onClose={() => setPaymentInvoice(null)} onSaved={refresh} />

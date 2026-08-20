@@ -19,7 +19,7 @@ export async function POST(request, context) {
 
   try {
     const { id } = await context.params
-    const visitor = await prisma.crmVisitor.findUnique({ where: { id }, include: { converted_lead: { select: { id: true } } } })
+    const visitor = await prisma.crmvisitor.findUnique({ where: { id }, include: { converted_lead: { select: { id: true } } } })
 
     if (!visitor) return errorResponse(dictionary.messages.notFound, 404, 'VISITOR_NOT_FOUND')
     if (visitor.converted_lead) return errorResponse(dictionary.messages.alreadyConverted, 409, 'ALREADY_CONVERTED')
@@ -38,7 +38,7 @@ export async function POST(request, context) {
     const leadNotes = [visitor.purpose, visitor.notes].filter(Boolean).join('\n\n')
 
     const lead = await prisma.$transaction(async transaction => {
-      const created = await transaction.crmLead.create({ data: {
+      const created = await transaction.crmlead.create({ data: {
         title: leadTitle,
         contact_name: visitor.full_name,
         company_name: visitor.company_name,
@@ -56,8 +56,8 @@ export async function POST(request, context) {
 
       const conversionNote = dictionary.conversion.note.replace('{title}', created.title)
 
-      await transaction.crmVisitor.update({ where: { id }, data: { converted_lead_id: created.id, notes: [visitor.notes, conversionNote].filter(Boolean).join('\n\n') } })
-      await transaction.auditLog.create({ data: { user_id: authorization.session.user.id, action: 'CRM_VISITOR_CONVERTED_TO_LEAD', module: 'CRM', details: { visitorId: id, leadId: created.id } } })
+      await transaction.crmvisitor.update({ where: { id }, data: { converted_lead_id: created.id, notes: [visitor.notes, conversionNote].filter(Boolean).join('\n\n') } })
+      await transaction.auditlog.create({ data: { user_id: authorization.session.user.id, action: 'CRM_VISITOR_CONVERTED_TO_LEAD', module: 'CRM', details: { visitorId: id, leadId: created.id } } })
 
       return created
     })

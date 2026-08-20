@@ -5,7 +5,7 @@ import { prisma } from '@/libs/prisma'
 
 export const getBrandingSettings = async () => {
   try {
-    const settings = await prisma.systemSetting.findUnique({
+    const settings = await prisma.systemsetting.findUnique({
       where: { id: SYSTEM_SETTING_ID },
       select: {
         lightLogoUrl: true,

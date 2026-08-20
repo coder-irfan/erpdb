@@ -21,6 +21,7 @@ const Breadcrumbs = () => {
   if (segments[0] === 'dashboard') segments.shift()
 
   if (segments.at(-1) === 'print') return null
+  if (segments.length === 0) return null
 
   return (
     <MuiBreadcrumbs

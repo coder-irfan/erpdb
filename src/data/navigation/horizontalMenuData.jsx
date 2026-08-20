@@ -46,23 +46,7 @@ const horizontalMenuData = dictionary => [
     label: dictionary.navigation.projects,
     icon: 'tabler-briefcase',
     permission: 'projects:read',
-    children: [
-      {
-        label: dictionary.navigation.projectsList,
-        href: '/projects',
-        permission: 'projects:read'
-      },
-      {
-        label: dictionary.navigation.projectMembers,
-        href: '/projects/members',
-        permission: 'projects_members:read'
-      },
-      {
-        label: dictionary.navigation.projectContracts,
-        href: '/projects/contracts',
-        permission: 'projects_contracts:read'
-      }
-    ]
+    href: '/projects'
   },
   {
     label: dictionary.navigation.contractModule,
@@ -78,21 +62,6 @@ const horizontalMenuData = dictionary => [
         label: dictionary.navigation.contractInvoices,
         href: '/contracts/invoices',
         permission: 'contracts:read'
-      },
-      {
-        label: dictionary.navigation.contractOthers,
-        href: '/contract/others',
-        permission: 'contracts_other:read'
-      },
-      {
-        label: dictionary.navigation.contractCustomers,
-        href: '/contract/customer',
-        permission: 'contracts_customer:read'
-      },
-      {
-        label: dictionary.navigation.contractNotifications,
-        href: '/contract/notifications',
-        permission: 'contracts_notification:read'
       }
     ]
   },
@@ -166,11 +135,6 @@ const horizontalMenuData = dictionary => [
     icon: 'tabler-list-details',
     permission: 'options:read',
     children: [
-      {
-        label: dictionary.navigation.lookupOptions,
-        href: '/options',
-        permission: 'options:read'
-      },
       {
         label: dictionary.navigation.hrManagement,
         icon: 'tabler-users-group',

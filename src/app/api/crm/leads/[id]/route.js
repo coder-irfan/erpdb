@@ -36,10 +36,10 @@ export async function PUT(request, context) {
     const values = parsed.output
 
     const [existing, source, status, assignedStaff, setup] = await Promise.all([
-      prisma.crmLead.findUnique({ where: { id }, select: { id: true, currency: true, exchange_rate: true } }),
+      prisma.crmlead.findUnique({ where: { id }, select: { id: true, currency: true, exchange_rate: true } }),
       prisma.option.findFirst({ where: { id: values.source_id, category: 'LEAD_SOURCE', is_active: true }, select: { id: true } }),
       prisma.option.findFirst({ where: { id: values.status_id, category: 'LEAD_STATUS', is_active: true }, select: { id: true } }),
-      values.assigned_to_id ? prisma.hrmStaff.findFirst({ where: { id: values.assigned_to_id, status: 'ACTIVE' }, select: { id: true } }) : null,
+      values.assigned_to_id ? prisma.hrmstaff.findFirst({ where: { id: values.assigned_to_id, status: 'ACTIVE' }, select: { id: true } }) : null,
       getCompanySetupRecord()
     ])
 
@@ -47,7 +47,7 @@ export async function PUT(request, context) {
     if (!source || !status || (values.assigned_to_id && !assignedStaff)) return errorResponse(dictionary.messages.invalidRelations, 400, 'INVALID_RELATIONS')
 
     const lead = await prisma.$transaction(async transaction => {
-      const updated = await transaction.crmLead.update({
+      const updated = await transaction.crmlead.update({
         where: { id },
         data: {
           title: cleanText(values.title),
@@ -74,7 +74,7 @@ export async function PUT(request, context) {
         include: leadInclude
       })
 
-      await transaction.auditLog.create({ data: { user_id: authorization.session.user.id, action: 'CRM_LEAD_UPDATED', module: 'CRM', details: { leadId: id } } })
+      await transaction.auditlog.create({ data: { user_id: authorization.session.user.id, action: 'CRM_LEAD_UPDATED', module: 'CRM', details: { leadId: id } } })
 
       return updated
     })
@@ -94,14 +94,14 @@ export async function DELETE(request, context) {
   if (!authorization.authorized) return errorResponse(dictionary.messages.forbidden, authorization.code === 'FORBIDDEN' ? 403 : 401, authorization.code)
 
   try {
-    const lead = await prisma.crmLead.findUnique({ where: { id }, select: { id: true, converted_client: { select: { id: true } }, contracts: { select: { id: true }, take: 1 } } })
+    const lead = await prisma.crmlead.findUnique({ where: { id }, select: { id: true, converted_client: { select: { id: true } }, contracts: { select: { id: true }, take: 1 } } })
 
     if (!lead) return errorResponse(dictionary.messages.notFound, 404, 'LEAD_NOT_FOUND')
     if (lead.converted_client || lead.contracts.length) return errorResponse(dictionary.messages.deleteBlocked, 409, 'LEAD_IN_USE')
 
     await prisma.$transaction([
-      prisma.crmLead.delete({ where: { id } }),
-      prisma.auditLog.create({ data: { user_id: authorization.session.user.id, action: 'CRM_LEAD_DELETED', module: 'CRM', details: { leadId: id } } })
+      prisma.crmlead.delete({ where: { id } }),
+      prisma.auditlog.create({ data: { user_id: authorization.session.user.id, action: 'CRM_LEAD_DELETED', module: 'CRM', details: { leadId: id } } })
     ])
 
     return Response.json({ success: true, message: dictionary.messages.deleted })

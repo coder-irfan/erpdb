@@ -168,9 +168,9 @@ const validateRelations = async (values, currentContract = null) => {
   ]
 
   const [client, manager, setup, ...optionResults] = await Promise.all([
-    prisma.crmClient.findUnique({ where: { id: values.client_id }, select: { id: true } }),
+    prisma.crmclient.findUnique({ where: { id: values.client_id }, select: { id: true } }),
     values.account_manager_id
-      ? prisma.hrmStaff.findUnique({ where: { id: values.account_manager_id }, select: { id: true } })
+      ? prisma.hrmstaff.findUnique({ where: { id: values.account_manager_id }, select: { id: true } })
       : null,
     getCompanySetupRecord(),
     ...categories.map(([, id, category, currentId]) =>
@@ -368,13 +368,13 @@ export const getContractFormOptions = async (payload = {}) => {
 
   try {
     const [clients, staff, options, setup] = await Promise.all([
-      prisma.crmClient.findMany({
+      prisma.crmclient.findMany({
         where: { status: 'ACTIVE' },
         select: { id: true, company_name: true, primary_contact_name: true, email: true },
         orderBy: { company_name: 'asc' },
         take: 500
       }),
-      prisma.hrmStaff.findMany({
+      prisma.hrmstaff.findMany({
         where: { status: { not: 'TERMINATED' } },
         select: { id: true, first_name: true, last_name: true, position: true, email: true },
         orderBy: [{ first_name: 'asc' }, { last_name: 'asc' }]
@@ -470,7 +470,7 @@ export const createContract = async (payload = {}) => {
       const contractNumber = await generateContractNumber(transaction)
       const created = await transaction.contract.create({ data: { ...prepared.data, contract_number: contractNumber } })
 
-      await transaction.auditLog.create({
+      await transaction.auditlog.create({
         data: {
           user_id: context.session.user.id,
           action: 'CONTRACT_CREATED',
@@ -514,7 +514,7 @@ export const updateContract = async (id, payload = {}) => {
 
     await prisma.$transaction(async transaction => {
       await transaction.contract.update({ where: { id: contractId }, data: prepared.data })
-      await transaction.auditLog.create({
+      await transaction.auditlog.create({
         data: {
           user_id: context.session.user.id,
           action: 'CONTRACT_UPDATED',
@@ -560,7 +560,7 @@ export const updateContractStatus = async (id, statusId, payload = {}) => {
         where: { id: contractId },
         data: { status_id: status.id, ...(status.value === 'EXPIRED' ? { renewal_status: 'EXPIRED' } : {}) }
       })
-      await transaction.auditLog.create({
+      await transaction.auditlog.create({
         data: {
           user_id: context.session.user.id,
           action: 'CONTRACT_STATUS_UPDATED',
@@ -600,7 +600,7 @@ export const deleteContract = async (id, payload = {}) => {
 
     await prisma.$transaction(async transaction => {
       await transaction.contract.delete({ where: { id: contractId } })
-      await transaction.auditLog.create({
+      await transaction.auditlog.create({
         data: {
           user_id: context.session.user.id,
           action: 'CONTRACT_DELETED',

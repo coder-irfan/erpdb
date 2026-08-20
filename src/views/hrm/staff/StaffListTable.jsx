@@ -7,9 +7,7 @@ import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import Chip from '@mui/material/Chip'
-import IconButton from '@mui/material/IconButton'
 import MenuItem from '@mui/material/MenuItem'
-import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
 import { createColumnHelper, flexRender, getCoreRowModel, useReactTable } from '@tanstack/react-table'
 import { toast } from 'sonner'
@@ -18,6 +16,7 @@ import { Avatar } from '@mui/material'
 
 import CustomTextField from '@core/components/mui/TextField'
 import DashboardTablePagination from '@/components/table/DashboardTablePagination'
+import EntityActionsMenu from '@/components/table/EntityActionsMenu'
 import TableEmptyStateRow from '@/components/table/TableEmptyStateRow'
 import TableFiltersPopover from '@/components/table/TableFiltersPopover'
 import TableSkeletonRows from '@/components/table/TableSkeletonRows'
@@ -238,34 +237,25 @@ const StaffListTable = ({
           const employee = row.original
 
           return (
-            <div className='flex min-is-[220px] items-center justify-end gap-1'>
-              <Tooltip title={dictionary.actions.view}>
-                <IconButton onClick={() => setDetailStaffId(employee.id)}>
-                  <i className='tabler-eye' />
-                </IconButton>
-              </Tooltip>
-              {canUpdate && (
-                <Tooltip title={dictionary.actions.edit}>
-                  <IconButton onClick={() => openEditDrawer(employee)}>
-                    <i className='tabler-edit' />
-                  </IconButton>
-                </Tooltip>
-              )}
-              <CustomTextField
-                select
-                value={employee.status}
-                onChange={event => handleStatusChange(employee.id, event.target.value)}
-                disabled={!canUpdate || busyStaffId === employee.id}
-                aria-label={dictionary.actions.changeStatus}
-                className='is-[135px]'
-              >
-                {['ACTIVE', 'INACTIVE', 'TERMINATED'].map(statusValue => (
-                  <MenuItem key={statusValue} value={statusValue}>
-                    {dictionary.status[statusValue]}
-                  </MenuItem>
-                ))}
-              </CustomTextField>
-            </div>
+            <EntityActionsMenu
+              actions={[
+                { label: dictionary.actions.view, icon: 'tabler-eye', onClick: () => setDetailStaffId(employee.id) },
+                canUpdate && { label: dictionary.actions.edit, icon: 'tabler-edit', onClick: () => openEditDrawer(employee) }
+              ]}
+              statusOptions={
+                canUpdate
+                  ? ['ACTIVE', 'INACTIVE', 'TERMINATED'].map(statusValue => ({
+                      id: statusValue,
+                      label: dictionary.status[statusValue]
+                    }))
+                  : []
+              }
+              currentStatus={employee.status}
+              statusDisabled={busyStaffId === employee.id}
+              changeStatusLabel={dictionary.actions.changeStatus}
+              moreActionsLabel={dictionary.table.actions}
+              onStatusChange={statusValue => handleStatusChange(employee.id, statusValue)}
+            />
           )
         }
       })

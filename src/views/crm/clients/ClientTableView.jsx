@@ -2,11 +2,11 @@
 
 import Avatar from '@mui/material/Avatar'
 import Chip from '@mui/material/Chip'
-import IconButton from '@mui/material/IconButton'
 import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
 
 import DashboardTablePagination from '@/components/table/DashboardTablePagination'
+import EntityActionsMenu from '@/components/table/EntityActionsMenu'
 import TableEmptyStateRow from '@/components/table/TableEmptyStateRow'
 import TableSkeletonRows from '@/components/table/TableSkeletonRows'
 import { formatCurrency } from '@/utils/formatCurrency'
@@ -29,12 +29,14 @@ const ClientTableView = ({
   dictionary,
   canWrite,
   canDelete,
+  statusUpdating,
   onPageChange,
   onRowsPerPageChange,
   onView,
   onActivity,
   onEdit,
   onDelete,
+  onStatusChange,
   onAdd
 }) => (
   <>
@@ -134,34 +136,27 @@ const ClientTableView = ({
                   {formatCurrency(client.total_revenue, locale, currencyCode)}
                 </td>
                 <td className='text-end' onClick={event => event.stopPropagation()}>
-                  <div className='flex justify-end gap-1'>
-                    <Tooltip title={dictionary.actions.view}>
-                      <IconButton onClick={() => onView(client)}>
-                        <i className='tabler-eye' />
-                      </IconButton>
-                    </Tooltip>
-                    {canWrite && (
-                      <Tooltip title={dictionary.actions.activity}>
-                        <IconButton onClick={() => onActivity(client)}>
-                          <i className='tabler-activity' />
-                        </IconButton>
-                      </Tooltip>
-                    )}
-                    {canWrite && (
-                      <Tooltip title={dictionary.actions.edit}>
-                        <IconButton onClick={() => onEdit(client)}>
-                          <i className='tabler-edit' />
-                        </IconButton>
-                      </Tooltip>
-                    )}
-                    {canDelete && (
-                      <Tooltip title={dictionary.actions.delete}>
-                        <IconButton color='error' onClick={() => onDelete(client)}>
-                          <i className='tabler-trash' />
-                        </IconButton>
-                      </Tooltip>
-                    )}
-                  </div>
+                  <EntityActionsMenu
+                    actions={[
+                      { label: dictionary.actions.view, icon: 'tabler-eye', onClick: () => onView(client) },
+                      canWrite && { label: dictionary.actions.activity, icon: 'tabler-activity', onClick: () => onActivity(client) },
+                      canWrite && { label: dictionary.actions.edit, icon: 'tabler-edit', onClick: () => onEdit(client) },
+                      canDelete && { label: dictionary.actions.delete, icon: 'tabler-trash', color: 'error', onClick: () => onDelete(client) }
+                    ]}
+                    statusOptions={
+                      canWrite
+                        ? [
+                            { id: 'ACTIVE', label: dictionary.status.ACTIVE },
+                            { id: 'INACTIVE', label: dictionary.status.INACTIVE }
+                          ]
+                        : []
+                    }
+                    currentStatus={client.status}
+                    statusDisabled={statusUpdating === client.id}
+                    changeStatusLabel={dictionary.actions.changeStatus}
+                    moreActionsLabel={dictionary.table.actions}
+                    onStatusChange={nextStatus => onStatusChange(client, nextStatus)}
+                  />
                 </td>
               </tr>
             ))

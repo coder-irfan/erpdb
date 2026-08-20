@@ -15,7 +15,7 @@ const iconStyles = theme => ({
   }),
   fontSize: '1.25rem',
   position: 'absolute',
-  right: '1rem',
+  insetInlineEnd: '1rem',
   pointerEvents: 'none'
 })
 
@@ -27,6 +27,8 @@ const select = {
     },
     styleOverrides: {
       select: ({ theme, ownerState }) => ({
+        WebkitPaddingEnd: '44px !important',
+        paddingInlineEnd: '44px !important',
         ...(ownerState.variant === 'outlined' && {
           height: '1.5em'
         }),

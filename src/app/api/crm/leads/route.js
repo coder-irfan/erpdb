@@ -68,15 +68,15 @@ export async function GET(request) {
 
   try {
     const [leads, totalCount, summaryLeads, statuses, sources, staff] = await Promise.all([
-      prisma.crmLead.findMany({
+      prisma.crmlead.findMany({
         where,
         include: leadInclude,
         orderBy: [{ next_follow_up_date: 'asc' }, { created_at: 'desc' }],
         skip: view === 'kanban' ? 0 : (page - 1) * limit,
         take: limit
       }),
-      prisma.crmLead.count({ where }),
-      prisma.crmLead.findMany({
+      prisma.crmlead.count({ where }),
+      prisma.crmlead.findMany({
         where,
         select: {
           amount_base: true,
@@ -87,7 +87,7 @@ export async function GET(request) {
       }),
       prisma.option.findMany({ where: { category: 'LEAD_STATUS', is_active: true }, select: { id: true, label: true, value: true, color_code: true }, orderBy: { sort_order: 'asc' } }),
       prisma.option.findMany({ where: { category: 'LEAD_SOURCE', is_active: true }, select: { id: true, label: true, value: true, color_code: true }, orderBy: { sort_order: 'asc' } }),
-      prisma.hrmStaff.findMany({ where: { status: 'ACTIVE' }, select: { id: true, first_name: true, last_name: true, position: true }, orderBy: [{ first_name: 'asc' }, { last_name: 'asc' }] })
+      prisma.hrmstaff.findMany({ where: { status: 'ACTIVE' }, select: { id: true, first_name: true, last_name: true, position: true }, orderBy: [{ first_name: 'asc' }, { last_name: 'asc' }] })
     ])
 
     const today = new Date()
@@ -150,7 +150,7 @@ export async function POST(request) {
     const [source, status, assignedStaff, currentStaffId, setup] = await Promise.all([
       prisma.option.findFirst({ where: { id: values.source_id, category: 'LEAD_SOURCE', is_active: true }, select: { id: true } }),
       prisma.option.findFirst({ where: { id: values.status_id, category: 'LEAD_STATUS', is_active: true }, select: { id: true } }),
-      values.assigned_to_id ? prisma.hrmStaff.findFirst({ where: { id: values.assigned_to_id, status: 'ACTIVE' }, select: { id: true } }) : null,
+      values.assigned_to_id ? prisma.hrmstaff.findFirst({ where: { id: values.assigned_to_id, status: 'ACTIVE' }, select: { id: true } }) : null,
       getCurrentStaffId(authorization.session.user.id),
       getCompanySetupRecord()
     ])
@@ -162,7 +162,7 @@ export async function POST(request) {
     if (!activityStaffId) return errorResponse(dictionary.messages.staffProfileRequired, 409, 'STAFF_PROFILE_REQUIRED')
 
     const lead = await prisma.$transaction(async transaction => {
-      const created = await transaction.crmLead.create({
+      const created = await transaction.crmlead.create({
         data: {
           title: cleanText(values.title),
           contact_name: cleanText(values.contact_name),
@@ -190,7 +190,7 @@ export async function POST(request) {
         include: leadInclude
       })
 
-      await transaction.auditLog.create({ data: { user_id: authorization.session.user.id, action: 'CRM_LEAD_CREATED', module: 'CRM', details: { leadId: created.id } } })
+      await transaction.auditlog.create({ data: { user_id: authorization.session.user.id, action: 'CRM_LEAD_CREATED', module: 'CRM', details: { leadId: created.id } } })
 
       return created
     })

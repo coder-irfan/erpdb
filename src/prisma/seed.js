@@ -105,14 +105,14 @@ const roles = [
 ]
 
 const syncRolePermissions = async (transaction, roleId, permissionIds) => {
-  await transaction.rolePermission.deleteMany({
+  await transaction.rolepermission.deleteMany({
     where: {
       role_id: roleId,
       permission_id: { notIn: permissionIds }
     }
   })
 
-  await transaction.rolePermission.createMany({
+  await transaction.rolepermission.createMany({
     data: permissionIds.map(permissionId => ({
       role_id: roleId,
       permission_id: permissionId

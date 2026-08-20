@@ -14,7 +14,7 @@ export async function PATCH(request, context) {
 
   try {
     const [lead, status, staffId] = await Promise.all([
-      prisma.crmLead.findUnique({ where: { id }, select: { id: true, status_id: true, assigned_to_id: true } }),
+      prisma.crmlead.findUnique({ where: { id }, select: { id: true, status_id: true, assigned_to_id: true } }),
       prisma.option.findFirst({ where: { id: payload.status_id, category: 'LEAD_STATUS', is_active: true }, select: { id: true, label: true } }),
       getCurrentStaffId(authorization.session.user.id)
     ])
@@ -27,9 +27,9 @@ export async function PATCH(request, context) {
     if (!activityStaffId) return Response.json({ success: false, error: dictionary.messages.staffProfileRequired }, { status: 409 })
 
     await prisma.$transaction(async transaction => {
-      await transaction.crmLead.update({ where: { id }, data: { status_id: status.id } })
-      await transaction.crmActivity.create({ data: { lead_id: id, staff_id: activityStaffId, activity_type: 'FOLLOW_UP', title: dictionary.activities.statusChanged.replace('{status}', status.label), is_completed: true } })
-      await transaction.auditLog.create({ data: { user_id: authorization.session.user.id, action: 'CRM_LEAD_STATUS_UPDATED', module: 'CRM', details: { leadId: id, statusId: status.id } } })
+      await transaction.crmlead.update({ where: { id }, data: { status_id: status.id } })
+      await transaction.crmactivity.create({ data: { lead_id: id, staff_id: activityStaffId, activity_type: 'FOLLOW_UP', title: dictionary.activities.statusChanged.replace('{status}', status.label), is_completed: true } })
+      await transaction.auditlog.create({ data: { user_id: authorization.session.user.id, action: 'CRM_LEAD_STATUS_UPDATED', module: 'CRM', details: { leadId: id, statusId: status.id } } })
     })
 
     return Response.json({ success: true, message: dictionary.messages.statusUpdated })

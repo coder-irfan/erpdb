@@ -41,7 +41,7 @@ export async function POST(request) {
   try {
     const [draftStatus, staffMembers, setup] = await Promise.all([
       prisma.option.findFirst({ where: { category: 'PAYROLL_STATUS', value: { in: ['DRAFT', 'PENDING'] }, is_active: true }, select: { id: true }, orderBy: { sort_order: 'asc' } }),
-      prisma.hrmStaff.findMany({
+      prisma.hrmstaff.findMany({
         where: {
           status: 'ACTIVE',
           ...(staffId && { id: staffId }),
@@ -82,7 +82,7 @@ export async function POST(request) {
 
         if (!calculation) continue
 
-        const existing = await transaction.hrmPayroll.findUnique({
+        const existing = await transaction.hrmpayroll.findUnique({
           where: { staff_id_month_year: { staff_id: staff.id, month, year } },
           select: { id: true, exchange_rate: true, status: { select: { value: true } } }
         })
@@ -110,13 +110,13 @@ export async function POST(request) {
           notes: JSON.stringify({ unpaidDays: calculation.unpaidDays, contractNumber: calculation.contractNumber })
         }
 
-        if (existing) await transaction.hrmPayroll.update({ where: { id: existing.id }, data })
-        else await transaction.hrmPayroll.create({ data: { staff_id: staff.id, month, year, ...data } })
+        if (existing) await transaction.hrmpayroll.update({ where: { id: existing.id }, data })
+        else await transaction.hrmpayroll.create({ data: { staff_id: staff.id, month, year, ...data } })
 
         generated += 1
       }
 
-      await transaction.auditLog.create({ data: { user_id: authorization.session.user.id, action: 'PAYROLL_GENERATED', module: 'HRM', details: { month, year, staffId: staffId || null, generated, skippedPaid } } })
+      await transaction.auditlog.create({ data: { user_id: authorization.session.user.id, action: 'PAYROLL_GENERATED', module: 'HRM', details: { month, year, staffId: staffId || null, generated, skippedPaid } } })
 
       return { generated, skippedPaid }
     })

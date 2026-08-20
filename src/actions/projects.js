@@ -1,0 +1,475 @@
+'use server'
+
+import { revalidatePath } from 'next/cache'
+
+import { Prisma } from '@prisma/client'
+import { safeParse } from 'valibot'
+
+import { i18n } from '@/configs/i18n'
+import { getProjectsDictionary } from '@/data/dictionaries/projects'
+import { authorizeAction } from '@/libs/actionAuthorization'
+import { getCompanySetupRecord } from '@/libs/companySetup'
+import { prisma } from '@/libs/prisma'
+import { createProjectSchema } from '@/schemas/projects'
+import { toUtcDateOnly } from '@/utils/contractDuration'
+import { convertToBaseCurrency, toFiniteNumber } from '@/utils/formatCurrency'
+
+const READ_PERMISSIONS = ['projects:read', 'projects:write']
+const WRITE_PERMISSIONS = ['projects:write']
+const DELETE_PERMISSIONS = ['projects:delete']
+const ACTIVE_VALUES = ['ACTIVE', 'IN_PROGRESS']
+const CLOSED_VALUES = ['COMPLETED', 'CANCELLED']
+const DEFAULT_PAGE_SIZE = 10
+const MAX_PAGE_SIZE = 100
+
+const DEFAULT_OPTIONS = {
+  PROJECT_STATUS: [
+    ['Planning', 'PLANNING', 'info', 1, true],
+    ['In Progress', 'IN_PROGRESS', 'primary', 2, false],
+    ['Active', 'ACTIVE', 'success', 3, false],
+    ['On Hold', 'ON_HOLD', 'warning', 4, false],
+    ['Completed', 'COMPLETED', 'success', 5, false],
+    ['Cancelled', 'CANCELLED', 'secondary', 6, false]
+  ],
+  PROJECT_PRIORITY: [
+    ['Low', 'LOW', 'success', 1, false],
+    ['Medium', 'MEDIUM', 'info', 2, true],
+    ['High', 'HIGH', 'warning', 3, false],
+    ['Urgent', 'URGENT', 'error', 4, false]
+  ]
+}
+
+const normalizeLocale = locale => (i18n.locales.includes(locale) ? locale : i18n.defaultLocale)
+const normalizeId = value => (typeof value === 'string' ? value.trim() : '')
+const iso = value => value?.toISOString() ?? null
+const numberString = (value, precision = 2) => value == null ? null : value.toFixed(precision)
+
+const getContext = async (payload, permissions) => {
+  const locale = normalizeLocale(payload?.locale)
+  const authorization = await authorizeAction(permissions)
+  const translations = getProjectsDictionary(locale)
+
+  if (!authorization.authorized) {
+    return {
+      authorized: false,
+      code: authorization.code,
+      error: authorization.code === 'UNAUTHENTICATED' ? translations.messages.unauthenticated : translations.messages.forbidden,
+      locale,
+      translations
+    }
+  }
+
+  return { authorized: true, session: authorization.session, locale, translations }
+}
+
+const optionSelect = { id: true, label: true, value: true, color_code: true, is_default: true, is_active: true }
+const staffSelect = { id: true, first_name: true, last_name: true, email: true, phone: true, position: true }
+
+const projectSelect = {
+  id: true,
+  contract_id: true,
+  client_id: true,
+  project_code: true,
+  title: true,
+  description: true,
+  status_id: true,
+  priority_id: true,
+  project_area: true,
+  project_sponsor: true,
+  project_manager_id: true,
+  estimated_hours: true,
+  actual_hours: true,
+  budget: true,
+  currency: true,
+  exchange_rate: true,
+  amount_base: true,
+  start_date: true,
+  end_date: true,
+  actual_end_date: true,
+  created_at: true,
+  updated_at: true,
+  client: { select: { id: true, company_name: true, primary_contact_name: true, email: true, phone: true, address: true } },
+  contract: { select: { id: true, contract_number: true, title: true, total_amount: true, currency: true, amount_base: true, start_date: true, end_date: true, status: { select: optionSelect }, contract_type: { select: optionSelect } } },
+  project_manager: { select: staffSelect },
+  status: { select: optionSelect },
+  priority: { select: optionSelect },
+  members: { select: { id: true, role: true, assigned_at: true, staff: { select: staffSelect } }, orderBy: { assigned_at: 'asc' } }
+}
+
+const withFullName = staff => staff ? { ...staff, full_name: `${staff.first_name} ${staff.last_name}`.trim() } : null
+
+const normalizeProject = project => ({
+  ...project,
+  estimated_hours: numberString(project.estimated_hours),
+  actual_hours: numberString(project.actual_hours),
+  budget: numberString(project.budget),
+  exchange_rate: numberString(project.exchange_rate, 4),
+  amount_base: numberString(project.amount_base),
+  start_date: iso(project.start_date),
+  end_date: iso(project.end_date),
+  actual_end_date: iso(project.actual_end_date),
+  created_at: iso(project.created_at),
+  updated_at: iso(project.updated_at),
+  project_manager: withFullName(project.project_manager),
+  members: project.members?.map(member => ({ ...member, assigned_at: iso(member.assigned_at), staff: withFullName(member.staff) })) || [],
+  contract: project.contract ? {
+    ...project.contract,
+    total_amount: numberString(project.contract.total_amount),
+    amount_base: numberString(project.contract.amount_base),
+    start_date: iso(project.contract.start_date),
+    end_date: iso(project.contract.end_date)
+  } : null,
+  is_overdue: !project.actual_end_date && project.end_date < toUtcDateOnly(new Date()),
+  progress: Math.min(100, Math.round((toFiniteNumber(project.actual_hours) / Math.max(toFiniteNumber(project.estimated_hours), 1)) * 100))
+})
+
+const revalidateProjects = () => {
+  revalidatePath('/[lang]/projects', 'page')
+  revalidatePath('/[lang]/crm/clients', 'page')
+}
+
+const ensureProjectOptions = async () => {
+  const existing = await prisma.option.findMany({
+    where: { category: { in: Object.keys(DEFAULT_OPTIONS) } },
+    select: { category: true, value: true }
+  })
+
+  const keys = new Set(existing.map(option => `${option.category}:${option.value}`))
+  const creates = []
+
+  Object.entries(DEFAULT_OPTIONS).forEach(([category, options]) => {
+    options.forEach(([label, value, color_code, sort_order, is_default]) => {
+      if (!keys.has(`${category}:${value}`)) {
+        creates.push(prisma.option.create({ data: { category, label, value, color_code, sort_order, is_default, is_active: true } }))
+      }
+    })
+  })
+
+  if (creates.length) await prisma.$transaction(creates)
+}
+
+const validationPayload = payload => ({
+  title: payload?.title,
+  description: payload?.description || '',
+  client_id: payload?.client_id,
+  contract_id: payload?.contract_id || '',
+  project_manager_id: payload?.project_manager_id || '',
+  status_id: payload?.status_id,
+  priority_id: payload?.priority_id,
+  project_area: payload?.project_area || '',
+  project_sponsor: payload?.project_sponsor || '',
+  estimated_hours: String(payload?.estimated_hours ?? '0'),
+  actual_hours: String(payload?.actual_hours ?? '0'),
+  budget: String(payload?.budget ?? ''),
+  currency: payload?.currency || 'AFN',
+  exchange_rate: String(payload?.exchange_rate ?? '65'),
+  start_date: payload?.start_date,
+  end_date: payload?.end_date,
+  actual_end_date: payload?.actual_end_date || ''
+})
+
+const prepareProjectData = async (values, translations, current = null) => {
+  const [client, contract, manager, status, priority, setup] = await Promise.all([
+    prisma.crmclient.findUnique({ where: { id: values.client_id }, select: { id: true } }),
+    values.contract_id ? prisma.contract.findUnique({ where: { id: values.contract_id }, select: { id: true, client_id: true } }) : null,
+    values.project_manager_id ? prisma.hrmstaff.findUnique({ where: { id: values.project_manager_id }, select: { id: true } }) : null,
+    prisma.option.findFirst({ where: { id: values.status_id, category: 'PROJECT_STATUS', ...(current?.status_id === values.status_id ? {} : { is_active: true }) }, select: { id: true } }),
+    prisma.option.findFirst({ where: { id: values.priority_id, category: 'PROJECT_PRIORITY', ...(current?.priority_id === values.priority_id ? {} : { is_active: true }) }, select: { id: true } }),
+    getCompanySetupRecord()
+  ])
+
+  if (!client || !status || !priority || (values.contract_id && (!contract || contract.client_id !== values.client_id)) || (values.project_manager_id && !manager)) {
+    return { success: false, error: translations.validation.invalidRelation }
+  }
+
+  const startDate = toUtcDateOnly(values.start_date)
+  const endDate = toUtcDateOnly(values.end_date)
+  const actualEndDate = values.actual_end_date ? toUtcDateOnly(values.actual_end_date) : null
+  const budget = toFiniteNumber(values.budget)
+  const rate = toFiniteNumber(values.exchange_rate)
+
+  if (!startDate || !endDate || endDate < startDate) return { success: false, error: translations.validation.dateRangeInvalid }
+  if (rate <= 0) return { success: false, error: translations.validation.positiveInvalid }
+
+  return {
+    success: true,
+    data: {
+      title: values.title,
+      description: values.description || null,
+      client_id: values.client_id,
+      contract_id: values.contract_id || null,
+      project_manager_id: values.project_manager_id || null,
+      status_id: values.status_id,
+      priority_id: values.priority_id,
+      project_area: values.project_area || null,
+      project_sponsor: values.project_sponsor || null,
+      estimated_hours: new Prisma.Decimal(toFiniteNumber(values.estimated_hours)),
+      actual_hours: new Prisma.Decimal(current ? toFiniteNumber(values.actual_hours ?? current.actual_hours) : 0),
+      budget: new Prisma.Decimal(budget),
+      currency: values.currency,
+      exchange_rate: new Prisma.Decimal(rate),
+      amount_base: new Prisma.Decimal(convertToBaseCurrency(budget, values.currency, rate, setup.currency_code || 'AFN')),
+      start_date: startDate,
+      end_date: endDate,
+      actual_end_date: actualEndDate
+    }
+  }
+}
+
+const generateProjectCode = async transaction => {
+  const year = new Date().getUTCFullYear()
+  const prefix = `PRJ-${year}-`
+  const latest = await transaction.project.findFirst({ where: { project_code: { startsWith: prefix } }, select: { project_code: true }, orderBy: { project_code: 'desc' } })
+  const sequence = Number.parseInt(latest?.project_code.slice(prefix.length), 10)
+
+  return `${prefix}${String(Number.isFinite(sequence) ? sequence + 1 : 1).padStart(3, '0')}`
+}
+
+export const getProjects = async (payload = {}) => {
+  const context = await getContext(payload, READ_PERMISSIONS)
+
+  if (!context.authorized) return { success: false, code: context.code, error: context.error }
+  const page = Math.max(1, Number.parseInt(payload.page, 10) || 1)
+  const limit = Math.min(MAX_PAGE_SIZE, Math.max(1, Number.parseInt(payload.limit, 10) || DEFAULT_PAGE_SIZE))
+  const search = typeof payload.search === 'string' ? payload.search.trim() : ''
+  const clientId = normalizeId(payload.clientId)
+  const managerId = normalizeId(payload.managerId)
+  const statusId = normalizeId(payload.statusId)
+  const priorityId = normalizeId(payload.priorityId)
+
+  const where = {
+    AND: [
+      clientId ? { client_id: clientId } : {}, managerId ? { project_manager_id: managerId } : {},
+      statusId ? { status_id: statusId } : {}, priorityId ? { priority_id: priorityId } : {},
+      search ? { OR: [{ project_code: { contains: search } }, { title: { contains: search } }, { project_sponsor: { contains: search } }] } : {}
+    ]
+  }
+
+  const activeWhere = { status: { is: { value: { in: ACTIVE_VALUES } } } }
+  const today = toUtcDateOnly(new Date())
+
+  try {
+    await ensureProjectOptions()
+
+    const [totalCount, projects, active, totals, activeHours, overdueCount, setup, statuses, priorities] = await prisma.$transaction([
+      prisma.project.count({ where }),
+      prisma.project.findMany({ where, select: projectSelect, orderBy: [{ end_date: 'asc' }, { created_at: 'desc' }], skip: (page - 1) * limit, take: limit }),
+      prisma.project.count({ where: activeWhere }),
+      prisma.project.aggregate({ _sum: { budget: true, amount_base: true } }),
+      prisma.project.aggregate({ where: activeWhere, _sum: { actual_hours: true, estimated_hours: true } }),
+      prisma.project.count({ where: { end_date: { lt: today }, actual_end_date: null } }),
+      prisma.setup.findUnique({ where: { scope: 'GLOBAL' }, select: { currency_code: true } }),
+      prisma.option.findMany({ where: { category: 'PROJECT_STATUS', is_active: true }, select: optionSelect, orderBy: [{ sort_order: 'asc' }, { label: 'asc' }] }),
+      prisma.option.findMany({ where: { category: 'PROJECT_PRIORITY', is_active: true }, select: optionSelect, orderBy: [{ sort_order: 'asc' }, { label: 'asc' }] })
+    ])
+
+    return { success: true, data: { projects: projects.map(normalizeProject), totalCount, page, baseCurrency: setup?.currency_code || 'AFN', statuses, priorities, summary: { activeCount: active, budget: toFiniteNumber(totals._sum.budget), amountBase: toFiniteNumber(totals._sum.amount_base), actualHours: toFiniteNumber(activeHours._sum.actual_hours), estimatedHours: toFiniteNumber(activeHours._sum.estimated_hours), overdueCount } } }
+  } catch {
+    return { success: false, code: 'PROJECTS_LOAD_FAILED', error: context.translations.messages.loadFailed }
+  }
+}
+
+export const getProjectFormOptions = async (payload = {}) => {
+  const context = await getContext(payload, READ_PERMISSIONS)
+
+  if (!context.authorized) return { success: false, code: context.code, error: context.error }
+
+  try {
+    await ensureProjectOptions()
+
+    const [clients, staff, contracts, options, setup] = await Promise.all([
+      prisma.crmclient.findMany({ where: { status: 'ACTIVE' }, select: { id: true, company_name: true, primary_contact_name: true }, orderBy: { company_name: 'asc' }, take: 500 }),
+      prisma.hrmstaff.findMany({ where: { status: { not: 'TERMINATED' } }, select: staffSelect, orderBy: [{ first_name: 'asc' }, { last_name: 'asc' }], take: 500 }),
+      prisma.contract.findMany({ select: { id: true, client_id: true, contract_number: true, title: true, total_amount: true, currency: true, exchange_rate: true, amount_base: true }, orderBy: { created_at: 'desc' }, take: 500 }),
+      prisma.option.findMany({ where: { category: { in: ['PROJECT_STATUS', 'PROJECT_PRIORITY'] }, is_active: true }, select: { ...optionSelect, category: true }, orderBy: [{ category: 'asc' }, { sort_order: 'asc' }, { label: 'asc' }] }),
+      getCompanySetupRecord()
+    ])
+
+    return { success: true, data: { clients, staff: staff.map(withFullName), contracts: contracts.map(contract => ({ ...contract, total_amount: numberString(contract.total_amount), exchange_rate: numberString(contract.exchange_rate, 4), amount_base: numberString(contract.amount_base) })), statuses: options.filter(option => option.category === 'PROJECT_STATUS'), priorities: options.filter(option => option.category === 'PROJECT_PRIORITY'), baseCurrency: setup.currency_code || 'AFN', exchangeRate: setup.usd_afn_exchange_rate || '65.0000' } }
+  } catch {
+    return { success: false, code: 'OPTIONS_LOAD_FAILED', error: context.translations.messages.optionsLoadFailed }
+  }
+}
+
+export const getProjectDetail = async (id, payload = {}) => {
+  const context = await getContext(payload, READ_PERMISSIONS)
+
+  if (!context.authorized) return { success: false, code: context.code, error: context.error }
+  const projectId = normalizeId(id)
+
+  try {
+    const project = await prisma.project.findUnique({
+      where: { id: projectId },
+      select: {
+        ...projectSelect,
+        timesheets: { select: { id: true, date: true, status: true, hours_worked: true, notes: true, check_in_time: true, check_out_time: true, staff: { select: staffSelect } }, orderBy: { date: 'desc' } },
+        expenses: { select: { id: true, expense_date: true, details: true, sub_total: true, currency: true, amount_base: true, expense_type: { select: optionSelect }, spent_by: { select: staffSelect } }, orderBy: { expense_date: 'desc' } },
+        incomes: { select: { id: true, name: true, status: true, total_amount: true, paid_amount: true, currency: true, amount_base: true, created_at: true, income_type: { select: optionSelect }, received_by: { select: staffSelect } }, orderBy: { created_at: 'desc' } }
+      }
+    })
+
+    if (!project) return { success: false, code: 'NOT_FOUND', error: context.translations.messages.notFound }
+    const normalized = normalizeProject(project)
+
+    return { success: true, data: { ...normalized,
+      timesheets: project.timesheets.map(row => ({ ...row, date: iso(row.date), check_in_time: iso(row.check_in_time), check_out_time: iso(row.check_out_time), hours_worked: numberString(row.hours_worked), staff: withFullName(row.staff) })),
+      expenses: project.expenses.map(row => ({ ...row, expense_date: iso(row.expense_date), sub_total: numberString(row.sub_total), amount_base: numberString(row.amount_base), spent_by: withFullName(row.spent_by) })),
+      incomes: project.incomes.map(row => ({ ...row, total_amount: numberString(row.total_amount), paid_amount: numberString(row.paid_amount), amount_base: numberString(row.amount_base), created_at: iso(row.created_at), received_by: withFullName(row.received_by) })),
+      financeSummary: { revenue: project.incomes.reduce((sum, row) => sum + toFiniteNumber(row.amount_base), 0), expenses: project.expenses.reduce((sum, row) => sum + toFiniteNumber(row.amount_base), 0) }
+    } }
+  } catch {
+    return { success: false, code: 'DETAIL_LOAD_FAILED', error: context.translations.messages.detailLoadFailed }
+  }
+}
+
+export const createProject = async (payload = {}) => {
+  const context = await getContext(payload, WRITE_PERMISSIONS)
+
+  if (!context.authorized) return { success: false, code: context.code, error: context.error }
+  const validation = safeParse(createProjectSchema(context.translations.validation), validationPayload(payload))
+
+  if (!validation.success) return { success: false, code: 'VALIDATION_ERROR', error: validation.issues[0]?.message }
+  const prepared = await prepareProjectData(validation.output, context.translations)
+
+  if (!prepared.success) return { success: false, code: 'VALIDATION_ERROR', error: prepared.error }
+
+  try {
+    const created = await prisma.$transaction(async transaction => {
+      const projectCode = await generateProjectCode(transaction)
+      const project = await transaction.project.create({ data: { ...prepared.data, project_code: projectCode } })
+
+      await transaction.auditlog.create({ data: { user_id: context.session.user.id, action: 'PROJECT_CREATED', module: 'PROJECTS', details: { projectId: project.id, projectCode } } })
+
+      return project
+    })
+
+    revalidateProjects()
+
+    return { success: true, data: { id: created.id }, message: context.translations.messages.created }
+  } catch (error) {
+    return { success: false, code: error?.code === 'P2002' ? 'DUPLICATE' : 'CREATE_FAILED', error: error?.code === 'P2002' ? context.translations.messages.duplicate : context.translations.messages.operationFailed }
+  }
+}
+
+export const updateProject = async (id, payload = {}) => {
+  const context = await getContext(payload, WRITE_PERMISSIONS)
+
+  if (!context.authorized) return { success: false, code: context.code, error: context.error }
+  const projectId = normalizeId(id)
+  const validation = safeParse(createProjectSchema(context.translations.validation), validationPayload(payload))
+
+  if (!projectId || !validation.success) return { success: false, code: 'VALIDATION_ERROR', error: validation.issues?.[0]?.message || context.translations.messages.notFound }
+
+  try {
+    const current = await prisma.project.findUnique({ where: { id: projectId }, select: { id: true, project_code: true, status_id: true, priority_id: true, actual_hours: true } })
+
+    if (!current) return { success: false, code: 'NOT_FOUND', error: context.translations.messages.notFound }
+    const prepared = await prepareProjectData(validation.output, context.translations, current)
+
+    if (!prepared.success) return { success: false, code: 'VALIDATION_ERROR', error: prepared.error }
+    await prisma.$transaction([
+      prisma.project.update({ where: { id: projectId }, data: prepared.data }),
+      prisma.auditlog.create({ data: { user_id: context.session.user.id, action: 'PROJECT_UPDATED', module: 'PROJECTS', details: { projectId, projectCode: current.project_code } } })
+    ])
+    revalidateProjects()
+
+    return { success: true, message: context.translations.messages.updated }
+  } catch {
+    return { success: false, code: 'UPDATE_FAILED', error: context.translations.messages.operationFailed }
+  }
+}
+
+export const deleteProject = async (id, payload = {}) => {
+  const context = await getContext(payload, DELETE_PERMISSIONS)
+
+  if (!context.authorized) return { success: false, code: context.code, error: context.error }
+  const projectId = normalizeId(id)
+
+  try {
+    const project = await prisma.project.findUnique({ where: { id: projectId }, select: { id: true, project_code: true, _count: { select: { timesheets: true, expenses: true, incomes: true, tasks: true } } } })
+
+    if (!project) return { success: false, code: 'NOT_FOUND', error: context.translations.messages.notFound }
+    if (Object.values(project._count).some(Boolean)) return { success: false, code: 'IN_USE', error: context.translations.messages.inUse }
+    await prisma.$transaction([
+      prisma.projectmember.deleteMany({ where: { project_id: projectId } }),
+      prisma.project.delete({ where: { id: projectId } }),
+      prisma.auditlog.create({ data: { user_id: context.session.user.id, action: 'PROJECT_DELETED', module: 'PROJECTS', details: { projectId, projectCode: project.project_code } } })
+    ])
+    revalidateProjects()
+
+    return { success: true, message: context.translations.messages.deleted }
+  } catch {
+    return { success: false, code: 'DELETE_FAILED', error: context.translations.messages.operationFailed }
+  }
+}
+
+export const assignProjectMember = async (projectId, payload = {}) => {
+  const context = await getContext(payload, WRITE_PERMISSIONS)
+
+  if (!context.authorized) return { success: false, code: context.code, error: context.error }
+  const id = normalizeId(projectId)
+  const staffId = normalizeId(payload.staff_id)
+  const role = typeof payload.role === 'string' ? payload.role.trim().slice(0, 191) : ''
+
+  try {
+    const [project, staff] = await Promise.all([prisma.project.findUnique({ where: { id }, select: { id: true } }), prisma.hrmstaff.findUnique({ where: { id: staffId }, select: { id: true } })])
+
+    if (!project || !staff) return { success: false, code: 'VALIDATION_ERROR', error: context.translations.validation.invalidRelation }
+    await prisma.$transaction([
+      prisma.projectmember.upsert({ where: { project_id_staff_id: { project_id: id, staff_id: staffId } }, update: { role: role || null }, create: { project_id: id, staff_id: staffId, role: role || null } }),
+      prisma.auditlog.create({ data: { user_id: context.session.user.id, action: 'PROJECT_MEMBER_ASSIGNED', module: 'PROJECTS', details: { projectId: id, staffId, role: role || null } } })
+    ])
+    revalidateProjects()
+
+    return { success: true, message: context.translations.messages.memberAssigned }
+  } catch {
+    return { success: false, code: 'MEMBER_ASSIGN_FAILED', error: context.translations.messages.operationFailed }
+  }
+}
+
+export const removeProjectMember = async (projectId, memberId, payload = {}) => {
+  const context = await getContext(payload, WRITE_PERMISSIONS)
+
+  if (!context.authorized) return { success: false, code: context.code, error: context.error }
+
+  try {
+    const id = normalizeId(projectId)
+    const normalizedMemberId = normalizeId(memberId)
+    const member = await prisma.projectmember.findFirst({ where: { id: normalizedMemberId, project_id: id }, select: { id: true, staff_id: true } })
+
+    if (!member) return { success: false, code: 'NOT_FOUND', error: context.translations.messages.notFound }
+    await prisma.$transaction([
+      prisma.projectmember.delete({ where: { id: member.id } }),
+      prisma.auditlog.create({ data: { user_id: context.session.user.id, action: 'PROJECT_MEMBER_REMOVED', module: 'PROJECTS', details: { projectId: id, staffId: member.staff_id } } })
+    ])
+    revalidateProjects()
+
+    return { success: true, message: context.translations.messages.memberRemoved }
+  } catch {
+    return { success: false, code: 'MEMBER_REMOVE_FAILED', error: context.translations.messages.operationFailed }
+  }
+}
+
+export const updateProjectContract = async (projectId, contractId, payload = {}) => {
+  const context = await getContext(payload, WRITE_PERMISSIONS)
+
+  if (!context.authorized) return { success: false, code: context.code, error: context.error }
+  const id = normalizeId(projectId)
+  const normalizedContractId = normalizeId(contractId)
+
+  try {
+    const project = await prisma.project.findUnique({ where: { id }, select: { id: true, client_id: true } })
+    const contract = normalizedContractId ? await prisma.contract.findUnique({ where: { id: normalizedContractId }, select: { id: true, client_id: true } }) : null
+
+    if (!project || (normalizedContractId && (!contract || contract.client_id !== project.client_id))) return { success: false, code: 'VALIDATION_ERROR', error: context.translations.validation.invalidRelation }
+    await prisma.$transaction([
+      prisma.project.update({ where: { id }, data: { contract_id: normalizedContractId || null } }),
+      prisma.auditlog.create({ data: { user_id: context.session.user.id, action: 'PROJECT_CONTRACT_UPDATED', module: 'PROJECTS', details: { projectId: id, contractId: normalizedContractId || null } } })
+    ])
+    revalidateProjects()
+
+    return { success: true, message: context.translations.messages.contractUpdated }
+  } catch {
+    return { success: false, code: 'CONTRACT_UPDATE_FAILED', error: context.translations.messages.operationFailed }
+  }
+}

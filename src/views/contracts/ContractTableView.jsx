@@ -1,13 +1,11 @@
 'use client'
 
 import Chip from '@mui/material/Chip'
-import IconButton from '@mui/material/IconButton'
-import MenuItem from '@mui/material/MenuItem'
 import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
 
-import CustomTextField from '@core/components/mui/TextField'
 import DashboardTablePagination from '@/components/table/DashboardTablePagination'
+import EntityActionsMenu from '@/components/table/EntityActionsMenu'
 import TableEmptyStateRow from '@/components/table/TableEmptyStateRow'
 import TableSkeletonRows from '@/components/table/TableSkeletonRows'
 import { toDateInputValue } from '@/utils/contractDuration'
@@ -121,7 +119,7 @@ const ContractTableView = ({
                   <td>
                     <div className='min-is-[170px]'>
                       <Typography variant='body2' className='whitespace-nowrap'>
-                        {toDateInputValue(contract.end_date)}
+                        {toDateInputValue(contract.start_date)} {' -> '} {toDateInputValue(contract.end_date)}
                       </Typography>
                       <Chip
                         size='small'
@@ -149,41 +147,19 @@ const ContractTableView = ({
                     />
                   </td>
                   <td className='text-end' onClick={event => event.stopPropagation()}>
-                    <div className='flex min-is-[245px] items-center justify-end gap-1'>
-                      <Tooltip title={dictionary.actions.view}>
-                        <IconButton onClick={() => onView(contract)}>
-                          <i className='tabler-eye' />
-                        </IconButton>
-                      </Tooltip>
-                      {canWrite && (
-                        <Tooltip title={dictionary.actions.edit}>
-                          <IconButton onClick={() => onEdit(contract)}>
-                            <i className='tabler-edit' />
-                          </IconButton>
-                        </Tooltip>
-                      )}
-                      {canDelete && (
-                        <Tooltip title={dictionary.actions.delete}>
-                          <IconButton color='error' onClick={() => onDelete(contract)}>
-                            <i className='tabler-trash' />
-                          </IconButton>
-                        </Tooltip>
-                      )}
-                      <CustomTextField
-                        select
-                        value={contract.status_id || ''}
-                        onChange={event => onStatusChange(contract, event.target.value)}
-                        disabled={!canWrite || statusUpdating === contract.id}
-                        aria-label={dictionary.actions.changeStatus}
-                        className='is-[135px]'
-                      >
-                        {data.statuses.map(status => (
-                          <MenuItem key={status.id} value={status.id}>
-                            {status.label}
-                          </MenuItem>
-                        ))}
-                      </CustomTextField>
-                    </div>
+                    <EntityActionsMenu
+                      actions={[
+                        { label: dictionary.actions.view, icon: 'tabler-eye', onClick: () => onView(contract) },
+                        canWrite && { label: dictionary.actions.edit, icon: 'tabler-edit', onClick: () => onEdit(contract) },
+                        canDelete && { label: dictionary.actions.delete, icon: 'tabler-trash', color: 'error', onClick: () => onDelete(contract) }
+                      ]}
+                      statusOptions={canWrite ? data.statuses : []}
+                      currentStatus={contract.status_id}
+                      statusDisabled={statusUpdating === contract.id}
+                      changeStatusLabel={dictionary.actions.changeStatus}
+                      moreActionsLabel={dictionary.table.actions}
+                      onStatusChange={statusId => onStatusChange(contract, statusId)}
+                    />
                   </td>
                 </tr>
               )

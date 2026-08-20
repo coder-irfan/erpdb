@@ -50,7 +50,7 @@ export const runContractExpirationAuditCore = async ({ locale = 'en', initiatedB
 
     if (!reminder) continue
 
-    const existing = await prisma.contractNotification.findFirst({
+    const existing = await prisma.contractnotification.findFirst({
       where: { contract_id: contract.id, reminder_type: reminder.type },
       select: { id: true }
     })
@@ -71,7 +71,7 @@ export const runContractExpirationAuditCore = async ({ locale = 'en', initiatedB
         companyName: setup.company_name
       })
 
-      await prisma.contractNotification.create({
+      await prisma.contractnotification.create({
         data: {
           contract_id: contract.id,
           reminder_type: reminder.type,
@@ -86,7 +86,7 @@ export const runContractExpirationAuditCore = async ({ locale = 'en', initiatedB
     }
   }
 
-  await prisma.auditLog.create({
+  await prisma.auditlog.create({
     data: {
       user_id: initiatedBy,
       action: 'CONTRACT_EXPIRATION_AUDIT_RUN',

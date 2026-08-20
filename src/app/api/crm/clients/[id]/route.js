@@ -29,7 +29,7 @@ export async function GET(request, context) {
   try {
     const { id } = await context.params
 
-    const client = await prisma.crmClient.findUnique({
+    const client = await prisma.crmclient.findUnique({
       where: { id },
       include: {
         account_manager: { select: { id: true, first_name: true, last_name: true, position: true, email: true, phone: true } },
@@ -66,9 +66,9 @@ export async function PUT(request, context) {
     const values = parsed.output
 
     const [client, emailOwner, manager] = await Promise.all([
-      prisma.crmClient.findUnique({ where: { id }, select: { id: true } }),
-      prisma.crmClient.findUnique({ where: { email: values.email.toLowerCase() }, select: { id: true } }),
-      values.account_manager_id ? prisma.hrmStaff.findFirst({ where: { id: values.account_manager_id, status: 'ACTIVE' }, select: { id: true } }) : null
+      prisma.crmclient.findUnique({ where: { id }, select: { id: true } }),
+      prisma.crmclient.findUnique({ where: { email: values.email.toLowerCase() }, select: { id: true } }),
+      values.account_manager_id ? prisma.hrmstaff.findFirst({ where: { id: values.account_manager_id, status: 'ACTIVE' }, select: { id: true } }) : null
     ])
 
     if (!client) return errorResponse(dictionary.messages.notFound, 404, 'CLIENT_NOT_FOUND')
@@ -76,7 +76,7 @@ export async function PUT(request, context) {
     if (values.account_manager_id && !manager) return errorResponse(dictionary.messages.invalidManager, 400, 'INVALID_MANAGER')
 
     await prisma.$transaction([
-      prisma.crmClient.update({ where: { id }, data: {
+      prisma.crmclient.update({ where: { id }, data: {
         company_name: cleanText(values.company_name),
         primary_contact_name: cleanText(values.primary_contact_name),
         email: values.email.toLowerCase(),
@@ -87,7 +87,7 @@ export async function PUT(request, context) {
         status: values.status,
         notes: cleanText(values.notes) || null
       } }),
-      prisma.auditLog.create({ data: { user_id: authorization.session.user.id, action: 'CRM_CLIENT_UPDATED', module: 'CRM', details: { clientId: id } } })
+      prisma.auditlog.create({ data: { user_id: authorization.session.user.id, action: 'CRM_CLIENT_UPDATED', module: 'CRM', details: { clientId: id } } })
     ])
 
     return Response.json({ success: true, message: dictionary.messages.updated })
@@ -100,6 +100,46 @@ export async function PUT(request, context) {
   }
 }
 
+export async function PATCH(request, context) {
+  const { authorization, dictionary } = await getContext(request, CRM_CLIENT_WRITE_PERMISSIONS)
+
+  if (!authorization.authorized) return errorResponse(authorization.code === 'FORBIDDEN' ? dictionary.messages.forbidden : dictionary.messages.unauthenticated, authorization.code === 'FORBIDDEN' ? 403 : 401, authorization.code)
+
+  try {
+    const { id } = await context.params
+    const payload = await request.json()
+    const status = typeof payload?.status === 'string' ? payload.status.trim().toUpperCase() : ''
+
+    if (!['ACTIVE', 'INACTIVE'].includes(status)) {
+      return errorResponse(dictionary.validation.invalid, 400, 'INVALID_STATUS')
+    }
+
+    const client = await prisma.crmclient.findUnique({ where: { id }, select: { id: true, status: true } })
+
+    if (!client) return errorResponse(dictionary.messages.notFound, 404, 'CLIENT_NOT_FOUND')
+
+    if (client.status !== status) {
+      await prisma.$transaction([
+        prisma.crmclient.update({ where: { id }, data: { status } }),
+        prisma.auditlog.create({
+          data: {
+            user_id: authorization.session.user.id,
+            action: 'CRM_CLIENT_STATUS_UPDATED',
+            module: 'CRM',
+            details: { clientId: id, fromStatus: client.status, toStatus: status }
+          }
+        })
+      ])
+    }
+
+    return Response.json({ success: true, message: dictionary.messages.statusUpdated })
+  } catch (error) {
+    console.error('CRM client status update failed', error)
+
+    return errorResponse(dictionary.messages.operationFailed, 500, 'CLIENT_STATUS_UPDATE_FAILED')
+  }
+}
+
 export async function DELETE(request, context) {
   const { authorization, dictionary } = await getContext(request, CRM_CLIENT_DELETE_PERMISSIONS)
 
@@ -108,7 +148,7 @@ export async function DELETE(request, context) {
   try {
     const { id } = await context.params
 
-    const client = await prisma.crmClient.findUnique({
+    const client = await prisma.crmclient.findUnique({
       where: { id },
       select: {
         id: true,
@@ -121,8 +161,8 @@ export async function DELETE(request, context) {
     if (client.projects.length || client.contracts.length) return errorResponse(dictionary.messages.deleteBlocked, 409, 'ACTIVE_DEPENDENCIES')
 
     await prisma.$transaction([
-      prisma.crmClient.delete({ where: { id } }),
-      prisma.auditLog.create({ data: { user_id: authorization.session.user.id, action: 'CRM_CLIENT_DELETED', module: 'CRM', details: { clientId: id } } })
+      prisma.crmclient.delete({ where: { id } }),
+      prisma.auditlog.create({ data: { user_id: authorization.session.user.id, action: 'CRM_CLIENT_DELETED', module: 'CRM', details: { clientId: id } } })
     ])
 
     return Response.json({ success: true, message: dictionary.messages.deleted })

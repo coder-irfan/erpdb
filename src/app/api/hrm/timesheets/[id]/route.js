@@ -49,7 +49,7 @@ export async function PUT(request, context) {
   if (!validation.success) return responseError(validation.issues[0]?.message, 400, 'VALIDATION_ERROR')
 
   try {
-    const existing = await prisma.hrmStaffTimesheet.findUnique({ where: { id }, select: { id: true, date: true } })
+    const existing = await prisma.hrmstafftimesheet.findUnique({ where: { id }, select: { id: true, date: true } })
 
     if (!existing) return responseError(dictionary.messages.notFound, 404, 'TIMESHEET_NOT_FOUND')
 
@@ -59,13 +59,13 @@ export async function PUT(request, context) {
     if (Number.isNaN(hours)) return responseError(dictionary.validation.checkoutBeforeCheckin, 400, 'INVALID_TIME_RANGE')
 
     const record = await prisma.$transaction(async transaction => {
-      const updated = await transaction.hrmStaffTimesheet.update({
+      const updated = await transaction.hrmstafftimesheet.update({
         where: { id },
         data: normalizeAttendanceInput(validation.output, date),
         select: attendanceSelect
       })
 
-      await transaction.auditLog.create({
+      await transaction.auditlog.create({
         data: {
           user_id: authorization.session.user.id,
           action: 'ATTENDANCE_UPDATED',
@@ -102,9 +102,9 @@ export async function DELETE(request, context) {
 
   try {
     await prisma.$transaction(async transaction => {
-      const deleted = await transaction.hrmStaffTimesheet.delete({ where: { id }, select: { staff_id: true, date: true } })
+      const deleted = await transaction.hrmstafftimesheet.delete({ where: { id }, select: { staff_id: true, date: true } })
 
-      await transaction.auditLog.create({
+      await transaction.auditlog.create({
         data: {
           user_id: authorization.session.user.id,
           action: 'ATTENDANCE_DELETED',

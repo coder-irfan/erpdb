@@ -128,7 +128,7 @@ export const acceptInvitationAction = async payload => {
       if (activatedUser.count !== 1) return false
 
       await transaction.verificationToken.deleteMany({ where: { identifier: invitation.identifier } })
-      await transaction.auditLog.create({
+      await transaction.auditlog.create({
         data: { user_id: userId, action: 'INVITATION_ACCEPTED', module: 'AUTH' }
       })
 

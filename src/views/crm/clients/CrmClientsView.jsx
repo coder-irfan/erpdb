@@ -42,6 +42,7 @@ const CrmClientsView = ({ locale, dictionary, currencyCode, canWrite, canDelete 
   const [activityClient, setActivityClient] = useState(null)
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [deleting, setDeleting] = useState(false)
+  const [statusUpdating, setStatusUpdating] = useState(null)
 
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -106,6 +107,31 @@ const CrmClientsView = ({ locale, dictionary, currencyCode, canWrite, canDelete 
   const edit = client => {
     setEditingClient(client)
     setFormOpen(true)
+  }
+
+  const changeStatus = async (client, nextStatus) => {
+    if (!nextStatus || nextStatus === client.status) return
+    setStatusUpdating(client.id)
+
+    try {
+      const response = await fetch(`/api/crm/clients/${client.id}?locale=${locale}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: nextStatus })
+      })
+
+      const result = await response.json()
+
+      if (!response.ok || !result.success) toast.error(result.error || dictionary.messages.operationFailed)
+      else {
+        toast.success(result.message)
+        await refresh()
+      }
+    } catch {
+      toast.error(dictionary.messages.operationFailed)
+    } finally {
+      setStatusUpdating(null)
+    }
   }
 
   return (
@@ -192,6 +218,7 @@ const CrmClientsView = ({ locale, dictionary, currencyCode, canWrite, canDelete 
           dictionary={dictionary}
           canWrite={canWrite}
           canDelete={canDelete}
+          statusUpdating={statusUpdating}
           onPageChange={(_, next) => setPage(next)}
           onRowsPerPageChange={event => {
             setRowsPerPage(Number(event.target.value))
@@ -201,6 +228,7 @@ const CrmClientsView = ({ locale, dictionary, currencyCode, canWrite, canDelete 
           onActivity={setActivityClient}
           onEdit={edit}
           onDelete={setDeleteTarget}
+          onStatusChange={changeStatus}
           onAdd={() => {
             setEditingClient(null)
             setFormOpen(true)

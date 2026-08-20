@@ -88,24 +88,24 @@ export async function GET(request) {
   try {
     const [leaves, totalCount, statuses, leaveTypes, staffOptions, pendingCount, todayLeaves, approvedMonth] =
       await Promise.all([
-        prisma.hrmStaffLeave.findMany({
+        prisma.hrmstaffleave.findMany({
           where,
           select: leaveSelect,
           orderBy: [{ created_at: 'desc' }],
           skip: (page - 1) * limit,
           take: limit
         }),
-        prisma.hrmStaffLeave.count({ where }),
+        prisma.hrmstaffleave.count({ where }),
         prisma.option.findMany({ where: { category: 'LEAVE_STATUS', is_active: true }, select: { id: true, label: true, value: true }, orderBy: { sort_order: 'asc' } }),
         prisma.option.findMany({ where: { category: 'LEAVE_TYPE', is_active: true }, select: { id: true, label: true, value: true }, orderBy: { sort_order: 'asc' } }),
-        prisma.hrmStaff.findMany({
+        prisma.hrmstaff.findMany({
           where: context.canManage ? { status: { not: 'TERMINATED' } } : { id: context.staff.id },
           select: { id: true, first_name: true, last_name: true, position: true },
           orderBy: [{ first_name: 'asc' }, { last_name: 'asc' }]
         }),
-        prisma.hrmStaffLeave.count({ where: { ...scopeWhere, status: { is: { value: 'PENDING', category: 'LEAVE_STATUS' } } } }),
-        prisma.hrmStaffLeave.findMany({ where: { ...scopeWhere, status: { is: { value: 'APPROVED', category: 'LEAVE_STATUS' } }, start_date: { lte: todayDate }, end_date: { gte: todayDate } }, distinct: ['staff_id'], select: { staff_id: true } }),
-        prisma.hrmStaffLeave.findMany({ where: { ...scopeWhere, status: { is: { value: 'APPROVED', category: 'LEAVE_STATUS' } }, start_date: { lte: monthEnd }, end_date: { gte: monthStart } }, select: { start_date: true, end_date: true } })
+        prisma.hrmstaffleave.count({ where: { ...scopeWhere, status: { is: { value: 'PENDING', category: 'LEAVE_STATUS' } } } }),
+        prisma.hrmstaffleave.findMany({ where: { ...scopeWhere, status: { is: { value: 'APPROVED', category: 'LEAVE_STATUS' } }, start_date: { lte: todayDate }, end_date: { gte: todayDate } }, distinct: ['staff_id'], select: { staff_id: true } }),
+        prisma.hrmstaffleave.findMany({ where: { ...scopeWhere, status: { is: { value: 'APPROVED', category: 'LEAVE_STATUS' } }, start_date: { lte: monthEnd }, end_date: { gte: monthStart } }, select: { start_date: true, end_date: true } })
       ])
 
     const monthlyDays = approvedMonth.reduce((total, leave) => {
@@ -169,7 +169,7 @@ export async function POST(request) {
 
   try {
     const [staff, leaveType, pendingStatus, selectedStatus] = await Promise.all([
-      prisma.hrmStaff.findFirst({ where: { id: validation.output.staff_id, status: { not: 'TERMINATED' } }, select: { id: true } }),
+      prisma.hrmstaff.findFirst({ where: { id: validation.output.staff_id, status: { not: 'TERMINATED' } }, select: { id: true } }),
       prisma.option.findFirst({ where: { id: validation.output.leave_type_id, category: 'LEAVE_TYPE', is_active: true }, select: { id: true } }),
       prisma.option.findFirst({ where: { category: 'LEAVE_STATUS', value: 'PENDING', is_active: true }, select: { id: true, value: true } }),
       context.canManage && payload?.status_id
@@ -186,7 +186,7 @@ export async function POST(request) {
     if (!status) return responseError(context.dictionary.messages.statusNotFound, 409, 'STATUS_NOT_CONFIGURED')
 
     const created = await prisma.$transaction(async transaction => {
-      const leave = await transaction.hrmStaffLeave.create({
+      const leave = await transaction.hrmstaffleave.create({
         data: {
           staff_id: validation.output.staff_id,
           leave_type_id: validation.output.leave_type_id,
@@ -203,7 +203,7 @@ export async function POST(request) {
 
       if (isApproved) await createLeaveAttendance(transaction, leave)
 
-      await transaction.auditLog.create({ data: { user_id: context.authorization.session.user.id, action: 'LEAVE_CREATED', module: 'HRM', details: { leaveId: leave.id, staffId: leave.staff_id, totalDays } } })
+      await transaction.auditlog.create({ data: { user_id: context.authorization.session.user.id, action: 'LEAVE_CREATED', module: 'HRM', details: { leaveId: leave.id, staffId: leave.staff_id, totalDays } } })
 
       return leave
     })

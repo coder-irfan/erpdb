@@ -197,7 +197,7 @@ const validateDateRange = values => {
 
 const getValidatedRelations = async (values, currentContract = null) => {
   const [staff, policy, status, setup] = await Promise.all([
-    prisma.hrmStaff.findUnique({
+    prisma.hrmstaff.findUnique({
       where: { id: values.staff_id },
       select: {
         id: true,
@@ -236,7 +236,7 @@ const generateContractNumber = async transaction => {
   const year = new Date().getUTCFullYear()
   const prefix = `CTR-${year}-`
 
-  const latest = await transaction.hrmStaffContract.findFirst({
+  const latest = await transaction.hrmstaffcontract.findFirst({
     where: { contract_number: { startsWith: prefix } },
     select: { contract_number: true },
     orderBy: { contract_number: 'desc' }
@@ -289,8 +289,8 @@ export const getStaffContracts = async (payload = {}) => {
 
   try {
     const [totalCount, contracts] = await prisma.$transaction([
-      prisma.hrmStaffContract.count({ where }),
-      prisma.hrmStaffContract.findMany({
+      prisma.hrmstaffcontract.count({ where }),
+      prisma.hrmstaffcontract.findMany({
         where,
         select: contractSelect,
         orderBy: { created_at: 'desc' },
@@ -315,7 +315,7 @@ export const getContractFormOptions = async (payload = {}) => {
 
   try {
     const [staff, policies, statuses, setup] = await Promise.all([
-      prisma.hrmStaff.findMany({
+      prisma.hrmstaff.findMany({
         where: { status: { not: 'TERMINATED' } },
         select: { id: true, first_name: true, last_name: true, position: true, salary: true, salary_currency: true, salary_exchange_rate: true, tazkira_no: true },
         orderBy: [{ first_name: 'asc' }, { last_name: 'asc' }]
@@ -363,7 +363,7 @@ export const getStaffContractById = async (id, payload = {}) => {
 
   try {
     const [contract, setup] = await Promise.all([
-      prisma.hrmStaffContract.findUnique({ where: { id: contractId }, select: contractSelect }),
+      prisma.hrmstaffcontract.findUnique({ where: { id: contractId }, select: contractSelect }),
       getCompanySetupRecord()
     ])
 
@@ -407,7 +407,7 @@ export const createStaffContract = async (payload = {}) => {
     const contract = await prisma.$transaction(async transaction => {
       const contractNumber = await generateContractNumber(transaction)
 
-      const created = await transaction.hrmStaffContract.create({
+      const created = await transaction.hrmstaffcontract.create({
         data: {
           staff_id: validation.output.staff_id,
           contract_number: contractNumber,
@@ -433,7 +433,7 @@ export const createStaffContract = async (payload = {}) => {
         select: contractSelect
       })
 
-      await transaction.auditLog.create({
+      await transaction.auditlog.create({
         data: {
           user_id: context.session.user.id,
           action: 'HRM_CONTRACT_CREATED',
@@ -474,7 +474,7 @@ export const updateStaffContract = async (id, payload = {}) => {
   }
 
   try {
-    const existing = await prisma.hrmStaffContract.findUnique({
+    const existing = await prisma.hrmstaffcontract.findUnique({
       where: { id: contractId },
       select: { id: true, contract_type_id: true, status_id: true, currency: true, exchange_rate: true }
     })
@@ -495,7 +495,7 @@ export const updateStaffContract = async (id, payload = {}) => {
     })
 
     const contract = await prisma.$transaction(async transaction => {
-      const updated = await transaction.hrmStaffContract.update({
+      const updated = await transaction.hrmstaffcontract.update({
         where: { id: contractId },
         data: {
           staff_id: validation.output.staff_id,
@@ -520,7 +520,7 @@ export const updateStaffContract = async (id, payload = {}) => {
         select: contractSelect
       })
 
-      await transaction.auditLog.create({
+      await transaction.auditlog.create({
         data: {
           user_id: context.session.user.id,
           action: 'HRM_CONTRACT_UPDATED',
@@ -561,13 +561,13 @@ export const updateStaffContractStatus = async (id, statusId, payload = {}) => {
     if (!status) return { success: false, code: 'STATUS_NOT_FOUND', error: context.translations.messages.statusNotFound }
 
     const contract = await prisma.$transaction(async transaction => {
-      const updated = await transaction.hrmStaffContract.update({
+      const updated = await transaction.hrmstaffcontract.update({
         where: { id: contractId },
         data: { status_id: status.id },
         select: contractSelect
       })
 
-      await transaction.auditLog.create({
+      await transaction.auditlog.create({
         data: {
           user_id: context.session.user.id,
           action: 'HRM_CONTRACT_STATUS_UPDATED',

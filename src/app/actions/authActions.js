@@ -238,7 +238,7 @@ export const forgotPasswordAction = async formData => {
           expires
         }
       }),
-      prisma.auditLog.create({
+      prisma.auditlog.create({
         data: {
           user_id: user.id,
           action: 'PASSWORD_RESET_REQUESTED',
@@ -317,7 +317,7 @@ export const resetPasswordAction = async formData => {
         where: { identifier: verificationToken.identifier }
       })
 
-      await transaction.auditLog.create({
+      await transaction.auditlog.create({
         data: {
           user_id: user.id,
           action: 'PASSWORD_RESET_COMPLETED',

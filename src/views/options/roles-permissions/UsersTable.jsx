@@ -10,9 +10,7 @@ import Dialog from '@mui/material/Dialog'
 import DialogActions from '@mui/material/DialogActions'
 import DialogContent from '@mui/material/DialogContent'
 import DialogTitle from '@mui/material/DialogTitle'
-import IconButton from '@mui/material/IconButton'
 import MenuItem from '@mui/material/MenuItem'
-import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
 
 import { Avatar } from '@mui/material'
@@ -20,6 +18,7 @@ import { Avatar } from '@mui/material'
 import CustomTextField from '@core/components/mui/TextField'
 import LoadingButtonContent from '@/components/LoadingButtonContent'
 import DashboardTablePagination from '@/components/table/DashboardTablePagination'
+import EntityActionsMenu from '@/components/table/EntityActionsMenu'
 import TableEmptyStateRow from '@/components/table/TableEmptyStateRow'
 
 import tableStyles from '@core/styles/table.module.css'
@@ -110,8 +109,8 @@ const UsersTable = ({ users, roles, locale, onInvite, onStatusChange, onRoleChan
   return (
     <>
       <Card>
-        <CardContent className='border-bs border-divider'>
-          <div className='mb-4 mt-5 flex flex-wrap items-center justify-between gap-4'>
+        <CardContent>
+          <div className='flex flex-wrap items-center justify-between gap-4'>
             <CustomTextField
               value={search}
               onChange={event => {
@@ -202,37 +201,29 @@ const UsersTable = ({ users, roles, locale, onInvite, onStatusChange, onRoleChan
                       <td>{formatDate(user.createdAt, locale)}</td>
                       <td>{user.invitedBy?.name || translations.table.system}</td>
                       <td className='text-end'>
-                        <div className='flex min-is-[210px] items-center justify-end gap-2'>
-                          <CustomTextField
-                            select
-                            value={user.status}
-                            onChange={event => handleStatusChange(user.id, event.target.value)}
-                            disabled={protectedUser || busyUserId === user.id}
-                            aria-label={translations.table.status}
-                            className='is-[150px]'
-                          >
-                            {!currentStatusIsSelectable && (
-                              <MenuItem value={user.status} disabled>
-                                {translations.status[user.status] || user.status}
-                              </MenuItem>
-                            )}
-                            {['ACTIVE', 'INACTIVE', 'SUSPENDED'].map(status => (
-                              <MenuItem key={status} value={status}>
-                                {translations.status[status]}
-                              </MenuItem>
-                            ))}
-                          </CustomTextField>
-                          <Tooltip title={translations.editUserRole}>
-                            <span>
-                              <IconButton
-                                disabled={protectedUser || busyUserId === user.id}
-                                onClick={() => openRoleDialog(user)}
-                              >
-                                <i className='tabler-user-cog' />
-                              </IconButton>
-                            </span>
-                          </Tooltip>
-                        </div>
+                        <EntityActionsMenu
+                          actions={[
+                            {
+                              label: translations.editUserRole,
+                              icon: 'tabler-user-cog',
+                              disabled: protectedUser || busyUserId === user.id,
+                              onClick: () => openRoleDialog(user)
+                            }
+                          ]}
+                          statusOptions={
+                            currentStatusIsSelectable
+                              ? ['ACTIVE', 'INACTIVE', 'SUSPENDED'].map(status => ({
+                                  id: status,
+                                  label: translations.status[status]
+                                }))
+                              : []
+                          }
+                          currentStatus={user.status}
+                          statusDisabled={protectedUser || busyUserId === user.id}
+                          changeStatusLabel={translations.changeStatus}
+                          moreActionsLabel={translations.table.actions}
+                          onStatusChange={status => handleStatusChange(user.id, status)}
+                        />
                       </td>
                     </tr>
                   )

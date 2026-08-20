@@ -38,7 +38,7 @@ export const generateMetadata = async () => {
   let faviconUrl = '/favicon.ico'
 
   try {
-    const settings = await prisma.systemSetting.findFirst({
+    const settings = await prisma.systemsetting.findFirst({
       select: { faviconUrl: true }
     })
 

@@ -7,8 +7,6 @@ import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import Chip from '@mui/material/Chip'
-import IconButton from '@mui/material/IconButton'
-import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
 import { toast } from 'sonner'
 
@@ -18,6 +16,7 @@ import CustomTextField from '@core/components/mui/TextField'
 import { deleteOption, getOptionsListPaginated, toggleOptionStatus } from '@/actions/options'
 import ConfirmDeleteModal from '@/components/dialogs/ConfirmDeleteModal'
 import DashboardTablePagination from '@/components/table/DashboardTablePagination'
+import EntityActionsMenu from '@/components/table/EntityActionsMenu'
 import TableEmptyStateRow from '@/components/table/TableEmptyStateRow'
 import TableSkeletonRows from '@/components/table/TableSkeletonRows'
 
@@ -146,7 +145,7 @@ const PositionTable = ({ initialResult, initialError, canCreate, canUpdate, canD
             <Alert severity='error'>{initialError}</Alert>
           </CardContent>
         )}
-        <CardContent className='border-bs border-divider'>
+        <CardContent>
           <div className='mb-4 mt-5 flex flex-wrap items-center justify-between gap-4'>
             <CustomTextField
               value={searchInput}
@@ -222,39 +221,14 @@ const PositionTable = ({ initialResult, initialError, canCreate, canUpdate, canD
                     </td>
                     <td>{formatDate(option.created_at, locale)}</td>
                     <td className='text-end'>
-                      <div className='flex min-is-[140px] items-center justify-end gap-1'>
-                        {canUpdate && (
-                          <>
-                            <Tooltip title={dictionary.common.edit}>
-                              <IconButton onClick={() => openEditForm(option)} disabled={busyId === option.id}>
-                                <i className='tabler-edit' />
-                              </IconButton>
-                            </Tooltip>
-                            <Tooltip
-                              title={option.is_active ? dictionary.common.deactivate : dictionary.common.activate}
-                            >
-                              <IconButton
-                                color={option.is_active ? 'primary' : 'secondary'}
-                                onClick={() => handleStatusToggle(option)}
-                                disabled={busyId === option.id}
-                              >
-                                <i className={option.is_active ? 'tabler-toggle-right' : 'tabler-toggle-left'} />
-                              </IconButton>
-                            </Tooltip>
-                          </>
-                        )}
-                        {canDelete && (
-                          <Tooltip title={dictionary.common.delete}>
-                            <IconButton
-                              color='error'
-                              onClick={() => setDeleteTarget(option)}
-                              disabled={busyId === option.id}
-                            >
-                              <i className='tabler-trash' />
-                            </IconButton>
-                          </Tooltip>
-                        )}
-                      </div>
+                      <EntityActionsMenu
+                        actions={[
+                          canUpdate && { label: dictionary.common.edit, icon: 'tabler-edit', disabled: busyId === option.id, onClick: () => openEditForm(option) },
+                          canUpdate && { label: option.is_active ? dictionary.common.deactivate : dictionary.common.activate, icon: option.is_active ? 'tabler-toggle-right' : 'tabler-toggle-left', disabled: busyId === option.id, onClick: () => handleStatusToggle(option) },
+                          canDelete && { label: dictionary.common.delete, icon: 'tabler-trash', color: 'error', disabled: busyId === option.id, onClick: () => setDeleteTarget(option) }
+                        ]}
+                        moreActionsLabel={dictionary.common.actions}
+                      />
                     </td>
                   </tr>
                 ))

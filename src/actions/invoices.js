@@ -21,6 +21,13 @@ const DEFAULT_PAGE_SIZE = 10
 const MAX_PAGE_SIZE = 100
 const OUTSTANDING_STATUSES = ['UNPAID', 'PARTIALLY_PAID']
 
+const DEFAULT_INVOICE_STATUSES = [
+  { label: 'Unpaid', value: 'UNPAID', color_code: 'warning', sort_order: 1, is_default: true },
+  { label: 'Partially Paid', value: 'PARTIALLY_PAID', color_code: 'info', sort_order: 2, is_default: false },
+  { label: 'Paid', value: 'PAID', color_code: 'success', sort_order: 3, is_default: false },
+  { label: 'Cancelled', value: 'CANCELLED', color_code: 'secondary', sort_order: 4, is_default: false }
+]
+
 const normalizeLocale = locale => (i18n.locales.includes(locale) ? locale : i18n.defaultLocale)
 const normalizeId = value => (typeof value === 'string' ? value.trim() : '')
 
@@ -116,7 +123,7 @@ const generateInvoiceNumber = async transaction => {
   const year = new Date().getUTCFullYear()
   const prefix = `INV-${year}-`
 
-  const latest = await transaction.contractInvoice.findFirst({
+  const latest = await transaction.contractinvoice.findFirst({
     where: { invoice_number: { startsWith: prefix } },
     select: { invoice_number: true },
     orderBy: { invoice_number: 'desc' }
@@ -125,6 +132,51 @@ const generateInvoiceNumber = async transaction => {
   const sequence = Number.parseInt(latest?.invoice_number.slice(prefix.length), 10)
 
   return `${prefix}${String(Number.isFinite(sequence) ? sequence + 1 : 1).padStart(4, '0')}`
+}
+
+const getOrCreateInvoiceStatuses = async () => {
+  const existingStatuses = await prisma.option.findMany({
+    where: { category: 'INVOICE_STATUS' },
+    select: { id: true, label: true, value: true, is_active: true, is_default: true, color_code: true, sort_order: true }
+  })
+
+  const existingValues = new Set(existingStatuses.map(status => status.value))
+  const missingStatuses = DEFAULT_INVOICE_STATUSES.filter(status => !existingValues.has(status.value))
+
+  if (missingStatuses.length > 0) {
+    await prisma.$transaction(
+      missingStatuses.map(status =>
+        prisma.option.upsert({
+          where: { category_value: { category: 'INVOICE_STATUS', value: status.value } },
+          update: {},
+          create: { category: 'INVOICE_STATUS', ...status, is_active: true }
+        })
+      )
+    )
+  }
+
+  let activeStatuses = await prisma.option.findMany({
+    where: { category: 'INVOICE_STATUS', is_active: true },
+    select: { id: true, label: true, value: true, is_default: true, color_code: true },
+    orderBy: [{ sort_order: 'asc' }, { label: 'asc' }]
+  })
+
+  // A database may already contain the category with every option disabled.
+  // Keep the form usable without overriding any other administrator choices.
+  if (activeStatuses.length === 0) {
+    await prisma.option.update({
+      where: { category_value: { category: 'INVOICE_STATUS', value: 'UNPAID' } },
+      data: { is_active: true, is_default: true }
+    })
+
+    activeStatuses = await prisma.option.findMany({
+      where: { category: 'INVOICE_STATUS', is_active: true },
+      select: { id: true, label: true, value: true, is_default: true, color_code: true },
+      orderBy: [{ sort_order: 'asc' }, { label: 'asc' }]
+    })
+  }
+
+  return activeStatuses
 }
 
 const validationPayload = payload => ({
@@ -228,18 +280,18 @@ export const getInvoices = async (payload = {}) => {
 
   try {
     const [totalCount, invoices, totalInvoiced, paid, overdue, outstanding, setup, statuses] = await prisma.$transaction([
-      prisma.contractInvoice.count({ where }),
-      prisma.contractInvoice.findMany({
+      prisma.contractinvoice.count({ where }),
+      prisma.contractinvoice.findMany({
         where,
         select: invoiceSelect,
         orderBy: [{ due_date: 'asc' }, { issued_date: 'desc' }],
         skip: (page - 1) * limit,
         take: limit
       }),
-      prisma.contractInvoice.aggregate({ _sum: { amount_base: true } }),
-      prisma.contractInvoice.aggregate({ where: paidWhere, _sum: { amount_base: true } }),
-      prisma.contractInvoice.aggregate({ where: overdueWhere, _count: { _all: true }, _sum: { amount_base: true } }),
-      prisma.contractInvoice.aggregate({ where: outstandingWhere, _sum: { amount_base: true } }),
+      prisma.contractinvoice.aggregate({ _sum: { amount_base: true } }),
+      prisma.contractinvoice.aggregate({ where: paidWhere, _sum: { amount_base: true } }),
+      prisma.contractinvoice.aggregate({ where: overdueWhere, _count: { _all: true }, _sum: { amount_base: true } }),
+      prisma.contractinvoice.aggregate({ where: outstandingWhere, _sum: { amount_base: true } }),
       prisma.setup.findUnique({ where: { scope: 'GLOBAL' }, select: { currency_code: true } }),
       prisma.option.findMany({
         where: { category: 'INVOICE_STATUS', is_active: true },
@@ -292,11 +344,7 @@ export const getInvoiceFormOptions = async (payload = {}) => {
         orderBy: { contract_number: 'desc' },
         take: 500
       }),
-      prisma.option.findMany({
-        where: { category: 'INVOICE_STATUS', is_active: true },
-        select: { id: true, label: true, value: true, is_default: true, color_code: true },
-        orderBy: [{ sort_order: 'asc' }, { label: 'asc' }]
-      }),
+      getOrCreateInvoiceStatuses(),
       prisma.option.findMany({
         where: { category: 'PAYMENT_METHOD', is_active: true },
         select: { id: true, label: true, value: true, is_default: true },
@@ -334,7 +382,7 @@ export const getInvoiceDetail = async (id, payload = {}) => {
   if (!invoiceId) return { success: false, code: 'NOT_FOUND', error: context.translations.messages.notFound }
 
   try {
-    const invoice = await prisma.contractInvoice.findUnique({ where: { id: invoiceId }, select: invoiceSelect })
+    const invoice = await prisma.contractinvoice.findUnique({ where: { id: invoiceId }, select: invoiceSelect })
 
     if (!invoice) return { success: false, code: 'NOT_FOUND', error: context.translations.messages.notFound }
 
@@ -358,9 +406,9 @@ export const createInvoice = async (payload = {}) => {
   try {
     const invoice = await prisma.$transaction(async transaction => {
       const invoiceNumber = await generateInvoiceNumber(transaction)
-      const created = await transaction.contractInvoice.create({ data: { ...prepared.data, invoice_number: invoiceNumber } })
+      const created = await transaction.contractinvoice.create({ data: { ...prepared.data, invoice_number: invoiceNumber } })
 
-      await transaction.auditLog.create({
+      await transaction.auditlog.create({
         data: { user_id: context.session.user.id, action: 'INVOICE_CREATED', module: 'CONTRACTS', details: { invoiceId: created.id, invoiceNumber, contractId: created.contract_id } }
       })
 
@@ -387,7 +435,7 @@ export const updateInvoice = async (id, payload = {}) => {
   if (!invoiceId || !validation.success) return { success: false, code: 'VALIDATION_ERROR', error: validation.issues?.[0]?.message || context.translations.messages.notFound }
 
   try {
-    const current = await prisma.contractInvoice.findUnique({ where: { id: invoiceId }, select: invoiceSelect })
+    const current = await prisma.contractinvoice.findUnique({ where: { id: invoiceId }, select: invoiceSelect })
 
     if (!current) return { success: false, code: 'NOT_FOUND', error: context.translations.messages.notFound }
     if (current.payment_income || current.status.value === 'PAID') return { success: false, code: 'PAID_LOCKED', error: context.translations.messages.paidLocked }
@@ -397,8 +445,8 @@ export const updateInvoice = async (id, payload = {}) => {
     if (!prepared.success) return { success: false, code: 'VALIDATION_ERROR', error: prepared.error }
 
     await prisma.$transaction(async transaction => {
-      await transaction.contractInvoice.update({ where: { id: invoiceId }, data: prepared.data })
-      await transaction.auditLog.create({
+      await transaction.contractinvoice.update({ where: { id: invoiceId }, data: prepared.data })
+      await transaction.auditlog.create({
         data: { user_id: context.session.user.id, action: 'INVOICE_UPDATED', module: 'CONTRACTS', details: { invoiceId, invoiceNumber: current.invoice_number } }
       })
     })
@@ -411,6 +459,76 @@ export const updateInvoice = async (id, payload = {}) => {
   }
 }
 
+export const updateInvoiceStatus = async (id, statusId, payload = {}) => {
+  const context = await getContext(payload, WRITE_PERMISSIONS)
+
+  if (!context.authorized) return { success: false, code: context.code, error: context.error }
+  const invoiceId = normalizeId(id)
+  const nextStatusId = normalizeId(statusId)
+
+  if (!invoiceId || !nextStatusId) {
+    return { success: false, code: 'VALIDATION_ERROR', error: context.translations.messages.notFound }
+  }
+
+  try {
+    const [invoice, nextStatus] = await Promise.all([
+      prisma.contractinvoice.findUnique({
+        where: { id: invoiceId },
+        select: {
+          id: true,
+          invoice_number: true,
+          status_id: true,
+          status: { select: { value: true } },
+          payment_income: { select: { id: true } }
+        }
+      }),
+      prisma.option.findFirst({
+        where: { id: nextStatusId, category: 'INVOICE_STATUS', is_active: true },
+        select: { id: true, value: true }
+      })
+    ])
+
+    if (!invoice || !nextStatus) {
+      return { success: false, code: 'NOT_FOUND', error: context.translations.messages.notFound }
+    }
+
+    if (invoice.payment_income || invoice.status.value === 'PAID') {
+      return { success: false, code: 'PAID_LOCKED', error: context.translations.messages.paidLocked }
+    }
+
+    if (nextStatus.value === 'PAID') {
+      return { success: false, code: 'PAYMENT_REQUIRED', error: context.translations.messages.paymentRequired }
+    }
+
+    if (invoice.status_id === nextStatus.id) {
+      return { success: true, message: context.translations.messages.statusUpdated }
+    }
+
+    await prisma.$transaction([
+      prisma.contractinvoice.update({ where: { id: invoice.id }, data: { status_id: nextStatus.id } }),
+      prisma.auditlog.create({
+        data: {
+          user_id: context.session.user.id,
+          action: 'INVOICE_STATUS_UPDATED',
+          module: 'CONTRACTS',
+          details: {
+            invoiceId: invoice.id,
+            invoiceNumber: invoice.invoice_number,
+            fromStatus: invoice.status.value,
+            toStatus: nextStatus.value
+          }
+        }
+      })
+    ])
+
+    revalidateInvoices()
+
+    return { success: true, message: context.translations.messages.statusUpdated }
+  } catch {
+    return { success: false, code: 'STATUS_UPDATE_FAILED', error: context.translations.messages.operationFailed }
+  }
+}
+
 export const deleteInvoice = async (id, payload = {}) => {
   const context = await getContext(payload, DELETE_PERMISSIONS)
 
@@ -420,14 +538,14 @@ export const deleteInvoice = async (id, payload = {}) => {
   if (!invoiceId) return { success: false, code: 'NOT_FOUND', error: context.translations.messages.notFound }
 
   try {
-    const invoice = await prisma.contractInvoice.findUnique({ where: { id: invoiceId }, select: invoiceSelect })
+    const invoice = await prisma.contractinvoice.findUnique({ where: { id: invoiceId }, select: invoiceSelect })
 
     if (!invoice) return { success: false, code: 'NOT_FOUND', error: context.translations.messages.notFound }
     if (invoice.payment_income || invoice.status.value === 'PAID') return { success: false, code: 'PAID_LOCKED', error: context.translations.messages.paidDeleteBlocked }
 
     await prisma.$transaction(async transaction => {
-      await transaction.contractInvoice.delete({ where: { id: invoiceId } })
-      await transaction.auditLog.create({
+      await transaction.contractinvoice.delete({ where: { id: invoiceId } })
+      await transaction.auditlog.create({
         data: { user_id: context.session.user.id, action: 'INVOICE_DELETED', module: 'CONTRACTS', details: { invoiceId, invoiceNumber: invoice.invoice_number } }
       })
     })
@@ -457,7 +575,7 @@ export const recordInvoicePayment = async (id, payload = {}) => {
 
   try {
     const [invoice, paidStatus, paymentMethod, incomeType] = await Promise.all([
-      prisma.contractInvoice.findUnique({ where: { id: invoiceId }, select: invoiceSelect }),
+      prisma.contractinvoice.findUnique({ where: { id: invoiceId }, select: invoiceSelect }),
       prisma.option.findFirst({ where: { category: 'INVOICE_STATUS', value: 'PAID', is_active: true }, select: { id: true } }),
       prisma.option.findFirst({ where: { id: validation.output.payment_method_id, category: 'PAYMENT_METHOD', is_active: true }, select: { id: true, label: true, value: true } }),
       prisma.option.findFirst({ where: { category: 'INCOME_TYPE', value: 'CONTRACT_PAYMENT', is_active: true }, select: { id: true } })
@@ -478,7 +596,7 @@ export const recordInvoicePayment = async (id, payload = {}) => {
       : convertToBaseCurrency(paymentAmount, 'AFN', invoice.exchange_rate, 'USD')
 
     const income = await prisma.$transaction(async transaction => {
-      const createdIncome = await transaction.financeIncome.create({
+      const createdIncome = await transaction.financeincome.create({
         data: {
           invoice_id: invoice.id,
           client_id: invoice.client_id,
@@ -498,8 +616,8 @@ export const recordInvoicePayment = async (id, payload = {}) => {
         }
       })
 
-      await transaction.contractInvoice.update({ where: { id: invoice.id }, data: { status_id: paidStatus.id } })
-      await transaction.auditLog.create({
+      await transaction.contractinvoice.update({ where: { id: invoice.id }, data: { status_id: paidStatus.id } })
+      await transaction.auditlog.create({
         data: {
           user_id: context.session.user.id,
           action: 'INVOICE_PAYMENT_RECORDED',

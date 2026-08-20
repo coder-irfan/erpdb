@@ -2,11 +2,11 @@
 
 import Avatar from '@mui/material/Avatar'
 import Chip from '@mui/material/Chip'
-import IconButton from '@mui/material/IconButton'
 import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
 
 import DashboardTablePagination from '@/components/table/DashboardTablePagination'
+import EntityActionsMenu from '@/components/table/EntityActionsMenu'
 import TableEmptyStateRow from '@/components/table/TableEmptyStateRow'
 import TableSkeletonRows from '@/components/table/TableSkeletonRows'
 import { formatCurrency } from '@/utils/formatCurrency'
@@ -151,34 +151,15 @@ const LeadTableView = ({
                       )}
                     </td>
                     <td className='text-end'>
-                      <div className='flex justify-end gap-1'>
-                        <Tooltip title={dictionary.actions.activity}>
-                          <IconButton onClick={() => onActivity(lead)}>
-                            <i className='tabler-activity' />
-                          </IconButton>
-                        </Tooltip>
-                        {canWrite && !lead.converted_client && (
-                          <Tooltip title={dictionary.actions.convert}>
-                            <IconButton color='success' onClick={() => onConvert(lead)}>
-                              <i className='tabler-user-check' />
-                            </IconButton>
-                          </Tooltip>
-                        )}
-                        {canWrite && (
-                          <Tooltip title={dictionary.actions.edit}>
-                            <IconButton onClick={() => onEdit(lead)}>
-                              <i className='tabler-edit' />
-                            </IconButton>
-                          </Tooltip>
-                        )}
-                        {canDelete && !lead.converted_client && (
-                          <Tooltip title={dictionary.actions.delete}>
-                            <IconButton color='error' onClick={() => onDelete(lead)}>
-                              <i className='tabler-trash' />
-                            </IconButton>
-                          </Tooltip>
-                        )}
-                      </div>
+                      <EntityActionsMenu
+                        actions={[
+                          { label: dictionary.actions.activity, icon: 'tabler-activity', onClick: () => onActivity(lead) },
+                          canWrite && !lead.converted_client && { label: dictionary.actions.convert, icon: 'tabler-user-check', onClick: () => onConvert(lead) },
+                          canWrite && { label: dictionary.actions.edit, icon: 'tabler-edit', onClick: () => onEdit(lead) },
+                          canDelete && !lead.converted_client && { label: dictionary.actions.delete, icon: 'tabler-trash', color: 'error', onClick: () => onDelete(lead) }
+                        ]}
+                        moreActionsLabel={dictionary.table.actions}
+                      />
                     </td>
                   </tr>
                 )

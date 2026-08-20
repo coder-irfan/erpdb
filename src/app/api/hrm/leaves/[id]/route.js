@@ -37,7 +37,7 @@ export async function PUT(request, routeContext) {
 
   const currentStaff = await getCurrentStaff(authorization.session.user.id)
   const canManage = hasAnyPermission(authorization.session, LEAVE_WRITE_PERMISSIONS)
-  const existing = await prisma.hrmStaffLeave.findUnique({ where: { id }, select: leaveSelect })
+  const existing = await prisma.hrmstaffleave.findUnique({ where: { id }, select: leaveSelect })
 
   if (!existing) return responseError(dictionary.messages.notFound, 404, 'LEAVE_NOT_FOUND')
 
@@ -62,7 +62,7 @@ export async function PUT(request, routeContext) {
 
   try {
     const [staff, leaveType] = await Promise.all([
-      prisma.hrmStaff.findFirst({ where: { id: validation.output.staff_id, status: { not: 'TERMINATED' } }, select: { id: true } }),
+      prisma.hrmstaff.findFirst({ where: { id: validation.output.staff_id, status: { not: 'TERMINATED' } }, select: { id: true } }),
       prisma.option.findFirst({ where: { id: validation.output.leave_type_id, category: 'LEAVE_TYPE', is_active: true }, select: { id: true } })
     ])
 
@@ -71,10 +71,10 @@ export async function PUT(request, routeContext) {
 
     const updated = await prisma.$transaction(async transaction => {
       if (existing.status.value === 'APPROVED') {
-        await transaction.hrmStaffTimesheet.deleteMany({ where: { notes: `Approved leave request ${id}`, status: 'LEAVE' } })
+        await transaction.hrmstafftimesheet.deleteMany({ where: { notes: `Approved leave request ${id}`, status: 'LEAVE' } })
       }
 
-      const leave = await transaction.hrmStaffLeave.update({
+      const leave = await transaction.hrmstaffleave.update({
         where: { id },
         data: {
           staff_id: validation.output.staff_id,
@@ -89,7 +89,7 @@ export async function PUT(request, routeContext) {
 
       if (existing.status.value === 'APPROVED') await createLeaveAttendance(transaction, leave)
 
-      await transaction.auditLog.create({ data: { user_id: authorization.session.user.id, action: 'LEAVE_UPDATED', module: 'HRM', details: { leaveId: id, staffId: leave.staff_id, totalDays } } })
+      await transaction.auditlog.create({ data: { user_id: authorization.session.user.id, action: 'LEAVE_UPDATED', module: 'HRM', details: { leaveId: id, staffId: leave.staff_id, totalDays } } })
 
       return leave
     })
@@ -111,7 +111,7 @@ export async function DELETE(request, routeContext) {
 
   const currentStaff = await getCurrentStaff(authorization.session.user.id)
   const canDelete = hasAnyPermission(authorization.session, LEAVE_DELETE_PERMISSIONS)
-  const existing = await prisma.hrmStaffLeave.findUnique({ where: { id }, select: { staff_id: true, status: { select: { value: true } } } })
+  const existing = await prisma.hrmstaffleave.findUnique({ where: { id }, select: { staff_id: true, status: { select: { value: true } } } })
 
   if (!existing) return responseError(dictionary.messages.notFound, 404, 'LEAVE_NOT_FOUND')
 
@@ -121,9 +121,9 @@ export async function DELETE(request, routeContext) {
 
   try {
     await prisma.$transaction([
-      prisma.hrmStaffTimesheet.deleteMany({ where: { notes: `Approved leave request ${id}`, status: 'LEAVE' } }),
-      prisma.hrmStaffLeave.delete({ where: { id } }),
-      prisma.auditLog.create({ data: { user_id: authorization.session.user.id, action: 'LEAVE_DELETED', module: 'HRM', details: { leaveId: id, staffId: existing.staff_id } } })
+      prisma.hrmstafftimesheet.deleteMany({ where: { notes: `Approved leave request ${id}`, status: 'LEAVE' } }),
+      prisma.hrmstaffleave.delete({ where: { id } }),
+      prisma.auditlog.create({ data: { user_id: authorization.session.user.id, action: 'LEAVE_DELETED', module: 'HRM', details: { leaveId: id, staffId: existing.staff_id } } })
     ])
 
     return Response.json({ success: true, message: dictionary.messages.deleted })

@@ -25,7 +25,7 @@ export async function POST(request, context) {
 
   try {
     const [lead, staffId] = await Promise.all([
-      prisma.crmLead.findUnique({ where: { id }, select: { id: true } }),
+      prisma.crmlead.findUnique({ where: { id }, select: { id: true } }),
       getCurrentStaffId(authorization.session.user.id)
     ])
 
@@ -33,7 +33,7 @@ export async function POST(request, context) {
     if (!staffId) return Response.json({ success: false, error: dictionary.messages.staffProfileRequired }, { status: 409 })
 
     const activity = await prisma.$transaction(async transaction => {
-      const created = await transaction.crmActivity.create({
+      const created = await transaction.crmactivity.create({
         data: {
           lead_id: id,
           staff_id: staffId,
@@ -46,7 +46,7 @@ export async function POST(request, context) {
         include: { staff: { select: { id: true, first_name: true, last_name: true, position: true } } }
       })
 
-      await transaction.auditLog.create({ data: { user_id: authorization.session.user.id, action: 'CRM_ACTIVITY_CREATED', module: 'CRM', details: { leadId: id, activityId: created.id } } })
+      await transaction.auditlog.create({ data: { user_id: authorization.session.user.id, action: 'CRM_ACTIVITY_CREATED', module: 'CRM', details: { leadId: id, activityId: created.id } } })
 
       return created
     })

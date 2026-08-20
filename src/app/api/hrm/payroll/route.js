@@ -58,12 +58,12 @@ export async function GET(request) {
 
   try {
     const [payrolls, totalCount, periodPayrolls, statuses, paymentMethods, staff] = await Promise.all([
-      prisma.hrmPayroll.findMany({ where, select: payrollSelect, orderBy: [{ created_at: 'desc' }], skip: (page - 1) * limit, take: limit }),
-      prisma.hrmPayroll.count({ where }),
-      prisma.hrmPayroll.findMany({ where: periodWhere, select: { amount_base: true, net_salary: true, unpaid_leave_deduction: true, tax_deduction: true, status: { select: { value: true } } } }),
+      prisma.hrmpayroll.findMany({ where, select: payrollSelect, orderBy: [{ created_at: 'desc' }], skip: (page - 1) * limit, take: limit }),
+      prisma.hrmpayroll.count({ where }),
+      prisma.hrmpayroll.findMany({ where: periodWhere, select: { amount_base: true, net_salary: true, unpaid_leave_deduction: true, tax_deduction: true, status: { select: { value: true } } } }),
       prisma.option.findMany({ where: { category: 'PAYROLL_STATUS', is_active: true }, select: { id: true, label: true, value: true }, orderBy: { sort_order: 'asc' } }),
       prisma.option.findMany({ where: { category: 'PAYROLL_PAYMENT_METHOD', is_active: true }, select: { id: true, label: true, value: true }, orderBy: { sort_order: 'asc' } }),
-      prisma.hrmStaff.findMany({ where: canReadAll ? { status: 'ACTIVE' } : { id: currentStaffId }, select: { id: true, first_name: true, last_name: true, position: true }, orderBy: [{ first_name: 'asc' }, { last_name: 'asc' }] })
+      prisma.hrmstaff.findMany({ where: canReadAll ? { status: 'ACTIVE' } : { id: currentStaffId }, select: { id: true, first_name: true, last_name: true, position: true }, orderBy: [{ first_name: 'asc' }, { last_name: 'asc' }] })
     ])
 
     const summary = periodPayrolls.reduce(

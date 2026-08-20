@@ -1,22 +1,14 @@
-datasource db {
-  provider = "mysql"
-  url      = env("DATABASE_URL")
-}
-
 generator client {
   provider      = "prisma-client-js"
   binaryTargets = ["native", "debian-openssl-3.0.x", "linux-arm64-openssl-1.1.x", "rhel-openssl-3.0.x"]
 }
 
-// AUTHENTICATION & ROLES PERMISSION
-enum AccountStatus {
-  ACTIVE
-  INACTIVE
-  SUSPENDED
-  PENDING_ACTIVATION
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
 }
 
-model Account {
+model account {
   id                String  @id @default(cuid())
   userId            String
   type              String
@@ -29,97 +21,13 @@ model Account {
   scope             String?
   id_token          String? @db.Text
   session_state     String?
+  user              user    @relation(fields: [userId], references: [id], onDelete: Cascade, map: "Account_userId_fkey")
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([provider, providerAccountId])
+  @@unique([provider, providerAccountId], map: "Account_provider_providerAccountId_key")
+  @@index([userId], map: "Account_userId_fkey")
 }
 
-model Session {
-  id           String   @id @default(cuid())
-  sessionToken String   @unique
-  userId       String
-  expires      DateTime
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
-model VerificationToken {
-  identifier String
-  token      String   @unique
-  expires    DateTime
-
-  @@unique([identifier, token])
-}
-
-model User {
-  id             String        @id @default(cuid())
-  name           String?
-  email          String?       @unique
-  emailVerified  DateTime?
-  image          String?
-  password_hash  String?
-  account_status AccountStatus @default(ACTIVE)
-  locale         String        @default("en")
-  last_login_at  DateTime?
-  created_by_id  String?
-
-  // NextAuth Relations
-  accounts Account[]
-  sessions Session[]
-
-  // Self-Referencing Creator Relation
-  created_by    User?  @relation("UserCreatedBy", fields: [created_by_id], references: [id], onDelete: SetNull)
-  created_users User[] @relation("UserCreatedBy")
-
-  // ERP Core & RBAC Relations
-  staff                   HrmStaff?
-  roles                   Role[]          @relation("UserRoles")
-  audit_logs              AuditLog[]
-  approved_leave_requests HrmStaffLeave[] @relation("ApprovedLeaveUsers")
-
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-
-  @@index([created_by_id])
-}
-
-model Role {
-  id           String   @id @default(cuid())
-  name         String   @unique
-  display_name String
-  description  String?  @db.Text
-  is_system    Boolean  @default(false)
-  is_active    Boolean  @default(true)
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
-
-  users            User[]           @relation("UserRoles")
-  role_permissions RolePermission[]
-}
-
-model Permission {
-  id          String   @id @default(cuid())
-  key         String   @unique
-  module      String
-  description String?  @db.Text
-  created_at  DateTime @default(now())
-
-  role_permissions RolePermission[]
-}
-
-model RolePermission {
-  id            String   @id @default(cuid())
-  role_id       String
-  permission_id String
-  granted_at    DateTime @default(now())
-
-  role       Role       @relation(fields: [role_id], references: [id], onDelete: Cascade)
-  permission Permission @relation(fields: [permission_id], references: [id], onDelete: Cascade)
-
-  @@unique([role_id, permission_id])
-}
-
-model AuditLog {
+model auditlog {
   id         String   @id @default(cuid())
   user_id    String?
   action     String
@@ -128,127 +36,449 @@ model AuditLog {
   user_agent String?  @db.Text
   details    Json?
   created_at DateTime @default(now())
+  user       user?    @relation(fields: [user_id], references: [id], map: "AuditLog_user_id_fkey")
 
-  user User? @relation(fields: [user_id], references: [id], onDelete: SetNull)
-
-  @@index([user_id, created_at])
-  @@index([module, created_at])
+  @@index([module, created_at], map: "AuditLog_module_created_at_idx")
+  @@index([user_id, created_at], map: "AuditLog_user_id_created_at_idx")
 }
 
-// HRM
-model HrmStaff {
-  id                   String   @id @default(cuid())
+model contract {
+  id                 String                 @id @default(cuid())
+  client_id          String
+  lead_id            String?
+  contract_number    String                 @unique(map: "Contract_contract_number_key")
+  title              String
+  status_id          String
+  total_amount       Decimal                @db.Decimal(12, 2)
+  contract_duration  String?
+  contract_type_id   String
+  country_id         String?
+  percentage         Decimal?               @db.Decimal(5, 2)
+  currency           String                 @default("USD")
+  exchange_rate      Decimal                @default(65.0000) @db.Decimal(12, 4)
+  amount_usd         Decimal?               @db.Decimal(12, 2)
+  level_id           String?
+  signed_date        DateTime?
+  start_date         DateTime
+  end_date           DateTime
+  auto_renew         Boolean                @default(false)
+  renewal_status     String                 @default("ACTIVE")
+  document_url       String?                @db.Text
+  account_manager_id String?
+  created_at         DateTime               @default(now())
+  updated_at         DateTime               @updatedAt
+  amount_base        Decimal                @default(0.00) @db.Decimal(14, 2)
+  account_manager    hrmstaff?              @relation(fields: [account_manager_id], references: [id], map: "Contract_account_manager_id_fkey")
+  client             crmclient              @relation(fields: [client_id], references: [id], map: "Contract_client_id_fkey")
+  contract_type      option                 @relation("contract_contract_type_idTooption", fields: [contract_type_id], references: [id], map: "Contract_contract_type_id_fkey")
+  country            option?                @relation("contract_country_idTooption", fields: [country_id], references: [id], map: "Contract_country_id_fkey")
+  lead               crmlead?               @relation(fields: [lead_id], references: [id], map: "Contract_lead_id_fkey")
+  level              option?                @relation("contract_level_idTooption", fields: [level_id], references: [id], map: "Contract_level_id_fkey")
+  status             option                 @relation("contract_status_idTooption", fields: [status_id], references: [id], map: "Contract_status_id_fkey")
+  invoices           contractinvoice[]
+  notifications      contractnotification[]
+  incomes            financeincome[]
+  projects           project[]
+
+  @@index([account_manager_id], map: "Contract_account_manager_id_fkey")
+  @@index([client_id, status_id], map: "Contract_client_id_status_id_idx")
+  @@index([contract_type_id], map: "Contract_contract_type_id_fkey")
+  @@index([country_id], map: "Contract_country_id_fkey")
+  @@index([lead_id], map: "Contract_lead_id_fkey")
+  @@index([level_id], map: "Contract_level_id_fkey")
+  @@index([status_id], map: "Contract_status_id_fkey")
+}
+
+model contractinvoice {
+  id             String         @id @default(cuid())
+  contract_id    String
+  client_id      String
+  invoice_number String         @unique(map: "ContractInvoice_invoice_number_key")
+  amount         Decimal        @db.Decimal(12, 2)
+  due_date       DateTime
+  status_id      String
+  issued_date    DateTime       @default(now())
+  created_at     DateTime       @default(now())
+  updated_at     DateTime       @updatedAt
+  amount_base    Decimal        @default(0.00) @db.Decimal(14, 2)
+  currency       String         @default("AFN")
+  exchange_rate  Decimal        @default(65.0000) @db.Decimal(12, 4)
+  client         crmclient      @relation(fields: [client_id], references: [id], map: "ContractInvoice_client_id_fkey")
+  contract       contract       @relation(fields: [contract_id], references: [id], onDelete: Cascade, map: "ContractInvoice_contract_id_fkey")
+  status         option         @relation(fields: [status_id], references: [id], map: "ContractInvoice_status_id_fkey")
+  payment_income financeincome?
+
+  @@index([client_id], map: "ContractInvoice_client_id_fkey")
+  @@index([contract_id, status_id], map: "ContractInvoice_contract_id_status_id_idx")
+  @@index([status_id], map: "ContractInvoice_status_id_fkey")
+}
+
+model contractnotification {
+  id              String   @id @default(cuid())
+  contract_id     String
+  reminder_type   String
+  sent_at         DateTime @default(now())
+  recipient_email String
+  status          String   @default("SENT")
+  contract        contract @relation(fields: [contract_id], references: [id], onDelete: Cascade, map: "ContractNotification_contract_id_fkey")
+
+  @@index([contract_id, reminder_type], map: "ContractNotification_contract_id_reminder_type_idx")
+}
+
+model crmactivity {
+  id            String     @id @default(cuid())
+  lead_id       String?
+  client_id     String?
+  staff_id      String
+  activity_type String
+  title         String
+  description   String?    @db.Text
+  activity_date DateTime   @default(now())
+  due_date      DateTime?
+  is_completed  Boolean    @default(false)
+  created_at    DateTime   @default(now())
+  updated_at    DateTime   @updatedAt
+  client        crmclient? @relation(fields: [client_id], references: [id], onDelete: Cascade, map: "CrmActivity_client_id_fkey")
+  lead          crmlead?   @relation(fields: [lead_id], references: [id], onDelete: Cascade, map: "CrmActivity_lead_id_fkey")
+  staff         hrmstaff   @relation(fields: [staff_id], references: [id], map: "CrmActivity_staff_id_fkey")
+
+  @@index([client_id, activity_date], map: "CrmActivity_client_id_activity_date_idx")
+  @@index([lead_id, activity_date], map: "CrmActivity_lead_id_activity_date_idx")
+  @@index([staff_id], map: "CrmActivity_staff_id_idx")
+}
+
+model crmclient {
+  id                   String            @id @default(cuid())
+  lead_id              String?           @unique(map: "CrmClient_lead_id_key")
+  company_name         String
+  primary_contact_name String
+  email                String            @unique(map: "CrmClient_email_key")
+  phone                String?
+  address              String?           @db.Text
+  tax_id               String?
+  account_manager_id   String?
+  status               String            @default("ACTIVE")
+  created_at           DateTime          @default(now())
+  updated_at           DateTime          @updatedAt
+  notes                String?           @db.Text
+  contracts            contract[]
+  invoices             contractinvoice[]
+  activities           crmactivity[]
+  account_manager      hrmstaff?         @relation(fields: [account_manager_id], references: [id], map: "CrmClient_account_manager_id_fkey")
+  lead                 crmlead?          @relation(fields: [lead_id], references: [id], map: "CrmClient_lead_id_fkey")
+  incomes              financeincome[]
+  projects             project[]
+
+  @@index([account_manager_id], map: "CrmClient_account_manager_id_fkey")
+}
+
+model crmlead {
+  id                  String        @id @default(cuid())
+  title               String
+  company_name        String?
+  contact_name        String
+  email               String
+  phone               String?
+  source_id           String
+  status_id           String
+  assigned_to_id      String?
+  estimated_value     Decimal?      @db.Decimal(12, 2)
+  notes               String?       @db.Text
+  created_at          DateTime      @default(now())
+  updated_at          DateTime      @updatedAt
+  next_follow_up_date DateTime?
+  amount_base         Decimal       @default(0.00) @db.Decimal(14, 2)
+  currency            String        @default("AFN")
+  exchange_rate       Decimal       @default(65.0000) @db.Decimal(12, 4)
+  contracts           contract[]
+  activities          crmactivity[]
+  converted_client    crmclient?
+  assigned_to         hrmstaff?     @relation(fields: [assigned_to_id], references: [id], map: "CrmLead_assigned_to_id_fkey")
+  source              option        @relation("crmlead_source_idTooption", fields: [source_id], references: [id], map: "CrmLead_source_id_fkey")
+  status              option        @relation("crmlead_status_idTooption", fields: [status_id], references: [id], map: "CrmLead_status_id_fkey")
+  origin_visitor      crmvisitor?
+
+  @@index([assigned_to_id], map: "CrmLead_assigned_to_id_fkey")
+  @@index([source_id], map: "CrmLead_source_id_fkey")
+  @@index([status_id, created_at], map: "CrmLead_status_id_created_at_idx")
+}
+
+model crmvisitor {
+  id                String    @id @default(cuid())
+  full_name         String
+  email             String?
+  phone             String
+  company_name      String?
+  purpose           String
+  visited_at        DateTime  @default(now())
+  notes             String?   @db.Text
+  created_at        DateTime  @default(now())
+  updated_at        DateTime  @updatedAt
+  check_out_time    DateTime?
+  host_staff_id     String?
+  status            String    @default("CHECKED_IN")
+  converted_lead_id String?   @unique(map: "CrmVisitor_converted_lead_id_key")
+  converted_lead    crmlead?  @relation(fields: [converted_lead_id], references: [id], map: "CrmVisitor_converted_lead_id_fkey")
+  host_staff        hrmstaff? @relation(fields: [host_staff_id], references: [id], map: "CrmVisitor_host_staff_id_fkey")
+
+  @@index([host_staff_id], map: "CrmVisitor_host_staff_id_idx")
+  @@index([status, visited_at], map: "CrmVisitor_status_visited_at_idx")
+  @@index([visited_at], map: "CrmVisitor_visited_at_idx")
+}
+
+model financeexpense {
+  id              String    @id @default(cuid())
+  project_id      String?
+  spent_by_id     String?
+  receipt_url     String?   @db.Text
+  expense_date    DateTime  @db.Date
+  details         String    @db.Text
+  expense_type_id String
+  quantity        Int       @default(1)
+  unit_price      Decimal   @db.Decimal(12, 2)
+  sub_total       Decimal   @db.Decimal(12, 2)
+  exchange_rate   Decimal   @default(65.0000) @db.Decimal(12, 4)
+  total_usd       Decimal?  @db.Decimal(12, 2)
+  created_at      DateTime  @default(now())
+  updated_at      DateTime  @updatedAt
+  amount_base     Decimal   @default(0.00) @db.Decimal(14, 2)
+  currency        String    @default("AFN")
+  expense_type    option    @relation(fields: [expense_type_id], references: [id], map: "FinanceExpense_expense_type_id_fkey")
+  project         project?  @relation(fields: [project_id], references: [id], map: "FinanceExpense_project_id_fkey")
+  spent_by        hrmstaff? @relation(fields: [spent_by_id], references: [id], map: "FinanceExpense_spent_by_id_fkey")
+
+  @@index([created_at], map: "FinanceExpense_created_at_idx")
+  @@index([expense_type_id], map: "FinanceExpense_expense_type_id_fkey")
+  @@index([project_id], map: "FinanceExpense_project_id_fkey")
+  @@index([spent_by_id], map: "FinanceExpense_spent_by_id_fkey")
+}
+
+model financeincome {
+  id             String           @id @default(cuid())
+  invoice_id     String?          @unique(map: "FinanceIncome_invoice_id_key")
+  client_id      String?
+  contract_id    String?
+  project_id     String?
+  received_by_id String?
+  status         String           @default("PENDING")
+  name           String
+  pay_details    String?          @db.Text
+  income_type_id String
+  total_amount   Decimal          @db.Decimal(12, 2)
+  paid_amount    Decimal          @default(0.00) @db.Decimal(12, 2)
+  remind_amount  Decimal          @default(0.00) @db.Decimal(12, 2)
+  exchange_rate  Decimal          @default(65.0000) @db.Decimal(12, 4)
+  total_usd      Decimal?         @db.Decimal(12, 2)
+  remind_date    DateTime?
+  created_at     DateTime         @default(now())
+  updated_at     DateTime         @updatedAt
+  amount_base    Decimal          @default(0.00) @db.Decimal(14, 2)
+  currency       String           @default("AFN")
+  client         crmclient?       @relation(fields: [client_id], references: [id], map: "FinanceIncome_client_id_fkey")
+  contract       contract?        @relation(fields: [contract_id], references: [id], map: "FinanceIncome_contract_id_fkey")
+  income_type    option           @relation(fields: [income_type_id], references: [id], map: "FinanceIncome_income_type_id_fkey")
+  project        project?         @relation(fields: [project_id], references: [id], map: "FinanceIncome_project_id_fkey")
+  received_by    hrmstaff?        @relation(fields: [received_by_id], references: [id], map: "FinanceIncome_received_by_id_fkey")
+  invoice        contractinvoice? @relation(fields: [invoice_id], references: [id], onDelete: SetNull, map: "FinanceIncome_invoice_id_fkey")
+
+  @@index([client_id], map: "FinanceIncome_client_id_fkey")
+  @@index([contract_id], map: "FinanceIncome_contract_id_fkey")
+  @@index([created_at], map: "FinanceIncome_created_at_idx")
+  @@index([income_type_id], map: "FinanceIncome_income_type_id_fkey")
+  @@index([project_id], map: "FinanceIncome_project_id_fkey")
+  @@index([received_by_id], map: "FinanceIncome_received_by_id_fkey")
+}
+
+model financeloan {
+  id                String    @id @default(cuid())
+  staff_id          String
+  loan_number       String    @unique(map: "FinanceLoan_loan_number_key")
+  total_amount      Decimal   @db.Decimal(12, 2)
+  monthly_deduction Decimal   @db.Decimal(12, 2)
+  repaid_amount     Decimal   @default(0.00) @db.Decimal(12, 2)
+  remaining_balance Decimal   @db.Decimal(12, 2)
+  status_id         String
+  issue_date        DateTime  @db.Date
+  reason            String?   @db.Text
+  approved_by_id    String?
+  created_at        DateTime  @default(now())
+  updated_at        DateTime  @updatedAt
+  amount_base       Decimal   @default(0.00) @db.Decimal(14, 2)
+  currency          String    @default("AFN")
+  exchange_rate     Decimal   @default(65.0000) @db.Decimal(12, 4)
+  approved_by       hrmstaff? @relation("financeloan_approved_by_idTohrmstaff", fields: [approved_by_id], references: [id], map: "FinanceLoan_approved_by_id_fkey")
+  staff             hrmstaff  @relation("financeloan_staff_idTohrmstaff", fields: [staff_id], references: [id], map: "FinanceLoan_staff_id_fkey")
+  status            option    @relation(fields: [status_id], references: [id], map: "FinanceLoan_status_id_fkey")
+
+  @@index([approved_by_id], map: "FinanceLoan_approved_by_id_fkey")
+  @@index([staff_id], map: "FinanceLoan_staff_id_fkey")
+  @@index([status_id], map: "FinanceLoan_status_id_fkey")
+}
+
+model financesalary {
+  id                String    @id @default(cuid())
+  timesheet_summary String?   @db.Text
+  status            String    @default("DRAFT")
+  staff_id          String
+  timesheet_month   String
+  total_month_days  Int
+  worked_days       Int
+  off_days          Int       @default(0)
+  base_salary       Decimal   @db.Decimal(12, 2)
+  base_daily_rate   Decimal   @db.Decimal(12, 2)
+  earned_salary     Decimal   @db.Decimal(12, 2)
+  bonus_amount      Decimal   @default(0.00) @db.Decimal(12, 2)
+  loan_deduction    Decimal   @default(0.00) @db.Decimal(12, 2)
+  payable_amount    Decimal   @db.Decimal(12, 2)
+  exchange_rate     Decimal   @default(65.0000) @db.Decimal(12, 4)
+  payable_usd       Decimal?  @db.Decimal(12, 2)
+  loan_status       String?   @default("PENDING")
+  payment_date      DateTime? @db.Date
+  processed_by_id   String?
+  created_at        DateTime  @default(now())
+  updated_at        DateTime  @updatedAt
+  amount_base       Decimal   @default(0.00) @db.Decimal(14, 2)
+  currency          String    @default("AFN")
+  processed_by      hrmstaff? @relation("financesalary_processed_by_idTohrmstaff", fields: [processed_by_id], references: [id], map: "FinanceSalary_processed_by_id_fkey")
+  staff             hrmstaff  @relation("financesalary_staff_idTohrmstaff", fields: [staff_id], references: [id], map: "FinanceSalary_staff_id_fkey")
+
+  @@unique([staff_id, timesheet_month], map: "FinanceSalary_staff_id_timesheet_month_key")
+  @@index([processed_by_id], map: "FinanceSalary_processed_by_id_fkey")
+}
+
+model hrmpayroll {
+  id                     String    @id @default(cuid())
+  staff_id               String
+  month                  Int
+  year                   Int
+  base_salary            Decimal   @db.Decimal(12, 2)
+  total_allowance        Decimal   @default(0.00) @db.Decimal(12, 2)
+  unpaid_leave_deduction Decimal   @default(0.00) @db.Decimal(12, 2)
+  tax_deduction          Decimal   @default(0.00) @db.Decimal(12, 2)
+  net_salary             Decimal   @db.Decimal(12, 2)
+  status_id              String
+  payment_method_id      String?
+  payment_date           DateTime?
+  processed_by_id        String?
+  notes                  String?   @db.Text
+  created_at             DateTime  @default(now())
+  updated_at             DateTime  @updatedAt
+  amount_base            Decimal   @default(0.00) @db.Decimal(14, 2)
+  currency               String    @default("AFN")
+  exchange_rate          Decimal   @default(65.0000) @db.Decimal(12, 4)
+  payment_method         option?   @relation("hrmpayroll_payment_method_idTooption", fields: [payment_method_id], references: [id], map: "HrmPayroll_payment_method_id_fkey")
+  processed_by           hrmstaff? @relation("hrmpayroll_processed_by_idTohrmstaff", fields: [processed_by_id], references: [id], map: "HrmPayroll_processed_by_id_fkey")
+  staff                  hrmstaff  @relation("hrmpayroll_staff_idTohrmstaff", fields: [staff_id], references: [id], map: "HrmPayroll_staff_id_fkey")
+  status                 option    @relation("hrmpayroll_status_idTooption", fields: [status_id], references: [id], map: "HrmPayroll_status_id_fkey")
+
+  @@unique([staff_id, month, year], map: "HrmPayroll_staff_id_month_year_key")
+  @@index([payment_method_id], map: "HrmPayroll_payment_method_id_fkey")
+  @@index([processed_by_id], map: "HrmPayroll_processed_by_id_fkey")
+  @@index([staff_id, month, year], map: "HrmPayroll_staff_id_month_year_idx")
+  @@index([status_id, month, year], map: "HrmPayroll_status_id_month_year_idx")
+}
+
+model hrmstaff {
+  id                   String              @id @default(cuid())
   first_name           String
   last_name            String
   father_name          String?
   phone                String
-  email                String   @unique
-  address              String?  @db.Text
-  educations           String?  @db.Text
+  email                String              @unique(map: "HrmStaff_email_key")
+  address              String?             @db.Text
+  educations           String?             @db.Text
   tazkira_no           String?
   position             String
-  salary               Decimal  @db.Decimal(12, 2)
-  salary_currency      String   @default("AFN")
-  salary_exchange_rate Decimal  @default(65) @db.Decimal(12, 4)
-  amount_base          Decimal  @default(0) @db.Decimal(14, 2)
+  salary               Decimal             @db.Decimal(12, 2)
   guarantor_name       String?
   guarantor_phone      String?
   guarantor_license    String?
   join_date            DateTime
   contract_period      String?
-  user_id              String?  @unique
-  status               String   @default("ACTIVE")
-  created_at           DateTime @default(now())
-  updated_at           DateTime @updatedAt
-
-  // CRM Back-Relations
-  assigned_leads  CrmLead[]
-  managed_clients CrmClient[]
-  hosted_visitors CrmVisitor[]  @relation("HostedVisitors")
-  crm_activities  CrmActivity[]
-
-  // Project & Contract Back-Relations
-  managed_projects  Project[]  @relation("ProjectManager")
-  managed_contracts Contract[]
-
-  // Task Back-Relations
-  assigned_tasks Task[] @relation("AssignedTasks")
-  created_tasks  Task[] @relation("CreatedTasks")
-
-  // Finance Back-Relations
-  received_incomes   FinanceIncome[]
-  spent_expenses     FinanceExpense[]
-  salaries           FinanceSalary[]  @relation("StaffSalaries")
-  processed_salaries FinanceSalary[]  @relation("ProcessedSalaries")
-  payrolls           HrmPayroll[]     @relation("StaffPayrolls")
-  processed_payrolls HrmPayroll[]     @relation("ProcessedPayrolls")
-  loans              FinanceLoan[]    @relation("StaffLoans")
-  approved_loans     FinanceLoan[]    @relation("ApprovedLoans")
-
-  // Core HRM & Auth Relations
-  user            User?               @relation(fields: [user_id], references: [id], onDelete: SetNull)
-  contracts       HrmStaffContract[]
-  leaves          HrmStaffLeave[]     @relation("StaffLeaves")
-  approved_leaves HrmStaffLeave[]     @relation("ApprovedLeaves")
-  timesheets      HrmStaffTimesheet[]
-  project_members ProjectMember[]
+  user_id              String?             @unique(map: "HrmStaff_user_id_key")
+  status               String              @default("ACTIVE")
+  created_at           DateTime            @default(now())
+  updated_at           DateTime            @updatedAt
+  amount_base          Decimal             @default(0.00) @db.Decimal(14, 2)
+  salary_currency      String              @default("AFN")
+  salary_exchange_rate Decimal             @default(65.0000) @db.Decimal(12, 4)
+  managed_contracts    contract[]
+  crm_activities       crmactivity[]
+  managed_clients      crmclient[]
+  assigned_leads       crmlead[]
+  hosted_visitors      crmvisitor[]
+  spent_expenses       financeexpense[]
+  received_incomes     financeincome[]
+  approved_loans       financeloan[]       @relation("financeloan_approved_by_idTohrmstaff")
+  loans                financeloan[]       @relation("financeloan_staff_idTohrmstaff")
+  processed_salaries   financesalary[]     @relation("financesalary_processed_by_idTohrmstaff")
+  salaries             financesalary[]     @relation("financesalary_staff_idTohrmstaff")
+  processed_payrolls   hrmpayroll[]        @relation("hrmpayroll_processed_by_idTohrmstaff")
+  payrolls             hrmpayroll[]        @relation("hrmpayroll_staff_idTohrmstaff")
+  user                 user?               @relation(fields: [user_id], references: [id], map: "HrmStaff_user_id_fkey")
+  contracts            hrmstaffcontract[]
+  approved_leaves      hrmstaffleave[]     @relation("hrmstaffleave_approved_by_idTohrmstaff")
+  leaves               hrmstaffleave[]     @relation("hrmstaffleave_staff_idTohrmstaff")
+  timesheets           hrmstafftimesheet[]
+  managed_projects     project[]
+  project_members      projectmember[]
+  assigned_tasks       task[]              @relation("task_assigned_to_idTohrmstaff")
+  created_tasks        task[]              @relation("task_created_by_idTohrmstaff")
 }
 
-model HrmStaffContract {
+model hrmstaffcontract {
   id               String    @id @default(cuid())
   staff_id         String
-  contract_number  String    @unique
+  contract_number  String    @unique(map: "HrmStaffContract_contract_number_key")
   contract_type_id String
   position_title   String
   base_salary      Decimal   @db.Decimal(12, 2)
-  currency         String    @default("AFN")
-  exchange_rate    Decimal   @default(65) @db.Decimal(12, 4)
-  amount_base      Decimal   @default(0) @db.Decimal(14, 2)
   start_date       DateTime
   end_date         DateTime?
   document_url     String?   @db.Text
-  content_html     String?   @db.Text
   status_id        String
   created_at       DateTime  @default(now())
   updated_at       DateTime  @updatedAt
+  content_html     String?   @db.Text
+  amount_base      Decimal   @default(0.00) @db.Decimal(14, 2)
+  currency         String    @default("AFN")
+  exchange_rate    Decimal   @default(65.0000) @db.Decimal(12, 4)
+  contract_type    option    @relation("hrmstaffcontract_contract_type_idTooption", fields: [contract_type_id], references: [id], map: "HrmStaffContract_contract_type_id_fkey")
+  staff            hrmstaff  @relation(fields: [staff_id], references: [id], map: "HrmStaffContract_staff_id_fkey")
+  status           option    @relation("hrmstaffcontract_status_idTooption", fields: [status_id], references: [id], map: "HrmStaffContract_status_id_fkey")
 
-  // Relations
-  staff         HrmStaff @relation(fields: [staff_id], references: [id], onDelete: Restrict)
-  contract_type Option   @relation("ContractType", fields: [contract_type_id], references: [id])
-  status        Option   @relation("ContractStatus", fields: [status_id], references: [id])
-
-  @@index([staff_id, status_id])
-  @@index([contract_type_id, status_id])
+  @@index([contract_type_id, status_id], map: "HrmStaffContract_contract_type_id_status_id_idx")
+  @@index([staff_id, status_id], map: "HrmStaffContract_staff_id_status_id_idx")
+  @@index([status_id], map: "HrmStaffContract_status_id_fkey")
 }
 
-model HrmStaffLeave {
-  id                  String   @id @default(cuid())
+model hrmstaffleave {
+  id                  String    @id @default(cuid())
   staff_id            String
   leave_type_id       String
   start_date          DateTime
   end_date            DateTime
   total_days          Int
-  reason              String?  @db.Text
+  reason              String?   @db.Text
   status_id           String
   approved_by_id      String?
+  created_at          DateTime  @default(now())
+  updated_at          DateTime  @updatedAt
   approved_by_user_id String?
-  created_at          DateTime @default(now())
-  updated_at          DateTime @updatedAt
+  approved_by         hrmstaff? @relation("hrmstaffleave_approved_by_idTohrmstaff", fields: [approved_by_id], references: [id], map: "HrmStaffLeave_approved_by_id_fkey")
+  approved_by_user    user?     @relation(fields: [approved_by_user_id], references: [id], map: "HrmStaffLeave_approved_by_user_id_fkey")
+  leave_type          option    @relation("hrmstaffleave_leave_type_idTooption", fields: [leave_type_id], references: [id], map: "HrmStaffLeave_leave_type_id_fkey")
+  staff               hrmstaff  @relation("hrmstaffleave_staff_idTohrmstaff", fields: [staff_id], references: [id], onDelete: Cascade, map: "HrmStaffLeave_staff_id_fkey")
+  status              option    @relation("hrmstaffleave_status_idTooption", fields: [status_id], references: [id], map: "HrmStaffLeave_status_id_fkey")
 
-  // Relations
-  staff            HrmStaff  @relation("StaffLeaves", fields: [staff_id], references: [id], onDelete: Cascade)
-  approved_by      HrmStaff? @relation("ApprovedLeaves", fields: [approved_by_id], references: [id], onDelete: SetNull)
-  approved_by_user User?     @relation("ApprovedLeaveUsers", fields: [approved_by_user_id], references: [id], onDelete: SetNull)
-  leave_type       Option    @relation("LeaveType", fields: [leave_type_id], references: [id])
-  status           Option    @relation("LeaveStatus", fields: [status_id], references: [id])
-
-  @@index([staff_id, start_date])
-  @@index([status_id, start_date, end_date])
-  @@index([leave_type_id, start_date])
-  @@index([approved_by_user_id])
+  @@index([approved_by_id], map: "HrmStaffLeave_approved_by_id_fkey")
+  @@index([approved_by_user_id], map: "HrmStaffLeave_approved_by_user_id_idx")
+  @@index([leave_type_id, start_date], map: "HrmStaffLeave_leave_type_id_start_date_idx")
+  @@index([staff_id, start_date], map: "HrmStaffLeave_staff_id_start_date_idx")
+  @@index([status_id, start_date, end_date], map: "HrmStaffLeave_status_id_start_date_end_date_idx")
 }
 
-model HrmStaffTimesheet {
+model hrmstafftimesheet {
   id             String    @id @default(cuid())
   staff_id       String
   project_id     String?
@@ -260,291 +490,208 @@ model HrmStaffTimesheet {
   notes          String?   @db.Text
   created_at     DateTime  @default(now())
   updated_at     DateTime  @updatedAt
+  project        project?  @relation(fields: [project_id], references: [id], map: "HrmStaffTimesheet_project_id_fkey")
+  staff          hrmstaff  @relation(fields: [staff_id], references: [id], onDelete: Cascade, map: "HrmStaffTimesheet_staff_id_fkey")
 
-  // Relations
-  staff   HrmStaff @relation(fields: [staff_id], references: [id], onDelete: Cascade)
-  project Project? @relation(fields: [project_id], references: [id], onDelete: SetNull)
-
-  @@unique([staff_id, date])
-  @@index([staff_id, date])
-  @@index([date, status])
+  @@unique([staff_id, date], map: "HrmStaffTimesheet_staff_id_date_key")
+  @@index([date, status], map: "HrmStaffTimesheet_date_status_idx")
+  @@index([project_id], map: "HrmStaffTimesheet_project_id_fkey")
+  @@index([staff_id, date], map: "HrmStaffTimesheet_staff_id_date_idx")
 }
 
-model HrmPayroll {
-  id                     String    @id @default(cuid())
-  staff_id               String
-  month                  Int
-  year                   Int
-  base_salary            Decimal   @db.Decimal(12, 2)
-  total_allowance        Decimal   @default(0) @db.Decimal(12, 2)
-  unpaid_leave_deduction Decimal   @default(0) @db.Decimal(12, 2)
-  tax_deduction          Decimal   @default(0) @db.Decimal(12, 2)
-  net_salary             Decimal   @db.Decimal(12, 2)
-  currency               String    @default("AFN")
-  exchange_rate          Decimal   @default(65) @db.Decimal(12, 4)
-  amount_base            Decimal   @default(0) @db.Decimal(14, 2)
-  status_id              String
-  payment_method_id      String?
-  payment_date           DateTime?
-  processed_by_id        String?
-  notes                  String?   @db.Text
-  created_at             DateTime  @default(now())
-  updated_at             DateTime  @updatedAt
+model inventory {
+  id                String   @id @default(cuid())
+  name              String
+  category_id       String
+  sku_code          String   @unique(map: "Inventory_sku_code_key")
+  quantity_in_stock Int      @default(0)
+  unit_price        Decimal  @db.Decimal(12, 2)
+  status_id         String
+  reorder_level     Int      @default(5)
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
+  amount_base       Decimal  @default(0.00) @db.Decimal(14, 2)
+  currency          String   @default("AFN")
+  exchange_rate     Decimal  @default(65.0000) @db.Decimal(12, 4)
+  category          option   @relation("inventory_category_idTooption", fields: [category_id], references: [id], map: "Inventory_category_id_fkey")
+  status            option   @relation("inventory_status_idTooption", fields: [status_id], references: [id], map: "Inventory_status_id_fkey")
 
-  // Relations
-  staff          HrmStaff  @relation("StaffPayrolls", fields: [staff_id], references: [id], onDelete: Restrict)
-  processed_by   HrmStaff? @relation("ProcessedPayrolls", fields: [processed_by_id], references: [id], onDelete: SetNull)
-  status         Option    @relation("PayrollStatus", fields: [status_id], references: [id])
-  payment_method Option?   @relation("PayrollPaymentMethod", fields: [payment_method_id], references: [id])
-
-  @@unique([staff_id, month, year])
-  @@index([staff_id, month, year])
-  @@index([status_id, month, year])
+  @@index([category_id, status_id], map: "Inventory_category_id_status_id_idx")
+  @@index([status_id], map: "Inventory_status_id_fkey")
 }
 
-// CRM
-model CrmLead {
-  id                  String    @id @default(cuid())
-  title               String
-  company_name        String?
-  contact_name        String
-  email               String
-  phone               String?
-  source_id           String
-  status_id           String
-  assigned_to_id      String?
-  estimated_value     Decimal?  @db.Decimal(12, 2)
-  currency            String    @default("AFN")
-  exchange_rate       Decimal   @default(65) @db.Decimal(12, 4)
-  amount_base         Decimal   @default(0) @db.Decimal(14, 2)
-  next_follow_up_date DateTime?
-  notes               String?   @db.Text
-  created_at          DateTime  @default(now())
-  updated_at          DateTime  @updatedAt
+model option {
+  id                    String             @id @default(cuid())
+  category              String
+  label                 String
+  value                 String
+  color_code            String?
+  sort_order            Int                @default(0)
+  is_active             Boolean            @default(true)
+  is_default            Boolean            @default(false)
+  created_at            DateTime           @default(now())
+  updated_at            DateTime           @updatedAt
+  description           String?            @db.Text
+  contract_types_ref    contract[]         @relation("contract_contract_type_idTooption")
+  contract_countries    contract[]         @relation("contract_country_idTooption")
+  contract_levels       contract[]         @relation("contract_level_idTooption")
+  contract_statuses_ref contract[]         @relation("contract_status_idTooption")
+  invoice_statuses      contractinvoice[]
+  lead_sources          crmlead[]          @relation("crmlead_source_idTooption")
+  lead_statuses         crmlead[]          @relation("crmlead_status_idTooption")
+  expense_types         financeexpense[]
+  income_types          financeincome[]
+  loan_statuses         financeloan[]
+  payment_methods       hrmpayroll[]       @relation("hrmpayroll_payment_method_idTooption")
+  payroll_statuses      hrmpayroll[]       @relation("hrmpayroll_status_idTooption")
+  contract_types        hrmstaffcontract[] @relation("hrmstaffcontract_contract_type_idTooption")
+  contract_statuses     hrmstaffcontract[] @relation("hrmstaffcontract_status_idTooption")
+  leave_types           hrmstaffleave[]    @relation("hrmstaffleave_leave_type_idTooption")
+  leave_statuses        hrmstaffleave[]    @relation("hrmstaffleave_status_idTooption")
+  inventory_categories  inventory[]        @relation("inventory_category_idTooption")
+  inventory_statuses    inventory[]        @relation("inventory_status_idTooption")
+  project_priorities    project[]          @relation("project_priority_idTooption")
+  project_statuses      project[]          @relation("project_status_idTooption")
+  task_priorities       task[]             @relation("task_priority_idTooption")
+  task_statuses         task[]             @relation("task_status_idTooption")
 
-  // Relations
-  source           Option        @relation("LeadSource", fields: [source_id], references: [id])
-  status           Option        @relation("LeadStatus", fields: [status_id], references: [id])
-  assigned_to      HrmStaff?     @relation(fields: [assigned_to_id], references: [id], onDelete: SetNull)
-  converted_client CrmClient?
-  origin_visitor   CrmVisitor?   @relation("VisitorConvertedLead")
-  activities       CrmActivity[]
-  contracts        Contract[]
-
-  @@index([status_id, created_at])
+  @@unique([category, value], map: "Option_category_value_key")
+  @@index([category], map: "Option_category_idx")
 }
 
-model CrmClient {
-  id                   String   @id @default(cuid())
-  lead_id              String?  @unique
-  company_name         String
-  primary_contact_name String
-  email                String   @unique
-  phone                String?
-  address              String?  @db.Text
-  tax_id               String?
-  notes                String?  @db.Text
-  account_manager_id   String?
-  status               String   @default("ACTIVE")
-  created_at           DateTime @default(now())
-  updated_at           DateTime @updatedAt
-
-  // Relations
-  lead            CrmLead?          @relation(fields: [lead_id], references: [id], onDelete: SetNull)
-  account_manager HrmStaff?         @relation(fields: [account_manager_id], references: [id], onDelete: SetNull)
-  contracts       Contract[]
-  projects        Project[]
-  incomes         FinanceIncome[]
-  invoices        ContractInvoice[]
-  activities      CrmActivity[]
+model permission {
+  id               String           @id @default(cuid())
+  key              String           @unique(map: "Permission_key_key")
+  module           String
+  description      String?          @db.Text
+  created_at       DateTime         @default(now())
+  role_permissions rolepermission[]
 }
 
-model CrmVisitor {
-  id                String    @id @default(uuid())
-  full_name         String
-  email             String?
-  phone             String
-  company_name      String?
-  purpose           String
-  visited_at        DateTime  @default(now())
-  host_staff_id     String?
-  converted_lead_id String?   @unique
-  check_out_time    DateTime?
-  status            String    @default("CHECKED_IN")
-  notes             String?   @db.Text
-  created_at        DateTime  @default(now())
-  updated_at        DateTime  @updatedAt
-
-  host_staff     HrmStaff? @relation("HostedVisitors", fields: [host_staff_id], references: [id], onDelete: SetNull)
-  converted_lead CrmLead?  @relation("VisitorConvertedLead", fields: [converted_lead_id], references: [id], onDelete: SetNull)
-
-  @@index([visited_at])
-  @@index([host_staff_id])
-  @@index([status, visited_at])
-}
-
-model CrmActivity {
-  id            String    @id @default(cuid())
-  lead_id       String?
-  client_id     String?
-  staff_id      String
-  activity_type String
-  title         String
-  description   String?   @db.Text
-  activity_date DateTime  @default(now())
-  due_date      DateTime?
-  is_completed  Boolean   @default(false)
-  created_at    DateTime  @default(now())
-  updated_at    DateTime  @updatedAt
-
-  // Relations
-  lead   CrmLead?   @relation(fields: [lead_id], references: [id], onDelete: Cascade)
-  client CrmClient? @relation(fields: [client_id], references: [id], onDelete: Cascade)
-  staff  HrmStaff   @relation(fields: [staff_id], references: [id], onDelete: Restrict)
-
-  @@index([lead_id, activity_date])
-  @@index([client_id, activity_date])
-  @@index([staff_id])
-}
-
-// PROJECT
-model Project {
-  id                 String    @id @default(cuid())
+model project {
+  id                 String              @id @default(cuid())
   contract_id        String?
   client_id          String
-  project_code       String    @unique
+  project_code       String              @unique(map: "Project_project_code_key")
   title              String
-  description        String?   @db.Text
+  description        String?             @db.Text
   status_id          String
   priority_id        String
   project_area       String?
   project_sponsor    String?
   project_manager_id String?
-  estimated_hours    Decimal?  @db.Decimal(8, 2)
-  actual_hours       Decimal?  @default(0) @db.Decimal(8, 2)
-  budget             Decimal   @db.Decimal(12, 2)
-  currency           String    @default("AFN")
-  exchange_rate      Decimal   @default(65) @db.Decimal(12, 4)
-  amount_base        Decimal   @default(0) @db.Decimal(14, 2)
+  estimated_hours    Decimal?            @db.Decimal(8, 2)
+  actual_hours       Decimal?            @default(0.00) @db.Decimal(8, 2)
+  budget             Decimal             @db.Decimal(12, 2)
   start_date         DateTime
   end_date           DateTime
   actual_end_date    DateTime?
-  created_at         DateTime  @default(now())
-  updated_at         DateTime  @updatedAt
+  created_at         DateTime            @default(now())
+  updated_at         DateTime            @updatedAt
+  amount_base        Decimal             @default(0.00) @db.Decimal(14, 2)
+  currency           String              @default("AFN")
+  exchange_rate      Decimal             @default(65.0000) @db.Decimal(12, 4)
+  expenses           financeexpense[]
+  incomes            financeincome[]
+  timesheets         hrmstafftimesheet[]
+  client             crmclient           @relation(fields: [client_id], references: [id], map: "Project_client_id_fkey")
+  contract           contract?           @relation(fields: [contract_id], references: [id], map: "Project_contract_id_fkey")
+  priority           option              @relation("project_priority_idTooption", fields: [priority_id], references: [id], map: "Project_priority_id_fkey")
+  project_manager    hrmstaff?           @relation(fields: [project_manager_id], references: [id], map: "Project_project_manager_id_fkey")
+  status             option              @relation("project_status_idTooption", fields: [status_id], references: [id], map: "Project_status_id_fkey")
+  members            projectmember[]
+  tasks              task[]
 
-  // Relations
-  contract        Contract?           @relation(fields: [contract_id], references: [id], onDelete: SetNull)
-  client          CrmClient           @relation(fields: [client_id], references: [id], onDelete: Restrict)
-  status          Option              @relation("ProjectStatus", fields: [status_id], references: [id])
-  priority        Option              @relation("ProjectPriority", fields: [priority_id], references: [id])
-  project_manager HrmStaff?           @relation("ProjectManager", fields: [project_manager_id], references: [id], onDelete: SetNull)
-  members         ProjectMember[]
-  tasks           Task[]
-  timesheets      HrmStaffTimesheet[]
-  incomes         FinanceIncome[]
-  expenses        FinanceExpense[]
-
-  @@index([client_id, status_id])
+  @@index([client_id, status_id], map: "Project_client_id_status_id_idx")
+  @@index([contract_id], map: "Project_contract_id_fkey")
+  @@index([priority_id], map: "Project_priority_id_fkey")
+  @@index([project_manager_id], map: "Project_project_manager_id_fkey")
+  @@index([status_id], map: "Project_status_id_fkey")
 }
 
-model ProjectMember {
+model projectmember {
   id          String   @id @default(cuid())
   project_id  String
   staff_id    String
   role        String?
   assigned_at DateTime @default(now())
+  project     project  @relation(fields: [project_id], references: [id], onDelete: Cascade, map: "ProjectMember_project_id_fkey")
+  staff       hrmstaff @relation(fields: [staff_id], references: [id], onDelete: Cascade, map: "ProjectMember_staff_id_fkey")
 
-  // Relations
-  project Project  @relation(fields: [project_id], references: [id], onDelete: Cascade)
-  staff   HrmStaff @relation(fields: [staff_id], references: [id], onDelete: Cascade)
-
-  @@unique([project_id, staff_id])
+  @@unique([project_id, staff_id], map: "ProjectMember_project_id_staff_id_key")
+  @@index([staff_id], map: "ProjectMember_staff_id_fkey")
 }
 
-// CONTRACT
-model Contract {
-  id                 String    @id @default(cuid())
-  client_id          String
-  lead_id            String?
-  contract_number    String    @unique
-  title              String
-  status_id          String
-  total_amount       Decimal   @db.Decimal(12, 2)
-  contract_duration  String?
-  contract_type_id   String
-  country_id         String?
-  percentage         Decimal?  @db.Decimal(5, 2)
-  currency           String    @default("USD")
-  exchange_rate      Decimal   @default(65) @db.Decimal(12, 4)
-  amount_base        Decimal   @default(0) @db.Decimal(14, 2)
-  amount_usd         Decimal?  @db.Decimal(12, 2)
-  level_id           String?
-  signed_date        DateTime?
-  start_date         DateTime
-  end_date           DateTime
-  auto_renew         Boolean   @default(false)
-  renewal_status     String    @default("ACTIVE") // ACTIVE, PENDING_RENEWAL, RENEWED, EXPIRED, CANCELLED
-  document_url       String?   @db.Text
-  account_manager_id String?
-  created_at         DateTime  @default(now())
-  updated_at         DateTime  @updatedAt
-
-  // Relations
-  client          CrmClient              @relation(fields: [client_id], references: [id], onDelete: Restrict)
-  lead            CrmLead?               @relation(fields: [lead_id], references: [id], onDelete: SetNull)
-  status          Option                 @relation("ContractStatus", fields: [status_id], references: [id])
-  contract_type   Option                 @relation("ContractType", fields: [contract_type_id], references: [id])
-  country         Option?                @relation("ContractCountry", fields: [country_id], references: [id], onDelete: SetNull)
-  level           Option?                @relation("ContractLevel", fields: [level_id], references: [id], onDelete: SetNull)
-  account_manager HrmStaff?              @relation(fields: [account_manager_id], references: [id], onDelete: SetNull)
-  projects        Project[]
-  invoices        ContractInvoice[]
-  incomes         FinanceIncome[]
-  notifications   ContractNotification[]
-
-  @@index([client_id, status_id])
+model role {
+  id               String           @id @default(cuid())
+  name             String           @unique(map: "Role_name_key")
+  display_name     String
+  description      String?          @db.Text
+  is_system        Boolean          @default(false)
+  created_at       DateTime         @default(now())
+  updated_at       DateTime         @updatedAt
+  is_active        Boolean          @default(true)
+  role_permissions rolepermission[]
+  users            user[]           @relation("userroles")
 }
 
-model ContractInvoice {
-  id             String   @id @default(cuid())
-  contract_id    String
-  client_id      String
-  invoice_number String   @unique
-  amount         Decimal  @db.Decimal(12, 2)
-  currency       String   @default("AFN")
-  exchange_rate  Decimal  @default(65) @db.Decimal(12, 4)
-  amount_base    Decimal  @default(0) @db.Decimal(14, 2)
-  due_date       DateTime
-  status_id      String
-  issued_date    DateTime @default(now())
-  created_at     DateTime @default(now())
-  updated_at     DateTime @updatedAt
+model rolepermission {
+  id            String     @id @default(cuid())
+  role_id       String
+  permission_id String
+  granted_at    DateTime   @default(now())
+  permission    permission @relation(fields: [permission_id], references: [id], onDelete: Cascade, map: "RolePermission_permission_id_fkey")
+  role          role       @relation(fields: [role_id], references: [id], onDelete: Cascade, map: "RolePermission_role_id_fkey")
 
-  // Relations
-  contract       Contract       @relation(fields: [contract_id], references: [id], onDelete: Cascade)
-  client         CrmClient      @relation(fields: [client_id], references: [id], onDelete: Restrict)
-  status         Option         @relation("InvoiceStatus", fields: [status_id], references: [id])
-  payment_income FinanceIncome?
-
-  @@index([contract_id, status_id])
+  @@unique([role_id, permission_id], map: "RolePermission_role_id_permission_id_key")
+  @@index([permission_id], map: "RolePermission_permission_id_fkey")
 }
 
-model ContractNotification {
-  id              String   @id @default(cuid())
-  contract_id     String
-  reminder_type   String // 30_DAY, 15_DAY, 3_DAY, EXPIRED
-  sent_at         DateTime @default(now())
-  recipient_email String
-  status          String   @default("SENT") // SENT, FAILED
+model session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique(map: "Session_sessionToken_key")
+  userId       String
+  expires      DateTime
+  user         user     @relation(fields: [userId], references: [id], onDelete: Cascade, map: "Session_userId_fkey")
 
-  // Relations
-  contract Contract @relation(fields: [contract_id], references: [id], onDelete: Cascade)
-
-  @@index([contract_id, reminder_type])
+  @@index([userId], map: "Session_userId_fkey")
 }
 
-// TASK
-model Task {
+model setup {
+  id                    String      @id @default(cuid())
+  scope                 setup_scope @unique(map: "Setup_scope_key") @default(GLOBAL)
+  app_name              String      @default("ERP System")
+  company_name          String
+  company_logo          String?     @db.Text
+  currency_code         String      @default("AFN")
+  currency_symbol       String      @default("؋")
+  timezone              String      @default("Asia/Kabul")
+  date_format           String      @default("YYYY-MM-DD")
+  fiscal_year_start     String      @default("01-01")
+  default_tax_rate      Decimal     @default(0.00) @db.Decimal(5, 2)
+  created_at            DateTime    @default(now())
+  updated_at            DateTime    @updatedAt
+  company_address       String?     @db.Text
+  company_email         String?
+  company_phone         String?
+  company_tax_id        String?
+  signatory_name        String?
+  signatory_stamp       String?     @db.Text
+  signatory_title       String?
+  default_work_end      String      @default("17:30")
+  default_work_start    String      @default("08:30")
+  usd_afn_exchange_rate Decimal     @default(65.0000) @db.Decimal(12, 4)
+}
+
+model systemsetting {
+  id           String   @id @default("default")
+  lightLogoUrl String?
+  darkLogoUrl  String?
+  faviconUrl   String?
+  updatedAt    DateTime @updatedAt
+}
+
+model task {
   id              String    @id @default(cuid())
   project_id      String
   title           String
@@ -554,246 +701,65 @@ model Task {
   assigned_to_id  String?
   created_by_id   String?
   estimated_hours Decimal?  @db.Decimal(6, 2)
-  actual_hours    Decimal?  @default(0) @db.Decimal(6, 2)
+  actual_hours    Decimal?  @default(0.00) @db.Decimal(6, 2)
   due_date        DateTime?
   completed_at    DateTime?
   created_at      DateTime  @default(now())
   updated_at      DateTime  @updatedAt
+  assigned_to     hrmstaff? @relation("task_assigned_to_idTohrmstaff", fields: [assigned_to_id], references: [id], map: "Task_assigned_to_id_fkey")
+  created_by      hrmstaff? @relation("task_created_by_idTohrmstaff", fields: [created_by_id], references: [id], map: "Task_created_by_id_fkey")
+  priority        option    @relation("task_priority_idTooption", fields: [priority_id], references: [id], map: "Task_priority_id_fkey")
+  project         project   @relation(fields: [project_id], references: [id], map: "Task_project_id_fkey")
+  status          option    @relation("task_status_idTooption", fields: [status_id], references: [id], map: "Task_status_id_fkey")
 
-  // Relations
-  project     Project   @relation(fields: [project_id], references: [id], onDelete: Restrict)
-  status      Option    @relation("TaskStatus", fields: [status_id], references: [id])
-  priority    Option    @relation("TaskPriority", fields: [priority_id], references: [id])
-  assigned_to HrmStaff? @relation("AssignedTasks", fields: [assigned_to_id], references: [id], onDelete: SetNull)
-  created_by  HrmStaff? @relation("CreatedTasks", fields: [created_by_id], references: [id], onDelete: SetNull)
-
-  @@index([project_id, status_id])
-  @@index([assigned_to_id, status_id])
+  @@index([assigned_to_id, status_id], map: "Task_assigned_to_id_status_id_idx")
+  @@index([created_by_id], map: "Task_created_by_id_fkey")
+  @@index([priority_id], map: "Task_priority_id_fkey")
+  @@index([project_id, status_id], map: "Task_project_id_status_id_idx")
+  @@index([status_id], map: "Task_status_id_fkey")
 }
 
-// FINANCE
-model FinanceIncome {
-  id             String    @id @default(cuid())
-  invoice_id     String?   @unique
-  client_id      String?
-  contract_id    String?
-  project_id     String?
-  received_by_id String?
-  status         String    @default("PENDING")
-  name           String
-  pay_details    String?   @db.Text
-  income_type_id String
-  total_amount   Decimal   @db.Decimal(12, 2)
-  currency       String    @default("AFN")
-  paid_amount    Decimal   @default(0) @db.Decimal(12, 2)
-  remind_amount  Decimal   @default(0) @db.Decimal(12, 2)
-  exchange_rate  Decimal   @default(65) @db.Decimal(12, 4)
-  amount_base    Decimal   @default(0) @db.Decimal(14, 2)
-  total_usd      Decimal?  @db.Decimal(12, 2)
-  remind_date    DateTime?
-  created_at     DateTime  @default(now())
-  updated_at     DateTime  @updatedAt
+model user {
+  id                      String              @id @default(cuid())
+  name                    String?
+  email                   String?             @unique(map: "User_email_key")
+  emailVerified           DateTime?
+  image                   String?
+  password_hash           String?
+  account_status          user_account_status @default(ACTIVE)
+  locale                  String              @default("en")
+  last_login_at           DateTime?
+  created_by_id           String?
+  created_at              DateTime            @default(now())
+  updated_at              DateTime            @updatedAt
+  accounts                account[]
+  audit_logs              auditlog[]
+  staff                   hrmstaff?
+  approved_leave_requests hrmstaffleave[]
+  sessions                session[]
+  created_by              user?               @relation("userTouser", fields: [created_by_id], references: [id], map: "User_created_by_id_fkey")
+  created_users           user[]              @relation("userTouser")
+  roles                   role[]              @relation("userroles")
 
-  // Relations
-  client      CrmClient?       @relation(fields: [client_id], references: [id], onDelete: SetNull)
-  contract    Contract?        @relation(fields: [contract_id], references: [id], onDelete: SetNull)
-  project     Project?         @relation(fields: [project_id], references: [id], onDelete: SetNull)
-  received_by HrmStaff?        @relation(fields: [received_by_id], references: [id], onDelete: SetNull)
-  income_type Option           @relation("IncomeType", fields: [income_type_id], references: [id])
-  invoice     ContractInvoice? @relation(fields: [invoice_id], references: [id], onDelete: SetNull)
-
-  @@index([created_at])
+  @@index([created_by_id], map: "User_created_by_id_idx")
 }
 
-model FinanceExpense {
-  id              String   @id @default(cuid())
-  project_id      String?
-  spent_by_id     String?
-  receipt_url     String?  @db.Text
-  expense_date    DateTime @db.Date
-  details         String   @db.Text
-  expense_type_id String
-  quantity        Int      @default(1)
-  unit_price      Decimal  @db.Decimal(12, 2)
-  sub_total       Decimal  @db.Decimal(12, 2)
-  currency        String   @default("AFN")
-  exchange_rate   Decimal  @default(65) @db.Decimal(12, 4)
-  amount_base     Decimal  @default(0) @db.Decimal(14, 2)
-  total_usd       Decimal? @db.Decimal(12, 2)
-  created_at      DateTime @default(now())
-  updated_at      DateTime @updatedAt
+model VerificationToken {
+  identifier String
+  token      String   @unique(map: "VerificationToken_token_key")
+  expires    DateTime
 
-  // Relations
-  project      Project?  @relation(fields: [project_id], references: [id], onDelete: SetNull)
-  spent_by     HrmStaff? @relation(fields: [spent_by_id], references: [id], onDelete: SetNull)
-  expense_type Option    @relation("ExpenseType", fields: [expense_type_id], references: [id])
-
-  @@index([created_at])
+  @@unique([identifier, token], map: "VerificationToken_identifier_token_key")
+  @@map("verificationtoken")
 }
 
-model FinanceSalary {
-  id                String    @id @default(cuid())
-  timesheet_summary String?   @db.Text
-  status            String    @default("DRAFT")
-  staff_id          String
-  timesheet_month   String // e.g., "2026-08"
-  total_month_days  Int
-  worked_days       Int
-  off_days          Int       @default(0)
-  base_salary       Decimal   @db.Decimal(12, 2)
-  base_daily_rate   Decimal   @db.Decimal(12, 2)
-  earned_salary     Decimal   @db.Decimal(12, 2)
-  bonus_amount      Decimal   @default(0) @db.Decimal(12, 2)
-  loan_deduction    Decimal   @default(0) @db.Decimal(12, 2)
-  payable_amount    Decimal   @db.Decimal(12, 2)
-  currency          String    @default("AFN")
-  exchange_rate     Decimal   @default(65) @db.Decimal(12, 4)
-  amount_base       Decimal   @default(0) @db.Decimal(14, 2)
-  payable_usd       Decimal?  @db.Decimal(12, 2)
-  loan_status       String?   @default("PENDING")
-  payment_date      DateTime? @db.Date
-  processed_by_id   String?
-  created_at        DateTime  @default(now())
-  updated_at        DateTime  @updatedAt
-
-  // Relations
-  staff        HrmStaff  @relation("StaffSalaries", fields: [staff_id], references: [id], onDelete: Restrict)
-  processed_by HrmStaff? @relation("ProcessedSalaries", fields: [processed_by_id], references: [id], onDelete: SetNull)
-
-  @@unique([staff_id, timesheet_month])
-}
-
-model FinanceLoan {
-  id                String   @id @default(cuid())
-  staff_id          String
-  loan_number       String   @unique
-  total_amount      Decimal  @db.Decimal(12, 2)
-  monthly_deduction Decimal  @db.Decimal(12, 2)
-  repaid_amount     Decimal  @default(0) @db.Decimal(12, 2)
-  remaining_balance Decimal  @db.Decimal(12, 2)
-  currency          String   @default("AFN")
-  exchange_rate     Decimal  @default(65) @db.Decimal(12, 4)
-  amount_base       Decimal  @default(0) @db.Decimal(14, 2)
-  status_id         String
-  issue_date        DateTime @db.Date
-  reason            String?  @db.Text
-  approved_by_id    String?
-  created_at        DateTime @default(now())
-  updated_at        DateTime @updatedAt
-
-  // Relations
-  staff       HrmStaff  @relation("StaffLoans", fields: [staff_id], references: [id], onDelete: Restrict)
-  approved_by HrmStaff? @relation("ApprovedLoans", fields: [approved_by_id], references: [id], onDelete: SetNull)
-  status      Option    @relation("LoanStatus", fields: [status_id], references: [id])
-}
-
-model Inventory {
-  id                String   @id @default(cuid())
-  name              String
-  category_id       String
-  sku_code          String   @unique
-  quantity_in_stock Int      @default(0)
-  unit_price        Decimal  @db.Decimal(12, 2)
-  currency          String   @default("AFN")
-  exchange_rate     Decimal  @default(65) @db.Decimal(12, 4)
-  amount_base       Decimal  @default(0) @db.Decimal(14, 2)
-  status_id         String
-  reorder_level     Int      @default(5)
-  created_at        DateTime @default(now())
-  updated_at        DateTime @updatedAt
-
-  // Relations
-  category Option @relation("InventoryCategory", fields: [category_id], references: [id])
-  status   Option @relation("InventoryStatus", fields: [status_id], references: [id])
-
-  @@index([category_id, status_id])
-}
-
-// OPTION
-model Option {
-  id          String   @id @default(cuid())
-  category    String // e.g., LEAD_STATUS, PROJECT_PRIORITY, EXPENSE_TYPE
-  label       String
-  value       String
-  description String?  @db.Text
-  color_code  String?
-  sort_order  Int      @default(0)
-  is_active   Boolean  @default(true)
-  is_default  Boolean  @default(false)
-  created_at  DateTime @default(now())
-  updated_at  DateTime @updatedAt
-
-  // HRM Relations
-  contract_types    HrmStaffContract[] @relation("ContractType")
-  contract_statuses HrmStaffContract[] @relation("ContractStatus")
-  leave_types       HrmStaffLeave[]    @relation("LeaveType")
-  leave_statuses    HrmStaffLeave[]    @relation("LeaveStatus")
-  payroll_statuses  HrmPayroll[]       @relation("PayrollStatus")
-  payment_methods   HrmPayroll[]       @relation("PayrollPaymentMethod")
-
-  // CRM Relations
-  lead_sources  CrmLead[] @relation("LeadSource")
-  lead_statuses CrmLead[] @relation("LeadStatus")
-
-  // Projects & Tasks Relations
-  project_statuses   Project[] @relation("ProjectStatus")
-  project_priorities Project[] @relation("ProjectPriority")
-  task_statuses      Task[]    @relation("TaskStatus")
-  task_priorities    Task[]    @relation("TaskPriority")
-
-  // Contracts Relations
-  contract_statuses_ref Contract[]        @relation("ContractStatus")
-  contract_types_ref    Contract[]        @relation("ContractType")
-  contract_countries    Contract[]        @relation("ContractCountry")
-  contract_levels       Contract[]        @relation("ContractLevel")
-  invoice_statuses      ContractInvoice[] @relation("InvoiceStatus")
-
-  // Finance & Inventory Relations
-  income_types         FinanceIncome[]  @relation("IncomeType")
-  expense_types        FinanceExpense[] @relation("ExpenseType")
-  loan_statuses        FinanceLoan[]    @relation("LoanStatus")
-  inventory_categories Inventory[]      @relation("InventoryCategory")
-  inventory_statuses   Inventory[]      @relation("InventoryStatus")
-
-  @@unique([category, value])
-  @@index([category])
-}
-
-// SETUP
-enum SetupScope {
+enum setup_scope {
   GLOBAL
 }
 
-model Setup {
-  id                    String     @id @default(cuid())
-  scope                 SetupScope @unique @default(GLOBAL)
-  app_name              String     @default("ERP System")
-  company_name          String
-  company_logo          String?    @db.Text
-  company_email         String?
-  company_phone         String?
-  company_address       String?    @db.Text
-  company_tax_id        String?
-  signatory_name        String?
-  signatory_title       String?
-  signatory_stamp       String?    @db.Text
-  currency_code         String     @default("AFN")
-  currency_symbol       String     @default("؋")
-  usd_afn_exchange_rate Decimal    @default(65) @db.Decimal(12, 4)
-  timezone              String     @default("Asia/Kabul")
-  date_format           String     @default("YYYY-MM-DD")
-  fiscal_year_start     String     @default("01-01") // MM-DD format
-  default_work_start    String     @default("08:30")
-  default_work_end      String     @default("17:30")
-  default_tax_rate      Decimal    @default(0.00) @db.Decimal(5, 2)
-  created_at            DateTime   @default(now())
-  updated_at            DateTime   @updatedAt
-}
-
-model SystemSetting {
-  id           String   @id @default("default")
-  lightLogoUrl String?
-  darkLogoUrl  String?
-  faviconUrl   String?
-  updatedAt    DateTime @updatedAt
+enum user_account_status {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  PENDING_ACTIVATION
 }

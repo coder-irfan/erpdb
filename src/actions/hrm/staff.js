@@ -220,15 +220,15 @@ export const getStaffList = async (payload = {}) => {
 
   try {
     const [totalCount, staff, positionRows] = await prisma.$transaction([
-      prisma.hrmStaff.count({ where }),
-      prisma.hrmStaff.findMany({
+      prisma.hrmstaff.count({ where }),
+      prisma.hrmstaff.findMany({
         where,
         select: staffListSelect,
         orderBy: { created_at: 'desc' },
         skip: (page - 1) * limit,
         take: limit
       }),
-      prisma.hrmStaff.findMany({ select: { position: true }, distinct: ['position'], orderBy: { position: 'asc' } })
+      prisma.hrmstaff.findMany({ select: { position: true }, distinct: ['position'], orderBy: { position: 'asc' } })
     ])
 
     const totalPages = Math.max(1, Math.ceil(totalCount / limit))
@@ -255,9 +255,9 @@ export const getStaffStats = async (payload = {}) => {
 
   try {
     const [total, active, terminated] = await prisma.$transaction([
-      prisma.hrmStaff.count(),
-      prisma.hrmStaff.count({ where: { status: 'ACTIVE' } }),
-      prisma.hrmStaff.count({ where: { status: 'TERMINATED' } })
+      prisma.hrmstaff.count(),
+      prisma.hrmstaff.count({ where: { status: 'ACTIVE' } }),
+      prisma.hrmstaff.count({ where: { status: 'TERMINATED' } })
     ])
 
     return { success: true, data: { total, active, inactive: Math.max(0, total - active - terminated), terminated } }
@@ -301,7 +301,7 @@ export const createStaff = async payload => {
 
   try {
     const [existingStaff, userAvailable, setup] = await Promise.all([
-      prisma.hrmStaff.findUnique({ where: { email: validation.output.email }, select: { id: true } }),
+      prisma.hrmstaff.findUnique({ where: { email: validation.output.email }, select: { id: true } }),
       ensureUserAvailable(validation.output.user_id),
       getCompanySetupRecord()
     ])
@@ -315,12 +315,12 @@ export const createStaff = async payload => {
     }
 
     const createdStaff = await prisma.$transaction(async transaction => {
-      const staff = await transaction.hrmStaff.create({
+      const staff = await transaction.hrmstaff.create({
         data: toStaffData(validation.output, setup.usd_afn_exchange_rate, setup.currency_code),
         select: staffListSelect
       })
 
-      await transaction.auditLog.create({
+      await transaction.auditlog.create({
         data: {
           user_id: context.session.user.id,
           action: 'HRM_STAFF_CREATED',
@@ -377,11 +377,11 @@ export const updateStaff = async (id, payload = {}) => {
 
   try {
     const [currentStaff, duplicateEmail, userAvailable, setup] = await Promise.all([
-      prisma.hrmStaff.findUnique({
+      prisma.hrmstaff.findUnique({
         where: { id: staffId },
         select: { id: true, salary_exchange_rate: true }
       }),
-      prisma.hrmStaff.findFirst({
+      prisma.hrmstaff.findFirst({
         where: { email: validation.output.email, NOT: { id: staffId } },
         select: { id: true }
       }),
@@ -402,13 +402,13 @@ export const updateStaff = async (id, payload = {}) => {
     }
 
     const updatedStaff = await prisma.$transaction(async transaction => {
-      const staff = await transaction.hrmStaff.update({
+      const staff = await transaction.hrmstaff.update({
         where: { id: staffId },
         data: toStaffData(validation.output, currentStaff.salary_exchange_rate, setup.currency_code),
         select: staffListSelect
       })
 
-      await transaction.auditLog.create({
+      await transaction.auditlog.create({
         data: {
           user_id: context.session.user.id,
           action: 'HRM_STAFF_UPDATED',
@@ -452,20 +452,20 @@ export const updateStaffStatus = async (id, newStatus, payload = {}) => {
   }
 
   try {
-    const currentStaff = await prisma.hrmStaff.findUnique({ where: { id: staffId }, select: { id: true } })
+    const currentStaff = await prisma.hrmstaff.findUnique({ where: { id: staffId }, select: { id: true } })
 
     if (!currentStaff) {
       return { success: false, code: 'STAFF_NOT_FOUND', error: context.translations.messages.notFound }
     }
 
     const updatedStaff = await prisma.$transaction(async transaction => {
-      const staff = await transaction.hrmStaff.update({
+      const staff = await transaction.hrmstaff.update({
         where: { id: staffId },
         data: { status: newStatus },
         select: staffListSelect
       })
 
-      await transaction.auditLog.create({
+      await transaction.auditlog.create({
         data: {
           user_id: context.session.user.id,
           action: 'HRM_STAFF_STATUS_UPDATED',
@@ -495,7 +495,7 @@ export const getStaffById = async (id, payload = {}) => {
   if (!staffId) return { success: false, code: 'INVALID_STAFF', error: context.translations.messages.notFound }
 
   try {
-    const staff = await prisma.hrmStaff.findUnique({
+    const staff = await prisma.hrmstaff.findUnique({
       where: { id: staffId },
       select: {
         ...staffListSelect,

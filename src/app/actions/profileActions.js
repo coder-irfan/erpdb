@@ -84,7 +84,7 @@ const resolveActivityEntityLabels = async logs => {
 
   const [staffRecords, users, roles] = await Promise.all([
     staffIds.length
-      ? prisma.hrmStaff.findMany({
+      ? prisma.hrmstaff.findMany({
           where: { id: { in: staffIds } },
           select: { id: true, first_name: true, last_name: true, email: true }
         })
@@ -252,7 +252,7 @@ export const updateCurrentUserProfile = async payload => {
 
     await prisma.$transaction([
       prisma.user.update({ where: { id: currentUser.id }, data: updateData }),
-      prisma.auditLog.create({
+      prisma.auditlog.create({
         data: {
           user_id: currentUser.id,
           action: 'PROFILE_UPDATED',
@@ -323,7 +323,7 @@ export const changeCurrentUserPassword = async payload => {
 
     await prisma.$transaction([
       prisma.user.update({ where: { id: user.id }, data: { password_hash: passwordHash } }),
-      prisma.auditLog.create({
+      prisma.auditlog.create({
         data: { user_id: user.id, action: 'PASSWORD_CHANGED', module: 'AUTH' }
       })
     ])

@@ -112,16 +112,16 @@ export const getAttendanceDashboard = async ({ date, month, year, staffId, statu
   const dailyWhere = { date: dayStart }
 
   const [records, totalCount, dailyRecords, activeStaff] = await Promise.all([
-    prisma.hrmStaffTimesheet.findMany({
+    prisma.hrmstafftimesheet.findMany({
       where: recordWhere,
       select: attendanceSelect,
       orderBy: [{ date: 'desc' }, { created_at: 'desc' }],
       skip: (page - 1) * limit,
       take: limit
     }),
-    prisma.hrmStaffTimesheet.count({ where: recordWhere }),
-    prisma.hrmStaffTimesheet.findMany({ where: dailyWhere, select: { staff_id: true, status: true } }),
-    prisma.hrmStaff.findMany({
+    prisma.hrmstafftimesheet.count({ where: recordWhere }),
+    prisma.hrmstafftimesheet.findMany({ where: dailyWhere, select: { staff_id: true, status: true } }),
+    prisma.hrmstaff.findMany({
       where: { status: 'ACTIVE' },
       select: { id: true, first_name: true, last_name: true, position: true },
       orderBy: [{ first_name: 'asc' }, { last_name: 'asc' }]
@@ -132,7 +132,7 @@ export const getAttendanceDashboard = async ({ date, month, year, staffId, statu
   const leaveIds = records.map(record => record.notes?.match(leaveRequestPattern)?.[1]).filter(Boolean)
 
   const approvedLeaves = leaveIds.length
-    ? await prisma.hrmStaffLeave.findMany({
+    ? await prisma.hrmstaffleave.findMany({
         where: { id: { in: [...new Set(leaveIds)] } },
         select: { id: true, start_date: true, end_date: true, leave_type: { select: { label: true } } }
       })

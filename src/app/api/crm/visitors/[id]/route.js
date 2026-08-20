@@ -33,15 +33,15 @@ export async function PUT(request, context) {
     const values = parsed.output
 
     const [visitor, host] = await Promise.all([
-      prisma.crmVisitor.findUnique({ where: { id }, select: { id: true } }),
-      prisma.hrmStaff.findFirst({ where: { id: values.host_staff_id, status: 'ACTIVE' }, select: { id: true } })
+      prisma.crmvisitor.findUnique({ where: { id }, select: { id: true } }),
+      prisma.hrmstaff.findFirst({ where: { id: values.host_staff_id, status: 'ACTIVE' }, select: { id: true } })
     ])
 
     if (!visitor) return errorResponse(dictionary.messages.notFound, 404, 'VISITOR_NOT_FOUND')
     if (!host) return errorResponse(dictionary.messages.invalidHost, 400, 'INVALID_HOST')
 
     const updated = await prisma.$transaction(async transaction => {
-      const record = await transaction.crmVisitor.update({ where: { id }, data: {
+      const record = await transaction.crmvisitor.update({ where: { id }, data: {
         full_name: cleanText(values.full_name),
         phone: cleanText(values.phone),
         email: values.email.toLowerCase() || null,
@@ -51,7 +51,7 @@ export async function PUT(request, context) {
         notes: cleanText(values.notes) || null
       }, include: visitorInclude })
 
-      await transaction.auditLog.create({ data: { user_id: authorization.session.user.id, action: 'CRM_VISITOR_UPDATED', module: 'CRM', details: { visitorId: id } } })
+      await transaction.auditlog.create({ data: { user_id: authorization.session.user.id, action: 'CRM_VISITOR_UPDATED', module: 'CRM', details: { visitorId: id } } })
 
       return record
     })
@@ -71,13 +71,13 @@ export async function DELETE(request, context) {
 
   try {
     const { id } = await context.params
-    const visitor = await prisma.crmVisitor.findUnique({ where: { id }, select: { id: true } })
+    const visitor = await prisma.crmvisitor.findUnique({ where: { id }, select: { id: true } })
 
     if (!visitor) return errorResponse(dictionary.messages.notFound, 404, 'VISITOR_NOT_FOUND')
 
     await prisma.$transaction([
-      prisma.crmVisitor.delete({ where: { id } }),
-      prisma.auditLog.create({ data: { user_id: authorization.session.user.id, action: 'CRM_VISITOR_DELETED', module: 'CRM', details: { visitorId: id } } })
+      prisma.crmvisitor.delete({ where: { id } }),
+      prisma.auditlog.create({ data: { user_id: authorization.session.user.id, action: 'CRM_VISITOR_DELETED', module: 'CRM', details: { visitorId: id } } })
     ])
 
     return Response.json({ success: true, message: dictionary.messages.deleted })

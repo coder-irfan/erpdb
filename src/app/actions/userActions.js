@@ -122,7 +122,7 @@ export const getAvailableStaffForInvitation = async (payload = {}) => {
   if (!context.authorized) return { success: false, code: context.code, error: context.error }
 
   try {
-    const staff = await prisma.hrmStaff.findMany({
+    const staff = await prisma.hrmstaff.findMany({
       where: { user_id: null, status: 'ACTIVE' },
       select: { id: true, first_name: true, last_name: true, email: true, position: true },
       orderBy: [{ first_name: 'asc' }, { last_name: 'asc' }]
@@ -170,7 +170,7 @@ export const inviteUser = async payload => {
         select: { id: true, name: true, is_active: true }
       }),
       validation.output.staffId
-        ? prisma.hrmStaff.findUnique({
+        ? prisma.hrmstaff.findUnique({
             where: { id: validation.output.staffId },
             select: { id: true, user_id: true, status: true }
           })
@@ -211,7 +211,7 @@ export const inviteUser = async payload => {
       })
 
       if (validation.output.staffId) {
-        const staffUpdate = await transaction.hrmStaff.updateMany({
+        const staffUpdate = await transaction.hrmstaff.updateMany({
           where: { id: validation.output.staffId, user_id: null, status: 'ACTIVE' },
           data: { user_id: user.id }
         })
@@ -238,7 +238,7 @@ export const inviteUser = async payload => {
           await transaction.verificationToken.deleteMany({ where: { token: storedToken } })
 
           if (validation.output.staffId) {
-            await transaction.hrmStaff.updateMany({
+            await transaction.hrmstaff.updateMany({
               where: { id: validation.output.staffId, user_id: userId },
               data: { user_id: null }
             })
@@ -250,7 +250,7 @@ export const inviteUser = async payload => {
         })
         .catch(() => undefined)
 
-      await prisma.auditLog
+      await prisma.auditlog
         .create({
           data: {
             user_id: context.session.user.id,
@@ -268,7 +268,7 @@ export const inviteUser = async payload => {
       }
     }
 
-    await prisma.auditLog
+    await prisma.auditlog
       .create({
         data: {
           user_id: context.session.user.id,
@@ -342,7 +342,7 @@ export const updateUserStatus = async payload => {
         where: { id: user.id },
         data: { account_status: validation.output.status }
       }),
-      prisma.auditLog.create({
+      prisma.auditlog.create({
         data: {
           user_id: context.session.user.id,
           action: 'USER_STATUS_UPDATED',
@@ -417,7 +417,7 @@ export const assignUserRole = async payload => {
         where: { id: user.id },
         data: { roles: { set: [{ id: role.id }] } }
       }),
-      prisma.auditLog.create({
+      prisma.auditlog.create({
         data: {
           user_id: context.session.user.id,
           action: 'USER_ROLE_ASSIGNED',

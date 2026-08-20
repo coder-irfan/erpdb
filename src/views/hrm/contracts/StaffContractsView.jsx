@@ -2,21 +2,19 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
-import Link from 'next/link'
-
 import Alert from '@mui/material/Alert'
 import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
-import IconButton from '@mui/material/IconButton'
+import Chip from '@mui/material/Chip'
 import MenuItem from '@mui/material/MenuItem'
-import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
 import { toast } from 'sonner'
 
 import CustomTextField from '@core/components/mui/TextField'
 import { getStaffContracts, updateStaffContractStatus } from '@/actions/hrm/contracts'
 import DashboardTablePagination from '@/components/table/DashboardTablePagination'
+import EntityActionsMenu from '@/components/table/EntityActionsMenu'
 import TableEmptyStateRow from '@/components/table/TableEmptyStateRow'
 import TableFiltersPopover from '@/components/table/TableFiltersPopover'
 import TableSkeletonRows from '@/components/table/TableSkeletonRows'
@@ -29,11 +27,11 @@ import tableStyles from '@core/styles/table.module.css'
 
 const localeMap = { en: 'en-US', fa: 'fa-AF', ps: 'ps-AF' }
 
-const STATUS_TEXT_CLASSES = {
-  ACTIVE: 'text-success',
-  DRAFT: 'text-textSecondary',
-  EXPIRED: 'text-warning',
-  TERMINATED: 'text-error'
+const STATUS_COLORS = {
+  ACTIVE: 'success',
+  DRAFT: 'secondary',
+  EXPIRED: 'warning',
+  TERMINATED: 'error'
 }
 
 const formatDate = (value, locale) =>
@@ -283,85 +281,35 @@ const StaffContractsView = ({ initialResult, initialError, formOptions, canWrite
                         {formatDate(contract.end_date, locale)}
                       </Typography>
                     </td>
-                    <td className='text-end'>
-                      {canWrite ? (
-                        <CustomTextField
-                          select
-                          size='small'
-                          value={contract.status_id}
-                          disabled={busyId === contract.id}
-                          className='border-none bg-transparent shadow-none outline-none focus:ring-0'
-                          sx={{
-                            '& .MuiInputBase-root': { backgroundColor: 'transparent', boxShadow: 'none' },
-                            '& .MuiOutlinedInput-notchedOutline': { border: 'none' },
-                            '& .MuiInputBase-root::before, & .MuiInputBase-root::after': { display: 'none' }
-                          }}
-                          slotProps={{
-                            select: {
-                              renderValue: selectedId => {
-                                const selectedStatus =
-                                  formOptions.statuses.find(status => status.id === selectedId) || contract.status
-
-                                const statusValue = selectedStatus.value
-
-                                return (
-                                  <span
-                                    className={`bg-transparent font-medium ${STATUS_TEXT_CLASSES[statusValue] || 'text-info'}`}
-                                  >
-                                    {dictionary.status[statusValue] || selectedStatus.label}
-                                  </span>
-                                )
-                              }
-                            }
-                          }}
-                          onChange={event => handleStatusChange(contract, event.target.value)}
-                        >
-                          {formOptions.statuses.map(status => (
-                            <MenuItem key={status.id} value={status.id}>
-                              {dictionary.status[status.value] || status.label}
-                            </MenuItem>
-                          ))}
-                          {!formOptions.statuses.some(status => status.id === contract.status_id) && (
-                            <MenuItem value={contract.status_id} disabled>
-                              {dictionary.status[contract.status.value] || contract.status.label}
-                            </MenuItem>
-                          )}
-                        </CustomTextField>
-                      ) : (
-                        <span
-                          className={`bg-transparent font-medium ${STATUS_TEXT_CLASSES[contract.status.value] || 'text-info'}`}
-                        >
-                          {dictionary.status[contract.status.value] || contract.status.label}
-                        </span>
-                      )}
-                    </td>
                     <td>
-                      <div className='flex justify-end gap-1'>
-                        <Tooltip title={dictionary.actions.view}>
-                          <IconButton size='small' onClick={() => setViewingContract(contract)}>
-                            <i className='tabler-eye' />
-                          </IconButton>
-                        </Tooltip>
-                        <Tooltip title={dictionary.actions.print}>
-                          <Link
-                            href={`/${locale}/hrm/contracts/${contract.id}/print`}
-                            target='_blank'
-                            rel='noopener noreferrer'
-                            aria-label={dictionary.actions.print}
-                          >
-                            <IconButton size='small' component='span'>
-                              <i className='tabler-printer' />
-                            </IconButton>
-                          </Link>
-                        </Tooltip>
-                        {canWrite && (
-                          <Tooltip title={dictionary.actions.edit}>
-                            <IconButton size='small' onClick={() => openEdit(contract)}>
-                              <i className='tabler-edit' />
-                            </IconButton>
-                          </Tooltip>
-                        )}
-                      </div>
+                      <Chip
+                        size='small'
+                        variant='tonal'
+                        color={STATUS_COLORS[contract.status.value] || 'default'}
+                        label={dictionary.status[contract.status.value] || contract.status.label}
+                      />
+                    </td>
+                    <td className='text-end'>
+                      <EntityActionsMenu
+                        actions={[
+                          { label: dictionary.actions.view, icon: 'tabler-eye', onClick: () => setViewingContract(contract) },
+                          { label: dictionary.actions.print, icon: 'tabler-printer', onClick: () => window.open(`/${locale}/hrm/contracts/${contract.id}/print`, '_blank', 'noopener,noreferrer') },
+                          canWrite && { label: dictionary.actions.edit, icon: 'tabler-edit', onClick: () => openEdit(contract) }
+                        ]}
+                        statusOptions={
+                          canWrite
+                            ? formOptions.statuses.map(status => ({
+                                ...status,
+                                label: dictionary.status[status.value] || status.label
+                              }))
+                            : []
+                        }
+                        currentStatus={contract.status_id}
+                        statusDisabled={busyId === contract.id}
+                        changeStatusLabel={dictionary.actions.changeStatus}
+                        moreActionsLabel={dictionary.table.actions}
+                        onStatusChange={nextStatusId => handleStatusChange(contract, nextStatusId)}
+                      />
                     </td>
                   </tr>
                 ))

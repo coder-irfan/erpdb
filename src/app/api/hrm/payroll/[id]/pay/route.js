@@ -30,7 +30,7 @@ export async function PATCH(request, routeContext) {
 
   try {
     const [payroll, paidStatus, paymentMethod, currentStaffId] = await Promise.all([
-      prisma.hrmPayroll.findUnique({ where: { id }, select: { id: true, status: { select: { value: true } } } }),
+      prisma.hrmpayroll.findUnique({ where: { id }, select: { id: true, status: { select: { value: true } } } }),
       prisma.option.findFirst({ where: { category: 'PAYROLL_STATUS', value: 'PAID', is_active: true }, select: { id: true } }),
       prisma.option.findFirst({ where: { id: validation.output.payment_method_id, category: 'PAYROLL_PAYMENT_METHOD', is_active: true }, select: { id: true } }),
       getCurrentStaffId(authorization.session.user.id)
@@ -41,9 +41,9 @@ export async function PATCH(request, routeContext) {
     if (!paymentMethod) return responseError(dictionary.messages.paymentMethodNotFound, 400, 'PAYMENT_METHOD_NOT_FOUND')
 
     const updated = await prisma.$transaction(async transaction => {
-      const record = await transaction.hrmPayroll.update({ where: { id }, data: { status_id: paidStatus.id, payment_method_id: paymentMethod.id, payment_date: new Date(), processed_by_id: currentStaffId }, select: payrollSelect })
+      const record = await transaction.hrmpayroll.update({ where: { id }, data: { status_id: paidStatus.id, payment_method_id: paymentMethod.id, payment_date: new Date(), processed_by_id: currentStaffId }, select: payrollSelect })
 
-      await transaction.auditLog.create({ data: { user_id: authorization.session.user.id, action: 'PAYROLL_PAID', module: 'HRM', details: { payrollId: id, paymentMethodId: paymentMethod.id, processedByStaffId: currentStaffId } } })
+      await transaction.auditlog.create({ data: { user_id: authorization.session.user.id, action: 'PAYROLL_PAID', module: 'HRM', details: { payrollId: id, paymentMethodId: paymentMethod.id, processedByStaffId: currentStaffId } } })
 
       return record
     })

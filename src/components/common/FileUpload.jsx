@@ -31,6 +31,7 @@ const DEFAULT_ACCEPT = {
 
 const DEFAULT_TRANSLATIONS = {
   browse: 'Browse Image',
+  upload: 'Upload',
   drop: 'Drag and drop an image here, or browse files.',
   fileHint: 'PNG, JPEG, WebP, or SVG up to {maxSizeMB} MB',
   forbidden: 'You do not have permission to upload this file.',
@@ -70,7 +71,8 @@ const FileUpload = ({
   maxSizeMB = 4,
   previewHeight = 180,
   uploadType = 'image',
-  translations = DEFAULT_TRANSLATIONS
+  translations = DEFAULT_TRANSLATIONS,
+  compact = false
 }) => {
   const copy = { ...DEFAULT_TRANSLATIONS, ...translations }
   const normalizedMaxSizeMB = Math.min(Math.max(Number(maxSizeMB) || 1, 1), 4)
@@ -156,6 +158,64 @@ const FileUpload = ({
     onDrop: handleDrop,
     onDropRejected: handleRejectedFiles
   })
+
+  if (compact) {
+    return (
+      <div className='flex flex-col gap-2'>
+        <Typography variant='subtitle1' className='font-medium'>
+          {label}
+        </Typography>
+        <div
+          {...getRootProps()}
+          className={`flex items-center gap-4 rounded border p-4 transition-colors ${isDragActive ? 'border-primary bg-primaryLighter' : 'border-divider bg-backgroundPaper'}`}
+        >
+          <input {...getInputProps()} />
+          <div className='relative flex size-20 shrink-0 items-center justify-center overflow-hidden rounded border border-divider bg-actionHover'>
+            {previewUrl ? (
+              <img src={previewUrl} alt={copy.previewAlt} className='size-full object-contain p-1' />
+            ) : (
+              <i className='tabler-photo-plus text-3xl text-textSecondary' />
+            )}
+            {isUploading && (
+              <div className='absolute inset-0 flex items-center justify-center bg-backgroundPaper/80'>
+                <CircularProgress size={24} />
+              </div>
+            )}
+          </div>
+          <div className='min-is-0 grow'>
+            <Typography variant='body2' color='text.secondary' className='mb-3'>
+              {interpolate(copy.fileHint, { maxSizeMB: normalizedMaxSizeMB })}
+            </Typography>
+            <div className='flex flex-wrap gap-2'>
+              <Button
+                type='button'
+                size='small'
+                variant={value ? 'tonal' : 'contained'}
+                onClick={open}
+                disabled={isUploading}
+                startIcon={<i className='tabler-upload' />}
+              >
+                {value ? copy.replace : copy.upload}
+              </Button>
+              {value && (
+                <Button
+                  type='button'
+                  size='small'
+                  color='error'
+                  variant='text'
+                  onClick={() => onChange?.(null)}
+                  disabled={isUploading}
+                  startIcon={<i className='tabler-trash' />}
+                >
+                  {copy.remove}
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className='flex flex-col gap-3'>

@@ -109,17 +109,11 @@
     "payroll": "معاشات ماهوار",
     "hrmReports": "گزارش‌ها",
     "projects": "پروژه‌ها",
-    "projectsList": "فهرست پروژه‌ها",
-    "projectMembers": "اعضای پروژه",
-    "projectContracts": "قراردادهای پروژه",
     "contractModule": "قرارداد",
     "contractManagement": "مدیریت قرارداد",
     "contractOptions": "گزینه‌های قرارداد",
     "contractList": "قراردادها",
     "contractInvoices": "صورت‌حساب‌ها",
-    "contractOthers": "سایر",
-    "contractCustomers": "مشتری",
-    "contractNotifications": "اعلان‌های قرارداد",
     "crmLeads": "سرنخ‌ها",
     "crmClients": "مشتریان",
     "visitors": "بازدیدکنندگان",
@@ -132,7 +126,6 @@
     "inventory": "موجودی",
     "financeReports": "گزارش‌ها",
     "options": "گزینه‌ها",
-    "lookupOptions": "گزینه‌های مرجع",
     "contractPolicies": "پالیسی‌های قرارداد",
     "staffPositions": "بست‌های کارمندان",
     "hrManagement": "مدیریت منابع بشری",
@@ -266,6 +259,8 @@
     }
   },
   "setupBranding": {
+    "tabs": { "general": "اطلاعات عمومی", "localization": "محلی‌سازی و پالیسی", "branding": "برند و دارایی‌ها", "signatories": "امضاکنندگان قانونی" },
+    "sections": { "generalTitle": "اطلاعات شرکت", "generalDescription": "هویت قانونی و اطلاعات تماس اصلی مورد استفاده در سیستم را مدیریت کنید.", "localizationTitle": "محلی‌سازی و پالیسی عملیاتی", "localizationDescription": "ارز گزارش‌دهی، نرخ تبادله و ساعات کاری پیش‌فرض را تنظیم کنید.", "brandingTitle": "برند و دارایی‌های رسانه‌ای", "brandingDescription": "تصاویر سربرگ، منو، مرورگر و اسناد رسمی را مدیریت کنید.", "signatoriesTitle": "امضاکننده مجاز", "signatoriesDescription": "فرد مجاز برای امضای اسناد شرکت را مشخص کنید." },
     "workHoursTitle": "ساعات کاری پیش‌فرض",
     "workHoursDescription": "این ساعت‌ها به‌صورت خودکار در ورود و خروج حاضری درج می‌شوند.",
     "currencyTitle": "ارز و نرخ تبادله",
@@ -309,6 +304,7 @@
     "upload": {
       "drop": "تصویر را اینجا بکشید و رها کنید یا فایل را انتخاب کنید.",
       "browse": "انتخاب تصویر",
+      "upload": "بارگذاری",
       "replace": "تعویض",
       "remove": "حذف",
       "uploading": "در حال بارگذاری...",
@@ -350,7 +346,7 @@
     },
     "actions": {
       "add": "ایجاد قرارداد", "addFirst": "ایجاد اولین قرارداد", "view": "مشاهده جزئیات",
-      "print": "چاپ قرارداد", "printSavePdf": "چاپ / ذخیره PDF", "edit": "ویرایش", "create": "ایجاد قرارداد",
+      "print": "چاپ قرارداد", "changeStatus": "تغییر وضعیت", "printSavePdf": "چاپ / ذخیره PDF", "edit": "ویرایش", "create": "ایجاد قرارداد",
       "saveChanges": "ذخیره تغییرات", "saving": "در حال ذخیره...", "cancel": "لغو", "close": "بستن",
       "back": "بازگشت به قراردادها"
     },
@@ -579,10 +575,10 @@
     "tabs": { "overview": "نمای کلی و تماس", "relationships": "پروژه‌ها و قراردادها", "finance": "فاکتورها و درآمد", "activity": "فعالیت و تاریخچه" },
     "detail": { "title": "پروفایل مشتری", "manager": "مسئول حساب", "leadOrigin": "منشأ سرنخ تبدیل‌شده", "projects": "پروژه‌های مرتبط", "contracts": "قراردادهای مرتبط", "paidRevenue": "درآمد پرداخت‌شده", "pendingInvoices": "مانده فاکتورهای پرداخت‌نشده", "invoice": "فاکتور", "dueDate": "تاریخ سررسید", "amount": "مبلغ" },
     "activity": { "addTitle": "ثبت فعالیت مشتری", "type": "نوع فعالیت", "subject": "عنوان", "description": "توضیحات / یادداشت", "dueDate": "تاریخ پیگیری", "add": "افزودن فعالیت", "types": { "CALL": "تماس", "MEETING": "جلسه", "EMAIL": "ایمیل", "NOTE": "یادداشت", "FOLLOW_UP": "پیگیری" } },
-    "actions": { "add": "افزودن مشتری", "view": "مشاهده پروفایل", "activity": "ثبت فعالیت", "edit": "ویرایش", "delete": "حذف", "cancel": "لغو", "close": "بستن", "create": "ایجاد مشتری", "save": "ذخیره تغییرات", "saving": "در حال ذخیره..." },
+    "actions": { "add": "افزودن مشتری", "view": "مشاهده پروفایل", "activity": "ثبت فعالیت", "edit": "ویرایش", "delete": "حذف", "changeStatus": "تغییر وضعیت", "cancel": "لغو", "close": "بستن", "create": "ایجاد مشتری", "save": "ذخیره تغییرات", "saving": "در حال ذخیره..." },
     "empty": { "title": "مشتری یافت نشد", "description": "هیچ مشتری با فیلترهای انتخاب‌شده مطابقت ندارد.", "projects": "پروژه‌ای به این مشتری مرتبط نیست.", "contracts": "قراردادی به این مشتری مرتبط نیست.", "invoices": "فاکتوری به این مشتری مرتبط نیست.", "activities": "هیچ فعالیت مشتری یا سرنخ مبدأ ثبت نشده است." },
     "pagination": { "rowsPerPage": "تعداد سطر در صفحه:", "of": "از" }, "delete": { "title": "حذف مشتری", "description": "این مشتری حذف شود؟ این عمل قابل بازگشت نیست." },
-    "messages": { "created": "مشتری با موفقیت ایجاد شد.", "updated": "مشتری با موفقیت به‌روزرسانی شد.", "deleted": "مشتری با موفقیت حذف شد.", "activityAdded": "فعالیت مشتری با موفقیت ثبت شد.", "loadFailed": "بارگذاری مشتریان انجام نشد.", "operationFailed": "عملیات مشتری تکمیل نشد.", "unauthenticated": "برای دسترسی به مشتریان وارد شوید.", "forbidden": "اجازه مدیریت مشتریان را ندارید.", "notFound": "مشتری انتخاب‌شده یافت نشد.", "emailExists": "مشتری دیگری با این ایمیل وجود دارد.", "invalidManager": "یک مسئول حساب فعال و معتبر انتخاب کنید.", "staffProfileRequired": "برای ثبت فعالیت، حساب شما باید به پروفایل کارمند مرتبط باشد.", "deleteBlocked": "این مشتری پروژه یا قرارداد فعال دارد. ابتدا مشتری را غیرفعال یا سوابق فعال را بسته کنید." },
+    "messages": { "created": "مشتری با موفقیت ایجاد شد.", "updated": "مشتری با موفقیت به‌روزرسانی شد.", "statusUpdated": "وضعیت مشتری با موفقیت به‌روزرسانی شد.", "deleted": "مشتری با موفقیت حذف شد.", "activityAdded": "فعالیت مشتری با موفقیت ثبت شد.", "loadFailed": "بارگذاری مشتریان انجام نشد.", "operationFailed": "عملیات مشتری تکمیل نشد.", "unauthenticated": "برای دسترسی به مشتریان وارد شوید.", "forbidden": "اجازه مدیریت مشتریان را ندارید.", "notFound": "مشتری انتخاب‌شده یافت نشد.", "emailExists": "مشتری دیگری با این ایمیل وجود دارد.", "invalidManager": "یک مسئول حساب فعال و معتبر انتخاب کنید.", "staffProfileRequired": "برای ثبت فعالیت، حساب شما باید به پروفایل کارمند مرتبط باشد.", "deleteBlocked": "این مشتری پروژه یا قرارداد فعال دارد. ابتدا مشتری را غیرفعال یا سوابق فعال را بسته کنید." },
     "validation": { "invalid": "اطلاعات مشتری را بررسی کنید.", "required": "این فیلد الزامی است.", "emailInvalid": "ایمیل معتبر وارد کنید.", "statusInvalid": "وضعیت معتبر انتخاب کنید.", "tooLong": "این مقدار بیش از حد طولانی است.", "activityTypeInvalid": "نوع فعالیت معتبر انتخاب کنید.", "dateInvalid": "تاریخ پیگیری معتبر وارد کنید." }
   },
   "crmLeadOptions": { "statuses": { "title": "وضعیت‌های سرنخ", "description": "مراحل خط فروش را مدیریت کنید." }, "sources": { "title": "منابع سرنخ", "description": "کانال‌های جذب فرصت‌های فروش را مدیریت کنید." }, "common": { "name": "نام", "description": "توضیحات", "status": "وضعیت", "actions": "عملیات", "active": "فعال", "inactive": "غیرفعال", "activate": "فعال‌سازی", "deactivate": "غیرفعال‌سازی", "create": "افزودن گزینه", "add": "ایجاد گزینه CRM", "cancel": "لغو", "empty": "گزینه‌ای تنظیم نشده" } },
@@ -740,6 +736,7 @@
     "createRole": "ایجاد نقش",
     "inviteUser": "دعوت کاربر جدید",
     "editUserRole": "ویرایش نقش کاربر",
+    "changeStatus": "تغییر وضعیت",
     "saveRole": "ذخیره نقش",
     "rowsPerPage": "تعداد سطر در صفحه:",
     "of": "از",
@@ -1106,13 +1103,13 @@
     "kpis": { "totalInvoiced": "مجموع صورتحساب‌ها", "allInvoices": "همه صورتحساب‌های ایجادشده", "paidRevenue": "درآمد پرداخت‌شده", "paidInvoices": "پرداخت‌های ثبت‌شده در مالی", "overdueInvoices": "صورتحساب‌های تأخیری", "overdueCount": "{count} صورتحساب تأخیری", "outstanding": "مانده قابل پرداخت", "pendingInvoices": "پرداخت‌نشده و قسمی پرداخت‌شده" },
     "filters": { "search": "جستجو", "searchPlaceholder": "صورتحساب، قرارداد یا مشتری را جستجو کنید", "status": "وضعیت صورتحساب", "allStatuses": "همه وضعیت‌ها", "client": "مشتری", "allClients": "همه مشتریان", "contract": "قرارداد", "allContracts": "همه قراردادها", "fromDate": "سررسید از", "toDate": "سررسید تا", "clear": "پاک‌کردن فیلترها" },
     "table": { "invoiceContract": "صورتحساب و قرارداد", "client": "مشتری", "issueDue": "تاریخ صدور و سررسید", "amountCurrency": "مبلغ و ارز", "baseAmount": "مبلغ پایه", "status": "وضعیت", "actions": "عملیات" }, "status": { "OVERDUE": "تأخیری" },
-    "actions": { "create": "ایجاد صورتحساب", "save": "ذخیره تغییرات", "saving": "در حال ذخیره…", "viewPrint": "مشاهده / چاپ", "recordPayment": "ثبت پرداخت", "edit": "ویرایش", "delete": "حذف", "cancel": "لغو", "close": "بستن", "confirmPayment": "تأیید پرداخت", "printDownload": "چاپ / دانلود PDF" },
+    "actions": { "create": "ایجاد صورتحساب", "save": "ذخیره تغییرات", "saving": "در حال ذخیره…", "viewPrint": "مشاهده / چاپ", "recordPayment": "ثبت پرداخت", "edit": "ویرایش", "delete": "حذف", "changeStatus": "تغییر وضعیت", "cancel": "لغو", "close": "بستن", "confirmPayment": "تأیید پرداخت", "printDownload": "چاپ / دانلود PDF" },
     "form": { "createTitle": "ایجاد صورتحساب", "editTitle": "ویرایش صورتحساب", "description": "صورتحساب قرارداد مشتری را ایجاد و مدیریت کنید.", "selectContractHelp": "برای تکمیل مشتری، قرارداد را انتخاب کنید.", "baseAmount": "مبلغ پایه محاسبه‌شده ({currency})" },
     "fields": { "contract": "قرارداد", "client": "مشتری", "amount": "مبلغ صورتحساب", "currency": "ارز", "exchangeRate": "نرخ تبادله USD/AFN", "issueDate": "تاریخ صدور", "dueDate": "تاریخ سررسید", "status": "وضعیت", "invoiceNumber": "شماره صورتحساب" }, "placeholders": { "contract": "قرارداد را جستجو و انتخاب کنید" },
     "payment": { "title": "ثبت پرداخت صورتحساب", "date": "تاریخ پرداخت", "amount": "مبلغ پرداخت", "method": "روش پرداخت", "notes": "یادداشت پرداخت", "ledgerNotice": "با تأیید، صورتحساب پرداخت‌شده می‌شود و سند مرتبط در FinanceIncome ایجاد می‌گردد.", "recording": "در حال ثبت…" },
     "print": { "title": "صورتحساب قابل چاپ", "invoice": "صورتحساب", "from": "از", "billTo": "صورتحساب برای", "taxId": "شماره مالیاتی", "paymentTerms": "شرایط پرداخت", "netDays": "{days} روز", "item": "قرارداد / مورد", "service": "نوع خدمت", "rate": "نرخ پایه", "total": "مجموع", "amountDue": "مبلغ قابل پرداخت", "thankYou": "از همکاری شما سپاسگزاریم.", "footer": "هنگام پرداخت شماره صورتحساب را ذکر کنید.", "stamp": "مهر شرکت" },
     "empty": { "title": "صورتحسابی یافت نشد", "description": "صورتحساب ایجاد کنید یا جستجو و فیلترها را تغییر دهید." }, "delete": { "title": "حذف صورتحساب", "description": "صورتحساب {name} حذف شود؟ این عمل قابل بازگشت نیست." }, "pagination": { "rowsPerPage": "سطر در هر صفحه", "of": "از" },
-    "messages": { "created": "صورتحساب با موفقیت ایجاد شد.", "updated": "صورتحساب به‌روزرسانی شد.", "deleted": "صورتحساب حذف شد.", "paymentRecorded": "پرداخت ثبت و FinanceIncome به‌روزرسانی شد.", "loadFailed": "صورتحساب‌ها بارگذاری نشد.", "optionsLoadFailed": "گزینه‌های فورم بارگذاری نشد.", "operationFailed": "عملیات صورتحساب انجام نشد.", "paymentFailed": "پرداخت ثبت نشد.", "notFound": "صورتحساب یافت نشد.", "duplicate": "صورتحساب با این شماره موجود است.", "paidLocked": "صورتحساب پرداخت‌شده به دلیل همگام‌سازی مالی قفل است.", "paidDeleteBlocked": "صورتحساب پرداخت‌شده قابل حذف نیست.", "alreadyPaid": "این صورتحساب قبلاً پرداخت شده است.", "paymentOptionsMissing": "وضعیت پرداخت‌شده، روش پرداخت و نوع درآمد پرداخت قرارداد را تنظیم کنید.", "unauthenticated": "برای مدیریت صورتحساب وارد شوید.", "forbidden": "اجازه مدیریت صورتحساب را ندارید." },
+    "messages": { "created": "صورتحساب با موفقیت ایجاد شد.", "updated": "صورتحساب به‌روزرسانی شد.", "statusUpdated": "وضعیت صورتحساب به‌روزرسانی شد.", "deleted": "صورتحساب حذف شد.", "paymentRecorded": "پرداخت ثبت و FinanceIncome به‌روزرسانی شد.", "loadFailed": "صورتحساب‌ها بارگذاری نشد.", "optionsLoadFailed": "گزینه‌های فورم بارگذاری نشد.", "operationFailed": "عملیات صورتحساب انجام نشد.", "paymentFailed": "پرداخت ثبت نشد.", "paymentRequired": "برای پرداخت‌شده‌کردن صورتحساب و ایجاد سند FinanceIncome از ثبت پرداخت استفاده کنید.", "notFound": "صورتحساب یافت نشد.", "duplicate": "صورتحساب با این شماره موجود است.", "paidLocked": "صورتحساب پرداخت‌شده به دلیل همگام‌سازی مالی قفل است.", "paidDeleteBlocked": "صورتحساب پرداخت‌شده قابل حذف نیست.", "alreadyPaid": "این صورتحساب قبلاً پرداخت شده است.", "paymentOptionsMissing": "وضعیت پرداخت‌شده، روش پرداخت و نوع درآمد پرداخت قرارداد را تنظیم کنید.", "unauthenticated": "برای مدیریت صورتحساب وارد شوید.", "forbidden": "اجازه مدیریت صورتحساب را ندارید." },
     "validation": { "required": "این فیلد الزامی است.", "amountInvalid": "مبلغ بزرگ‌تر از صفر وارد کنید.", "dateInvalid": "تاریخ معتبر وارد کنید.", "notesTooLong": "یادداشت نباید بیشتر از ۱۰۰۰ نویسه باشد.", "invalidContract": "قرارداد و مشتری مرتبط معتبر انتخاب کنید.", "invalidStatus": "وضعیت معتبر انتخاب کنید.", "paidViaPaymentOnly": "برای پرداخت‌شده‌کردن از ثبت پرداخت استفاده کنید.", "dateRangeInvalid": "سررسید باید بعد یا برابر تاریخ صدور باشد.", "fullPaymentRequired": "مبلغ پرداخت باید برابر کل صورتحساب باشد." }
   }
 }

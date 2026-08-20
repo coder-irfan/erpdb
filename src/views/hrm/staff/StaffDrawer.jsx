@@ -205,23 +205,9 @@ const StaffDrawer = ({ open, staff, users, locale, dictionary, baseCurrency, onC
           <SectionTitle>{dictionary.sections.employment}</SectionTitle>
           <div className='grid grid-cols-1 gap-5 sm:grid-cols-2'>
             <div>
-              <div className='mb-2 flex items-center justify-between gap-2'>
-                <Typography variant='body2' color='text.primary'>
-                  {dictionary.fields.position}
-                </Typography>
-                <Button
-                  component={Link}
-                  href={`/${locale}/options/hrm/positions`}
-                  target='_blank'
-                  rel='noopener noreferrer'
-                  size='small'
-                  variant='text'
-                  startIcon={<i className='tabler-plus' />}
-                  className='min-is-0 p-0'
-                >
-                  {dictionary.actions.addPosition}
-                </Button>
-              </div>
+              <Typography variant='body2' color='text.primary'>
+                {dictionary.fields.position}
+              </Typography>
               <Controller
                 name='position'
                 control={control}

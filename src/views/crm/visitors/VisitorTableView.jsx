@@ -1,13 +1,12 @@
 'use client'
 
 import Avatar from '@mui/material/Avatar'
-import Button from '@mui/material/Button'
 import Chip from '@mui/material/Chip'
-import IconButton from '@mui/material/IconButton'
 import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
 
 import DashboardTablePagination from '@/components/table/DashboardTablePagination'
+import EntityActionsMenu from '@/components/table/EntityActionsMenu'
 import TableEmptyStateRow from '@/components/table/TableEmptyStateRow'
 import TableSkeletonRows from '@/components/table/TableSkeletonRows'
 
@@ -162,41 +161,15 @@ const VisitorTableView = ({
                   </div>
                 </td>
                 <td className='text-end'>
-                  <div className='flex items-center justify-end gap-1'>
-                    {canWrite && visitor.status === 'CHECKED_IN' && (
-                      <Button
-                        size='small'
-                        variant='tonal'
-                        color='success'
-                        disabled={busyId === visitor.id}
-                        startIcon={<i className='tabler-door-exit' />}
-                        onClick={() => onCheckout(visitor)}
-                      >
-                        {dictionary.actions.checkout}
-                      </Button>
-                    )}
-                    {canWrite && !visitor.converted_lead && (
-                      <Tooltip title={dictionary.actions.convert}>
-                        <IconButton color='primary' disabled={busyId === visitor.id} onClick={() => onConvert(visitor)}>
-                          <i className='tabler-user-share' />
-                        </IconButton>
-                      </Tooltip>
-                    )}
-                    {canWrite && (
-                      <Tooltip title={dictionary.actions.edit}>
-                        <IconButton onClick={() => onEdit(visitor)}>
-                          <i className='tabler-edit' />
-                        </IconButton>
-                      </Tooltip>
-                    )}
-                    {canDelete && (
-                      <Tooltip title={dictionary.actions.delete}>
-                        <IconButton color='error' onClick={() => onDelete(visitor)}>
-                          <i className='tabler-trash' />
-                        </IconButton>
-                      </Tooltip>
-                    )}
-                  </div>
+                  <EntityActionsMenu
+                    actions={[
+                      canWrite && visitor.status === 'CHECKED_IN' && { label: dictionary.actions.checkout, icon: 'tabler-door-exit', disabled: busyId === visitor.id, onClick: () => onCheckout(visitor) },
+                      canWrite && !visitor.converted_lead && { label: dictionary.actions.convert, icon: 'tabler-user-share', disabled: busyId === visitor.id, onClick: () => onConvert(visitor) },
+                      canWrite && { label: dictionary.actions.edit, icon: 'tabler-edit', disabled: busyId === visitor.id, onClick: () => onEdit(visitor) },
+                      canDelete && { label: dictionary.actions.delete, icon: 'tabler-trash', color: 'error', disabled: busyId === visitor.id, onClick: () => onDelete(visitor) }
+                    ]}
+                    moreActionsLabel={dictionary.table.actions}
+                  />
                 </td>
               </tr>
             ))
