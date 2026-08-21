@@ -1,0 +1,150 @@
+'use client'
+
+import Avatar from '@mui/material/Avatar'
+import Chip from '@mui/material/Chip'
+import Tooltip from '@mui/material/Tooltip'
+import Typography from '@mui/material/Typography'
+
+import DashboardTablePagination from '@/components/table/DashboardTablePagination'
+import EntityActionsMenu from '@/components/table/EntityActionsMenu'
+import TableEmptyStateRow from '@/components/table/TableEmptyStateRow'
+import TableSkeletonRows from '@/components/table/TableSkeletonRows'
+import { toDateInputValue } from '@/utils/contractDuration'
+import { formatCurrency } from '@/utils/formatCurrency'
+
+import tableStyles from '@core/styles/table.module.css'
+
+const PALETTE_COLORS = new Set(['primary', 'secondary', 'success', 'error', 'info', 'warning'])
+const initials = name => name?.split(' ').map(part => part[0]).join('').slice(0, 2).toUpperCase() || '?'
+
+const typeChipProps = option => {
+  const configuredColor = option?.color_code?.toLowerCase()
+
+  if (PALETTE_COLORS.has(configuredColor)) return { color: configuredColor }
+
+  if (/^#[0-9a-f]{6}$/i.test(configuredColor || '')) {
+    return { sx: { color: configuredColor, backgroundColor: `${configuredColor}18`, borderColor: `${configuredColor}55` } }
+  }
+
+  return { color: 'info' }
+}
+
+const FinanceExpenseTable = ({
+  data,
+  loading,
+  page,
+  rowsPerPage,
+  locale,
+  dictionary,
+  canWrite,
+  canDelete,
+  onPageChange,
+  onRowsPerPageChange,
+  onView,
+  onEdit,
+  onDelete,
+  onAdd
+}) => (
+  <>
+    <div className='no-scrollbar overflow-x-auto scroll-smooth'>
+      <table className={tableStyles.table}>
+        <thead>
+          <tr>
+            <th>{dictionary.table.details}</th>
+            <th>{dictionary.table.type}</th>
+            <th>{dictionary.table.scope}</th>
+            <th>{dictionary.table.date}</th>
+            <th>{dictionary.table.quantity}</th>
+            <th className='text-end'>{dictionary.table.subtotal}</th>
+            <th className='text-end'>{dictionary.table.actions}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {loading ? (
+            <TableSkeletonRows columns={7} />
+          ) : data.expenses.length === 0 ? (
+            <TableEmptyStateRow
+              colSpan={7}
+              icon='tabler-receipt-off'
+              title={dictionary.empty.title}
+              description={dictionary.empty.description}
+              actionLabel={canWrite ? dictionary.actions.add : null}
+              onAction={canWrite ? onAdd : null}
+            />
+          ) : (
+            data.expenses.map(expense => (
+              <tr key={expense.id} onClick={() => onView(expense)}>
+                <td>
+                  <div className='flex min-is-[230px] items-center gap-3'>
+                    <span className='flex size-9 shrink-0 items-center justify-center rounded bg-errorLighter text-error'>
+                      <i className='tabler-receipt-tax' />
+                    </span>
+                    <Tooltip title={expense.details}>
+                      <Typography className='max-is-[240px] truncate font-medium'>{expense.details}</Typography>
+                    </Tooltip>
+                    {expense.receipt_url && (
+                      <Tooltip title={dictionary.fields.receipt}>
+                        <i className='tabler-paperclip shrink-0 text-lg text-primary' />
+                      </Tooltip>
+                    )}
+                  </div>
+                </td>
+                <td><Chip size='small' variant='tonal' label={expense.expense_type.label} {...typeChipProps(expense.expense_type)} /></td>
+                <td>
+                  <div className='min-is-[200px]'>
+                    {expense.project ? (
+                      <Tooltip title={`${expense.project.project_code} · ${expense.project.title}`}>
+                        <Typography variant='body2' className='max-is-[210px] truncate font-medium'>{expense.project.title}</Typography>
+                      </Tooltip>
+                    ) : (
+                      <Chip size='small' variant='tonal' color='secondary' label={dictionary.common.generalOverhead} />
+                    )}
+                    <div className='mt-1 flex items-center gap-2'>
+                      <Avatar className='size-6 text-[10px]'>{initials(expense.spent_by?.full_name)}</Avatar>
+                      <Typography variant='caption' color='text.secondary' className='max-is-[150px] truncate'>{expense.spent_by?.full_name || dictionary.common.unassigned}</Typography>
+                    </div>
+                  </div>
+                </td>
+                <td><Typography variant='body2' className='min-is-[105px] whitespace-nowrap'>{toDateInputValue(expense.expense_date)}</Typography></td>
+                <td>
+                  <Typography variant='body2' className='min-is-[170px] whitespace-nowrap'>
+                    {expense.quantity} × {formatCurrency(expense.unit_price, locale, expense.currency)}
+                  </Typography>
+                </td>
+                <td className='text-end'>
+                  <Tooltip title={`${dictionary.fields.baseAmount}: ${formatCurrency(expense.amount_base, locale, data.baseCurrency)}`}>
+                    <div className='min-is-[150px]'>
+                      <Typography variant='body2' className='whitespace-nowrap font-semibold'>{formatCurrency(expense.sub_total, locale, expense.currency)}</Typography>
+                      <Chip size='small' variant='outlined' label={expense.currency} className='mt-1' />
+                    </div>
+                  </Tooltip>
+                </td>
+                <td className='text-end' onClick={event => event.stopPropagation()}>
+                  <EntityActionsMenu
+                    moreActionsLabel={dictionary.table.actions}
+                    actions={[
+                      { label: dictionary.actions.view, icon: 'tabler-eye', onClick: () => onView(expense) },
+                      canWrite && { label: dictionary.actions.edit, icon: 'tabler-edit', onClick: () => onEdit(expense) },
+                      canDelete && { label: dictionary.actions.delete, icon: 'tabler-trash', color: 'error', onClick: () => onDelete(expense) }
+                    ]}
+                  />
+                </td>
+              </tr>
+            ))
+          )}
+        </tbody>
+      </table>
+    </div>
+    <DashboardTablePagination
+      count={data.totalCount}
+      page={page}
+      rowsPerPage={rowsPerPage}
+      rowsPerPageLabel={dictionary.common.rowsPerPage}
+      ofLabel={dictionary.common.of}
+      onPageChange={onPageChange}
+      onRowsPerPageChange={onRowsPerPageChange}
+    />
+  </>
+)
+
+export default FinanceExpenseTable

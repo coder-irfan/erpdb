@@ -436,3 +436,118 @@ export const assignUserRole = async payload => {
     return { success: false, code: 'USER_ROLE_UPDATE_FAILED', error: context.translations.messages.operationFailed }
   }
 }
+
+const getAccessRemovalTarget = async (userId, context) => {
+  if (!userId) {
+    return { error: { success: false, code: 'USER_NOT_FOUND', error: context.translations.messages.userNotFound } }
+  }
+
+  if (userId === context.session.user.id) {
+    return { error: { success: false, code: 'SELF_PROTECTED', error: context.translations.messages.selfProtected } }
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { id: true, email: true, account_status: true, roles: { select: { name: true } } }
+  })
+
+  if (!user) {
+    return { error: { success: false, code: 'USER_NOT_FOUND', error: context.translations.messages.userNotFound } }
+  }
+
+  if (user.roles.some(role => role.name === 'super_admin')) {
+    return { error: { success: false, code: 'PROTECTED_USER', error: context.translations.messages.protectedUser } }
+  }
+
+  return { user }
+}
+
+export const revokeUserInvitation = async payload => {
+  const context = await getActionContext(payload)
+
+  if (!context.authorized) return { success: false, code: context.code, error: context.error }
+
+  const userId = typeof payload?.userId === 'string' ? payload.userId.trim() : ''
+
+  try {
+    const target = await getAccessRemovalTarget(userId, context)
+
+    if (target.error) return target.error
+
+    if (target.user.account_status !== 'PENDING_ACTIVATION') {
+      return {
+        success: false,
+        code: 'INVITATION_NOT_PENDING',
+        error: context.translations.messages.invitationNotPending
+      }
+    }
+
+    await prisma.$transaction(async transaction => {
+      await transaction.verificationToken.deleteMany({ where: { identifier: getInvitationIdentifier(target.user.id) } })
+      await transaction.session.deleteMany({ where: { userId: target.user.id } })
+      await transaction.user.update({
+        where: { id: target.user.id },
+        data: { account_status: 'INACTIVE', roles: { set: [] } }
+      })
+      await transaction.auditlog.create({
+        data: {
+          user_id: context.session.user.id,
+          action: 'USER_INVITATION_REVOKED',
+          module: 'SETTINGS',
+          details: { targetUserId: target.user.id, email: target.user.email }
+        }
+      })
+    })
+
+    const updatedUser = await getNormalizedUser(target.user.id, context.session.user.id)
+
+    revalidateRolesPage()
+
+    return { success: true, data: updatedUser, message: context.translations.messages.invitationRevoked }
+  } catch {
+    return { success: false, code: 'INVITATION_REVOKE_FAILED', error: context.translations.messages.operationFailed }
+  }
+}
+
+export const removeUserAccess = async payload => {
+  const context = await getActionContext(payload)
+
+  if (!context.authorized) return { success: false, code: context.code, error: context.error }
+
+  const userId = typeof payload?.userId === 'string' ? payload.userId.trim() : ''
+
+  try {
+    const target = await getAccessRemovalTarget(userId, context)
+
+    if (target.error) return target.error
+
+    await prisma.$transaction(async transaction => {
+      await transaction.verificationToken.deleteMany({ where: { identifier: getInvitationIdentifier(target.user.id) } })
+      await transaction.session.deleteMany({ where: { userId: target.user.id } })
+      await transaction.user.update({
+        where: { id: target.user.id },
+        data: { account_status: 'INACTIVE', roles: { set: [] } }
+      })
+      await transaction.auditlog.create({
+        data: {
+          user_id: context.session.user.id,
+          action: 'USER_ACCESS_REMOVED',
+          module: 'SETTINGS',
+          details: {
+            targetUserId: target.user.id,
+            email: target.user.email,
+            previousStatus: target.user.account_status
+          }
+        }
+      })
+    })
+
+    const updatedUser = await getNormalizedUser(target.user.id, context.session.user.id)
+
+    revalidateRolesPage()
+
+    return { success: true, data: updatedUser, message: context.translations.messages.userAccessRemoved }
+  } catch {
+    return { success: false, code: 'USER_ACCESS_REMOVE_FAILED', error: context.translations.messages.operationFailed }
+  }
+}

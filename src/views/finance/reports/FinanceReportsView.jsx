@@ -1,0 +1,385 @@
+'use client'
+
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+
+import Button from '@mui/material/Button'
+import Card from '@mui/material/Card'
+import CardContent from '@mui/material/CardContent'
+import MenuItem from '@mui/material/MenuItem'
+import Tab from '@mui/material/Tab'
+import Tabs from '@mui/material/Tabs'
+import ToggleButton from '@mui/material/ToggleButton'
+import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
+import Typography from '@mui/material/Typography'
+import { toast } from 'sonner'
+
+import CustomTextField from '@core/components/mui/TextField'
+import DashboardTablePagination from '@/components/table/DashboardTablePagination'
+import { toFiniteNumber } from '@/utils/formatCurrency'
+
+import FinanceReportCharts from './FinanceReportCharts'
+import FinanceReportTable from './FinanceReportTable'
+
+const REPORT_TYPES = ['income', 'expenses', 'salary', 'inventory', 'loans']
+const EMPTY_REPORT = { summary: {}, rows: [], charts: {}, display_currency: 'AFN', report_exchange_rate: 65 }
+const localeMap = { en: 'en-US', fa: 'fa-AF', ps: 'ps-AF' }
+
+const toInputDate = date => date.toISOString().slice(0, 10)
+
+const getPresetRange = preset => {
+  const now = new Date()
+  const year = now.getUTCFullYear()
+  const month = now.getUTCMonth()
+
+  if (preset === 'last_month') {
+    return {
+      start: toInputDate(new Date(Date.UTC(year, month - 1, 1))),
+      end: toInputDate(new Date(Date.UTC(year, month, 0)))
+    }
+  }
+
+  if (preset === 'this_quarter') {
+    const quarterStart = Math.floor(month / 3) * 3
+
+    return {
+      start: toInputDate(new Date(Date.UTC(year, quarterStart, 1))),
+      end: toInputDate(new Date(Date.UTC(year, quarterStart + 3, 0)))
+    }
+  }
+
+  if (preset === 'this_year') return { start: `${year}-01-01`, end: `${year}-12-31` }
+
+  return {
+    start: toInputDate(new Date(Date.UTC(year, month, 1))),
+    end: toInputDate(new Date(Date.UTC(year, month + 1, 0)))
+  }
+}
+
+const escapeCsv = value => `"${String(value ?? '').replaceAll('"', '""')}"`
+
+const FinanceReportsView = ({ locale, dictionary, setup, generatedAt }) => {
+  const initialRange = getPresetRange('this_month')
+  const initialCurrency = ['AFN', 'USD'].includes(setup.currency_code) ? setup.currency_code : 'AFN'
+  const initialRate = String(toFiniteNumber(setup.usd_afn_exchange_rate) || 65)
+  const [reportType, setReportType] = useState('income')
+  const [datePreset, setDatePreset] = useState('this_month')
+  const [startDate, setStartDate] = useState(initialRange.start)
+  const [endDate, setEndDate] = useState(initialRange.end)
+  const [displayCurrency, setDisplayCurrency] = useState(initialCurrency)
+  const [rateInput, setRateInput] = useState(initialRate)
+  const [reportRate, setReportRate] = useState(initialRate)
+  const [search, setSearch] = useState('')
+  const [data, setData] = useState(EMPTY_REPORT)
+  const [loading, setLoading] = useState(true)
+  const [page, setPage] = useState(0)
+  const [rowsPerPage, setRowsPerPage] = useState(10)
+  const requestIdRef = useRef(0)
+
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      if (toFiniteNumber(rateInput) > 0) setReportRate(rateInput)
+    }, 350)
+
+    return () => clearTimeout(timeout)
+  }, [rateInput])
+
+  useEffect(() => {
+    if (!startDate || !endDate || startDate > endDate || toFiniteNumber(reportRate) <= 0) return undefined
+
+    const controller = new AbortController()
+    const requestId = ++requestIdRef.current
+
+    setLoading(true)
+    fetch(
+      `/api/finance/reports/${reportType}?start_date=${encodeURIComponent(startDate)}&end_date=${encodeURIComponent(endDate)}&currency=${displayCurrency}&exchange_rate=${encodeURIComponent(reportRate)}`,
+      { signal: controller.signal, cache: 'no-store' }
+    )
+      .then(async response => {
+        const payload = await response.json()
+
+        if (!response.ok || !payload.success) throw new Error(payload.error || dictionary.messages.loadFailed)
+
+        if (requestId === requestIdRef.current) setData(payload.data)
+      })
+      .catch(error => {
+        if (error.name !== 'AbortError' && requestId === requestIdRef.current) {
+          setData(EMPTY_REPORT)
+          toast.error(error.message || dictionary.messages.loadFailed)
+        }
+      })
+      .finally(() => {
+        if (requestId === requestIdRef.current) setLoading(false)
+      })
+
+    return () => controller.abort()
+  }, [dictionary.messages.loadFailed, displayCurrency, endDate, reportRate, reportType, startDate])
+
+  const formatDate = useCallback(
+    value =>
+      value
+        ? new Intl.DateTimeFormat(localeMap[locale] || localeMap.en, { dateStyle: 'medium', timeZone: 'UTC' }).format(new Date(value))
+        : dictionary.common.notAvailable,
+    [dictionary.common.notAvailable, locale]
+  )
+
+  const formatDateTime = useCallback(
+    value =>
+      new Intl.DateTimeFormat(localeMap[locale] || localeMap.en, {
+        dateStyle: 'medium',
+        timeStyle: 'short'
+      }).format(new Date(value)),
+    [locale]
+  )
+
+  const rows = useMemo(() => {
+    const sourceRows = data.rows || []
+    const query = search.trim().toLocaleLowerCase(locale)
+
+    if (!query) return sourceRows
+
+    return sourceRows.filter(row =>
+      Object.values(row).some(value => typeof value === 'string' && value.toLocaleLowerCase(locale).includes(query))
+    )
+  }, [data.rows, locale, search])
+
+  const pageRows = rows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+  const activeReport = dictionary.tabs[reportType]
+
+  const changePreset = preset => {
+    setDatePreset(preset)
+    setPage(0)
+
+    if (preset !== 'custom') {
+      const range = getPresetRange(preset)
+
+      setStartDate(range.start)
+      setEndDate(range.end)
+    }
+  }
+
+  const csvRows = useMemo(() => {
+    const headers = dictionary.table
+
+    const configurations = {
+      income: {
+        header: [headers.date, headers.reference, headers.sourceCategory, headers.amountLocal, headers.baseAmountUsd, headers.paymentMethod, headers.status],
+        row: item => [item.date, item.reference, item.source, item.amount_local, item.amount_usd, item.payment_method, item.status]
+      },
+      expenses: {
+        header: [headers.date, headers.expenseTitle, headers.category, headers.vendorPayee, headers.amount, headers.paymentMethod, headers.status],
+        row: item => [item.date, item.title, item.category, item.payee, item.amount_display, item.payment_method, item.status]
+      },
+      salary: {
+        header: [headers.staffName, headers.designation, headers.month, headers.baseSalary, headers.bonuses, headers.deductions, headers.netPaid, headers.paymentStatus],
+        row: item => [item.staff_name, item.designation, item.month, item.base_salary, item.bonus, item.deductions, item.net_paid, item.status]
+      },
+      inventory: {
+        header: [headers.sku, headers.itemName, headers.category, headers.inStockQty, headers.unitCost, headers.totalAssetValue, headers.reorderStatus],
+        row: item => [item.sku, item.name, item.category, item.quantity, item.unit_cost, item.total_value, item.reorder_status]
+      },
+      loans: {
+        header: [headers.loanNumber, headers.borrower, headers.loanType, headers.totalLoan, headers.repaid, headers.remainingBalance, headers.issueDate],
+        row: item => [item.loan_number, item.borrower, item.type, item.total, item.repaid, item.remaining, item.issue_date]
+      }
+    }
+
+    return configurations[reportType]
+  }, [dictionary.table, reportType])
+
+  const exportCsv = () => {
+    const csv = [csvRows.header, ...rows.map(csvRows.row)].map(row => row.map(escapeCsv).join(',')).join('\r\n')
+    const blob = new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const anchor = document.createElement('a')
+
+    anchor.href = url
+    anchor.download = `finance-${reportType}-${startDate}-${endDate}.csv`
+    anchor.click()
+    URL.revokeObjectURL(url)
+  }
+
+  const printReport = mode => {
+    const originalTitle = document.title
+
+    document.title = `${activeReport.label}-${startDate}-${endDate}${mode === 'pdf' ? '-PDF' : ''}`
+    window.print()
+    window.setTimeout(() => {
+      document.title = originalTitle
+    }, 250)
+  }
+
+  return (
+    <div className='finance-report-print hrm-report-print flex flex-col gap-6'>
+      <Card className='no-print'>
+        <CardContent className='flex flex-wrap items-end gap-3'>
+          <CustomTextField
+            label={dictionary.filters.search}
+            placeholder={dictionary.filters.searchPlaceholder}
+            value={search}
+            onChange={event => {
+              setSearch(event.target.value)
+              setPage(0)
+            }}
+            className='is-full sm:is-[260px]'
+            slotProps={{ input: { startAdornment: <i className='tabler-search' /> } }}
+          />
+          <CustomTextField
+            select
+            label={dictionary.filters.dateRange}
+            value={datePreset}
+            onChange={event => changePreset(event.target.value)}
+            className='is-full sm:is-[170px]'
+          >
+            <MenuItem value='this_month'>{dictionary.datePresets.thisMonth}</MenuItem>
+            <MenuItem value='last_month'>{dictionary.datePresets.lastMonth}</MenuItem>
+            <MenuItem value='this_quarter'>{dictionary.datePresets.thisQuarter}</MenuItem>
+            <MenuItem value='this_year'>{dictionary.datePresets.thisYear}</MenuItem>
+            <MenuItem value='custom'>{dictionary.datePresets.custom}</MenuItem>
+          </CustomTextField>
+          <CustomTextField
+            type='date'
+            label={dictionary.filters.startDate}
+            value={startDate}
+            onChange={event => {
+              setStartDate(event.target.value)
+              setDatePreset('custom')
+              setPage(0)
+            }}
+            className='is-full sm:is-[155px]'
+          />
+          <CustomTextField
+            type='date'
+            label={dictionary.filters.endDate}
+            value={endDate}
+            onChange={event => {
+              setEndDate(event.target.value)
+              setDatePreset('custom')
+              setPage(0)
+            }}
+            className='is-full sm:is-[155px]'
+          />
+          <div className='flex flex-col gap-1'>
+            <Typography variant='caption' color='text.secondary'>{dictionary.filters.currency}</Typography>
+            <ToggleButtonGroup
+              exclusive
+              size='small'
+              value={displayCurrency}
+              aria-label={dictionary.filters.currency}
+              onChange={(_, value) => {
+                if (value) {
+                  setDisplayCurrency(value)
+                  setPage(0)
+                }
+              }}
+            >
+              <ToggleButton value='AFN'>AFN</ToggleButton>
+              <ToggleButton value='USD'>USD</ToggleButton>
+            </ToggleButtonGroup>
+          </div>
+          <CustomTextField
+            type='number'
+            label={dictionary.filters.exchangeRate}
+            value={rateInput}
+            onChange={event => setRateInput(event.target.value)}
+            className='is-full sm:is-[145px]'
+            slotProps={{ htmlInput: { min: 0.0001, step: 0.0001 } }}
+          />
+          <div className='ms-auto flex flex-wrap gap-2'>
+            <Button variant='tonal' color='secondary' startIcon={<i className='tabler-file-type-pdf' />} disabled={loading || rows.length === 0} onClick={() => printReport('pdf')}>
+              {dictionary.actions.exportPdf}
+            </Button>
+            <Button variant='tonal' color='secondary' startIcon={<i className='tabler-file-spreadsheet' />} disabled={loading || rows.length === 0} onClick={exportCsv}>
+              {dictionary.actions.exportCsv}
+            </Button>
+            <Button variant='contained' startIcon={<i className='tabler-printer' />} disabled={loading} onClick={() => printReport('print')}>
+              {dictionary.actions.print}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className='no-print no-scrollbar overflow-x-auto'>
+        <Tabs
+          value={reportType}
+          variant='scrollable'
+          scrollButtons='auto'
+          onChange={(_, value) => {
+            setReportType(value)
+            setData(EMPTY_REPORT)
+            setLoading(true)
+            setPage(0)
+          }}
+        >
+          {REPORT_TYPES.map(type => (
+            <Tab key={type} value={type} icon={<i className={dictionary.tabs[type].icon} />} iconPosition='start' label={dictionary.tabs[type].label} />
+          ))}
+        </Tabs>
+      </Card>
+
+      <div className='report-print-header hidden border-b-2 border-black pb-5 text-black'>
+        <div className='flex items-start justify-between gap-6'>
+          <div>{setup.company_logo ? <img src={setup.company_logo} alt={setup.company_name} className='max-h-16 max-w-44 object-contain' /> : null}</div>
+          <div className='text-end'>
+            <Typography className='text-xl font-bold text-black'>{setup.company_name}</Typography>
+            <Typography className='whitespace-pre-line text-sm text-black'>{setup.company_address}</Typography>
+            <Typography className='text-sm text-black'>{[setup.company_phone, setup.company_email].filter(Boolean).join(' · ')}</Typography>
+          </div>
+        </div>
+        <div className='mt-6 text-center'>
+          <Typography component='h1' className='text-2xl font-bold text-black'>{activeReport.label}</Typography>
+          <Typography className='text-black'>{formatDate(`${startDate}T00:00:00.000Z`)} — {formatDate(`${endDate}T00:00:00.000Z`)}</Typography>
+          <Typography className='text-sm text-black'>{dictionary.filters.currency}: {displayCurrency} · {dictionary.filters.exchangeRate}: {reportRate}</Typography>
+          <Typography className='text-xs text-black'>{dictionary.print.generated}: {formatDateTime(generatedAt)}</Typography>
+        </div>
+      </div>
+
+      <FinanceReportCharts
+        tab={reportType}
+        charts={data.charts}
+        loading={loading}
+        dictionary={dictionary.charts}
+        locale={locale}
+        currency={displayCurrency}
+      />
+
+      <Card className='report-table-card'>
+        <CardContent className='flex flex-wrap items-center justify-between gap-2 border-be border-divider'>
+          <div>
+            <Typography variant='h5'>{activeReport.tableTitle}</Typography>
+            <Typography variant='body2' color='text.secondary'>{dictionary.common.records.replace('{count}', String(rows.length))}</Typography>
+          </div>
+        </CardContent>
+        <div className='screen-report-table no-scrollbar overflow-x-auto scroll-smooth'>
+          <FinanceReportTable tab={reportType} rows={pageRows} loading={loading} dictionary={dictionary} locale={locale} displayCurrency={displayCurrency} />
+        </div>
+        <div className='print-report-table hidden'>
+          <FinanceReportTable tab={reportType} rows={rows} loading={false} dictionary={dictionary} locale={locale} displayCurrency={displayCurrency} />
+        </div>
+        <div className='no-print'>
+          <DashboardTablePagination
+            count={rows.length}
+            page={page}
+            rowsPerPage={rowsPerPage}
+            rowsPerPageOptions={[10, 25, 50]}
+            rowsPerPageLabel={dictionary.pagination.rowsPerPage}
+            ofLabel={dictionary.pagination.of}
+            onPageChange={(_, nextPage) => setPage(nextPage)}
+            onRowsPerPageChange={event => {
+              setRowsPerPage(Number(event.target.value))
+              setPage(0)
+            }}
+          />
+        </div>
+      </Card>
+
+      <style jsx global>{`
+        @media print {
+          .finance-report-print .screen-report-table { display: none !important; }
+          .finance-report-print .print-report-table { display: block !important; }
+        }
+      `}</style>
+    </div>
+  )
+}
+
+export default FinanceReportsView

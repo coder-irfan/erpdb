@@ -3,8 +3,10 @@
 import { useEffect, useState } from 'react'
 
 import Button from '@mui/material/Button'
-import Divider from '@mui/material/Divider'
-import Drawer from '@mui/material/Drawer'
+import Dialog from '@mui/material/Dialog'
+import DialogActions from '@mui/material/DialogActions'
+import DialogContent from '@mui/material/DialogContent'
+import DialogTitle from '@mui/material/DialogTitle'
 import IconButton from '@mui/material/IconButton'
 import Typography from '@mui/material/Typography'
 
@@ -37,13 +39,13 @@ const PermissionDrawer = ({ open, role, groups, onClose, onSave, translations })
   }
 
   return (
-    <Drawer
+    <Dialog
       open={open}
-      anchor='right'
       onClose={isSaving ? undefined : onClose}
-      slotProps={{ paper: { sx: { width: { xs: '100%', sm: 640, lg: 760 } } } }}
+      fullWidth
+      maxWidth='md'
     >
-      <div className='flex items-start justify-between gap-4 p-6'>
+      <DialogTitle className='flex items-start justify-between gap-4'>
         <div>
           <Typography variant='h5'>{translations.permissionMatrix}</Typography>
           <Typography color='text.secondary'>
@@ -53,9 +55,8 @@ const PermissionDrawer = ({ open, role, groups, onClose, onSave, translations })
         <IconButton onClick={onClose} disabled={isSaving} aria-label={translations.close}>
           <i className='tabler-x' />
         </IconButton>
-      </div>
-      <Divider />
-      <div className='grow overflow-y-auto p-6'>
+      </DialogTitle>
+      <DialogContent dividers className='max-bs-[70vh]'>
         <PermissionMatrix
           groups={groups}
           selectedPermissionIds={selectedPermissionIds}
@@ -63,9 +64,8 @@ const PermissionDrawer = ({ open, role, groups, onClose, onSave, translations })
           translations={translations}
           disabled={isSaving}
         />
-      </div>
-      <Divider />
-      <div className='flex justify-end gap-3 p-6'>
+      </DialogContent>
+      <DialogActions className='p-6'>
         <Button variant='tonal' color='secondary' onClick={onClose} disabled={isSaving}>
           {translations.cancel}
         </Button>
@@ -74,8 +74,8 @@ const PermissionDrawer = ({ open, role, groups, onClose, onSave, translations })
             {translations.savePermissions}
           </LoadingButtonContent>
         </Button>
-      </div>
-    </Drawer>
+      </DialogActions>
+    </Dialog>
   )
 }
 

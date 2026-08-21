@@ -19,7 +19,7 @@ const StaffStatsCards = ({ stats, dictionary }) => {
       key: 'terminated',
       label: dictionary.stats.terminated,
       icon: 'tabler-user-x',
-      classes: 'bg-errorLighter text-primary'
+      classes: 'bg-errorLighter text-error'
     }
   ]
 

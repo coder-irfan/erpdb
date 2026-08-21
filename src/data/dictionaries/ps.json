@@ -111,6 +111,7 @@
     "projects": "پروژې",
     "contractModule": "قرارداد",
     "contractManagement": "د قرارداد اداره",
+    "financeManagement": "مالي مدیریت",
     "contractOptions": "د قرارداد انتخابونه",
     "contractList": "قراردادونه",
     "contractInvoices": "صورتحسابونه",
@@ -124,6 +125,7 @@
     "salary": "معاش",
     "loans": "پورونه",
     "inventory": "زېرمه",
+    "inventoryCategories": "د زېرمې کټګورۍ",
     "financeReports": "راپورونه",
     "options": "اختیارونه",
     "contractPolicies": "د قرارداد پالیسۍ",
@@ -259,8 +261,22 @@
     }
   },
   "setupBranding": {
-    "tabs": { "general": "عمومي معلومات", "localization": "ځایي کول او تګلاره", "branding": "نښه او شتمنۍ", "signatories": "قانوني لاسلیک کوونکي" },
-    "sections": { "generalTitle": "د شرکت معلومات", "generalDescription": "په سیسټم کې کارېدونکي قانوني هویت او اصلي اړیکې اداره کړئ.", "localizationTitle": "ځایي کول او عملیاتي تګلاره", "localizationDescription": "د راپور اسعار، د تبادلې نرخ او اصلي کاري ساعتونه تنظیم کړئ.", "brandingTitle": "نښه او رسنیزې شتمنۍ", "brandingDescription": "د رسمي پاڼو، منو، براوزر او اسنادو انځورونه اداره کړئ.", "signatoriesTitle": "مجاز لاسلیک کوونکی", "signatoriesDescription": "هغه کس وټاکئ چې د شرکت اسناد لاسلیکولی شي." },
+    "tabs": {
+      "general": "عمومي معلومات",
+      "localization": "ځایي کول او تګلاره",
+      "branding": "نښه او شتمنۍ",
+      "signatories": "قانوني لاسلیک کوونکي"
+    },
+    "sections": {
+      "generalTitle": "د شرکت معلومات",
+      "generalDescription": "په سیسټم کې کارېدونکي قانوني هویت او اصلي اړیکې اداره کړئ.",
+      "localizationTitle": "ځایي کول او عملیاتي تګلاره",
+      "localizationDescription": "د راپور اسعار، د تبادلې نرخ او اصلي کاري ساعتونه تنظیم کړئ.",
+      "brandingTitle": "نښه او رسنیزې شتمنۍ",
+      "brandingDescription": "د رسمي پاڼو، منو، براوزر او اسنادو انځورونه اداره کړئ.",
+      "signatoriesTitle": "مجاز لاسلیک کوونکی",
+      "signatoriesDescription": "هغه کس وټاکئ چې د شرکت اسناد لاسلیکولی شي."
+    },
     "workHoursTitle": "اصلي کاري ساعتونه",
     "workHoursDescription": "دا وختونه د حاضرۍ د ننوتلو او وتلو په برخو کې په اتومات ډول ډکېږي.",
     "currencyTitle": "اسعار او د تبادلې نرخ",
@@ -320,70 +336,227 @@
     }
   },
   "hrmTimesheets": {
-    "date": { "today": "نن", "date": "د حاضرۍ نېټه", "previous": "مخکینۍ ورځ", "next": "بله ورځ", "yesterday": "پرون", "custom": "ټاکلې نېټه" },
-    "summary": { "present": "ټول حاضر", "absent": "ټول غیر حاضر", "leave": "ټولې رخصتۍ", "unmarked": "ناثبت شوي" },
-    "fields": { "date": "د حاضرۍ نېټه", "staff": "کارکوونکی", "position": "دنده", "status": "حالت", "checkIn": "ننوتل", "checkOut": "وتل", "hours": "کاري ساعتونه", "project": "تړلې پروژه", "notes": "یادښتونه" },
-    "status": { "PRESENT": "حاضر", "ABSENT": "غیر حاضر", "LEAVE": "رخصتي" },
-    "filters": { "search": "د کارکوونکي لټون", "searchPlaceholder": "د کارکوونکي نوم ولټوئ", "status": "حالت", "allStatuses": "ټول حالتونه" },
-    "actions": { "mark": "حاضري ثبتول", "bulkAbsent": "پاتې کسان غیر حاضر ثبتول", "export": "CSV ایستل", "print": "چاپ", "edit": "سمول", "delete": "ړنګول", "save": "حاضري خوندي کول", "saveNext": "خوندي او بل کس", "saveChanges": "بدلونونه خوندي کول", "saving": "خوندي کېږي...", "cancel": "لغوه کول" },
-    "table": { "title": "ورځنی حاضري ریکارډ", "description": "د ټاکلې نېټې د حاضرۍ ریکارډونه.", "actions": "کړنې", "emptyTitle": "د حاضرۍ ریکارډ نشته", "emptyDescription": "د یوه فعال کارکوونکي حاضري ثبت کړئ.", "rowsPerPage": "په پاڼه کې کتارونه:", "of": "له" },
-    "drawer": { "title": "ورځنۍ حاضري ثبتول", "editTitle": "حاضري سمول", "description": "یوازې د دې نېټې ناثبت شوي کارکوونکي ښودل کېږي." },
-    "placeholders": { "selectStaff": "پاتې کارکوونکی وټاکئ", "noProject": "پروژه نشته" }, "hoursShort": "ساعت",
-    "export": { "columns": ["د کارکوونکي نوم", "دنده", "حالت", "ننوتل", "وتل", "ساعتونه", "یادښتونه"] },
-    "messages": { "created": "حاضري په بریالیتوب خوندي شوه.", "updated": "حاضري په بریالیتوب تازه شوه.", "deleted": "د حاضرۍ ریکارډ ړنګ شو.", "bulkAbsent": "{count} پاتې کارکوونکي غیر حاضر ثبت شول.", "noRemainingStaff": "د ټولو فعالو کارکوونکو حاضري ثبت شوې.", "duplicate": "د دې کارکوونکي حاضري په دې نېټه مخکې ثبت شوې.", "staffNotFound": "ټاکل شوی فعال کارکوونکی ونه موندل شو.", "projectNotFound": "ټاکل شوې پروژه ونه موندل شوه.", "notFound": "د حاضرۍ ریکارډ ونه موندل شو.", "loadFailed": "د حاضرۍ ریکارډونه پورته نه شول.", "operationFailed": "کړنه بشپړه نه شوه. بیا هڅه وکړئ.", "unauthenticated": "حاضرۍ ته د لاسرسي لپاره ننوځئ.", "forbidden": "تاسو حاضرۍ ته د لاسرسي اجازه نه لرئ.", "deleteTitle": "د حاضرۍ ریکارډ ړنګول", "deleteDescription": "ایا ډاډه یاست چې دا د حاضرۍ ریکارډ ړنګول غواړئ؟ دا کړنه بېرته نه راګرځي." },
-    "validation": { "invalidSubmission": "نښه شوي ځایونه وګورئ.", "required": "دا ځای اړین دی.", "statusInvalid": "سم حالت وټاکئ.", "dateInvalid": "سمه نېټه وټاکئ.", "timeInvalid": "سم وخت ولیکئ.", "checkoutBeforeCheckin": "د وتلو وخت د ننوتلو څخه مخکې نه شي کېدای.", "notesTooLong": "یادښتونه باید له ۲۰۰۰ تورو زیات نه وي." }
+    "date": {
+      "today": "نن",
+      "date": "د حاضرۍ نېټه",
+      "previous": "مخکینۍ ورځ",
+      "next": "بله ورځ",
+      "yesterday": "پرون",
+      "custom": "ټاکلې نېټه"
+    },
+    "summary": {
+      "present": "ټول حاضر",
+      "absent": "ټول غیر حاضر",
+      "leave": "ټولې رخصتۍ",
+      "unmarked": "ناثبت شوي"
+    },
+    "fields": {
+      "date": "د حاضرۍ نېټه",
+      "staff": "کارکوونکی",
+      "position": "دنده",
+      "status": "حالت",
+      "checkIn": "ننوتل",
+      "checkOut": "وتل",
+      "hours": "کاري ساعتونه",
+      "project": "تړلې پروژه",
+      "notes": "یادښتونه"
+    },
+    "status": {
+      "PRESENT": "حاضر",
+      "ABSENT": "غیر حاضر",
+      "LEAVE": "رخصتي"
+    },
+    "filters": {
+      "search": "د کارکوونکي لټون",
+      "searchPlaceholder": "د کارکوونکي نوم ولټوئ",
+      "status": "حالت",
+      "allStatuses": "ټول حالتونه"
+    },
+    "actions": {
+      "mark": "حاضري ثبتول",
+      "bulkAbsent": "پاتې کسان غیر حاضر ثبتول",
+      "export": "CSV ایستل",
+      "print": "چاپ",
+      "edit": "سمول",
+      "delete": "ړنګول",
+      "save": "حاضري خوندي کول",
+      "saveNext": "خوندي او بل کس",
+      "saveChanges": "بدلونونه خوندي کول",
+      "saving": "خوندي کېږي...",
+      "cancel": "لغوه کول"
+    },
+    "table": {
+      "title": "ورځنی حاضري ریکارډ",
+      "description": "د ټاکلې نېټې د حاضرۍ ریکارډونه.",
+      "actions": "کړنې",
+      "emptyTitle": "د حاضرۍ ریکارډ نشته",
+      "emptyDescription": "د یوه فعال کارکوونکي حاضري ثبت کړئ.",
+      "rowsPerPage": "په پاڼه کې کتارونه:",
+      "of": "له"
+    },
+    "drawer": {
+      "title": "ورځنۍ حاضري ثبتول",
+      "editTitle": "حاضري سمول",
+      "description": "یوازې د دې نېټې ناثبت شوي کارکوونکي ښودل کېږي."
+    },
+    "placeholders": {
+      "selectStaff": "پاتې کارکوونکی وټاکئ",
+      "noProject": "پروژه نشته"
+    },
+    "hoursShort": "ساعت",
+    "export": {
+      "columns": [
+        "د کارکوونکي نوم",
+        "دنده",
+        "حالت",
+        "ننوتل",
+        "وتل",
+        "ساعتونه",
+        "یادښتونه"
+      ]
+    },
+    "messages": {
+      "created": "حاضري په بریالیتوب خوندي شوه.",
+      "updated": "حاضري په بریالیتوب تازه شوه.",
+      "deleted": "د حاضرۍ ریکارډ ړنګ شو.",
+      "bulkAbsent": "{count} پاتې کارکوونکي غیر حاضر ثبت شول.",
+      "noRemainingStaff": "د ټولو فعالو کارکوونکو حاضري ثبت شوې.",
+      "duplicate": "د دې کارکوونکي حاضري په دې نېټه مخکې ثبت شوې.",
+      "staffNotFound": "ټاکل شوی فعال کارکوونکی ونه موندل شو.",
+      "projectNotFound": "ټاکل شوې پروژه ونه موندل شوه.",
+      "notFound": "د حاضرۍ ریکارډ ونه موندل شو.",
+      "loadFailed": "د حاضرۍ ریکارډونه پورته نه شول.",
+      "operationFailed": "کړنه بشپړه نه شوه. بیا هڅه وکړئ.",
+      "unauthenticated": "حاضرۍ ته د لاسرسي لپاره ننوځئ.",
+      "forbidden": "تاسو حاضرۍ ته د لاسرسي اجازه نه لرئ.",
+      "deleteTitle": "د حاضرۍ ریکارډ ړنګول",
+      "deleteDescription": "ایا ډاډه یاست چې دا د حاضرۍ ریکارډ ړنګول غواړئ؟ دا کړنه بېرته نه راګرځي."
+    },
+    "validation": {
+      "invalidSubmission": "نښه شوي ځایونه وګورئ.",
+      "required": "دا ځای اړین دی.",
+      "statusInvalid": "سم حالت وټاکئ.",
+      "dateInvalid": "سمه نېټه وټاکئ.",
+      "timeInvalid": "سم وخت ولیکئ.",
+      "checkoutBeforeCheckin": "د وتلو وخت د ننوتلو څخه مخکې نه شي کېدای.",
+      "notesTooLong": "یادښتونه باید له ۲۰۰۰ تورو زیات نه وي."
+    }
   },
   "hrmContracts": {
     "fields": {
-      "contractNumber": "د قرارداد شمېره", "staffMember": "کارکوونکی", "contractType": "د قرارداد پالیسي",
-      "position": "دنده", "baseSalary": "منل شوی معاش", "currency": "اسعار", "startDate": "د پیل نېټه", "endDate": "د پای نېټه",
-      "status": "حالت", "email": "برېښنالیک", "phone": "ټیلیفون", "tazkiraNo": "د تذکرې شمېره"
+      "contractNumber": "د قرارداد شمېره",
+      "staffMember": "کارکوونکی",
+      "contractType": "د قرارداد پالیسي",
+      "position": "دنده",
+      "baseSalary": "منل شوی معاش",
+      "currency": "اسعار",
+      "startDate": "د پیل نېټه",
+      "endDate": "د پای نېټه",
+      "status": "حالت",
+      "email": "برېښنالیک",
+      "phone": "ټیلیفون",
+      "tazkiraNo": "د تذکرې شمېره"
     },
     "filters": {
-      "search": "د قراردادونو لټون", "searchPlaceholder": "د کارکوونکي نوم یا د قرارداد شمېره ولټوئ",
-      "status": "حالت", "allStatuses": "ټول حالتونه", "contractType": "د قرارداد پالیسي",
+      "search": "د قراردادونو لټون",
+      "searchPlaceholder": "د کارکوونکي نوم یا د قرارداد شمېره ولټوئ",
+      "status": "حالت",
+      "allStatuses": "ټول حالتونه",
+      "contractType": "د قرارداد پالیسي",
       "allContractTypes": "د قرارداد ټولې پالیسۍ"
     },
     "actions": {
-      "add": "قرارداد جوړول", "addFirst": "لومړی قرارداد جوړول", "view": "تفصیل کتل",
-      "print": "قرارداد چاپول", "changeStatus": "حالت بدلول", "printSavePdf": "چاپ / PDF خوندي کول", "edit": "سمول", "create": "قرارداد جوړول",
-      "saveChanges": "بدلونونه خوندي کول", "saving": "خوندي کېږي...", "cancel": "لغوه کول", "close": "تړل",
+      "add": "قرارداد جوړول",
+      "addFirst": "لومړی قرارداد جوړول",
+      "view": "تفصیل کتل",
+      "print": "قرارداد چاپول",
+      "changeStatus": "حالت بدلول",
+      "printSavePdf": "چاپ / PDF خوندي کول",
+      "edit": "سمول",
+      "create": "قرارداد جوړول",
+      "saveChanges": "بدلونونه خوندي کول",
+      "saving": "خوندي کېږي...",
+      "cancel": "لغوه کول",
+      "close": "تړل",
       "back": "قراردادونو ته ستنېدل"
     },
     "table": {
-      "contractNumber": "د قرارداد شمېره", "staff": "کارکوونکی", "position": "دنده", "contractType": "د قرارداد پالیسي",
-      "salary": "بنسټیز معاش", "period": "د قرارداد موده", "status": "حالت", "actions": "کړنې",
-      "emptyTitle": "د کارکوونکي قرارداد ونه موندل شو", "emptyDescription": "لومړی کاري قرارداد له یوې فعالې پالیسۍ جوړ کړئ.",
-      "rowsPerPage": "په پاڼه کې کتارونه:", "of": "له"
+      "contractNumber": "د قرارداد شمېره",
+      "staff": "کارکوونکی",
+      "position": "دنده",
+      "contractType": "د قرارداد پالیسي",
+      "salary": "بنسټیز معاش",
+      "period": "د قرارداد موده",
+      "status": "حالت",
+      "actions": "کړنې",
+      "emptyTitle": "د کارکوونکي قرارداد ونه موندل شو",
+      "emptyDescription": "لومړی کاري قرارداد له یوې فعالې پالیسۍ جوړ کړئ.",
+      "rowsPerPage": "په پاڼه کې کتارونه:",
+      "of": "له"
     },
-    "status": { "DRAFT": "مسوده", "ACTIVE": "فعال", "EXPIRED": "پای ته رسېدلی", "TERMINATED": "ختم شوی" },
+    "status": {
+      "DRAFT": "مسوده",
+      "ACTIVE": "فعال",
+      "EXPIRED": "پای ته رسېدلی",
+      "TERMINATED": "ختم شوی"
+    },
     "drawer": {
-      "addTitle": "د کارکوونکي قرارداد جوړول", "editTitle": "د کارکوونکي قرارداد سمول",
+      "addTitle": "د کارکوونکي قرارداد جوړول",
+      "editTitle": "د کارکوونکي قرارداد سمول",
       "description": "کارکوونکی او پالیسي وټاکئ؛ قانوني سند د خوندي کولو پر مهال جوړېږي.",
       "templateHelpTitle": "په اتومات ډول ډکېدونکي ځایونه",
       "templateHelpSubtitle": "کله چې قرارداد جوړېږي، دا ځایونه د کارکوونکي له پروفایل څخه په اتومات ډول ډکېږي:",
-      "templateFields": { "staffName": "د کارکوونکي نوم", "tazkira": "تذکره / ملي پېژندپاڼه", "position": "د دندې نوم", "salary": "اصلي معاش", "startDate": "د پیل نېټه", "companyName": "د شرکت نوم" }
+      "templateFields": {
+        "staffName": "د کارکوونکي نوم",
+        "tazkira": "تذکره / ملي پېژندپاڼه",
+        "position": "د دندې نوم",
+        "salary": "اصلي معاش",
+        "startDate": "د پیل نېټه",
+        "companyName": "د شرکت نوم"
+      }
     },
-    "placeholders": { "selectStaff": "کارکوونکی وټاکئ", "selectPolicy": "د قرارداد پالیسي وټاکئ", "selectStatus": "د قرارداد حالت وټاکئ" },
-    "details": { "title": "د قرارداد تفصیل", "documentSnapshot": "جوړ شوی قراردادي سند", "noContent": "د قرارداد د سند منځپانګه نشته." },
+    "placeholders": {
+      "selectStaff": "کارکوونکی وټاکئ",
+      "selectPolicy": "د قرارداد پالیسي وټاکئ",
+      "selectStatus": "د قرارداد حالت وټاکئ"
+    },
+    "details": {
+      "title": "د قرارداد تفصیل",
+      "documentSnapshot": "جوړ شوی قراردادي سند",
+      "noContent": "د قرارداد د سند منځپانګه نشته."
+    },
     "print": {
-      "title": "د استخدام قرارداد", "taxId": "جواز / مالیاتي شمېره", "employeeSignature": "د کارکوونکي لاسلیک",
-      "employerSignature": "کار ورکوونکی / مجاز لاسلیک کوونکی", "signatoryStamp": "مجاز لاسلیک یا مهر", "date": "نېټه"
+      "title": "د استخدام قرارداد",
+      "taxId": "جواز / مالیاتي شمېره",
+      "employeeSignature": "د کارکوونکي لاسلیک",
+      "employerSignature": "کار ورکوونکی / مجاز لاسلیک کوونکی",
+      "signatoryStamp": "مجاز لاسلیک یا مهر",
+      "date": "نېټه"
     },
     "messages": {
-      "created": "د کارکوونکي قرارداد په بریالیتوب جوړ شو.", "updated": "د کارکوونکي قرارداد په بریالیتوب تازه شو.",
-      "statusUpdated": "د قرارداد حالت په بریالیتوب تازه شو.", "loadFailed": "د کارکوونکو قراردادونه پورته نه شول.",
-      "optionsLoadFailed": "د قرارداد د فورم غوراوي پورته نه شول.", "notFound": "ټاکل شوی قرارداد ونه موندل شو.",
-      "staffNotFound": "ټاکل شوی کارکوونکی ونه موندل شو.", "policyNotFound": "ټاکل شوې قراردادي پالیسي ونه موندل شوه.",
-      "statusNotFound": "ټاکل شوی قراردادي حالت ونه موندل شو.", "numberConflict": "د قرارداد د شمېرې ټکر رامنځته شو. بیا یې ولېږئ.",
-      "operationFailed": "کړنه بشپړه نه شوه. مهرباني وکړئ بیا هڅه وکړئ.", "unauthenticated": "قراردادونو ته د لاسرسي لپاره ننوځئ.",
+      "created": "د کارکوونکي قرارداد په بریالیتوب جوړ شو.",
+      "updated": "د کارکوونکي قرارداد په بریالیتوب تازه شو.",
+      "statusUpdated": "د قرارداد حالت په بریالیتوب تازه شو.",
+      "loadFailed": "د کارکوونکو قراردادونه پورته نه شول.",
+      "optionsLoadFailed": "د قرارداد د فورم غوراوي پورته نه شول.",
+      "notFound": "ټاکل شوی قرارداد ونه موندل شو.",
+      "staffNotFound": "ټاکل شوی کارکوونکی ونه موندل شو.",
+      "policyNotFound": "ټاکل شوې قراردادي پالیسي ونه موندل شوه.",
+      "statusNotFound": "ټاکل شوی قراردادي حالت ونه موندل شو.",
+      "numberConflict": "د قرارداد د شمېرې ټکر رامنځته شو. بیا یې ولېږئ.",
+      "operationFailed": "کړنه بشپړه نه شوه. مهرباني وکړئ بیا هڅه وکړئ.",
+      "unauthenticated": "قراردادونو ته د لاسرسي لپاره ننوځئ.",
       "forbidden": "تاسو د کارکوونکو قراردادونو ته د لاسرسي اجازه نه لرئ."
     },
     "validation": {
-      "invalidSubmission": "نښه شوي ځایونه وګورئ او بیا هڅه وکړئ.", "required": "دا ځای اړین دی.",
-      "valueTooLong": "دا ارزښت ډېر اوږد دی.", "salaryInvalid": "سم معاش ولیکئ.",
-      "salaryPositive": "معاش باید له صفر څخه زیات وي.", "dateInvalid": "سمه نېټه ولیکئ.",
-      "endDateBeforeStart": "د پای نېټه د پیل له نېټې مخکې نه شي کېدای.", "statusInvalid": "د قرارداد سم حالت وټاکئ."
+      "invalidSubmission": "نښه شوي ځایونه وګورئ او بیا هڅه وکړئ.",
+      "required": "دا ځای اړین دی.",
+      "valueTooLong": "دا ارزښت ډېر اوږد دی.",
+      "salaryInvalid": "سم معاش ولیکئ.",
+      "salaryPositive": "معاش باید له صفر څخه زیات وي.",
+      "dateInvalid": "سمه نېټه ولیکئ.",
+      "endDateBeforeStart": "د پای نېټه د پیل له نېټې مخکې نه شي کېدای.",
+      "statusInvalid": "د قرارداد سم حالت وټاکئ."
     }
   },
   "hrmStaff": {
@@ -476,7 +649,22 @@
       "profileTab": "پروفایل",
       "contracts": "قراردادونه",
       "attendanceTab": "حاضري او وختپاڼې",
-      "attendance": { "month": "میاشت", "date": "نېټه", "statusLabel": "حالت", "checkIn": "د ننوتلو وخت", "checkOut": "د وتلو وخت", "hours": "ساعتونه", "totalHours": "ټول ساعتونه", "emptyTitle": "د حاضرۍ تاریخ نشته", "emptyDescription": "په ټاکل شوې میاشت کې د دې کارکوونکي حاضري نه ده ثبت شوې.", "status": { "PRESENT": "حاضر", "ABSENT": "غیر حاضر", "LEAVE": "رخصتي" } },
+      "attendance": {
+        "month": "میاشت",
+        "date": "نېټه",
+        "statusLabel": "حالت",
+        "checkIn": "د ننوتلو وخت",
+        "checkOut": "د وتلو وخت",
+        "hours": "ساعتونه",
+        "totalHours": "ټول ساعتونه",
+        "emptyTitle": "د حاضرۍ تاریخ نشته",
+        "emptyDescription": "په ټاکل شوې میاشت کې د دې کارکوونکي حاضري نه ده ثبت شوې.",
+        "status": {
+          "PRESENT": "حاضر",
+          "ABSENT": "غیر حاضر",
+          "LEAVE": "رخصتي"
+        }
+      },
       "noContractsTitle": "د قرارداد تاریخ ونه موندل شو",
       "noContracts": "له دې کارکوونکي سره د قرارداد تاریخ نشته.",
       "printContract": "قرارداد چاپول"
@@ -510,97 +698,861 @@
     }
   },
   "hrmPayroll": {
-    "months": ["جنوري", "فبروري", "مارچ", "اپرېل", "می", "جون", "جولای", "اګست", "سپتمبر", "اکتوبر", "نومبر", "دسمبر"],
-    "period": { "month": "میاشت", "year": "کال" }, "summary": { "totalPayroll": "ټول معاشونه", "totalPaid": "ټول تادیه شوي", "totalPending": "پاتې تادیات", "totalDeductions": "ټولې کسرۍ" }, "filters": { "search": "معاشونه ولټوئ", "searchPlaceholder": "د کارکوونکي نوم، برېښنالیک یا دنده ولټوئ", "staff": "کارکوونکی", "allStaff": "ټول کارکوونکي", "status": "حالت", "allStatuses": "ټول حالتونه" }, "fields": { "staff": "کارکوونکی", "position": "دنده", "baseSalary": "اصلي معاش", "allowances": "امتیازات", "tax": "مالیاتي کسر" },
-    "table": { "staff": "کارکوونکی", "baseSalary": "اصلي معاش", "deductions": "کسرۍ", "netSalary": "خالص معاش", "status": "حالت", "paymentMethod": "د تادیې طریقه", "actions": "کړنې", "rowsPerPage": "په پاڼه کې کتارونه:", "of": "له" }, "status": { "DRAFT": "مسوده", "PENDING": "په تمه", "PAID": "تادیه شوی" },
-    "actions": { "generate": "میاشتني معاشونه جوړول", "viewPayslip": "معاش پاڼه کتل", "processPayment": "تادیه اجرا کول", "confirmPayment": "تادیه تاییدول", "processing": "اجرا کېږي...", "delete": "ړنګول", "cancel": "لغوه کول", "close": "تړل", "print": "معاش پاڼه چاپول" }, "empty": { "title": "د معاش ریکارډ ونه موندل شو", "description": "د دې مودې فعالو قراردادونو لپاره معاش جوړ کړئ." }, "payment": { "title": "د معاش تادیه", "method": "د تادیې طریقه", "selectMethod": "د تادیې طریقه وټاکئ..." },
-    "payslip": { "title": "د کارکوونکي معاش پاڼه", "tazkira": "تذکره", "contractNumber": "د قرارداد شمېره", "payPeriod": "د معاش موده", "paymentDate": "د تادیې نېټه", "earnings": "عایدات", "deductions": "کسرۍ", "amount": "اندازه", "unpaidDays": "بې معاشه رخصتي / غیابت ({count} ورځې)", "netPay": "خالص تادیه" }, "delete": { "title": "د معاش ریکارډ ړنګول", "description": "دا د معاش ریکارډ ړنګ شي؟ دا کړنه بېرته نه راګرځي." },
-    "messages": { "generated": "د {count} کارکوونکو معاش جوړ شو.", "paid": "د معاش تادیه په بریالیتوب اجرا شوه.", "deleted": "د معاش ریکارډ ړنګ شو.", "loadFailed": "د معاش ریکارډونه پورته نه شول.", "operationFailed": "د معاش کړنه بشپړه نه شوه.", "unauthenticated": "د لاسرسي لپاره ننوځئ.", "forbidden": "تاسو د معاشونو د ادارې اجازه نه لرئ.", "staffProfileRequired": "د معاش پاڼې لپاره حساب باید له کارکوونکي سره تړلی وي.", "statusNotFound": "د معاش حالتونه نه دي تنظیم شوي.", "paymentMethodNotFound": "د تادیې فعاله طریقه وټاکئ.", "noEligibleStaff": "د دې مودې فعال قرارداد ونه موندل شو.", "notFound": "د معاش ریکارډ ونه موندل شو.", "paidDeleteBlocked": "تادیه شوی معاش نه شي ړنګېدلی." }, "validation": { "monthInvalid": "سمه میاشت وټاکئ.", "yearInvalid": "سم کال وټاکئ.", "paymentMethodRequired": "د تادیې طریقه وټاکئ." }
+    "months": [
+      "جنوري",
+      "فبروري",
+      "مارچ",
+      "اپرېل",
+      "می",
+      "جون",
+      "جولای",
+      "اګست",
+      "سپتمبر",
+      "اکتوبر",
+      "نومبر",
+      "دسمبر"
+    ],
+    "period": {
+      "month": "میاشت",
+      "year": "کال"
+    },
+    "summary": {
+      "totalPayroll": "ټول معاشونه",
+      "totalPaid": "ټول تادیه شوي",
+      "totalPending": "پاتې تادیات",
+      "totalDeductions": "ټولې کسرۍ"
+    },
+    "filters": {
+      "search": "معاشونه ولټوئ",
+      "searchPlaceholder": "د کارکوونکي نوم، برېښنالیک یا دنده ولټوئ",
+      "staff": "کارکوونکی",
+      "allStaff": "ټول کارکوونکي",
+      "status": "حالت",
+      "allStatuses": "ټول حالتونه"
+    },
+    "fields": {
+      "staff": "کارکوونکی",
+      "position": "دنده",
+      "baseSalary": "اصلي معاش",
+      "allowances": "امتیازات",
+      "tax": "مالیاتي کسر"
+    },
+    "table": {
+      "staff": "کارکوونکی",
+      "baseSalary": "اصلي معاش",
+      "deductions": "کسرۍ",
+      "netSalary": "خالص معاش",
+      "status": "حالت",
+      "paymentMethod": "د تادیې طریقه",
+      "actions": "کړنې",
+      "rowsPerPage": "په پاڼه کې کتارونه:",
+      "of": "له"
+    },
+    "status": {
+      "DRAFT": "مسوده",
+      "PENDING": "په تمه",
+      "PAID": "تادیه شوی"
+    },
+    "actions": {
+      "generate": "میاشتني معاشونه جوړول",
+      "viewPayslip": "معاش پاڼه کتل",
+      "processPayment": "تادیه اجرا کول",
+      "confirmPayment": "تادیه تاییدول",
+      "processing": "اجرا کېږي...",
+      "delete": "ړنګول",
+      "cancel": "لغوه کول",
+      "close": "تړل",
+      "print": "معاش پاڼه چاپول"
+    },
+    "empty": {
+      "title": "د معاش ریکارډ ونه موندل شو",
+      "description": "د دې مودې فعالو قراردادونو لپاره معاش جوړ کړئ."
+    },
+    "payment": {
+      "title": "د معاش تادیه",
+      "method": "د تادیې طریقه",
+      "selectMethod": "د تادیې طریقه وټاکئ..."
+    },
+    "payslip": {
+      "title": "د کارکوونکي معاش پاڼه",
+      "tazkira": "تذکره",
+      "contractNumber": "د قرارداد شمېره",
+      "payPeriod": "د معاش موده",
+      "paymentDate": "د تادیې نېټه",
+      "earnings": "عایدات",
+      "deductions": "کسرۍ",
+      "amount": "اندازه",
+      "unpaidDays": "بې معاشه رخصتي / غیابت ({count} ورځې)",
+      "netPay": "خالص تادیه"
+    },
+    "delete": {
+      "title": "د معاش ریکارډ ړنګول",
+      "description": "دا د معاش ریکارډ ړنګ شي؟ دا کړنه بېرته نه راګرځي."
+    },
+    "messages": {
+      "generated": "د {count} کارکوونکو معاش جوړ شو.",
+      "paid": "د معاش تادیه په بریالیتوب اجرا شوه.",
+      "deleted": "د معاش ریکارډ ړنګ شو.",
+      "loadFailed": "د معاش ریکارډونه پورته نه شول.",
+      "operationFailed": "د معاش کړنه بشپړه نه شوه.",
+      "unauthenticated": "د لاسرسي لپاره ننوځئ.",
+      "forbidden": "تاسو د معاشونو د ادارې اجازه نه لرئ.",
+      "staffProfileRequired": "د معاش پاڼې لپاره حساب باید له کارکوونکي سره تړلی وي.",
+      "statusNotFound": "د معاش حالتونه نه دي تنظیم شوي.",
+      "paymentMethodNotFound": "د تادیې فعاله طریقه وټاکئ.",
+      "noEligibleStaff": "د دې مودې فعال قرارداد ونه موندل شو.",
+      "notFound": "د معاش ریکارډ ونه موندل شو.",
+      "paidDeleteBlocked": "تادیه شوی معاش نه شي ړنګېدلی."
+    },
+    "validation": {
+      "monthInvalid": "سمه میاشت وټاکئ.",
+      "yearInvalid": "سم کال وټاکئ.",
+      "paymentMethodRequired": "د تادیې طریقه وټاکئ."
+    }
   },
-  "payrollOptions": { "statuses": { "title": "د معاش حالتونه", "description": "د معاش بهیر حالتونه اداره کړئ." }, "paymentMethods": { "title": "د تادیې طریقې", "description": "د معاش منظورې تادیې طریقې اداره کړئ." }, "common": { "name": "نوم", "description": "توضیحات", "status": "حالت", "actions": "کړنې", "active": "فعال", "inactive": "غیرفعال", "activate": "فعالول", "deactivate": "غیرفعالول", "add": "د معاش اختیار زیاتول", "create": "جوړول", "cancel": "لغوه کول", "empty": "اختیار نه دی تنظیم شوی" }, "messages": { "operationFailed": "کړنه بشپړه نه شوه." } },
+  "payrollOptions": {
+    "statuses": {
+      "title": "د معاش حالتونه",
+      "description": "د معاش بهیر حالتونه اداره کړئ."
+    },
+    "paymentMethods": {
+      "title": "د تادیې طریقې",
+      "description": "د معاش منظورې تادیې طریقې اداره کړئ."
+    },
+    "common": {
+      "name": "نوم",
+      "description": "توضیحات",
+      "status": "حالت",
+      "actions": "کړنې",
+      "active": "فعال",
+      "inactive": "غیرفعال",
+      "activate": "فعالول",
+      "deactivate": "غیرفعالول",
+      "add": "د معاش اختیار زیاتول",
+      "create": "جوړول",
+      "cancel": "لغوه کول",
+      "empty": "اختیار نه دی تنظیم شوی"
+    },
+    "messages": {
+      "operationFailed": "کړنه بشپړه نه شوه."
+    }
+  },
   "hrmLeaves": {
-    "summary": { "pending": "د ارزونې په تمه", "onLeaveToday": "نن په رخصتۍ", "monthlyDays": "د میاشتې رخصتۍ ورځې" },
-    "filters": { "search": "د رخصتۍ غوښتنې ولټوئ", "searchPlaceholder": "د کارکوونکي نوم، برېښنالیک، دنده یا لامل ولټوئ", "staff": "کارکوونکی", "allStaff": "ټول کارکوونکي", "leaveType": "د رخصتۍ ډول", "allLeaveTypes": "د رخصتۍ ټول ډولونه", "status": "حالت", "allStatuses": "ټول حالتونه" },
-    "table": { "staff": "کارکوونکی", "leaveType": "د رخصتۍ ډول", "duration": "موده / د نېټو واټن", "reason": "لامل", "status": "حالت", "approvedBy": "تاییدوونکی", "actions": "کړنې", "days": "{count} ورځې" },
-    "drawer": { "title": "د رخصتۍ غوښتنه", "editTitle": "د رخصتۍ غوښتنه سمول", "description": "د غوښتنې معلومات ولیکئ؛ موده په اوتومات ډول حسابېږي.", "calculatedDays": "حساب شوې ورځې" },
-    "fields": { "staff": "کارکوونکی", "leaveType": "د رخصتۍ ډول", "startDate": "د پیل نېټه", "endDate": "د پای نېټه", "reason": "لامل / یادښت", "initialStatus": "لومړنی حالت" },
-    "placeholders": { "selectStaff": "کارکوونکی وټاکئ...", "selectLeaveType": "د رخصتۍ ډول وټاکئ...", "selectStatus": "لومړنی حالت وټاکئ...", "reason": "د رخصتۍ غوښتنې لامل ولیکئ" },
-    "status": { "PENDING": "په تمه", "APPROVED": "تایید شوی", "REJECTED": "رد شوی" },
-    "actions": { "requestLeave": "د رخصتۍ غوښتنه", "approve": "تایید", "reject": "رد", "edit": "سمول", "delete": "ړنګول", "cancel": "لغوه کول", "close": "تړل", "submit": "غوښتنه ثبتول", "saveChanges": "بدلونونه خوندي کول", "saving": "خوندي کېږي..." },
-    "empty": { "title": "د رخصتۍ غوښتنه ونه موندل شوه", "description": "له ټاکل شویو فلټرونو سره کومه غوښتنه برابره نه ده.", "action": "لومړۍ غوښتنه جوړول" },
-    "delete": { "title": "د رخصتۍ غوښتنه ړنګول", "description": "ایا ډاډه یاست چې دا غوښتنه ړنګوئ؟ دا کړنه بېرته نه راګرځي." },
-    "pagination": { "rowsPerPage": "په پاڼه کې کتارونه:", "of": "له" },
-    "messages": { "created": "د رخصتۍ غوښتنه په بریالیتوب ثبت شوه.", "updated": "غوښتنه په بریالیتوب تازه شوه.", "approved": "غوښتنه تایید او حاضري همغږې شوه.", "rejected": "غوښتنه په بریالیتوب رد شوه.", "deleted": "غوښتنه په بریالیتوب ړنګه شوه.", "loadFailed": "د رخصتۍ غوښتنې پورته نه شوې.", "operationFailed": "کړنه بشپړه نه شوه. بیا هڅه وکړئ.", "unauthenticated": "د لاسرسي لپاره ننوځئ.", "forbidden": "تاسو د دې غوښتنې د ادارې اجازه نه لرئ.", "staffProfileRequired": "د رخصتۍ غوښتنې لپاره حساب باید د کارکوونکي له پروفایل سره تړلی وي.", "staffNotFound": "ټاکل شوی کارکوونکی ونه موندل شو.", "leaveTypeNotFound": "د رخصتۍ فعال ډول وټاکئ.", "statusNotFound": "د رخصتۍ حالتونه نه دي تنظیم شوي؛ د ډیټابیس Seed وچلوئ.", "notFound": "ټاکل شوې غوښتنه ونه موندل شوه.", "invalidRelations": "یو یا ډېر ټاکل شوي ارزښتونه ناسم دي." },
-    "validation": { "required": "دا ځای اړین دی.", "dateInvalid": "سمه نېټه وټاکئ.", "dateRangeInvalid": "د پای نېټه باید د پیل له نېټې سره برابره یا وروسته وي.", "reasonTooLong": "لامل باید تر ۲۰۰۰ تورو زیات نه وي.", "statusInvalid": "تایید یا رد وټاکئ." }
+    "summary": {
+      "pending": "د ارزونې په تمه",
+      "onLeaveToday": "نن په رخصتۍ",
+      "monthlyDays": "د میاشتې رخصتۍ ورځې"
+    },
+    "filters": {
+      "search": "د رخصتۍ غوښتنې ولټوئ",
+      "searchPlaceholder": "د کارکوونکي نوم، برېښنالیک، دنده یا لامل ولټوئ",
+      "staff": "کارکوونکی",
+      "allStaff": "ټول کارکوونکي",
+      "leaveType": "د رخصتۍ ډول",
+      "allLeaveTypes": "د رخصتۍ ټول ډولونه",
+      "status": "حالت",
+      "allStatuses": "ټول حالتونه"
+    },
+    "table": {
+      "staff": "کارکوونکی",
+      "leaveType": "د رخصتۍ ډول",
+      "duration": "موده / د نېټو واټن",
+      "reason": "لامل",
+      "status": "حالت",
+      "approvedBy": "تاییدوونکی",
+      "actions": "کړنې",
+      "days": "{count} ورځې"
+    },
+    "drawer": {
+      "title": "د رخصتۍ غوښتنه",
+      "editTitle": "د رخصتۍ غوښتنه سمول",
+      "description": "د غوښتنې معلومات ولیکئ؛ موده په اوتومات ډول حسابېږي.",
+      "calculatedDays": "حساب شوې ورځې"
+    },
+    "fields": {
+      "staff": "کارکوونکی",
+      "leaveType": "د رخصتۍ ډول",
+      "startDate": "د پیل نېټه",
+      "endDate": "د پای نېټه",
+      "reason": "لامل / یادښت",
+      "initialStatus": "لومړنی حالت"
+    },
+    "placeholders": {
+      "selectStaff": "کارکوونکی وټاکئ...",
+      "selectLeaveType": "د رخصتۍ ډول وټاکئ...",
+      "selectStatus": "لومړنی حالت وټاکئ...",
+      "reason": "د رخصتۍ غوښتنې لامل ولیکئ"
+    },
+    "status": {
+      "PENDING": "په تمه",
+      "APPROVED": "تایید شوی",
+      "REJECTED": "رد شوی"
+    },
+    "actions": {
+      "requestLeave": "د رخصتۍ غوښتنه",
+      "approve": "تایید",
+      "reject": "رد",
+      "edit": "سمول",
+      "delete": "ړنګول",
+      "cancel": "لغوه کول",
+      "close": "تړل",
+      "submit": "غوښتنه ثبتول",
+      "saveChanges": "بدلونونه خوندي کول",
+      "saving": "خوندي کېږي..."
+    },
+    "empty": {
+      "title": "د رخصتۍ غوښتنه ونه موندل شوه",
+      "description": "له ټاکل شویو فلټرونو سره کومه غوښتنه برابره نه ده.",
+      "action": "لومړۍ غوښتنه جوړول"
+    },
+    "delete": {
+      "title": "د رخصتۍ غوښتنه ړنګول",
+      "description": "ایا ډاډه یاست چې دا غوښتنه ړنګوئ؟ دا کړنه بېرته نه راګرځي."
+    },
+    "pagination": {
+      "rowsPerPage": "په پاڼه کې کتارونه:",
+      "of": "له"
+    },
+    "messages": {
+      "created": "د رخصتۍ غوښتنه په بریالیتوب ثبت شوه.",
+      "updated": "غوښتنه په بریالیتوب تازه شوه.",
+      "approved": "غوښتنه تایید او حاضري همغږې شوه.",
+      "rejected": "غوښتنه په بریالیتوب رد شوه.",
+      "deleted": "غوښتنه په بریالیتوب ړنګه شوه.",
+      "loadFailed": "د رخصتۍ غوښتنې پورته نه شوې.",
+      "operationFailed": "کړنه بشپړه نه شوه. بیا هڅه وکړئ.",
+      "unauthenticated": "د لاسرسي لپاره ننوځئ.",
+      "forbidden": "تاسو د دې غوښتنې د ادارې اجازه نه لرئ.",
+      "staffProfileRequired": "د رخصتۍ غوښتنې لپاره حساب باید د کارکوونکي له پروفایل سره تړلی وي.",
+      "staffNotFound": "ټاکل شوی کارکوونکی ونه موندل شو.",
+      "leaveTypeNotFound": "د رخصتۍ فعال ډول وټاکئ.",
+      "statusNotFound": "د رخصتۍ حالتونه نه دي تنظیم شوي؛ د ډیټابیس Seed وچلوئ.",
+      "notFound": "ټاکل شوې غوښتنه ونه موندل شوه.",
+      "invalidRelations": "یو یا ډېر ټاکل شوي ارزښتونه ناسم دي."
+    },
+    "validation": {
+      "required": "دا ځای اړین دی.",
+      "dateInvalid": "سمه نېټه وټاکئ.",
+      "dateRangeInvalid": "د پای نېټه باید د پیل له نېټې سره برابره یا وروسته وي.",
+      "reasonTooLong": "لامل باید تر ۲۰۰۰ تورو زیات نه وي.",
+      "statusInvalid": "تایید یا رد وټاکئ."
+    }
   },
   "crmLeads": {
-    "summary": { "totalActive": "ټول فعال فرصتونه", "pipelineValue": "د پایپ لاین ارزښت", "followUpsToday": "د نن تعقیبونه", "conversionRate": "د بدلون کچه" },
-    "filters": { "search": "لټون", "searchPlaceholder": "فرصت، شرکت یا اړیکه ولټوئ", "source": "سرچینه", "allSources": "ټولې سرچینې", "status": "حالت", "allStatuses": "ټول حالتونه", "assigned": "مسئول کارکوونکی", "allStaff": "ټول کارکوونکي" },
-    "views": { "table": "جدول", "kanban": "پایپ لاین" }, "table": { "lead": "د فرصت نوم / شرکت", "contact": "اړیکه", "source": "سرچینه", "status": "حالت", "value": "اټکلی ارزښت", "assigned": "مسئول کارکوونکی", "followUp": "راتلونکی تعقیب", "actions": "کړنې" },
-    "fields": { "title": "د فرصت نوم", "company": "د شرکت نوم", "contact": "د اړیکې نوم", "email": "برېښنالیک", "phone": "تلیفون", "source": "د فرصت سرچینه", "status": "د پایپ لاین حالت", "assigned": "مسئول کارکوونکی", "value": "اټکلی ارزښت", "currency": "اسعار", "followUp": "راتلونکی تعقیب", "notes": "یادښتونه" },
-    "placeholders": { "source": "سرچینه وټاکئ...", "status": "حالت وټاکئ...", "unassigned": "نه دی سپارل شوی" }, "drawer": { "addTitle": "نوی فرصت جوړول", "editTitle": "فرصت سمول", "description": "د فرصت، اړیکې، مالکیت او تعقیب معلومات ولیکئ." },
-    "actions": { "newLead": "نوی فرصت", "activity": "فعالیت ثبتول", "convert": "پېرېدونکي ته اړول", "edit": "سمول", "delete": "ړنګول", "cancel": "لغوه", "create": "فرصت جوړول", "save": "بدلونونه ساتل", "saving": "ساتل کېږي..." },
-    "activity": { "title": "د فرصت فعالیت او تاریخ", "type": "د فعالیت ډول", "subject": "سرلیک", "description": "تشریح / یادښت", "dueDate": "ټاکلې نېټه", "add": "فعالیت زیاتول", "history": "د فعالیت مهالویش", "empty": "تر اوسه فعالیت نشته.", "types": { "CALL": "زنګ", "MEETING": "ناسته", "EMAIL": "برېښنالیک", "NOTE": "یادښت", "FOLLOW_UP": "تعقیب" } },
-    "activities": { "leadCreated": "فرصت جوړ شو", "converted": "فعال پېرېدونکي ته واوښت", "statusChanged": "حالت {status} ته بدل شو" }, "kanban": { "empty": "په دې پړاو کې فرصت نشته" }, "empty": { "title": "فرصت ونه موندل شو", "description": "هیڅ فرصت له ټاکلو فلټرونو سره برابر نه دی." },
-    "pagination": { "rowsPerPage": "په هر مخ کې کتارونه:", "of": "له" }, "delete": { "title": "فرصت ړنګول", "description": "دا ناتبدیل شوی فرصت ړنګ شي؟ دا عمل بېرته نه راګرځي." },
-    "messages": { "created": "فرصت په بریالیتوب جوړ شو.", "updated": "فرصت تازه شو.", "deleted": "فرصت ړنګ شو.", "statusUpdated": "د پایپ لاین حالت تازه شو.", "activityAdded": "فعالیت ثبت شو.", "converted": "فرصت فعال پېرېدونکي ته واوښت.", "loadFailed": "فرصتونه پورته نه شول.", "operationFailed": "عملیات بشپړ نه شول.", "unauthenticated": "د لاسرسي لپاره ننوځئ.", "forbidden": "تاسو د فرصتونو د مدیریت اجازه نه لرئ.", "notFound": "ټاکل شوی فرصت ونه موندل شو.", "invalidRelations": "سمه فعاله سرچینه، حالت او کارکوونکی وټاکئ.", "staffProfileRequired": "د فعالیت لپاره تړلی کارکوونکی یا مسئول کارکوونکی اړین دی.", "alreadyConverted": "دا فرصت مخکې بدل شوی.", "wonStatusMissing": "له بدلولو مخکې فعال WON حالت تنظیم کړئ.", "clientEmailExists": "په دې برېښنالیک پېرېدونکی شته.", "deleteBlocked": "بدل شوی یا له قرارداد سره تړلی فرصت نه ړنګېږي." },
-    "validation": { "invalid": "لېږل شوي معلومات وګورئ.", "required": "دا برخه اړینه ده.", "emailInvalid": "سم برېښنالیک ولیکئ.", "valueInvalid": "سم ارزښت ولیکئ.", "dateInvalid": "سمه نېټه ولیکئ.", "tooLong": "دا ارزښت ډېر اوږد دی.", "activityTypeInvalid": "سم فعالیت ډول وټاکئ." }
+    "summary": {
+      "totalActive": "ټول فعال فرصتونه",
+      "pipelineValue": "د پایپ لاین ارزښت",
+      "followUpsToday": "د نن تعقیبونه",
+      "conversionRate": "د بدلون کچه"
+    },
+    "filters": {
+      "search": "لټون",
+      "searchPlaceholder": "فرصت، شرکت یا اړیکه ولټوئ",
+      "source": "سرچینه",
+      "allSources": "ټولې سرچینې",
+      "status": "حالت",
+      "allStatuses": "ټول حالتونه",
+      "assigned": "مسئول کارکوونکی",
+      "allStaff": "ټول کارکوونکي"
+    },
+    "views": {
+      "table": "جدول",
+      "kanban": "پایپ لاین"
+    },
+    "table": {
+      "lead": "د فرصت نوم / شرکت",
+      "contact": "اړیکه",
+      "source": "سرچینه",
+      "status": "حالت",
+      "value": "اټکلی ارزښت",
+      "assigned": "مسئول کارکوونکی",
+      "followUp": "راتلونکی تعقیب",
+      "actions": "کړنې"
+    },
+    "fields": {
+      "title": "د فرصت نوم",
+      "company": "د شرکت نوم",
+      "contact": "د اړیکې نوم",
+      "email": "برېښنالیک",
+      "phone": "تلیفون",
+      "source": "د فرصت سرچینه",
+      "status": "د پایپ لاین حالت",
+      "assigned": "مسئول کارکوونکی",
+      "value": "اټکلی ارزښت",
+      "currency": "اسعار",
+      "followUp": "راتلونکی تعقیب",
+      "notes": "یادښتونه"
+    },
+    "placeholders": {
+      "source": "سرچینه وټاکئ...",
+      "status": "حالت وټاکئ...",
+      "unassigned": "نه دی سپارل شوی"
+    },
+    "drawer": {
+      "addTitle": "نوی فرصت جوړول",
+      "editTitle": "فرصت سمول",
+      "description": "د فرصت، اړیکې، مالکیت او تعقیب معلومات ولیکئ."
+    },
+    "actions": {
+      "newLead": "نوی فرصت",
+      "activity": "فعالیت ثبتول",
+      "convert": "پېرېدونکي ته اړول",
+      "edit": "سمول",
+      "delete": "ړنګول",
+      "cancel": "لغوه",
+      "create": "فرصت جوړول",
+      "save": "بدلونونه ساتل",
+      "saving": "ساتل کېږي..."
+    },
+    "activity": {
+      "title": "د فرصت فعالیت او تاریخ",
+      "type": "د فعالیت ډول",
+      "subject": "سرلیک",
+      "description": "تشریح / یادښت",
+      "dueDate": "ټاکلې نېټه",
+      "add": "فعالیت زیاتول",
+      "history": "د فعالیت مهالویش",
+      "empty": "تر اوسه فعالیت نشته.",
+      "types": {
+        "CALL": "زنګ",
+        "MEETING": "ناسته",
+        "EMAIL": "برېښنالیک",
+        "NOTE": "یادښت",
+        "FOLLOW_UP": "تعقیب"
+      }
+    },
+    "activities": {
+      "leadCreated": "فرصت جوړ شو",
+      "converted": "فعال پېرېدونکي ته واوښت",
+      "statusChanged": "حالت {status} ته بدل شو"
+    },
+    "kanban": {
+      "empty": "په دې پړاو کې فرصت نشته"
+    },
+    "empty": {
+      "title": "فرصت ونه موندل شو",
+      "description": "هیڅ فرصت له ټاکلو فلټرونو سره برابر نه دی."
+    },
+    "pagination": {
+      "rowsPerPage": "په هر مخ کې کتارونه:",
+      "of": "له"
+    },
+    "delete": {
+      "title": "فرصت ړنګول",
+      "description": "دا ناتبدیل شوی فرصت ړنګ شي؟ دا عمل بېرته نه راګرځي."
+    },
+    "messages": {
+      "created": "فرصت په بریالیتوب جوړ شو.",
+      "updated": "فرصت تازه شو.",
+      "deleted": "فرصت ړنګ شو.",
+      "statusUpdated": "د پایپ لاین حالت تازه شو.",
+      "activityAdded": "فعالیت ثبت شو.",
+      "converted": "فرصت فعال پېرېدونکي ته واوښت.",
+      "loadFailed": "فرصتونه پورته نه شول.",
+      "operationFailed": "عملیات بشپړ نه شول.",
+      "unauthenticated": "د لاسرسي لپاره ننوځئ.",
+      "forbidden": "تاسو د فرصتونو د مدیریت اجازه نه لرئ.",
+      "notFound": "ټاکل شوی فرصت ونه موندل شو.",
+      "invalidRelations": "سمه فعاله سرچینه، حالت او کارکوونکی وټاکئ.",
+      "staffProfileRequired": "د فعالیت لپاره تړلی کارکوونکی یا مسئول کارکوونکی اړین دی.",
+      "alreadyConverted": "دا فرصت مخکې بدل شوی.",
+      "wonStatusMissing": "له بدلولو مخکې فعال WON حالت تنظیم کړئ.",
+      "clientEmailExists": "په دې برېښنالیک پېرېدونکی شته.",
+      "deleteBlocked": "بدل شوی یا له قرارداد سره تړلی فرصت نه ړنګېږي."
+    },
+    "validation": {
+      "invalid": "لېږل شوي معلومات وګورئ.",
+      "required": "دا برخه اړینه ده.",
+      "emailInvalid": "سم برېښنالیک ولیکئ.",
+      "valueInvalid": "سم ارزښت ولیکئ.",
+      "dateInvalid": "سمه نېټه ولیکئ.",
+      "tooLong": "دا ارزښت ډېر اوږد دی.",
+      "activityTypeInvalid": "سم فعالیت ډول وټاکئ."
+    }
   },
   "crmVisitors": {
-    "summary": { "totalToday": "د نن ورځې لیدونکي", "activeGuests": "په ودانۍ کې حاضر مېلمانه", "completedToday": "د نن بشپړې شوې لیدنې", "convertedCount": "فرصت ته بدل شوي لیدونکي" },
-    "filters": { "search": "لټون", "searchPlaceholder": "نوم، شرکت، ټیلیفون یا برېښنالیک ولټوئ", "host": "کوربه کارکوونکی", "allHosts": "ټول کوربه کارکوونکي", "status": "حالت", "allStatuses": "ټول حالتونه", "dateRange": "د لیدنې نېټه" },
-    "ranges": { "TODAY": "نن", "LAST_7_DAYS": "تېرې ۷ ورځې", "LAST_30_DAYS": "تېرې ۳۰ ورځې", "ALL": "ټولې نېټې" },
-    "table": { "visitor": "د لیدونکي معلومات", "purpose": "د لیدنې موخه", "host": "کوربه کارکوونکی", "times": "ننوتل او وتل", "duration": "موده", "status": "حالت", "actions": "کړنې" },
-    "fields": { "name": "د لیدونکي بشپړ نوم", "phone": "د ټیلیفون شمېره", "email": "برېښنالیک", "company": "شرکت / اداره", "purpose": "د لیدنې موخه", "host": "کوربه کارکوونکی", "notes": "یادښتونه" },
-    "purposes": { "INTERVIEW": "مرکه", "BUSINESS_MEETING": "سوداګریزه غونډه", "VENDOR_DELIVERY": "پلورونکی / سپارنه", "CLIENT_CONSULTATION": "د پېرودونکي مشوره", "OTHER": "نور" },
-    "status": { "CHECKED_IN": "دننه شوی", "COMPLETED": "بشپړ شوی", "CONVERTED": "فرصت جوړ شو" },
-    "form": { "addTitle": "نوی لیدونکی ثبت کړئ", "editTitle": "لیدونکی سمول", "description": "د مېلمه اړیکې ثبت او فعال کوربه کارکوونکی وټاکئ.", "emailHelp": "برېښنالیک یوازې فرصت ته د لیدونکي د بدلولو پر مهال اړین دی." },
-    "placeholders": { "purpose": "د لیدنې موخه وټاکئ...", "host": "کوربه کارکوونکی وټاکئ..." },
-    "actions": { "add": "نوی لیدونکی ثبت کړئ", "checkout": "وتل ثبت کړئ", "convert": "فرصت ته بدل کړئ", "edit": "سمول", "delete": "ړنګول", "cancel": "لغوه", "save": "بدلونونه خوندي کړئ", "checkin": "لیدونکی دننه کړئ", "saving": "خوندي کېږي...", "converting": "بدلېږي..." },
-    "convert": { "title": "لیدونکی فرصت ته بدل کړئ", "description": "له دې لیدونکي نوی CRM فرصت جوړ او کوربه کارکوونکي ته وسپارل شي؟" },
-    "conversion": { "activityTitle": "لیدونکی فرصت ته بدل شو", "activityDescription": "دا فرصت د مخکینۍ مېز د لیدونکي له ریکارډ څخه رامنځته شوی.", "note": "فرصت ته بدل شو: {title}" },
-    "empty": { "title": "د لیدونکو ریکارډونه ونه موندل شول", "description": "له ټاکلي کوربه، حالت او نېټې سره ریکارډ نشته." },
-    "pagination": { "rowsPerPage": "په پاڼه کې کرښې:", "of": "له" }, "delete": { "title": "د لیدونکي ریکارډ ړنګ کړئ", "description": "دا د لیدونکي ریکارډ ړنګ شي؟ دا کړنه بېرته نه راګرځي." },
-    "messages": { "created": "لیدونکی په بریالیتوب دننه شو.", "updated": "د لیدونکي معلومات تازه شول.", "checkedOut": "د لیدونکي وتل ثبت شول.", "converted": "لیدونکی په بریالیتوب CRM فرصت ته بدل شو.", "deleted": "د لیدونکي ریکارډ ړنګ شو.", "loadFailed": "د لیدونکو ریکارډونه پورته نه شول.", "operationFailed": "د لیدونکي کړنه بشپړه نه شوه.", "unauthenticated": "د لیدونکو د ادارې لپاره ننوزئ.", "forbidden": "تاسو د لیدونکو د ادارې اجازه نه لرئ.", "notFound": "ټاکل شوی لیدونکی ونه موندل شو.", "invalidHost": "یو معتبر فعال کوربه کارکوونکی وټاکئ.", "alreadyCheckedOut": "د دې لیدونکي وتل مخکې ثبت شوي دي.", "alreadyConverted": "دا لیدونکی مخکې فرصت ته بدل شوی دی.", "emailRequiredForLead": "له بدلولو مخکې لیدونکي ته برېښنالیک زیات کړئ.", "pipelineOptionsMissing": "له بدلولو مخکې فعال NEW حالت او WALK_IN سرچینه تنظیم کړئ." },
-    "validation": { "invalid": "د لیدونکي معلومات وګورئ.", "required": "دا برخه اړینه ده.", "emailInvalid": "معتبر برېښنالیک ولیکئ.", "tooLong": "دا ارزښت ډېر اوږد دی." }
+    "summary": {
+      "totalToday": "د نن ورځې لیدونکي",
+      "activeGuests": "په ودانۍ کې حاضر مېلمانه",
+      "completedToday": "د نن بشپړې شوې لیدنې",
+      "convertedCount": "فرصت ته بدل شوي لیدونکي"
+    },
+    "filters": {
+      "search": "لټون",
+      "searchPlaceholder": "نوم، شرکت، ټیلیفون یا برېښنالیک ولټوئ",
+      "host": "کوربه کارکوونکی",
+      "allHosts": "ټول کوربه کارکوونکي",
+      "status": "حالت",
+      "allStatuses": "ټول حالتونه",
+      "dateRange": "د لیدنې نېټه"
+    },
+    "ranges": {
+      "TODAY": "نن",
+      "LAST_7_DAYS": "تېرې ۷ ورځې",
+      "LAST_30_DAYS": "تېرې ۳۰ ورځې",
+      "ALL": "ټولې نېټې"
+    },
+    "table": {
+      "visitor": "د لیدونکي معلومات",
+      "purpose": "د لیدنې موخه",
+      "host": "کوربه کارکوونکی",
+      "times": "ننوتل او وتل",
+      "duration": "موده",
+      "status": "حالت",
+      "actions": "کړنې"
+    },
+    "fields": {
+      "name": "د لیدونکي بشپړ نوم",
+      "phone": "د ټیلیفون شمېره",
+      "email": "برېښنالیک",
+      "company": "شرکت / اداره",
+      "purpose": "د لیدنې موخه",
+      "host": "کوربه کارکوونکی",
+      "notes": "یادښتونه"
+    },
+    "purposes": {
+      "INTERVIEW": "مرکه",
+      "BUSINESS_MEETING": "سوداګریزه غونډه",
+      "VENDOR_DELIVERY": "پلورونکی / سپارنه",
+      "CLIENT_CONSULTATION": "د پېرودونکي مشوره",
+      "OTHER": "نور"
+    },
+    "status": {
+      "CHECKED_IN": "دننه شوی",
+      "COMPLETED": "بشپړ شوی",
+      "CONVERTED": "فرصت جوړ شو"
+    },
+    "form": {
+      "addTitle": "نوی لیدونکی ثبت کړئ",
+      "editTitle": "لیدونکی سمول",
+      "description": "د مېلمه اړیکې ثبت او فعال کوربه کارکوونکی وټاکئ.",
+      "emailHelp": "برېښنالیک یوازې فرصت ته د لیدونکي د بدلولو پر مهال اړین دی."
+    },
+    "placeholders": {
+      "purpose": "د لیدنې موخه وټاکئ...",
+      "host": "کوربه کارکوونکی وټاکئ..."
+    },
+    "actions": {
+      "add": "نوی لیدونکی ثبت کړئ",
+      "checkout": "وتل ثبت کړئ",
+      "convert": "فرصت ته بدل کړئ",
+      "edit": "سمول",
+      "delete": "ړنګول",
+      "cancel": "لغوه",
+      "save": "بدلونونه خوندي کړئ",
+      "checkin": "لیدونکی دننه کړئ",
+      "saving": "خوندي کېږي...",
+      "converting": "بدلېږي..."
+    },
+    "convert": {
+      "title": "لیدونکی فرصت ته بدل کړئ",
+      "description": "له دې لیدونکي نوی CRM فرصت جوړ او کوربه کارکوونکي ته وسپارل شي؟"
+    },
+    "conversion": {
+      "activityTitle": "لیدونکی فرصت ته بدل شو",
+      "activityDescription": "دا فرصت د مخکینۍ مېز د لیدونکي له ریکارډ څخه رامنځته شوی.",
+      "note": "فرصت ته بدل شو: {title}"
+    },
+    "empty": {
+      "title": "د لیدونکو ریکارډونه ونه موندل شول",
+      "description": "له ټاکلي کوربه، حالت او نېټې سره ریکارډ نشته."
+    },
+    "pagination": {
+      "rowsPerPage": "په پاڼه کې کرښې:",
+      "of": "له"
+    },
+    "delete": {
+      "title": "د لیدونکي ریکارډ ړنګ کړئ",
+      "description": "دا د لیدونکي ریکارډ ړنګ شي؟ دا کړنه بېرته نه راګرځي."
+    },
+    "messages": {
+      "created": "لیدونکی په بریالیتوب دننه شو.",
+      "updated": "د لیدونکي معلومات تازه شول.",
+      "checkedOut": "د لیدونکي وتل ثبت شول.",
+      "converted": "لیدونکی په بریالیتوب CRM فرصت ته بدل شو.",
+      "deleted": "د لیدونکي ریکارډ ړنګ شو.",
+      "loadFailed": "د لیدونکو ریکارډونه پورته نه شول.",
+      "operationFailed": "د لیدونکي کړنه بشپړه نه شوه.",
+      "unauthenticated": "د لیدونکو د ادارې لپاره ننوزئ.",
+      "forbidden": "تاسو د لیدونکو د ادارې اجازه نه لرئ.",
+      "notFound": "ټاکل شوی لیدونکی ونه موندل شو.",
+      "invalidHost": "یو معتبر فعال کوربه کارکوونکی وټاکئ.",
+      "alreadyCheckedOut": "د دې لیدونکي وتل مخکې ثبت شوي دي.",
+      "alreadyConverted": "دا لیدونکی مخکې فرصت ته بدل شوی دی.",
+      "emailRequiredForLead": "له بدلولو مخکې لیدونکي ته برېښنالیک زیات کړئ.",
+      "pipelineOptionsMissing": "له بدلولو مخکې فعال NEW حالت او WALK_IN سرچینه تنظیم کړئ."
+    },
+    "validation": {
+      "invalid": "د لیدونکي معلومات وګورئ.",
+      "required": "دا برخه اړینه ده.",
+      "emailInvalid": "معتبر برېښنالیک ولیکئ.",
+      "tooLong": "دا ارزښت ډېر اوږد دی."
+    }
   },
   "crmClients": {
-    "summary": { "totalActive": "فعال پېرودونکي", "lifetimeRevenue": "د پېرودونکو ټول ارزښت", "activeProjects": "تړلې فعالې پروژې", "pendingBalance": "ناورکړل شوي رسیدونه" },
-    "filters": { "search": "لټون", "searchPlaceholder": "شرکت، اړیکه، برېښنالیک یا ټیلیفون ولټوئ", "manager": "د حساب مسؤل", "allManagers": "ټول حساب مسؤلین", "status": "حالت", "allStatuses": "ټول حالتونه" },
-    "table": { "company": "شرکت او اړیکه", "manager": "د حساب مسؤل", "metrics": "تړلي ریکارډونه", "status": "حالت", "revenue": "ټول عاید", "actions": "کړنې" },
-    "metrics": { "projects": "پروژې", "contracts": "قراردادونه", "invoices": "رسیدونه" },
-    "fields": { "company": "د شرکت نوم", "contact": "د اصلي اړیکې نوم", "email": "برېښنالیک", "phone": "د ټیلیفون شمېره", "address": "پته", "tax": "د مالیې / ثبت شمېره", "manager": "د حساب مسؤل", "status": "حالت", "notes": "یادښتونه", "created": "د پېرودونکي پیل" },
-    "status": { "ACTIVE": "فعال", "INACTIVE": "غیرفعال" }, "placeholders": { "manager": "د حساب مسؤل نه دی ټاکل شوی" },
-    "form": { "addTitle": "پېرودونکی زیات کړئ", "editTitle": "پېرودونکی سمول", "description": "د پېرودونکي اړیکه، مسؤلیت او د حساب معلومات وساتئ." },
-    "tabs": { "overview": "لنډیز او اړیکه", "relationships": "پروژې او قراردادونه", "finance": "رسیدونه او عاید", "activity": "فعالیت او تاریخ" },
-    "detail": { "title": "د پېرودونکي پېژندپاڼه", "manager": "د حساب مسؤل", "leadOrigin": "د بدل شوي سرنخ سرچینه", "projects": "تړلې پروژې", "contracts": "تړلي قراردادونه", "paidRevenue": "ورکړل شوی عاید", "pendingInvoices": "د پاتې رسیدونو کچه", "invoice": "رسید", "dueDate": "د ورکړې نېټه", "amount": "اندازه" },
-    "activity": { "addTitle": "د پېرودونکي فعالیت ثبت کړئ", "type": "د فعالیت ډول", "subject": "سرلیک", "description": "تشریح / یادښت", "dueDate": "د تعقیب نېټه", "add": "فعالیت زیات کړئ", "types": { "CALL": "اړیکه", "MEETING": "غونډه", "EMAIL": "برېښنالیک", "NOTE": "یادښت", "FOLLOW_UP": "تعقیب" } },
-    "actions": { "add": "پېرودونکی زیات کړئ", "view": "پېژندپاڼه وګورئ", "activity": "فعالیت ثبت کړئ", "edit": "سمول", "delete": "ړنګول", "changeStatus": "حالت بدل کړئ", "cancel": "لغوه", "close": "تړل", "create": "پېرودونکی جوړ کړئ", "save": "بدلونونه خوندي کړئ", "saving": "خوندي کېږي..." },
-    "empty": { "title": "پېرودونکي ونه موندل شول", "description": "له ټاکلو فلټرونو سره پېرودونکي نشته.", "projects": "دې پېرودونکي ته کومه پروژه نه ده تړلې.", "contracts": "دې پېرودونکي ته کوم قرارداد نه دی تړلی.", "invoices": "دې پېرودونکي ته کوم رسید نه دی تړلی.", "activities": "د پېرودونکي یا اصلي سرنخ فعالیت نه دی ثبت شوی." },
-    "pagination": { "rowsPerPage": "په پاڼه کې کرښې:", "of": "له" }, "delete": { "title": "پېرودونکی ړنګ کړئ", "description": "دا پېرودونکی ړنګ شي؟ دا کړنه بېرته نه راګرځي." },
-    "messages": { "created": "پېرودونکی په بریالیتوب جوړ شو.", "updated": "پېرودونکی په بریالیتوب تازه شو.", "statusUpdated": "د پېرودونکي حالت تازه شو.", "deleted": "پېرودونکی په بریالیتوب ړنګ شو.", "activityAdded": "د پېرودونکي فعالیت ثبت شو.", "loadFailed": "پېرودونکي پورته نه شول.", "operationFailed": "د پېرودونکي کړنه بشپړه نه شوه.", "unauthenticated": "د پېرودونکو لپاره ننوزئ.", "forbidden": "تاسو د پېرودونکو د ادارې اجازه نه لرئ.", "notFound": "ټاکل شوی پېرودونکی ونه موندل شو.", "emailExists": "په دې برېښنالیک بل پېرودونکی شته.", "invalidManager": "یو معتبر فعال حساب مسؤل وټاکئ.", "staffProfileRequired": "د فعالیت ثبتولو لپاره حساب باید د کارکوونکي له پېژندپاڼې سره تړلی وي.", "deleteBlocked": "دا پېرودونکی فعالې پروژې یا قراردادونه لري. لومړی یې غیرفعال یا فعال ریکارډونه وتړئ." },
-    "validation": { "invalid": "د پېرودونکي معلومات وګورئ.", "required": "دا برخه اړینه ده.", "emailInvalid": "معتبر برېښنالیک ولیکئ.", "statusInvalid": "معتبر حالت وټاکئ.", "tooLong": "دا ارزښت ډېر اوږد دی.", "activityTypeInvalid": "معتبر فعالیت وټاکئ.", "dateInvalid": "د تعقیب معتبره نېټه ولیکئ." }
+    "summary": {
+      "totalActive": "فعال پېرودونکي",
+      "lifetimeRevenue": "د پېرودونکو ټول ارزښت",
+      "activeProjects": "تړلې فعالې پروژې",
+      "pendingBalance": "ناورکړل شوي رسیدونه"
+    },
+    "filters": {
+      "search": "لټون",
+      "searchPlaceholder": "شرکت، اړیکه، برېښنالیک یا ټیلیفون ولټوئ",
+      "manager": "د حساب مسؤل",
+      "allManagers": "ټول حساب مسؤلین",
+      "status": "حالت",
+      "allStatuses": "ټول حالتونه"
+    },
+    "table": {
+      "company": "شرکت او اړیکه",
+      "manager": "د حساب مسؤل",
+      "metrics": "تړلي ریکارډونه",
+      "status": "حالت",
+      "revenue": "ټول عاید",
+      "actions": "کړنې"
+    },
+    "metrics": {
+      "projects": "پروژې",
+      "contracts": "قراردادونه",
+      "invoices": "رسیدونه"
+    },
+    "fields": {
+      "company": "د شرکت نوم",
+      "contact": "د اصلي اړیکې نوم",
+      "email": "برېښنالیک",
+      "phone": "د ټیلیفون شمېره",
+      "address": "پته",
+      "tax": "د مالیې / ثبت شمېره",
+      "manager": "د حساب مسؤل",
+      "status": "حالت",
+      "notes": "یادښتونه",
+      "created": "د پېرودونکي پیل"
+    },
+    "status": {
+      "ACTIVE": "فعال",
+      "INACTIVE": "غیرفعال"
+    },
+    "placeholders": {
+      "manager": "د حساب مسؤل نه دی ټاکل شوی"
+    },
+    "form": {
+      "addTitle": "پېرودونکی زیات کړئ",
+      "editTitle": "پېرودونکی سمول",
+      "description": "د پېرودونکي اړیکه، مسؤلیت او د حساب معلومات وساتئ."
+    },
+    "tabs": {
+      "overview": "لنډیز او اړیکه",
+      "relationships": "پروژې او قراردادونه",
+      "finance": "رسیدونه او عاید",
+      "activity": "فعالیت او تاریخ"
+    },
+    "detail": {
+      "title": "د پېرودونکي پېژندپاڼه",
+      "manager": "د حساب مسؤل",
+      "leadOrigin": "د بدل شوي سرنخ سرچینه",
+      "projects": "تړلې پروژې",
+      "contracts": "تړلي قراردادونه",
+      "paidRevenue": "ورکړل شوی عاید",
+      "pendingInvoices": "د پاتې رسیدونو کچه",
+      "invoice": "رسید",
+      "dueDate": "د ورکړې نېټه",
+      "amount": "اندازه"
+    },
+    "activity": {
+      "addTitle": "د پېرودونکي فعالیت ثبت کړئ",
+      "type": "د فعالیت ډول",
+      "subject": "سرلیک",
+      "description": "تشریح / یادښت",
+      "dueDate": "د تعقیب نېټه",
+      "add": "فعالیت زیات کړئ",
+      "types": {
+        "CALL": "اړیکه",
+        "MEETING": "غونډه",
+        "EMAIL": "برېښنالیک",
+        "NOTE": "یادښت",
+        "FOLLOW_UP": "تعقیب"
+      }
+    },
+    "actions": {
+      "add": "پېرودونکی زیات کړئ",
+      "view": "پېژندپاڼه وګورئ",
+      "activity": "فعالیت ثبت کړئ",
+      "edit": "سمول",
+      "delete": "ړنګول",
+      "changeStatus": "حالت بدل کړئ",
+      "cancel": "لغوه",
+      "close": "تړل",
+      "create": "پېرودونکی جوړ کړئ",
+      "save": "بدلونونه خوندي کړئ",
+      "saving": "خوندي کېږي..."
+    },
+    "empty": {
+      "title": "پېرودونکي ونه موندل شول",
+      "description": "له ټاکلو فلټرونو سره پېرودونکي نشته.",
+      "projects": "دې پېرودونکي ته کومه پروژه نه ده تړلې.",
+      "contracts": "دې پېرودونکي ته کوم قرارداد نه دی تړلی.",
+      "invoices": "دې پېرودونکي ته کوم رسید نه دی تړلی.",
+      "activities": "د پېرودونکي یا اصلي سرنخ فعالیت نه دی ثبت شوی."
+    },
+    "pagination": {
+      "rowsPerPage": "په پاڼه کې کرښې:",
+      "of": "له"
+    },
+    "delete": {
+      "title": "پېرودونکی ړنګ کړئ",
+      "description": "دا پېرودونکی ړنګ شي؟ دا کړنه بېرته نه راګرځي."
+    },
+    "messages": {
+      "created": "پېرودونکی په بریالیتوب جوړ شو.",
+      "updated": "پېرودونکی په بریالیتوب تازه شو.",
+      "statusUpdated": "د پېرودونکي حالت تازه شو.",
+      "deleted": "پېرودونکی په بریالیتوب ړنګ شو.",
+      "activityAdded": "د پېرودونکي فعالیت ثبت شو.",
+      "loadFailed": "پېرودونکي پورته نه شول.",
+      "operationFailed": "د پېرودونکي کړنه بشپړه نه شوه.",
+      "unauthenticated": "د پېرودونکو لپاره ننوزئ.",
+      "forbidden": "تاسو د پېرودونکو د ادارې اجازه نه لرئ.",
+      "notFound": "ټاکل شوی پېرودونکی ونه موندل شو.",
+      "emailExists": "په دې برېښنالیک بل پېرودونکی شته.",
+      "invalidManager": "یو معتبر فعال حساب مسؤل وټاکئ.",
+      "staffProfileRequired": "د فعالیت ثبتولو لپاره حساب باید د کارکوونکي له پېژندپاڼې سره تړلی وي.",
+      "deleteBlocked": "دا پېرودونکی فعالې پروژې یا قراردادونه لري. لومړی یې غیرفعال یا فعال ریکارډونه وتړئ."
+    },
+    "validation": {
+      "invalid": "د پېرودونکي معلومات وګورئ.",
+      "required": "دا برخه اړینه ده.",
+      "emailInvalid": "معتبر برېښنالیک ولیکئ.",
+      "statusInvalid": "معتبر حالت وټاکئ.",
+      "tooLong": "دا ارزښت ډېر اوږد دی.",
+      "activityTypeInvalid": "معتبر فعالیت وټاکئ.",
+      "dateInvalid": "د تعقیب معتبره نېټه ولیکئ."
+    }
   },
-  "crmLeadOptions": { "statuses": { "title": "د فرصت حالتونه", "description": "د پلور پایپ لاین پړاوونه اداره کړئ." }, "sources": { "title": "د فرصت سرچینې", "description": "د پلور فرصتونو د ترلاسه کولو چینلونه اداره کړئ." }, "common": { "name": "نوم", "description": "تشریح", "status": "حالت", "actions": "کړنې", "active": "فعال", "inactive": "غیرفعال", "activate": "فعالول", "deactivate": "غیرفعالول", "create": "اختیار زیاتول", "add": "د CRM اختیار جوړول", "cancel": "لغوه", "empty": "اختیار نه دی تنظیم شوی" } },
+  "crmLeadOptions": {
+    "statuses": {
+      "title": "د فرصت حالتونه",
+      "description": "د پلور پایپ لاین پړاوونه اداره کړئ."
+    },
+    "sources": {
+      "title": "د فرصت سرچینې",
+      "description": "د پلور فرصتونو د ترلاسه کولو چینلونه اداره کړئ."
+    },
+    "common": {
+      "name": "نوم",
+      "description": "تشریح",
+      "status": "حالت",
+      "actions": "کړنې",
+      "active": "فعال",
+      "inactive": "غیرفعال",
+      "activate": "فعالول",
+      "deactivate": "غیرفعالول",
+      "create": "اختیار زیاتول",
+      "add": "د CRM اختیار جوړول",
+      "cancel": "لغوه",
+      "empty": "اختیار نه دی تنظیم شوی"
+    }
+  },
   "hrmReports": {
     "tabs": {
-      "payroll": { "label": "معاشونه او مالي چارې", "tableTitle": "د کارکوونکو د معاش تاریخ", "icon": "tabler-report-money" },
-      "attendance": { "label": "حاضري او غیرحاضري", "tableTitle": "د کارکوونکو د حاضرۍ شمېرې", "icon": "tabler-calendar-stats" },
-      "leaves": { "label": "د رخصتۍ بیلانس", "tableTitle": "د کارکوونکو د رخصتۍ کارونه", "icon": "tabler-calendar-off" },
-      "contracts": { "label": "د قراردادونو پای", "tableTitle": "ژر پای ته رسېدونکي قراردادونه", "icon": "tabler-file-time" }
+      "payroll": {
+        "label": "معاشونه او مالي چارې",
+        "tableTitle": "د کارکوونکو د معاش تاریخ",
+        "icon": "tabler-report-money"
+      },
+      "attendance": {
+        "label": "حاضري او غیرحاضري",
+        "tableTitle": "د کارکوونکو د حاضرۍ شمېرې",
+        "icon": "tabler-calendar-stats"
+      },
+      "leaves": {
+        "label": "د رخصتۍ بیلانس",
+        "tableTitle": "د کارکوونکو د رخصتۍ کارونه",
+        "icon": "tabler-calendar-off"
+      },
+      "contracts": {
+        "label": "د قراردادونو پای",
+        "tableTitle": "ژر پای ته رسېدونکي قراردادونه",
+        "icon": "tabler-file-time"
+      }
     },
-    "filters": { "dateRange": "د نېټې موده", "startDate": "د پیل نېټه", "endDate": "د پای نېټه", "staff": "کارکوونکی", "allStaff": "ټول کارکوونکي" },
-    "datePresets": { "thisMonth": "دا میاشت", "lastQuarter": "تېره ربع", "yearToDate": "د کال له پیل تر نن", "custom": "ځانګړې موده" },
-    "actions": { "exportCsv": "CSV صادرول", "print": "راپور چاپول" },
-    "kpis": { "baseSalary": "ټول بنسټیز معاش", "allowances": "ټولې امتیازې", "deductions": "ټولې کسرونې", "netPayout": "ټوله خالصه تادیه", "workingDays": "کاري ورځې", "presenceRate": "د حاضرۍ کچه", "hoursLogged": "ثبت شوي ساعتونه", "absences": "ټولې غیرحاضرۍ", "approvedLeaveDays": "منظورې رخصتۍ ورځې", "pendingRequests": "پاتې غوښتنې", "leaveTypesUsed": "کارول شوي رخصتي ډولونه", "activeContracts": "فعال قراردادونه", "expiring30": "په ۳۰ ورځو کې پای", "expiring90": "په ۳۱–۹۰ ورځو کې پای", "expiredInRange": "په موده کې پای ته رسېدلي" },
-    "chart": { "title": "د {report} بهیر", "netPayout": "خالصه تادیه", "deductions": "کسرونې", "approvedDays": "منظورې ورځې", "expirations": "پای نېټې", "contractStarts": "د قرارداد پیلونه" },
-    "table": { "period": "موده", "staff": "کارکوونکی", "position": "دنده", "baseSalary": "بنسټیز معاش", "allowances": "امتیازې", "deductions": "کسرونې", "netPayout": "خالصه تادیه", "status": "حالت", "paymentMethod": "د تادیې لاره", "present": "حاضر", "absent": "غایب", "leave": "رخصتي", "hours": "ثبت شوي ساعتونه", "presenceRate": "د حاضرۍ کچه", "approvedDays": "منظورې ورځې", "pending": "پاتې", "leaveBreakdown": "د رخصتۍ ډول وېش", "allowance": "سهمیه", "remaining": "پاتې", "contractNumber": "د قرارداد شمېره", "contractType": "د قرارداد ډول", "endDate": "د پای نېټه", "daysRemaining": "پاتې ورځې", "renewalStatus": "د نوي کولو حالت" },
-    "status": { "DRAFT": "مسوده", "PENDING": "پاتې", "PAID": "تادیه شوی", "PRESENT": "حاضر", "ABSENT": "غایب", "LEAVE": "رخصتي", "ACTIVE": "فعال", "EXPIRED": "پای ته رسېدلی", "TERMINATED": "فسخ شوی", "DUE_SOON": "نوي کول نږدې دي", "UPCOMING": "راتلونکی نوی کول" },
-    "common": { "records": "{count} راپور ریکارډونه", "notConfigured": "نه دی تنظیم شوی" },
+    "filters": {
+      "dateRange": "د نېټې موده",
+      "startDate": "د پیل نېټه",
+      "endDate": "د پای نېټه",
+      "staff": "کارکوونکی",
+      "allStaff": "ټول کارکوونکي"
+    },
+    "datePresets": {
+      "thisMonth": "دا میاشت",
+      "lastQuarter": "تېره ربع",
+      "yearToDate": "د کال له پیل تر نن",
+      "custom": "ځانګړې موده"
+    },
+    "actions": {
+      "exportCsv": "CSV صادرول",
+      "print": "راپور چاپول"
+    },
+    "kpis": {
+      "baseSalary": "ټول بنسټیز معاش",
+      "allowances": "ټولې امتیازې",
+      "deductions": "ټولې کسرونې",
+      "netPayout": "ټوله خالصه تادیه",
+      "workingDays": "کاري ورځې",
+      "presenceRate": "د حاضرۍ کچه",
+      "hoursLogged": "ثبت شوي ساعتونه",
+      "absences": "ټولې غیرحاضرۍ",
+      "approvedLeaveDays": "منظورې رخصتۍ ورځې",
+      "pendingRequests": "پاتې غوښتنې",
+      "leaveTypesUsed": "کارول شوي رخصتي ډولونه",
+      "activeContracts": "فعال قراردادونه",
+      "expiring30": "په ۳۰ ورځو کې پای",
+      "expiring90": "په ۳۱–۹۰ ورځو کې پای",
+      "expiredInRange": "په موده کې پای ته رسېدلي"
+    },
+    "chart": {
+      "title": "د {report} بهیر",
+      "netPayout": "خالصه تادیه",
+      "deductions": "کسرونې",
+      "approvedDays": "منظورې ورځې",
+      "expirations": "پای نېټې",
+      "contractStarts": "د قرارداد پیلونه"
+    },
+    "table": {
+      "period": "موده",
+      "staff": "کارکوونکی",
+      "position": "دنده",
+      "baseSalary": "بنسټیز معاش",
+      "allowances": "امتیازې",
+      "deductions": "کسرونې",
+      "netPayout": "خالصه تادیه",
+      "status": "حالت",
+      "paymentMethod": "د تادیې لاره",
+      "present": "حاضر",
+      "absent": "غایب",
+      "leave": "رخصتي",
+      "hours": "ثبت شوي ساعتونه",
+      "presenceRate": "د حاضرۍ کچه",
+      "approvedDays": "منظورې ورځې",
+      "pending": "پاتې",
+      "leaveBreakdown": "د رخصتۍ ډول وېش",
+      "allowance": "سهمیه",
+      "remaining": "پاتې",
+      "contractNumber": "د قرارداد شمېره",
+      "contractType": "د قرارداد ډول",
+      "endDate": "د پای نېټه",
+      "daysRemaining": "پاتې ورځې",
+      "renewalStatus": "د نوي کولو حالت"
+    },
+    "status": {
+      "DRAFT": "مسوده",
+      "PENDING": "پاتې",
+      "PAID": "تادیه شوی",
+      "PRESENT": "حاضر",
+      "ABSENT": "غایب",
+      "LEAVE": "رخصتي",
+      "ACTIVE": "فعال",
+      "EXPIRED": "پای ته رسېدلی",
+      "TERMINATED": "فسخ شوی",
+      "DUE_SOON": "نوي کول نږدې دي",
+      "UPCOMING": "راتلونکی نوی کول"
+    },
+    "common": {
+      "records": "{count} راپور ریکارډونه",
+      "notConfigured": "نه دی تنظیم شوی"
+    },
+    "pagination": {
+      "rowsPerPage": "په هر مخ کې کتارونه:",
+      "of": "له"
+    },
+    "empty": {
+      "title": "د راپور معلومات ونه موندل شول",
+      "description": "هیڅ د بشري سرچینو ریکارډ له ټاکل شویو فلټرونو او نېټې مودې سره برابر نه دی."
+    },
+    "print": {
+      "generated": "جوړ شوی"
+    },
+    "messages": {
+      "csvReady": "د CSV راپور په بریالیتوب ډاونلوډ شو.",
+      "loadFailed": "د بشري سرچینو راپور پورته نه شو.",
+      "unauthenticated": "د راپورونو د لیدلو لپاره ننوځئ.",
+      "forbidden": "تاسو د بشري سرچینو راپورونو د لیدلو اجازه نه لرئ.",
+      "invalidReport": "د راپور یو سم ډول وټاکئ.",
+      "invalidDates": "د پیل او پای سمې نېټې وټاکئ.",
+      "dateRangeTooLarge": "ټاکل شوې نېټې موده ډېره لویه ده.",
+      "staffNotFound": "ټاکل شوی کارکوونکی ونه موندل شو."
+    }
+  },
+  "financeReports": {
+    "tabs": {
+      "income": { "label": "عاید", "tableTitle": "د عاید راکړې ورکړې", "icon": "tabler-trending-up" },
+      "expenses": { "label": "لګښتونه", "tableTitle": "د لګښتونو راکړې ورکړې", "icon": "tabler-trending-down" },
+      "salary": { "label": "معاش / تنخوا", "tableTitle": "د معاش او تنخوا ریکارډونه", "icon": "tabler-users-dollar" },
+      "inventory": { "label": "موجودي", "tableTitle": "د موجودۍ ارزونه", "icon": "tabler-packages" },
+      "loans": { "label": "پورونه", "tableTitle": "د پورونو ټولګه", "icon": "tabler-building-bank" }
+    },
+    "filters": {
+      "search": "راپور لټول",
+      "searchPlaceholder": "په اوسني راپور کې لټون...",
+      "dateRange": "د نېټې موده", "startDate": "د پیل نېټه", "endDate": "د پای نېټه",
+      "currency": "د ښودلو اسعار", "exchangeRate": "د ډالر / افغانۍ نرخ"
+    },
+    "datePresets": {
+      "thisMonth": "روانه میاشت", "lastMonth": "تېره میاشت", "thisQuarter": "روانه ربع",
+      "thisYear": "روان کال", "custom": "ځانګړې موده"
+    },
+    "actions": {
+      "exportPdf": "PDF صادرول", "exportCsv": "CSV / Excel صادرول", "print": "راپور چاپول"
+    },
+    "charts": {
+      "titles": {
+        "income": { "trend": "د میاشتني عاید بهیر", "distribution": "د کټګورۍ له مخې د عاید وېش" },
+        "expenses": { "trend": "میاشتنی عملیاتي لګښت", "distribution": "د کټګورۍ له مخې لګښتونه" },
+        "salary": { "trend": "د میاشتني معاش جوړښت" },
+        "inventory": { "trend": "د موجودۍ ارزښت له مخې غوره توکي", "distribution": "د کټګورۍ له مخې د موجودۍ وېش" },
+        "loans": { "distribution": "ورکړل شوي، بېرته ورکړل شوي او پاتې پورونه" }
+      },
+      "series": {
+        "income": "عاید", "expenses": "لګښتونه", "baseSalary": "اساسي معاش",
+        "bonuses": "بونسونه", "deductions": "کسرونه", "stockValue": "د موجودۍ ارزښت"
+      },
+      "labels": { "issued": "ورکړل شوي", "repaid": "بېرته ورکړل شوي", "remaining": "پاتې" },
+      "total": "ټول",
+      "empty": "د ټاکل شوې مودې لپاره د چارټ معلومات نشته."
+    },
+    "kpis": {
+      "grossIncome": "ټول ناخالص عاید", "totalTransactions": "ټولې راکړې ورکړې",
+      "averageTransaction": "د راکړې ورکړې منځنی ارزښت", "operationalExpense": "ټول عملیاتي لګښت",
+      "topExpenseCategory": "د لګښت لوړه کټګوري", "approvedPending": "ثبت شوي / پاتې",
+      "payrollDisbursed": "ټول ورکړل شوي معاشونه", "totalDeductions": "ټولې کسرونه",
+      "activeStaffPaid": "معاش اخیستونکي فعال کارکوونکي", "stockValuation": "د موجودۍ ټول ارزښت",
+      "skuCount": "د توکو ټول شمېر", "lowStockCount": "د کمې موجودۍ / بیا فرمایش خبرتیا",
+      "activeLoanBalance": "د فعال پور ټول پاتې شونی", "totalRepaid": "تر اوسه ټول بېرته ورکړل شوي",
+      "monthlyRecovery": "د میاشتني وصول اټکل"
+    },
+    "table": {
+      "date": "نېټه", "reference": "د حوالې شمېره", "sourceCategory": "سرچینه / کټګوري",
+      "amountLocal": "اندازه (محلي)", "baseAmountUsd": "اساسي اندازه (ډالر)", "paymentMethod": "د ورکړې طریقه",
+      "status": "حالت", "expenseTitle": "د لګښت سرلیک", "category": "کټګوري", "vendorPayee": "پلورونکی / اخیستونکی",
+      "amount": "اندازه", "staffName": "د کارکوونکي نوم", "designation": "دنده", "month": "میاشت",
+      "baseSalary": "اساسي معاش", "bonuses": "بونسونه", "deductions": "کسرونه", "netPaid": "خالصه ورکړه",
+      "paymentStatus": "د ورکړې حالت", "sku": "د توکي کوډ", "itemName": "د توکي نوم", "inStockQty": "موجود شمېر",
+      "unitCost": "د واحد بیه", "totalAssetValue": "د شتمنۍ ټول ارزښت", "reorderStatus": "د بیا فرمایش حالت",
+      "loanNumber": "د پور شمېره", "borrower": "پور اخیستونکی", "loanType": "ډول", "totalLoan": "ټول پور",
+      "repaid": "بېرته ورکړل شوي", "remainingBalance": "پاتې شونی", "issueDate": "د ورکړې نېټه"
+    },
+    "status": {
+      "PAID": "ورکړل شوی", "APPROVED": "تایید شوی", "ACTIVE": "فعال", "PARTIAL": "برخه ییز",
+      "PENDING": "پاتې", "DRAFT": "مسوده", "OVERDUE": "وخت تېر", "RECORDED": "ثبت شوی",
+      "IN_STOCK": "موجود", "LOW_STOCK": "کمه موجودي", "OUT_OF_STOCK": "نه موجود",
+      "CANCELLED": "لغوه شوی", "CLOSED": "تړل شوی", "REPAID": "تصفیه شوی"
+    },
+    "loanTypes": { "STAFF": "کارکوونکی", "BANK": "بانک", "EXTERNAL": "بهرنی" },
+    "common": { "records": "{count} د راپور ریکارډونه", "notAvailable": "شتون نه لري" },
     "pagination": { "rowsPerPage": "په هر مخ کې کتارونه:", "of": "له" },
-    "empty": { "title": "د راپور معلومات ونه موندل شول", "description": "هیڅ د بشري سرچینو ریکارډ له ټاکل شویو فلټرونو او نېټې مودې سره برابر نه دی." },
+    "empty": { "title": "د راپور معلومات ونه موندل شول", "description": "هېڅ مالي ریکارډ له ټاکلو فلټرونو او نېټې مودې سره سمون نه خوري." },
     "print": { "generated": "جوړ شوی" },
-    "messages": { "csvReady": "د CSV راپور په بریالیتوب ډاونلوډ شو.", "loadFailed": "د بشري سرچینو راپور پورته نه شو.", "unauthenticated": "د راپورونو د لیدلو لپاره ننوځئ.", "forbidden": "تاسو د بشري سرچینو راپورونو د لیدلو اجازه نه لرئ.", "invalidReport": "د راپور یو سم ډول وټاکئ.", "invalidDates": "د پیل او پای سمې نېټې وټاکئ.", "dateRangeTooLarge": "ټاکل شوې نېټې موده ډېره لویه ده.", "staffNotFound": "ټاکل شوی کارکوونکی ونه موندل شو." }
+    "messages": { "loadFailed": "مالي راپور پورته نه شو." }
   },
   "optionsManagement": {
     "common": {
@@ -703,8 +1655,27 @@
       }
     },
     "leaveTypes": {
-      "title": "د رخصتۍ ډولونه", "description": "د کارکوونکو په غوښتنلیکونو کې د رخصتۍ فعال ډولونه اداره کړئ.", "add": "د رخصتۍ ډول زیاتول", "addFirst": "لومړی ډول زیاتول", "addTitle": "د رخصتۍ ډول جوړول", "editTitle": "د رخصتۍ ډول سمول", "searchPlaceholder": "د رخصتۍ ډول یا توضیحات ولټوئ", "emptyTitle": "د رخصتۍ ډول ونه موندل شو", "emptyDescription": "کلنۍ، ناروغۍ، عادي، بې معاشه یا بل منظور شوی ډول زیات کړئ.", "deleteTitle": "د رخصتۍ ډول ړنګول", "deleteDescription": "«{name}» ړنګ شي؟ دا کړنه بېرته نه راګرځي.",
-      "fields": { "name": "د رخصتۍ د ډول نوم", "namePlaceholder": "لکه کلنۍ رخصتي", "description": "توضیحات", "descriptionPlaceholder": "شرایط، بیلانس یا داخلي لارښود" }, "table": { "title": "د رخصتۍ ډول", "description": "توضیحات" }
+      "title": "د رخصتۍ ډولونه",
+      "description": "د کارکوونکو په غوښتنلیکونو کې د رخصتۍ فعال ډولونه اداره کړئ.",
+      "add": "د رخصتۍ ډول زیاتول",
+      "addFirst": "لومړی ډول زیاتول",
+      "addTitle": "د رخصتۍ ډول جوړول",
+      "editTitle": "د رخصتۍ ډول سمول",
+      "searchPlaceholder": "د رخصتۍ ډول یا توضیحات ولټوئ",
+      "emptyTitle": "د رخصتۍ ډول ونه موندل شو",
+      "emptyDescription": "کلنۍ، ناروغۍ، عادي، بې معاشه یا بل منظور شوی ډول زیات کړئ.",
+      "deleteTitle": "د رخصتۍ ډول ړنګول",
+      "deleteDescription": "«{name}» ړنګ شي؟ دا کړنه بېرته نه راګرځي.",
+      "fields": {
+        "name": "د رخصتۍ د ډول نوم",
+        "namePlaceholder": "لکه کلنۍ رخصتي",
+        "description": "توضیحات",
+        "descriptionPlaceholder": "شرایط، بیلانس یا داخلي لارښود"
+      },
+      "table": {
+        "title": "د رخصتۍ ډول",
+        "description": "توضیحات"
+      }
     },
     "messages": {
       "unauthenticated": "د سیسټم غوراویو ته د لاسرسي لپاره ننوځئ.",
@@ -741,6 +1712,12 @@
     "rowsPerPage": "په پاڼه کې کتارونه:",
     "of": "له",
     "editPermissions": "اجازې سمول",
+    "deleteRole": "رول ړنګول",
+    "deleteRoleConfirmation": "{name} رول ړنګ شي؟ دا ځانګړی رول او اجازې به د تل لپاره لرې شي.",
+    "revokeInvitation": "بلنه لغوه کول",
+    "revokeInvitationConfirmation": "د {name} پاتې بلنه لغوه شي؟ د فعالولو لینک به سمدستي کار بند کړي.",
+    "removeUserAccess": "کارن ړنګول / لاسرسی لرې کول",
+    "removeUserAccessConfirmation": "د {name} لاسرسی لرې شي؟ حساب به غیرفعال او ووځي، خو تړلی کارکوونکی او تاریخي ریکارډونه به خوندي پاتې شي.",
     "usersAssigned": "{count} ټاکل شوي کاروونکي",
     "permissionsAssigned": "{count} اجازې",
     "systemRole": "سیسټمي رول",
@@ -903,9 +1880,14 @@
     "messages": {
       "permissionsUpdated": "د رول اجازې په بریالیتوب سره تازه شوې.",
       "roleCreated": "رول په بریالیتوب سره جوړ شو.",
+      "roleDeleted": "ځانګړی رول په بریالیتوب سره ړنګ شو.",
+      "roleInUse": "دا رول یو یا څو کاروونکو ته ورکړل شوی. د ړنګولو مخکې د هغوی رول بدل کړئ.",
       "roleActivated": "رول په بریالیتوب سره فعال شو.",
       "roleDeactivated": "رول په بریالیتوب سره غیرفعال شو.",
       "userInvited": "د بلنې برېښنالیک په بریالیتوب سره ولېږل شو.",
+      "invitationRevoked": "بلنه په بریالیتوب سره لغوه شوه.",
+      "invitationNotPending": "دا بلنه نور پاتې نه ده.",
+      "userAccessRemoved": "د کارن لاسرسی په بریالیتوب سره لرې شو.",
       "invitationEmailFailed": "د بلنې برېښنالیک ونه لېږل شو. د کاروونکي حساب جوړ نه شو.",
       "statusUpdated": "د حساب حالت په بریالیتوب سره تازه شو.",
       "roleAssigned": "د کاروونکي رول په بریالیتوب سره تازه شو.",
@@ -1076,40 +2058,405 @@
     }
   },
   "contractsMain": {
-    "kpis": { "active": "ټول فعال قراردادونه", "expiring": "ژر پای ته رسېدونکي (۳۰ ورځې)", "monthlyRevenue": "میاشتنی فعال عاید", "drafts": "مسوده / منتظر قراردادونه", "baseCurrency": "په {currency} کې مجموعه", "awaiting": "د لاسلیک یا تایید په تمه" },
-    "tabs": { "all": "ټول قراردادونه", "active": "فعال", "expiring": "ژر پای ته رسېدونکي (≤ ۳۰ ورځې)", "draft": "مسوده / منتظر", "expired": "پای ته رسېدلي" },
-    "filters": { "search": "لټون", "searchPlaceholder": "شمېره، پېرودونکی یا سرلیک ولټوئ", "status": "حالت", "allStatuses": "ټول حالتونه", "serviceType": "د خدمت ډول", "allServices": "ټول خدمتونه", "client": "پېرودونکی", "allClients": "ټول پېرودونکي", "fromDate": "د پای نېټه له", "toDate": "د پای نېټه تر", "clear": "فلټرونه پاک کړئ" },
-    "table": { "number": "د قرارداد شمېره", "client": "پېرودونکی", "title": "د قرارداد سرلیک", "service": "د خدمت ډول", "dates": "د پیل او پای نېټه", "remaining": "پاتې ورځې", "amount": "ټوله اندازه", "status": "حالت", "actions": "کړنې", "contract": "قرارداد او سرلیک", "serviceDuration": "خدمت او موده", "endRemaining": "پای او پاتې" },
-    "remaining": { "days": "{days} ورځې", "expired": "{days} ورځې مخکې پای ته ورسېد" },
-    "actions": { "add": "قرارداد زیات کړئ", "create": "قرارداد جوړ کړئ", "save": "بدلونونه وساتئ", "saving": "ساتل کېږي…", "edit": "سمون", "view": "کتل", "delete": "ړنګول", "cancel": "لغوه", "runAudit": "د پای نېټه وګورئ", "runningAudit": "کتل کېږي…", "changeStatus": "حالت بدل کړئ" },
-    "form": { "addTitle": "قرارداد جوړ کړئ", "editTitle": "قرارداد سم کړئ", "description": "د پېرودونکي هوکړه، موده، ارزښت او مسئول اداره کړئ.", "endDateHelp": "له ټاکل شوې مودې څخه په اوتومات ډول محاسبه کېږي.", "selectDurationHelp": "لومړی د پیل نېټه او موده وټاکئ." },
-    "fields": { "client": "پېرودونکی", "title": "د قرارداد سرلیک", "serviceType": "د خدمت ډول", "duration": "موده", "amount": "اندازه", "currency": "اسعار", "exchangeRate": "د USD/AFN تبادلې نرخ", "startDate": "د پیل نېټه", "endDate": "د پای نېټه", "status": "حالت", "country": "هېواد", "level": "د خدمت کچه", "manager": "د حساب مدیر", "autoRenew": "قرارداد په اوتومات ډول نوی کړئ", "email": "برېښنالیک" },
-    "placeholders": { "client": "پېرودونکی ولټوئ او وټاکئ", "serviceType": "د خدمت ډول وټاکئ", "duration": "موده وټاکئ", "status": "حالت وټاکئ", "country": "هېواد وټاکئ", "level": "د خدمت کچه وټاکئ", "manager": "د حساب مدیر ولټوئ" },
-    "detail": { "title": "د قرارداد تفصیل", "overview": "لنډیز", "notifications": "د خبرتیاوو تاریخ", "contractDetails": "د قرارداد تفصیل", "financial": "مالي تفصیل", "contacts": "پېرودونکی او د حساب مدیر", "transactionAmount": "د معاملې اندازه", "baseAmount": "بنسټیزه اندازه ({currency})", "clientContact": "د پېرودونکي اړیکه", "managerContact": "د مدیر اړیکه", "noNotifications": "خبرتیا نه ده لېږل شوې", "noNotificationsDescription": "د دې قرارداد د پای یادونې به دلته ښکاره شي.", "createdAt": "د جوړېدو نېټه" },
-    "reminders": { "30_DAY": "د ۳۰ ورځو د پای یادونه", "15_DAY": "د ۱۵ ورځو د پای یادونه", "3_DAY": "د ۳ ورځو د پای یادونه" },
-    "empty": { "title": "قرارداد ونه موندل شو", "description": "قرارداد جوړ کړئ یا اوسنی لټون او ټب بدل کړئ." },
-    "delete": { "title": "قرارداد ړنګ کړئ", "description": "قرارداد {name} ړنګ شي؟ دا کړنه بېرته نه راګرځي." },
-    "pagination": { "rowsPerPage": "په هر مخ کې کتارونه", "of": "له" },
-    "common": { "notAvailable": "نشته", "loading": "بارېږي…", "yes": "هو", "no": "نه" },
-    "messages": { "created": "قرارداد په بریالیتوب جوړ شو.", "updated": "قرارداد په بریالیتوب تازه شو.", "deleted": "قرارداد په بریالیتوب ړنګ شو.", "statusUpdated": "د قرارداد حالت تازه شو.", "loadFailed": "قراردادونه بار نه شول.", "optionsLoadFailed": "د قرارداد د فورم انتخابونه بار نه شول.", "operationFailed": "د قرارداد کړنه بشپړه نه شوه.", "notFound": "قرارداد ونه موندل شو.", "duplicate": "په دې شمېره قرارداد شته.", "inUse": "دا قرارداد له پروژو یا بلونو سره تړلی او نه ړنګېږي.", "unauthenticated": "د قراردادونو د ادارې لپاره ننوځئ.", "forbidden": "د قراردادونو د ادارې اجازه نه لرئ.", "auditComplete": "د پای نېټې کتنه بشپړه شوه.", "auditFailed": "د پای نېټې کتنه بشپړه نه شوه.", "auditResult": "کتنه بشپړه شوه: {sent} لېږل، {skipped} پرېښودل، {failed} ناکام." },
-    "validation": { "required": "دا برخه اړینه ده.", "amountInvalid": "له صفر څخه لویه اندازه ولیکئ.", "exchangeRateInvalid": "له صفر څخه لوی د تبادلې نرخ ولیکئ.", "dateInvalid": "سمه د پیل نېټه ولیکئ.", "titleTooLong": "د قرارداد سرلیک باید تر ۱۹۱ تورو زیات نه وي.", "invalidOption": "د قرارداد سم انتخابونه وټاکئ.", "invalidManager": "سم د حساب مدیر وټاکئ.", "durationInvalid": "ټاکل شوې موده باید شمېره او د ورځې، اونۍ، میاشتې یا کال واحد ولري." }
+    "kpis": {
+      "active": "ټول فعال قراردادونه",
+      "expiring": "ژر پای ته رسېدونکي (۳۰ ورځې)",
+      "monthlyRevenue": "میاشتنی فعال عاید",
+      "drafts": "مسوده / منتظر قراردادونه",
+      "baseCurrency": "په {currency} کې مجموعه",
+      "awaiting": "د لاسلیک یا تایید په تمه"
+    },
+    "tabs": {
+      "all": "ټول قراردادونه",
+      "active": "فعال",
+      "expiring": "ژر پای ته رسېدونکي (≤ ۳۰ ورځې)",
+      "draft": "مسوده / منتظر",
+      "expired": "پای ته رسېدلي"
+    },
+    "filters": {
+      "search": "لټون",
+      "searchPlaceholder": "شمېره، پېرودونکی یا سرلیک ولټوئ",
+      "status": "حالت",
+      "allStatuses": "ټول حالتونه",
+      "serviceType": "د خدمت ډول",
+      "allServices": "ټول خدمتونه",
+      "client": "پېرودونکی",
+      "allClients": "ټول پېرودونکي",
+      "fromDate": "د پای نېټه له",
+      "toDate": "د پای نېټه تر",
+      "clear": "فلټرونه پاک کړئ"
+    },
+    "table": {
+      "number": "د قرارداد شمېره",
+      "client": "پېرودونکی",
+      "title": "د قرارداد سرلیک",
+      "service": "د خدمت ډول",
+      "dates": "د پیل او پای نېټه",
+      "remaining": "پاتې ورځې",
+      "amount": "ټوله اندازه",
+      "status": "حالت",
+      "actions": "کړنې",
+      "contract": "قرارداد او سرلیک",
+      "serviceDuration": "خدمت او موده",
+      "endRemaining": "پای او پاتې"
+    },
+    "remaining": {
+      "days": "{days} ورځې",
+      "expired": "{days} ورځې مخکې پای ته ورسېد"
+    },
+    "actions": {
+      "add": "قرارداد زیات کړئ",
+      "create": "قرارداد جوړ کړئ",
+      "save": "بدلونونه وساتئ",
+      "saving": "ساتل کېږي…",
+      "edit": "سمون",
+      "view": "کتل",
+      "delete": "ړنګول",
+      "cancel": "لغوه",
+      "runAudit": "د پای نېټه وګورئ",
+      "runningAudit": "کتل کېږي…",
+      "changeStatus": "حالت بدل کړئ"
+    },
+    "form": {
+      "addTitle": "قرارداد جوړ کړئ",
+      "editTitle": "قرارداد سم کړئ",
+      "description": "د پېرودونکي هوکړه، موده، ارزښت او مسئول اداره کړئ.",
+      "endDateHelp": "له ټاکل شوې مودې څخه په اوتومات ډول محاسبه کېږي.",
+      "selectDurationHelp": "لومړی د پیل نېټه او موده وټاکئ."
+    },
+    "fields": {
+      "client": "پېرودونکی",
+      "title": "د قرارداد سرلیک",
+      "serviceType": "د خدمت ډول",
+      "duration": "موده",
+      "amount": "اندازه",
+      "currency": "اسعار",
+      "exchangeRate": "د USD/AFN تبادلې نرخ",
+      "startDate": "د پیل نېټه",
+      "endDate": "د پای نېټه",
+      "status": "حالت",
+      "country": "هېواد",
+      "level": "د خدمت کچه",
+      "manager": "د حساب مدیر",
+      "autoRenew": "قرارداد په اوتومات ډول نوی کړئ",
+      "email": "برېښنالیک"
+    },
+    "placeholders": {
+      "client": "پېرودونکی ولټوئ او وټاکئ",
+      "serviceType": "د خدمت ډول وټاکئ",
+      "duration": "موده وټاکئ",
+      "status": "حالت وټاکئ",
+      "country": "هېواد وټاکئ",
+      "level": "د خدمت کچه وټاکئ",
+      "manager": "د حساب مدیر ولټوئ"
+    },
+    "detail": {
+      "title": "د قرارداد تفصیل",
+      "overview": "لنډیز",
+      "notifications": "د خبرتیاوو تاریخ",
+      "contractDetails": "د قرارداد تفصیل",
+      "financial": "مالي تفصیل",
+      "contacts": "پېرودونکی او د حساب مدیر",
+      "transactionAmount": "د معاملې اندازه",
+      "baseAmount": "بنسټیزه اندازه ({currency})",
+      "clientContact": "د پېرودونکي اړیکه",
+      "managerContact": "د مدیر اړیکه",
+      "noNotifications": "خبرتیا نه ده لېږل شوې",
+      "noNotificationsDescription": "د دې قرارداد د پای یادونې به دلته ښکاره شي.",
+      "createdAt": "د جوړېدو نېټه"
+    },
+    "reminders": {
+      "30_DAY": "د ۳۰ ورځو د پای یادونه",
+      "15_DAY": "د ۱۵ ورځو د پای یادونه",
+      "3_DAY": "د ۳ ورځو د پای یادونه"
+    },
+    "empty": {
+      "title": "قرارداد ونه موندل شو",
+      "description": "قرارداد جوړ کړئ یا اوسنی لټون او ټب بدل کړئ."
+    },
+    "delete": {
+      "title": "قرارداد ړنګ کړئ",
+      "description": "قرارداد {name} ړنګ شي؟ دا کړنه بېرته نه راګرځي."
+    },
+    "pagination": {
+      "rowsPerPage": "په هر مخ کې کتارونه",
+      "of": "له"
+    },
+    "common": {
+      "notAvailable": "نشته",
+      "loading": "بارېږي…",
+      "yes": "هو",
+      "no": "نه"
+    },
+    "messages": {
+      "created": "قرارداد په بریالیتوب جوړ شو.",
+      "updated": "قرارداد په بریالیتوب تازه شو.",
+      "deleted": "قرارداد په بریالیتوب ړنګ شو.",
+      "statusUpdated": "د قرارداد حالت تازه شو.",
+      "loadFailed": "قراردادونه بار نه شول.",
+      "optionsLoadFailed": "د قرارداد د فورم انتخابونه بار نه شول.",
+      "operationFailed": "د قرارداد کړنه بشپړه نه شوه.",
+      "notFound": "قرارداد ونه موندل شو.",
+      "duplicate": "په دې شمېره قرارداد شته.",
+      "inUse": "دا قرارداد له پروژو یا بلونو سره تړلی او نه ړنګېږي.",
+      "unauthenticated": "د قراردادونو د ادارې لپاره ننوځئ.",
+      "forbidden": "د قراردادونو د ادارې اجازه نه لرئ.",
+      "auditComplete": "د پای نېټې کتنه بشپړه شوه.",
+      "auditFailed": "د پای نېټې کتنه بشپړه نه شوه.",
+      "auditResult": "کتنه بشپړه شوه: {sent} لېږل، {skipped} پرېښودل، {failed} ناکام."
+    },
+    "validation": {
+      "required": "دا برخه اړینه ده.",
+      "amountInvalid": "له صفر څخه لویه اندازه ولیکئ.",
+      "exchangeRateInvalid": "له صفر څخه لوی د تبادلې نرخ ولیکئ.",
+      "dateInvalid": "سمه د پیل نېټه ولیکئ.",
+      "titleTooLong": "د قرارداد سرلیک باید تر ۱۹۱ تورو زیات نه وي.",
+      "invalidOption": "د قرارداد سم انتخابونه وټاکئ.",
+      "invalidManager": "سم د حساب مدیر وټاکئ.",
+      "durationInvalid": "ټاکل شوې موده باید شمېره او د ورځې، اونۍ، میاشتې یا کال واحد ولري."
+    }
   },
   "contractOptions": {
-    "types": { "title": "د قرارداد ډولونه", "description": "هغه خدمتونه چې په قرارداد کې پلورل کېږي." }, "durations": { "title": "د قرارداد مودې", "description": "د پای نېټې د محاسبې معیاري مودې." }, "levels": { "title": "د خدمت کچې", "description": "د قرارداد کچې او درجې." }, "countries": { "title": "د قرارداد هېوادونه", "description": "د قرارداد لپاره ټاکل کېدونکي هېوادونه." }, "statuses": { "title": "د قرارداد حالتونه", "description": "د پېرودونکي د قرارداد کاري پړاوونه." }, "invoiceStatuses": { "title": "د بل حالتونه", "description": "د قرارداد د بل د ورکړې حالتونه." }, "paymentMethods": { "title": "د ورکړې لارې", "description": "د بل د ورکړې منل شوې لارې." },
-    "durationHint": "انګلیسي شمېره او واحد وکاروئ؛ لکه 1 Year، 18 Months یا 90 Days.", "deleteDescription": "انتخاب {name} ړنګ شي؟ کارېدونکی انتخاب نه ړنګېږي.",
-    "common": { "name": "نوم", "description": "تفصیل", "status": "حالت", "actions": "کړنې", "active": "فعال", "inactive": "غیرفعال", "activate": "فعالول", "deactivate": "غیرفعالول", "add": "انتخاب زیات کړئ", "edit": "انتخاب سم کړئ", "create": "جوړول", "save": "بدلونونه ساتل", "saving": "ساتل کېږي…", "cancel": "لغوه", "empty": "انتخاب نشته" }
+    "types": {
+      "title": "د قرارداد ډولونه",
+      "description": "هغه خدمتونه چې په قرارداد کې پلورل کېږي."
+    },
+    "durations": {
+      "title": "د قرارداد مودې",
+      "description": "د پای نېټې د محاسبې معیاري مودې."
+    },
+    "levels": {
+      "title": "د خدمت کچې",
+      "description": "د قرارداد کچې او درجې."
+    },
+    "countries": {
+      "title": "د قرارداد هېوادونه",
+      "description": "د قرارداد لپاره ټاکل کېدونکي هېوادونه."
+    },
+    "statuses": {
+      "title": "د قرارداد حالتونه",
+      "description": "د پېرودونکي د قرارداد کاري پړاوونه."
+    },
+    "invoiceStatuses": {
+      "title": "د بل حالتونه",
+      "description": "د قرارداد د بل د ورکړې حالتونه."
+    },
+    "paymentMethods": {
+      "title": "د ورکړې لارې",
+      "description": "د بل د ورکړې منل شوې لارې."
+    },
+    "durationHint": "انګلیسي شمېره او واحد وکاروئ؛ لکه 1 Year، 18 Months یا 90 Days.",
+    "deleteDescription": "انتخاب {name} ړنګ شي؟ کارېدونکی انتخاب نه ړنګېږي.",
+    "common": {
+      "name": "نوم",
+      "description": "تفصیل",
+      "status": "حالت",
+      "actions": "کړنې",
+      "active": "فعال",
+      "inactive": "غیرفعال",
+      "activate": "فعالول",
+      "deactivate": "غیرفعالول",
+      "add": "انتخاب زیات کړئ",
+      "edit": "انتخاب سم کړئ",
+      "create": "جوړول",
+      "save": "بدلونونه ساتل",
+      "saving": "ساتل کېږي…",
+      "cancel": "لغوه",
+      "empty": "انتخاب نشته"
+    }
   },
   "contractInvoices": {
-    "kpis": { "totalInvoiced": "ټول بلونه", "allInvoices": "ټول جوړ شوي بلونه", "paidRevenue": "ورکړل شوی عاید", "paidInvoices": "په مالي برخه کې ثبت شوې ورکړې", "overdueInvoices": "ناوخته بلونه", "overdueCount": "{count} ناوخته بلونه", "outstanding": "پاتې اندازه", "pendingInvoices": "ناورکړل شوي او نیمګړي ورکړل شوي" },
-    "filters": { "search": "لټون", "searchPlaceholder": "بل، قرارداد یا پېرودونکی ولټوئ", "status": "د بل حالت", "allStatuses": "ټول حالتونه", "client": "پېرودونکی", "allClients": "ټول پېرودونکي", "contract": "قرارداد", "allContracts": "ټول قراردادونه", "fromDate": "د ورکړې نېټه له", "toDate": "د ورکړې نېټه تر", "clear": "فلټرونه پاک کړئ" },
-    "table": { "invoiceContract": "بل او قرارداد", "client": "پېرودونکی", "issueDue": "د جوړېدو او ورکړې نېټه", "amountCurrency": "اندازه او اسعار", "baseAmount": "بنسټیزه اندازه", "status": "حالت", "actions": "کړنې" }, "status": { "OVERDUE": "ناوخته" },
-    "actions": { "create": "بل جوړ کړئ", "save": "بدلونونه وساتئ", "saving": "ساتل کېږي…", "viewPrint": "کتل / چاپ", "recordPayment": "ورکړه ثبت کړئ", "edit": "سمون", "delete": "ړنګول", "changeStatus": "حالت بدل کړئ", "cancel": "لغوه", "close": "تړل", "confirmPayment": "ورکړه تایید کړئ", "printDownload": "چاپ / PDF ښکته کول" },
-    "form": { "createTitle": "بل جوړ کړئ", "editTitle": "بل سم کړئ", "description": "د پېرودونکي د قرارداد بل جوړ او اداره کړئ.", "selectContractHelp": "د پېرودونکي د ډکولو لپاره قرارداد وټاکئ.", "baseAmount": "محاسبه شوې بنسټیزه اندازه ({currency})" },
-    "fields": { "contract": "قرارداد", "client": "پېرودونکی", "amount": "د بل اندازه", "currency": "اسعار", "exchangeRate": "د USD/AFN تبادلې نرخ", "issueDate": "د جوړېدو نېټه", "dueDate": "د ورکړې نېټه", "status": "حالت", "invoiceNumber": "د بل شمېره" }, "placeholders": { "contract": "قرارداد ولټوئ او وټاکئ" },
-    "payment": { "title": "د بل ورکړه ثبت کړئ", "date": "د ورکړې نېټه", "amount": "د ورکړې اندازه", "method": "د ورکړې لاره", "notes": "د ورکړې یادښت", "ledgerNotice": "په تایید سره بل ورکړل شوی کېږي او په FinanceIncome کې تړلې لیکنه جوړېږي.", "recording": "ثبتېږي…" },
-    "print": { "title": "د چاپ وړ بل", "invoice": "بل", "from": "له", "billTo": "بل د", "taxId": "مالیاتي شمېره", "paymentTerms": "د ورکړې شرایط", "netDays": "{days} ورځې", "item": "قرارداد / توکی", "service": "د خدمت ډول", "rate": "بنسټیز نرخ", "total": "ټول", "amountDue": "د ورکړې اندازه", "thankYou": "ستاسو له همکارۍ مننه.", "footer": "د ورکړې پر مهال د بل شمېره ولیکئ.", "stamp": "د شرکت مهر" },
-    "empty": { "title": "بل ونه موندل شو", "description": "بل جوړ کړئ یا لټون او فلټرونه بدل کړئ." }, "delete": { "title": "بل ړنګ کړئ", "description": "بل {name} ړنګ شي؟ دا کړنه بېرته نه راګرځي." }, "pagination": { "rowsPerPage": "په هر مخ کې کتارونه", "of": "له" },
-    "messages": { "created": "بل په بریالیتوب جوړ شو.", "updated": "بل تازه شو.", "statusUpdated": "د بل حالت تازه شو.", "deleted": "بل ړنګ شو.", "paymentRecorded": "ورکړه ثبت او FinanceIncome تازه شو.", "loadFailed": "بلونه بار نه شول.", "optionsLoadFailed": "د فورم انتخابونه بار نه شول.", "operationFailed": "د بل کړنه بشپړه نه شوه.", "paymentFailed": "ورکړه ثبت نه شوه.", "paymentRequired": "د بل د ورکړل شوي کولو او FinanceIncome سند جوړولو لپاره ورکړه ثبت کړئ.", "notFound": "بل ونه موندل شو.", "duplicate": "په دې شمېره بل شته.", "paidLocked": "ورکړل شوی بل د مالي همغږۍ له امله تړلی دی.", "paidDeleteBlocked": "ورکړل شوی بل نه ړنګېږي.", "alreadyPaid": "دا بل مخکې ورکړل شوی.", "paymentOptionsMissing": "ورکړل شوی حالت، د ورکړې لارې او د قرارداد د ورکړې عاید ډول تنظیم کړئ.", "unauthenticated": "د بلونو د ادارې لپاره ننوځئ.", "forbidden": "د بلونو د ادارې اجازه نه لرئ." },
-    "validation": { "required": "دا برخه اړینه ده.", "amountInvalid": "له صفر څخه لویه اندازه ولیکئ.", "dateInvalid": "سمه نېټه ولیکئ.", "notesTooLong": "یادښت باید تر ۱۰۰۰ تورو زیات نه وي.", "invalidContract": "سم قرارداد او تړلی پېرودونکی وټاکئ.", "invalidStatus": "سم حالت وټاکئ.", "paidViaPaymentOnly": "د ورکړل شوي حالت لپاره ورکړه ثبت کړئ.", "dateRangeInvalid": "د ورکړې نېټه باید د جوړېدو له نېټې سره برابره یا وروسته وي.", "fullPaymentRequired": "د ورکړې اندازه باید د ټول بل سره برابره وي." }
+    "kpis": {
+      "totalInvoiced": "ټول بلونه",
+      "allInvoices": "ټول جوړ شوي بلونه",
+      "paidRevenue": "ورکړل شوی عاید",
+      "paidInvoices": "په مالي برخه کې ثبت شوې ورکړې",
+      "overdueInvoices": "ناوخته بلونه",
+      "overdueCount": "{count} ناوخته بلونه",
+      "outstanding": "پاتې اندازه",
+      "pendingInvoices": "ناورکړل شوي او نیمګړي ورکړل شوي"
+    },
+    "filters": {
+      "search": "لټون",
+      "searchPlaceholder": "بل، قرارداد یا پېرودونکی ولټوئ",
+      "status": "د بل حالت",
+      "allStatuses": "ټول حالتونه",
+      "client": "پېرودونکی",
+      "allClients": "ټول پېرودونکي",
+      "contract": "قرارداد",
+      "allContracts": "ټول قراردادونه",
+      "fromDate": "د ورکړې نېټه له",
+      "toDate": "د ورکړې نېټه تر",
+      "clear": "فلټرونه پاک کړئ"
+    },
+    "table": {
+      "invoiceContract": "بل او قرارداد",
+      "client": "پېرودونکی",
+      "issueDue": "د جوړېدو او ورکړې نېټه",
+      "amountCurrency": "اندازه او اسعار",
+      "baseAmount": "بنسټیزه اندازه",
+      "status": "حالت",
+      "actions": "کړنې"
+    },
+    "status": {
+      "OVERDUE": "ناوخته"
+    },
+    "actions": {
+      "create": "بل جوړ کړئ",
+      "save": "بدلونونه وساتئ",
+      "saving": "ساتل کېږي…",
+      "viewPrint": "کتل / چاپ",
+      "recordPayment": "ورکړه ثبت کړئ",
+      "edit": "سمون",
+      "delete": "ړنګول",
+      "changeStatus": "حالت بدل کړئ",
+      "cancel": "لغوه",
+      "close": "تړل",
+      "confirmPayment": "ورکړه تایید کړئ",
+      "printDownload": "چاپ / PDF ښکته کول"
+    },
+    "form": {
+      "createTitle": "بل جوړ کړئ",
+      "editTitle": "بل سم کړئ",
+      "description": "د پېرودونکي د قرارداد بل جوړ او اداره کړئ.",
+      "selectContractHelp": "د پېرودونکي د ډکولو لپاره قرارداد وټاکئ.",
+      "baseAmount": "محاسبه شوې بنسټیزه اندازه ({currency})"
+    },
+    "fields": {
+      "contract": "قرارداد",
+      "client": "پېرودونکی",
+      "amount": "د بل اندازه",
+      "currency": "اسعار",
+      "exchangeRate": "د USD/AFN تبادلې نرخ",
+      "issueDate": "د جوړېدو نېټه",
+      "dueDate": "د ورکړې نېټه",
+      "status": "حالت",
+      "invoiceNumber": "د بل شمېره"
+    },
+    "placeholders": {
+      "contract": "قرارداد ولټوئ او وټاکئ"
+    },
+    "payment": {
+      "title": "د بل ورکړه ثبت کړئ",
+      "date": "د ورکړې نېټه",
+      "amount": "د ورکړې اندازه",
+      "method": "د ورکړې لاره",
+      "notes": "د ورکړې یادښت",
+      "ledgerNotice": "په تایید سره بل ورکړل شوی کېږي او په FinanceIncome کې تړلې لیکنه جوړېږي.",
+      "recording": "ثبتېږي…"
+    },
+    "print": {
+      "title": "د چاپ وړ بل",
+      "invoice": "بل",
+      "from": "له",
+      "billTo": "بل د",
+      "taxId": "مالیاتي شمېره",
+      "paymentTerms": "د ورکړې شرایط",
+      "netDays": "{days} ورځې",
+      "item": "قرارداد / توکی",
+      "service": "د خدمت ډول",
+      "rate": "بنسټیز نرخ",
+      "total": "ټول",
+      "amountDue": "د ورکړې اندازه",
+      "thankYou": "ستاسو له همکارۍ مننه.",
+      "footer": "د ورکړې پر مهال د بل شمېره ولیکئ.",
+      "stamp": "د شرکت مهر"
+    },
+    "empty": {
+      "title": "بل ونه موندل شو",
+      "description": "بل جوړ کړئ یا لټون او فلټرونه بدل کړئ."
+    },
+    "delete": {
+      "title": "بل ړنګ کړئ",
+      "description": "بل {name} ړنګ شي؟ دا کړنه بېرته نه راګرځي."
+    },
+    "pagination": {
+      "rowsPerPage": "په هر مخ کې کتارونه",
+      "of": "له"
+    },
+    "messages": {
+      "created": "بل په بریالیتوب جوړ شو.",
+      "updated": "بل تازه شو.",
+      "statusUpdated": "د بل حالت تازه شو.",
+      "deleted": "بل ړنګ شو.",
+      "paymentRecorded": "ورکړه ثبت او FinanceIncome تازه شو.",
+      "loadFailed": "بلونه بار نه شول.",
+      "optionsLoadFailed": "د فورم انتخابونه بار نه شول.",
+      "operationFailed": "د بل کړنه بشپړه نه شوه.",
+      "paymentFailed": "ورکړه ثبت نه شوه.",
+      "paymentRequired": "د بل د ورکړل شوي کولو او FinanceIncome سند جوړولو لپاره ورکړه ثبت کړئ.",
+      "notFound": "بل ونه موندل شو.",
+      "duplicate": "په دې شمېره بل شته.",
+      "paidLocked": "ورکړل شوی بل د مالي همغږۍ له امله تړلی دی.",
+      "paidDeleteBlocked": "ورکړل شوی بل نه ړنګېږي.",
+      "alreadyPaid": "دا بل مخکې ورکړل شوی.",
+      "paymentOptionsMissing": "ورکړل شوی حالت، د ورکړې لارې او د قرارداد د ورکړې عاید ډول تنظیم کړئ.",
+      "unauthenticated": "د بلونو د ادارې لپاره ننوځئ.",
+      "forbidden": "د بلونو د ادارې اجازه نه لرئ."
+    },
+    "validation": {
+      "required": "دا برخه اړینه ده.",
+      "amountInvalid": "له صفر څخه لویه اندازه ولیکئ.",
+      "dateInvalid": "سمه نېټه ولیکئ.",
+      "notesTooLong": "یادښت باید تر ۱۰۰۰ تورو زیات نه وي.",
+      "invalidContract": "سم قرارداد او تړلی پېرودونکی وټاکئ.",
+      "invalidStatus": "سم حالت وټاکئ.",
+      "paidViaPaymentOnly": "د ورکړل شوي حالت لپاره ورکړه ثبت کړئ.",
+      "dateRangeInvalid": "د ورکړې نېټه باید د جوړېدو له نېټې سره برابره یا وروسته وي.",
+      "fullPaymentRequired": "د ورکړې اندازه باید د ټول بل سره برابره وي."
+    }
+  },
+  "inventoryManagement": {
+    "metrics": { "totalValue": "د زېرمې ټول ارزښت", "totalItems": "ټول توکي", "lowStock": "د کمې زېرمې خبرتیاوې", "outOfStock": "له زېرمې وتلي", "usdHint": "ډالرو ته بدل شوی", "itemsHint": "جلا زېرمه شوي توکي", "lowStockHint": "د بیا فرمایش له کچې سره برابر یا کم", "outOfStockHint": "هغه توکي چې زېرمه نه لري" },
+    "filters": { "search": "په زېرمه کې لټون", "searchPlaceholder": "د توکي نوم یا SKU کوډ...", "searchCategories": "کټګورۍ لټول", "searchCategoriesPlaceholder": "د کټګورۍ نوم یا کوډ...", "category": "کټګوري", "status": "حالت", "stock": "د زېرمې حالت", "allCategories": "ټولې کټګورۍ", "allStatuses": "ټول حالتونه", "allStock": "د زېرمې ټولې کچې", "clear": "فلټرونه پاکول" },
+    "stockStatus": { "IN_STOCK": "په زېرمه کې", "LOW_STOCK": "کمه زېرمه", "OUT_OF_STOCK": "له زېرمې وتلی" },
+    "table": { "sku": "SKU", "item": "د توکي نوم", "category": "کټګوري", "quantity": "په زېرمه کې شمېر", "unitPrice": "د واحد بیه", "totalValue": "ټول ارزښت", "reorderLevel": "د بیا فرمایش کچه", "status": "حالت", "actions": "کړنې" },
+    "actions": { "add": "زېرمه کې توکی زیاتول", "create": "توکی جوړول", "edit": "توکی سمول", "save": "بدلونونه ساتل", "saving": "ساتل کېږي...", "adjust": "شمېر برابرول", "delete": "ړنګول", "cancel": "لغوه" },
+    "fields": { "name": "د توکي نوم", "sku": "SKU کوډ", "category": "کټګوري", "quantity": "په زېرمه کې شمېر", "unitPrice": "د واحد بیه", "currency": "اسعار", "exchangeRate": "د ډالر / افغانۍ د تبادلې نرخ", "reorderLevel": "د بیا فرمایش کچه", "status": "حالت", "baseAmount": "د واحد ډالري ارزښت", "baseTotal": "ټول ډالري ارزښت", "currentStock": "اوسنۍ زېرمه" },
+    "placeholders": { "autoSku": "د اتومات جوړولو لپاره تش پرېږدئ" },
+    "form": { "addTitle": "زېرمه کې توکی زیاتول", "editTitle": "د زېرمې توکی سمول", "description": "د توکي پېژندنه، بیه، د زېرمې حدونه او تړل شوی اسعار وساتئ.", "statusNotice": "د کمې او ختمې زېرمې حالتونه د شمېر او بیا فرمایش کچې له مخې اتومات ټاکل کېږي." },
+    "adjust": { "title": "د زېرمې شمېر برابرول", "description": "د {item} لپاره د زېرمې حرکت ثبت کړئ.", "stockIn": "زېرمې ته داخل", "stockOut": "له زېرمې خارج", "quantity": "د حرکت شمېر" },
+    "categoryActions": { "add": "کټګوري زیاتول", "edit": "کټګوري سمول", "activate": "فعالول", "deactivate": "غیرفعالول", "delete": "کټګوري ړنګول" },
+    "categoryStatus": { "active": "فعاله", "inactive": "غیرفعاله" },
+    "categoryForm": { "addTitle": "د زېرمې کټګوري زیاتول", "editTitle": "د زېرمې کټګوري سمول", "name": "د کټګورۍ نوم", "description": "تشریح" },
+    "categoryEmpty": { "title": "د زېرمې کټګوري ونه موندل شوه", "description": "کټګوري زیاته کړئ یا لټون بدل کړئ." },
+    "categoryDelete": { "title": "د زېرمې کټګوري ړنګول", "description": "دا کټګوري ړنګه شي؟ په توکو کې کارېدونکې کټګوري نه شي ړنګېدای." },
+    "categoryMessages": { "created": "د زېرمې کټګوري جوړه شوه.", "updated": "د زېرمې کټګوري تازه شوه.", "statusUpdated": "د کټګورۍ حالت تازه شو.", "deleted": "د زېرمې کټګوري ړنګه شوه.", "duplicate": "په دې نوم کټګوري مخکې شته.", "inUse": "دا کټګوري له توکو سره تړلې ده او نه شي ړنګېدای." },
+    "common": { "rowsPerPage": "په هر مخ کې کتارونه:", "of": "له" },
+    "empty": { "title": "د زېرمې کوم توکی ونه موندل شو", "description": "یو توکی زیات کړئ یا لټون او فلټرونه بدل کړئ." },
+    "delete": { "title": "د زېرمې توکی ړنګول", "description": "دا توکی ړنګ شي؟ دا کړنه بېرته نه راګرځي." },
+    "messages": { "created": "د زېرمې توکی په بریالیتوب جوړ شو.", "updated": "د زېرمې توکی په بریالیتوب تازه شو.", "adjusted": "د زېرمې شمېر په بریالیتوب برابر شو.", "deleted": "د زېرمې توکی په بریالیتوب ړنګ شو.", "loadFailed": "د زېرمې ریکارډونه پورته نه شول.", "operationFailed": "د زېرمې کړنه بشپړه نه شوه.", "duplicateSku": "په دې SKU کوډ توکی مخکې شته.", "notFound": "د زېرمې توکی ونه موندل شو.", "insufficientStock": "د وتلو شمېر له شته زېرمې ډېر دی.", "invalidOptionType": "غوښتل شوی د انتخاب ډول نه ملاتړ کېږي.", "unauthenticated": "ننوتل اړین دي.", "forbidden": "تاسو د دې کړنې اجازه نه لرئ." },
+    "validation": { "required": "دا ډګر اړین دی.", "nameTooLong": "د توکي نوم باید له ۱۵۰ تورو زیات نه وي.", "skuInvalid": "د SKU لپاره ۲-۵۰ انګلیسي توري، شمېرې، کرښه یا لاندې کرښه وکاروئ.", "quantityInvalid": "سمه نامنفي بشپړه شمېره ولیکئ.", "priceInvalid": "له صفر لوړه د واحد بیه ولیکئ.", "currencyInvalid": "AFN یا USD وټاکئ.", "rateInvalid": "له صفر لوړ د تبادلې نرخ ولیکئ.", "adjustmentInvalid": "له صفر لوړه بشپړه شمېره ولیکئ.", "invalidRelation": "سمه کټګوري او حالت وټاکئ.", "statusMissing": "د زېرمې اړین حالتونه نه دي تنظیم شوي.", "categoryNameInvalid": "۲-۱۰۰ انګلیسي توري، شمېرې، تشې یا ساده نښې وکاروئ.", "descriptionTooLong": "تشریح باید له ۱۰۰۰ تورو زیاته نه وي." }
+  },
+  "financeSalary": {
+    "metrics": { "total": "ټول میاشتنی معاش", "paid": "ورکړل شوي معاشونه", "pending": "پاتې معاشونه", "loans": "د پور ټول کسر", "baseCurrency": "په {currency} راپور", "paidHint": "د دې میاشتې اجرا شوي معاشونه", "pendingHint": "د ورکړې په تمه مسوده معاشونه", "loansHint": "د کارکوونکو د پور ټاکل شوې بېرته اخیستنه" },
+    "filters": { "search": "معاش لټول", "searchPlaceholder": "د کارکوونکي نوم یا برېښنالیک...", "month": "د معاش میاشت", "status": "حالت", "allStatuses": "ټول حالتونه", "clear": "فلټرونه پاکول" },
+    "table": { "staff": "کارکوونکی", "monthDays": "میاشت او ورځې", "baseSalary": "اساسي معاش", "earnedBonus": "ترلاسه شوی او امتیاز", "loanDeduction": "د پور کسر", "payable": "خالص ورکړه", "status": "حالت", "actions": "کړنې" },
+    "actions": { "generate": "د {month} لپاره معاش جوړول", "generating": "معاشونه جوړېږي...", "view": "د معاش پاڼه کتل", "edit": "د معاش سمون", "markPaid": "ورکړل شوی نښه کول", "delete": "ریکارډ ړنګول", "cancel": "لغوه", "save": "سمونونه ساتل", "saving": "ساتل کېږي...", "close": "تړل", "print": "د معاش پاڼه چاپول" },
+    "fields": { "workedDays": "کاري ورځې", "offDays": "رخصت ورځې", "bonus": "امتیاز / اضافي", "loanDeduction": "د پور کسر", "notes": "د حاضري لنډیز یادښت", "currency": "اسعار", "exchangeRate": "د ډالر / افغانۍ د تبادلې نرخ", "dailyRate": "ورځنی نرخ", "earnedSalary": "ترلاسه شوی معاش", "payableAmount": "خالص ورکړه", "baseAmount": "بنسټیز مبلغ", "paymentDate": "د ورکړې نېټه", "processor": "اجرا کوونکی" },
+    "form": { "title": "د معاش سمون", "description": "له ورکړې مخکې حاضري، امتیاز، کسر او تړل شوي ارزښتونه برابر کړئ.", "liveCalculation": "ژوندۍ محاسبه", "paidLocked": "ورکړل شوي معاشونه تړلي دي او نه شي بدلېدلی." },
+    "payslip": { "title": "رسمي معاش پاڼه", "employee": "د کارکوونکي معلومات", "designation": "دنده", "payrollMonth": "د معاش میاشت", "earnings": "عایدات", "deductions": "کسرونه", "baseSalary": "میاشتنی اساسي معاش", "earnedPay": "د کاري ورځو معاش", "bonus": "امتیاز / اضافي", "loan": "د کارکوونکي پور بېرته ورکړه", "offDays": "رخصت / بې معاش ورځې", "netPayable": "خالص ورکړه", "signature": "مجاز لاسلیک", "notProcessed": "نه دی اجرا شوی" },
+    "status": { "DRAFT": "مسوده", "PAID": "ورکړل شوی" },
+    "common": { "notAvailable": "-", "rowsPerPage": "په هر مخ کې کتارونه:", "of": "له", "days": "{worked} / {total} ورځې", "bonus": "امتیاز: {amount}", "noLoan": "کسر نشته" },
+    "empty": { "title": "د معاش ریکارډ ونه موندل شو", "description": "د دې میاشتې معاش جوړ کړئ یا فلټرونه بدل کړئ." },
+    "delete": { "title": "د معاش ریکارډ ړنګول", "description": "د {name} مسوده معاش ړنګ شي؟ دا کړنه بېرته نه راګرځي." },
+    "pay": { "title": "معاش ورکړل شوی نښه کول", "description": "د {name} ورکړه تایید کړئ. ټاکل شوی د پور کسر به په پور کې ثبت شي.", "confirm": "ورکړه تاییدول" },
+    "validation": { "required": "دا ډګر اړین دی.", "monthInvalid": "د معاش سمه میاشت وټاکئ.", "daysInvalid": "د ورځو سمه بشپړه شمېره ولیکئ.", "numberInvalid": "سم نامنفي مبلغ ولیکئ.", "notesTooLong": "یادښت باید له ۵۰۰۰ تورو زیات نه وي.", "currencyInvalid": "AFN یا USD وټاکئ.", "rateInvalid": "له صفر لوړ نرخ ولیکئ.", "daysExceedMonth": "کاري او رخصت ورځې د میاشتې له ورځو ډېرېدای نه شي.", "invalidStaff": "ټاکل شوی کارکوونکی سم نه دی." },
+    "messages": { "unauthenticated": "ننوتل اړین دي.", "forbidden": "تاسو د دې کړنې اجازه نه لرئ.", "loadFailed": "د معاش ریکارډونه پورته نه شول.", "optionsLoadFailed": "د معاش انتخابونه پورته نه شول.", "detailLoadFailed": "د معاش پاڼې معلومات پورته نه شول.", "notFound": "د معاش ریکارډ ونه موندل شو.", "duplicate": "د دې کارکوونکي او میاشتې معاش مخکې شته.", "noEligibleStaff": "د معاش لپاره فعال کارکوونکی نشته.", "generated": "{created} معاشونه جوړ او {skipped} شته ریکارډونه پرېښودل شول.", "updated": "د معاش سمونونه وساتل شول.", "created": "د معاش ریکارډ جوړ شو.", "paid": "معاش ورکړل او د پور بېرته ورکړه ثبت شوه.", "alreadyPaid": "دا معاش مخکې ورکړل شوی.", "paidLocked": "ورکړل شوی معاش نه بدلېږي او نه ړنګېږي.", "deleted": "د معاش مسوده ړنګه شوه.", "processorMissing": "ستاسو حساب له فعال کارکوونکي سره نه دی تړلی.", "operationFailed": "د معاش کړنه بشپړه نه شوه." }
+  },
+  "financeLoans": {
+    "metrics": { "active": "ټول فعال پورونه", "repaid": "ټول بېرته ورکړل شوی مبلغ", "recovery": "میاشتنۍ تمه شوې بېرته اخیستنه", "portfolio": "د پورونو ټول ارزښت", "usdHint": "ډالرو ته بدل شوی", "activeHint": "د فعال او منظور شوو پورونو پاتې", "repaidHint": "په ټولو پورونو کې بېرته اخیستل شوی", "recoveryHint": "تمه شوي میاشتني کسرونه", "portfolioHint": "د ورکړل شوو پورونو اصلي ارزښت" },
+    "filters": { "search": "پورونه لټول", "searchPlaceholder": "د پور شمېره، پور اخیستونکی یا کارکوونکی...", "status": "حالت", "type": "د پور ډول", "allStatuses": "ټول حالتونه", "allTypes": "د پور ټول ډولونه", "clear": "فلټرونه پاکول" },
+    "types": { "STAFF": "د کارکوونکي پور", "EXTERNAL": "بهرنۍ اداره", "BANK": "بانک / شرکت" },
+    "table": { "loan": "پور", "borrower": "پور اخیستونکی", "total": "ټول مبلغ", "monthly": "میاشتنی کسر", "repaid": "بېرته ورکړل شوی", "remaining": "پاتې مبلغ", "status": "حالت", "date": "د صدور نېټه", "actions": "کړنې" },
+    "actions": { "add": "پور جوړول", "create": "پور جوړول", "save": "بدلونونه ساتل", "saving": "ساتل کېږي...", "cancel": "لغوه", "close": "تړل", "view": "معلومات کتل", "repay": "بېرته ورکړه ثبتول", "print": "حساب چاپول", "delete": "پور ړنګول" },
+    "fields": { "loanType": "د پور ډول", "staff": "کارکوونکی", "entity": "د بهرنۍ ادارې نوم", "total": "ټول مبلغ", "currency": "اسعار", "exchangeRate": "د ډالر / افغانۍ د تبادلې نرخ", "monthly": "میاشتنی کسر", "issueDate": "د صدور نېټه", "reason": "دلیل / یادښت", "amountBase": "ډالري بنسټیز مبلغ", "loanNumber": "د پور شمېره", "approver": "منظوروونکی", "repaid": "بېرته ورکړل شوی مبلغ", "remaining": "پاتې مبلغ", "status": "حالت", "repayment": "د بېرته ورکړې مبلغ" },
+    "form": { "title": "پور جوړول", "description": "د کارکوونکي مخکې ورکړه یا بهرنۍ تمویل د تړل شوو اسعارو ارزښتونو سره ثبت کړئ.", "calculation": "مالي مخکتنه" },
+    "repayment": { "title": "د پور بېرته ورکړه ثبتول", "description": "{loan} ته بېرته ورکړه ثبت کړئ. مبلغ به له پاتې اندازې نه زیاتېږي.", "confirm": "بېرته ورکړه ثبتول" },
+    "detail": { "title": "د پور معلومات", "financial": "مالي وېش", "borrower": "پور اخیستونکی او منظوري", "statement": "د پور حساب" },
+    "common": { "notAvailable": "-", "rowsPerPage": "په هر مخ کې کتارونه:", "of": "له", "active": "فعال", "unassigned": "نه دی ټاکل شوی" },
+    "empty": { "title": "پور ونه موندل شو", "description": "پور جوړ کړئ یا لټون او فلټرونه بدل کړئ." },
+    "validation": { "required": "دا ډګر اړین دی.", "amountInvalid": "له صفر لوړ مبلغ ولیکئ.", "rateInvalid": "له صفر لوړ د تبادلې نرخ ولیکئ.", "dateInvalid": "د صدور سمه نېټه وټاکئ.", "entityRequired": "د بهرنۍ ادارې نوم ولیکئ.", "staffRequired": "کارکوونکی وټاکئ.", "monthlyTooHigh": "میاشتنی کسر له ټول مبلغ نه زیاتېدای نه شي.", "reasonTooLong": "دلیل باید له ۵۰۰۰ تورو زیات نه وي." },
+    "messages": { "unauthenticated": "ننوتل اړین دي.", "forbidden": "تاسو د دې کړنې اجازه نه لرئ.", "loadFailed": "پورونه پورته نه شول.", "detailLoadFailed": "د پور معلومات پورته نه شول.", "created": "پور په بریالیتوب جوړ شو.", "updated": "پور په بریالیتوب تازه شو.", "deleted": "پور په بریالیتوب ړنګ شو.", "repaid": "د پور بېرته ورکړه ثبت شوه.", "notFound": "پور ونه موندل شو.", "invalidRelation": "ټاکل شوی کارکوونکی یا حالت سم نه دی.", "repaymentBlocked": "دا پور پاتې مبلغ نه لري.", "deleteBlocked": "هغه پور چې بېرته ورکړه لري نه شي ړنګېدای.", "operationFailed": "د پور کړنه بشپړه نه شوه." }
   }
 }

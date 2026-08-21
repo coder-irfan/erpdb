@@ -323,3 +323,53 @@ export const toggleRoleStatus = async payload => {
     return { success: false, code: 'ROLE_STATUS_FAILED', error: context.translations.messages.operationFailed }
   }
 }
+
+export const deleteRole = async payload => {
+  const context = await getActionContext(payload)
+
+  if (!context.authorized) return { success: false, code: context.code, error: context.error }
+
+  const roleId = typeof payload?.roleId === 'string' ? payload.roleId.trim() : ''
+
+  if (!roleId) {
+    return { success: false, code: 'ROLE_NOT_FOUND', error: context.translations.messages.roleNotFound }
+  }
+
+  try {
+    const role = await prisma.role.findUnique({
+      where: { id: roleId },
+      select: { id: true, name: true, display_name: true, is_system: true, _count: { select: { users: true } } }
+    })
+
+    if (!role) {
+      return { success: false, code: 'ROLE_NOT_FOUND', error: context.translations.messages.roleNotFound }
+    }
+
+    if (role.is_system || role.name === 'super_admin') {
+      return { success: false, code: 'PROTECTED_ROLE', error: context.translations.messages.protectedRole }
+    }
+
+    if (role._count.users > 0) {
+      return { success: false, code: 'ROLE_IN_USE', error: context.translations.messages.roleInUse }
+    }
+
+    await prisma.$transaction(async transaction => {
+      await transaction.rolepermission.deleteMany({ where: { role_id: role.id } })
+      await transaction.role.delete({ where: { id: role.id } })
+      await transaction.auditlog.create({
+        data: {
+          user_id: context.session.user.id,
+          action: 'ROLE_DELETED',
+          module: 'SETTINGS',
+          details: { roleId: role.id, roleName: role.name, displayName: role.display_name }
+        }
+      })
+    })
+
+    revalidateRolesPage()
+
+    return { success: true, data: { id: role.id }, message: context.translations.messages.roleDeleted }
+  } catch {
+    return { success: false, code: 'ROLE_DELETE_FAILED', error: context.translations.messages.operationFailed }
+  }
+}

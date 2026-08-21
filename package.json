@@ -4,7 +4,7 @@
   "license": "Commercial",
   "private": true,
   "scripts": {
-    "dev": "cross-env NODE_OPTIONS='--max-old-space-size=4096' next dev --webpack",
+    "dev": "cross-env NODE_OPTIONS='--max-old-space-size=4096' next dev --webpack -p 3005",
     "build": "next build",
     "start": "next start",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx",

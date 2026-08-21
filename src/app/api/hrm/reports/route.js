@@ -1,10 +1,13 @@
 import { authorizeAction } from '@/libs/actionAuthorization'
+import { getCompanySetupRecord } from '@/libs/companySetup'
 import { prisma } from '@/libs/prisma'
 import { getDictionary } from '@/utils/getDictionary'
-import { toFiniteNumber } from '@/utils/formatCurrency'
+import { convertToBaseCurrency, toFiniteNumber } from '@/utils/formatCurrency'
+import { hasAnyPermission } from '@/utils/rbac'
 
 const REPORT_TYPES = ['payroll', 'attendance', 'leaves', 'contracts']
 const REPORT_PERMISSIONS = ['hrm_reports:read', 'hrm:read']
+const SALARY_REPORT_PERMISSIONS = ['finance:read', 'finance_salary:read', 'hrm_payroll:read']
 const SUPPORTED_LOCALES = ['en', 'fa', 'ps']
 const DAY_IN_MS = 86_400_000
 
@@ -47,33 +50,30 @@ const getStaffOptions = () =>
   })
 
 const getPayrollReport = async ({ start, end, staffId, months }) => {
-  const monthFilters = months.map(period => {
-    const [year, month] = period.split('-').map(Number)
+  const [records, setup] = await Promise.all([
+    prisma.financesalary.findMany({
+      where: { ...(staffId && { staff_id: staffId }), timesheet_month: { in: months } },
+      select: {
+        id: true,
+        timesheet_month: true,
+        base_salary: true,
+        earned_salary: true,
+        bonus_amount: true,
+        loan_deduction: true,
+        payable_amount: true,
+        currency: true,
+        exchange_rate: true,
+        amount_base: true,
+        payment_date: true,
+        staff: { select: { id: true, first_name: true, last_name: true, position: true } },
+        status: true
+      },
+      orderBy: [{ timesheet_month: 'desc' }, { staff: { first_name: 'asc' } }]
+    }),
+    getCompanySetupRecord()
+  ])
 
-    return { year, month }
-  })
-
-  const records = await prisma.hrmpayroll.findMany({
-    where: { ...(staffId && { staff_id: staffId }), OR: monthFilters },
-    select: {
-      id: true,
-      month: true,
-      year: true,
-      base_salary: true,
-      total_allowance: true,
-      unpaid_leave_deduction: true,
-      tax_deduction: true,
-      net_salary: true,
-      currency: true,
-      exchange_rate: true,
-      amount_base: true,
-      payment_date: true,
-      staff: { select: { id: true, first_name: true, last_name: true, position: true } },
-      status: { select: { label: true, value: true } },
-      payment_method: { select: { label: true, value: true } }
-    },
-    orderBy: [{ year: 'desc' }, { month: 'desc' }, { staff: { first_name: 'asc' } }]
-  })
+  const baseCurrency = setup.currency_code || 'AFN'
 
   const trendMap = new Map(
     months.map(period => [
@@ -84,14 +84,13 @@ const getPayrollReport = async ({ start, end, staffId, months }) => {
 
   const summary = records.reduce(
     (totals, record) => {
-      const deductions = toFiniteNumber(record.unpaid_leave_deduction) + toFiniteNumber(record.tax_deduction)
-      const transactionNet = toFiniteNumber(record.net_salary)
+      const unpaidDeduction = Math.max(0, toFiniteNumber(record.base_salary) - toFiniteNumber(record.earned_salary))
+      const deductions = unpaidDeduction + toFiniteNumber(record.loan_deduction)
       const netPayout = toFiniteNumber(record.amount_base)
-      const baseFactor = transactionNet > 0 ? netPayout / transactionNet : 0
-      const baseSalary = toFiniteNumber(record.base_salary) * baseFactor
-      const allowances = toFiniteNumber(record.total_allowance) * baseFactor
-      const baseDeductions = deductions * baseFactor
-      const trend = trendMap.get(`${record.year}-${String(record.month).padStart(2, '0')}`)
+      const baseSalary = convertToBaseCurrency(record.base_salary, record.currency, record.exchange_rate, baseCurrency)
+      const allowances = convertToBaseCurrency(record.bonus_amount, record.currency, record.exchange_rate, baseCurrency)
+      const baseDeductions = convertToBaseCurrency(deductions, record.currency, record.exchange_rate, baseCurrency)
+      const trend = trendMap.get(record.timesheet_month)
 
       totals.total_base_salary += baseSalary
       totals.total_allowances += allowances
@@ -121,20 +120,20 @@ const getPayrollReport = async ({ start, end, staffId, months }) => {
     })),
     rows: records.map(record => ({
       id: record.id,
-      period: `${record.year}-${String(record.month).padStart(2, '0')}`,
+      period: record.timesheet_month,
       staff_id: record.staff.id,
       staff_name: staffName(record.staff),
       position: record.staff.position,
       base_salary: record.base_salary.toFixed(2),
-      allowances: record.total_allowance.toFixed(2),
-      deductions: money(toFiniteNumber(record.unpaid_leave_deduction) + toFiniteNumber(record.tax_deduction)),
-      net_payout: record.net_salary.toFixed(2),
+      allowances: record.bonus_amount.toFixed(2),
+      deductions: money(Math.max(0, toFiniteNumber(record.base_salary) - toFiniteNumber(record.earned_salary)) + toFiniteNumber(record.loan_deduction)),
+      net_payout: record.payable_amount.toFixed(2),
       currency: record.currency,
       exchange_rate: record.exchange_rate.toFixed(4),
       amount_base: record.amount_base.toFixed(2),
-      status: record.status.value,
-      status_label: record.status.label,
-      payment_method: record.payment_method?.label || null,
+      status: record.status,
+      status_label: record.status === 'PAID' ? 'Paid' : 'Draft',
+      payment_method: null,
       payment_date: record.payment_date?.toISOString() || null
     }))
   }
@@ -263,7 +262,9 @@ const getLeaveReport = async ({ start, end, staffId }) => {
     if (record.status.value === 'APPROVED') {
       const clippedStart = record.start_date < start ? start : record.start_date
       const clippedEnd = record.end_date > end ? end : record.end_date
-      const approvedDays = Math.floor((clippedEnd.getTime() - clippedStart.getTime()) / DAY_IN_MS) + 1
+      const overlapDays = Math.floor((clippedEnd.getTime() - clippedStart.getTime()) / DAY_IN_MS) + 1
+      const fullRangeDays = Math.floor((record.end_date.getTime() - record.start_date.getTime()) / DAY_IN_MS) + 1
+      const approvedDays = Number(record.total_days) * (overlapDays / fullRangeDays)
 
       totalApprovedDays += approvedDays
       current.approved_days += approvedDays
@@ -407,6 +408,11 @@ export async function GET(request) {
   const staffId = params.get('staff_id') || ''
 
   if (!REPORT_TYPES.includes(reportType)) return responseError(dictionary.messages.invalidReport, 400, 'INVALID_REPORT_TYPE')
+
+  if (reportType === 'payroll' && !hasAnyPermission(authorization.session, SALARY_REPORT_PERMISSIONS)) {
+    return responseError(dictionary.messages.forbidden, 403, 'FORBIDDEN')
+  }
+
   if (!start || !end || start > end) return responseError(dictionary.messages.invalidDates, 400, 'INVALID_DATE_RANGE')
 
   const months = buildMonths(start, end)

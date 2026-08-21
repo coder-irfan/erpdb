@@ -1,7 +1,11 @@
+// React Imports
+import { useMemo } from 'react'
+
 // MUI Imports
 import { useTheme } from '@mui/material/styles'
 
 // Third-party Imports
+import { useSession } from 'next-auth/react'
 import PerfectScrollbar from 'react-perfect-scrollbar'
 
 // Component Imports
@@ -16,6 +20,7 @@ import StyledVerticalNavExpandIcon from '@menu/styles/vertical/StyledVerticalNav
 
 // Data Imports
 import horizontalMenuData from '@/data/navigation/horizontalMenuData'
+import { filterNavByPermissions } from '@/utils/permissions'
 
 // Style Imports
 import menuItemStyles from '@core/styles/vertical/menuItemStyles'
@@ -30,8 +35,14 @@ const RenderExpandIcon = ({ open, transitionDuration }) => (
 const VerticalMenu = ({ dictionary, scrollMenu }) => {
   const theme = useTheme()
   const verticalNavOptions = useVerticalNav()
+  const { data: session } = useSession()
   const { isBreakpointReached, transitionDuration } = verticalNavOptions
   const ScrollWrapper = isBreakpointReached ? 'div' : PerfectScrollbar
+
+  const menuData = useMemo(
+    () => filterNavByPermissions(horizontalMenuData(dictionary), session?.user?.permissions, session?.user?.roles),
+    [dictionary, session?.user?.permissions, session?.user?.roles]
+  )
 
   return (
     <ScrollWrapper
@@ -52,7 +63,7 @@ const VerticalMenu = ({ dictionary, scrollMenu }) => {
         renderExpandedMenuItemIcon={{ icon: <i className='tabler-circle text-xs' /> }}
         menuSectionStyles={menuSectionStyles(verticalNavOptions, theme)}
       >
-        <GenerateVerticalMenu menuData={horizontalMenuData(dictionary)} />
+        <GenerateVerticalMenu menuData={menuData} />
       </Menu>
     </ScrollWrapper>
   )

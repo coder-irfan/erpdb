@@ -111,6 +111,7 @@
     "projects": "Projects",
     "contractModule": "Contract",
     "contractManagement": "Contract Management",
+    "financeManagement": "Finance Management",
     "contractOptions": "Contract Options",
     "contractList": "Contracts",
     "contractInvoices": "Invoices",
@@ -124,6 +125,7 @@
     "salary": "Salary",
     "loans": "Loans",
     "inventory": "Inventory",
+    "inventoryCategories": "Inventory Categories",
     "financeReports": "Reports",
     "options": "Options",
     "contractPolicies": "Contract Policies",
@@ -259,8 +261,22 @@
     }
   },
   "setupBranding": {
-    "tabs": { "general": "General Info", "localization": "Localization & Policy", "branding": "Branding & Assets", "signatories": "Legal Signatories" },
-    "sections": { "generalTitle": "Company information", "generalDescription": "Maintain the legal identity and primary contact details used throughout the system.", "localizationTitle": "Localization and operating policy", "localizationDescription": "Configure reporting currency, exchange rate, and the default work schedule.", "brandingTitle": "Branding and media assets", "brandingDescription": "Manage the images used on letterheads, navigation, browser tabs, and official documents.", "signatoriesTitle": "Authorized signatory", "signatoriesDescription": "Identify the person authorized to sign company documents." },
+    "tabs": {
+      "general": "General Info",
+      "localization": "Localization & Policy",
+      "branding": "Branding & Assets",
+      "signatories": "Legal Signatories"
+    },
+    "sections": {
+      "generalTitle": "Company information",
+      "generalDescription": "Maintain the legal identity and primary contact details used throughout the system.",
+      "localizationTitle": "Localization and operating policy",
+      "localizationDescription": "Configure reporting currency, exchange rate, and the default work schedule.",
+      "brandingTitle": "Branding and media assets",
+      "brandingDescription": "Manage the images used on letterheads, navigation, browser tabs, and official documents.",
+      "signatoriesTitle": "Authorized signatory",
+      "signatoriesDescription": "Identify the person authorized to sign company documents."
+    },
     "workHoursTitle": "Default Work Hours",
     "workHoursDescription": "These times automatically pre-fill attendance check-in and check-out fields.",
     "currencyTitle": "Currency & Exchange Rate",
@@ -320,19 +336,111 @@
     }
   },
   "hrmTimesheets": {
-    "date": { "today": "Today", "date": "Attendance Date", "previous": "Previous day", "next": "Next day", "yesterday": "Yesterday", "custom": "Custom Date" },
-    "summary": { "present": "Total Present", "absent": "Total Absent", "leave": "Total Leave", "unmarked": "Pending / Unmarked" },
-    "fields": { "date": "Attendance Date", "staff": "Staff Member", "position": "Position", "status": "Status", "checkIn": "Check-In", "checkOut": "Check-Out", "hours": "Hours Worked", "project": "Linked Project", "notes": "Notes" },
-    "status": { "PRESENT": "Present", "ABSENT": "Absent", "LEAVE": "Leave" },
-    "filters": { "search": "Search Staff", "searchPlaceholder": "Search employee name", "status": "Status", "allStatuses": "All statuses" },
-    "actions": { "mark": "Mark Attendance", "bulkAbsent": "Mark Remaining Absent", "export": "Export CSV", "print": "Print", "edit": "Edit", "delete": "Delete", "save": "Save Attendance", "saveNext": "Save & Mark Next", "saveChanges": "Save Changes", "saving": "Saving...", "cancel": "Cancel" },
-    "table": { "title": "Daily Attendance Log", "description": "Attendance entries for the selected date.", "actions": "Actions", "emptyTitle": "No Attendance Records Found", "emptyDescription": "Start by marking attendance for an active staff member.", "rowsPerPage": "Rows per page:", "of": "of" },
-    "drawer": { "title": "Mark Daily Attendance", "editTitle": "Edit Attendance", "description": "Only staff not yet marked for this date are available." },
-    "placeholders": { "selectStaff": "Select remaining staff member", "noProject": "No linked project" },
+    "date": {
+      "today": "Today",
+      "date": "Attendance Date",
+      "previous": "Previous day",
+      "next": "Next day",
+      "yesterday": "Yesterday",
+      "custom": "Custom Date"
+    },
+    "summary": {
+      "present": "Total Present",
+      "absent": "Total Absent",
+      "leave": "Total Leave",
+      "unmarked": "Pending / Unmarked"
+    },
+    "fields": {
+      "date": "Attendance Date",
+      "staff": "Staff Member",
+      "position": "Position",
+      "status": "Status",
+      "checkIn": "Check-In",
+      "checkOut": "Check-Out",
+      "hours": "Hours Worked",
+      "project": "Linked Project",
+      "notes": "Notes"
+    },
+    "status": {
+      "PRESENT": "Present",
+      "ABSENT": "Absent",
+      "LEAVE": "Leave"
+    },
+    "filters": {
+      "search": "Search Staff",
+      "searchPlaceholder": "Search employee name",
+      "status": "Status",
+      "allStatuses": "All statuses"
+    },
+    "actions": {
+      "mark": "Mark Attendance",
+      "bulkAbsent": "Mark Remaining Absent",
+      "export": "Export CSV",
+      "print": "Print",
+      "edit": "Edit",
+      "delete": "Delete",
+      "save": "Save Attendance",
+      "saveNext": "Save & Mark Next",
+      "saveChanges": "Save Changes",
+      "saving": "Saving...",
+      "cancel": "Cancel"
+    },
+    "table": {
+      "title": "Daily Attendance Log",
+      "description": "Attendance entries for the selected date.",
+      "actions": "Actions",
+      "emptyTitle": "No Attendance Records Found",
+      "emptyDescription": "Start by marking attendance for an active staff member.",
+      "rowsPerPage": "Rows per page:",
+      "of": "of"
+    },
+    "drawer": {
+      "title": "Mark Daily Attendance",
+      "editTitle": "Edit Attendance",
+      "description": "Only staff not yet marked for this date are available."
+    },
+    "placeholders": {
+      "selectStaff": "Select remaining staff member",
+      "noProject": "No linked project"
+    },
     "hoursShort": "hrs",
-    "export": { "columns": ["Staff Name", "Position", "Status", "Check-In", "Check-Out", "Hours", "Notes"] },
-    "messages": { "created": "Attendance saved successfully.", "updated": "Attendance updated successfully.", "deleted": "Attendance entry deleted successfully.", "bulkAbsent": "{count} remaining staff marked absent.", "noRemainingStaff": "All active staff have already been marked.", "duplicate": "Attendance has already been recorded for this staff member on this date.", "staffNotFound": "The selected active staff member could not be found.", "projectNotFound": "The selected project could not be found.", "notFound": "The attendance entry could not be found.", "loadFailed": "Attendance records could not be loaded.", "operationFailed": "The operation could not be completed. Please try again.", "unauthenticated": "Sign in to access attendance.", "forbidden": "You do not have permission to access attendance.", "deleteTitle": "Delete Attendance Entry", "deleteDescription": "Are you sure you want to delete this attendance entry? This action cannot be undone." },
-    "validation": { "invalidSubmission": "Review the highlighted fields and try again.", "required": "This field is required.", "statusInvalid": "Select a valid attendance status.", "dateInvalid": "Select a valid attendance date.", "timeInvalid": "Enter a valid time.", "checkoutBeforeCheckin": "Check-out time cannot be earlier than check-in time.", "notesTooLong": "Notes must not exceed 2,000 characters." }
+    "export": {
+      "columns": [
+        "Staff Name",
+        "Position",
+        "Status",
+        "Check-In",
+        "Check-Out",
+        "Hours",
+        "Notes"
+      ]
+    },
+    "messages": {
+      "created": "Attendance saved successfully.",
+      "updated": "Attendance updated successfully.",
+      "deleted": "Attendance entry deleted successfully.",
+      "bulkAbsent": "{count} remaining staff marked absent.",
+      "noRemainingStaff": "All active staff have already been marked.",
+      "duplicate": "Attendance has already been recorded for this staff member on this date.",
+      "staffNotFound": "The selected active staff member could not be found.",
+      "projectNotFound": "The selected project could not be found.",
+      "notFound": "The attendance entry could not be found.",
+      "loadFailed": "Attendance records could not be loaded.",
+      "operationFailed": "The operation could not be completed. Please try again.",
+      "unauthenticated": "Sign in to access attendance.",
+      "forbidden": "You do not have permission to access attendance.",
+      "deleteTitle": "Delete Attendance Entry",
+      "deleteDescription": "Are you sure you want to delete this attendance entry? This action cannot be undone."
+    },
+    "validation": {
+      "invalidSubmission": "Review the highlighted fields and try again.",
+      "required": "This field is required.",
+      "statusInvalid": "Select a valid attendance status.",
+      "dateInvalid": "Select a valid attendance date.",
+      "timeInvalid": "Enter a valid time.",
+      "checkoutBeforeCheckin": "Check-out time cannot be earlier than check-in time.",
+      "notesTooLong": "Notes must not exceed 2,000 characters."
+    }
   },
   "hrmContracts": {
     "fields": {
@@ -541,7 +649,22 @@
       "profileTab": "Profile",
       "contracts": "Contracts",
       "attendanceTab": "Attendance & Timesheets",
-      "attendance": { "month": "Month", "date": "Date", "statusLabel": "Status", "checkIn": "Check-In", "checkOut": "Check-Out", "hours": "Hours", "totalHours": "Total Hours", "emptyTitle": "No Attendance History", "emptyDescription": "No attendance entries were recorded for this employee in the selected month.", "status": { "PRESENT": "Present", "ABSENT": "Absent", "LEAVE": "Leave" } },
+      "attendance": {
+        "month": "Month",
+        "date": "Date",
+        "statusLabel": "Status",
+        "checkIn": "Check-In",
+        "checkOut": "Check-Out",
+        "hours": "Hours",
+        "totalHours": "Total Hours",
+        "emptyTitle": "No Attendance History",
+        "emptyDescription": "No attendance entries were recorded for this employee in the selected month.",
+        "status": {
+          "PRESENT": "Present",
+          "ABSENT": "Absent",
+          "LEAVE": "Leave"
+        }
+      },
       "noContractsTitle": "No Contract History Found",
       "noContracts": "No contract history is linked to this employee.",
       "printContract": "Print Contract"
@@ -575,100 +698,905 @@
     }
   },
   "hrmPayroll": {
-    "months": ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
-    "period": { "month": "Month", "year": "Year" }, "summary": { "totalPayroll": "Total Payroll", "totalPaid": "Total Paid", "totalPending": "Pending Payouts", "totalDeductions": "Total Deductions" },
-    "filters": { "search": "Search Payroll", "searchPlaceholder": "Search staff name, email, or position", "staff": "Staff Member", "allStaff": "All Staff", "status": "Status", "allStatuses": "All Statuses" }, "fields": { "staff": "Staff Member", "position": "Position", "baseSalary": "Base Salary", "allowances": "Allowances", "tax": "Tax Deduction" },
-    "table": { "staff": "Staff Member", "baseSalary": "Base Salary", "deductions": "Deductions", "netSalary": "Net Salary", "status": "Status", "paymentMethod": "Payment Method", "actions": "Actions", "rowsPerPage": "Rows per page:", "of": "of" }, "status": { "DRAFT": "Draft", "PENDING": "Pending", "PAID": "Paid" },
-    "actions": { "generate": "Generate Monthly Payroll", "viewPayslip": "View Payslip", "processPayment": "Process Payment", "confirmPayment": "Confirm Payment", "processing": "Processing...", "delete": "Delete", "cancel": "Cancel", "close": "Close", "print": "Print Payslip" },
-    "empty": { "title": "No Payroll Records Found", "description": "Generate payroll for active staff contracts in this period." }, "payment": { "title": "Process Payroll Payment", "method": "Payment Method", "selectMethod": "Select payment method..." },
-    "payslip": { "title": "EMPLOYEE PAYSLIP", "tazkira": "National ID / Tazkira", "contractNumber": "Contract Number", "payPeriod": "Pay Period", "paymentDate": "Payment Date", "earnings": "Earnings", "deductions": "Deductions", "amount": "Amount", "unpaidDays": "Unpaid Leave / Absence ({count} days)", "netPay": "Net Pay" },
-    "delete": { "title": "Delete Payroll Record", "description": "Delete this payroll record? This action cannot be undone." },
-    "messages": { "generated": "Payroll generated for {count} staff member(s).", "paid": "Payroll payment processed successfully.", "deleted": "Payroll record deleted successfully.", "loadFailed": "Payroll records could not be loaded.", "operationFailed": "The payroll operation could not be completed.", "unauthenticated": "Sign in to access payroll.", "forbidden": "You do not have permission to manage payroll.", "staffProfileRequired": "Your account must be linked to a staff profile to view payslips.", "statusNotFound": "Payroll statuses are not configured.", "paymentMethodNotFound": "Select an active payment method.", "noEligibleStaff": "No active staff contracts were found for this period.", "notFound": "The payroll record could not be found.", "paidDeleteBlocked": "Paid payroll records are protected and cannot be deleted." }, "validation": { "monthInvalid": "Select a valid payroll month.", "yearInvalid": "Select a valid payroll year.", "paymentMethodRequired": "Select a payment method." }
+    "months": [
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December"
+    ],
+    "period": {
+      "month": "Month",
+      "year": "Year"
+    },
+    "summary": {
+      "totalPayroll": "Total Payroll",
+      "totalPaid": "Total Paid",
+      "totalPending": "Pending Payouts",
+      "totalDeductions": "Total Deductions"
+    },
+    "filters": {
+      "search": "Search Payroll",
+      "searchPlaceholder": "Search staff name, email, or position",
+      "staff": "Staff Member",
+      "allStaff": "All Staff",
+      "status": "Status",
+      "allStatuses": "All Statuses"
+    },
+    "fields": {
+      "staff": "Staff Member",
+      "position": "Position",
+      "baseSalary": "Base Salary",
+      "allowances": "Allowances",
+      "tax": "Tax Deduction"
+    },
+    "table": {
+      "staff": "Staff Member",
+      "baseSalary": "Base Salary",
+      "deductions": "Deductions",
+      "netSalary": "Net Salary",
+      "status": "Status",
+      "paymentMethod": "Payment Method",
+      "actions": "Actions",
+      "rowsPerPage": "Rows per page:",
+      "of": "of"
+    },
+    "status": {
+      "DRAFT": "Draft",
+      "PENDING": "Pending",
+      "PAID": "Paid"
+    },
+    "actions": {
+      "generate": "Generate Monthly Payroll",
+      "viewPayslip": "View Payslip",
+      "processPayment": "Process Payment",
+      "confirmPayment": "Confirm Payment",
+      "processing": "Processing...",
+      "delete": "Delete",
+      "cancel": "Cancel",
+      "close": "Close",
+      "print": "Print Payslip"
+    },
+    "empty": {
+      "title": "No Payroll Records Found",
+      "description": "Generate payroll for active staff contracts in this period."
+    },
+    "payment": {
+      "title": "Process Payroll Payment",
+      "method": "Payment Method",
+      "selectMethod": "Select payment method..."
+    },
+    "payslip": {
+      "title": "EMPLOYEE PAYSLIP",
+      "tazkira": "National ID / Tazkira",
+      "contractNumber": "Contract Number",
+      "payPeriod": "Pay Period",
+      "paymentDate": "Payment Date",
+      "earnings": "Earnings",
+      "deductions": "Deductions",
+      "amount": "Amount",
+      "unpaidDays": "Unpaid Leave / Absence ({count} days)",
+      "netPay": "Net Pay"
+    },
+    "delete": {
+      "title": "Delete Payroll Record",
+      "description": "Delete this payroll record? This action cannot be undone."
+    },
+    "messages": {
+      "generated": "Payroll generated for {count} staff member(s).",
+      "paid": "Payroll payment processed successfully.",
+      "deleted": "Payroll record deleted successfully.",
+      "loadFailed": "Payroll records could not be loaded.",
+      "operationFailed": "The payroll operation could not be completed.",
+      "unauthenticated": "Sign in to access payroll.",
+      "forbidden": "You do not have permission to manage payroll.",
+      "staffProfileRequired": "Your account must be linked to a staff profile to view payslips.",
+      "statusNotFound": "Payroll statuses are not configured.",
+      "paymentMethodNotFound": "Select an active payment method.",
+      "noEligibleStaff": "No active staff contracts were found for this period.",
+      "notFound": "The payroll record could not be found.",
+      "paidDeleteBlocked": "Paid payroll records are protected and cannot be deleted."
+    },
+    "validation": {
+      "monthInvalid": "Select a valid payroll month.",
+      "yearInvalid": "Select a valid payroll year.",
+      "paymentMethodRequired": "Select a payment method."
+    }
   },
-  "payrollOptions": { "statuses": { "title": "Payroll Statuses", "description": "Maintain payroll workflow statuses." }, "paymentMethods": { "title": "Payment Methods", "description": "Maintain approved salary payment methods." }, "common": { "name": "Name", "description": "Description", "status": "Status", "actions": "Actions", "active": "Active", "inactive": "Inactive", "activate": "Activate", "deactivate": "Deactivate", "add": "Add Payroll Option", "create": "Create", "cancel": "Cancel", "empty": "No options configured" }, "messages": { "operationFailed": "The operation could not be completed." } },
+  "payrollOptions": {
+    "statuses": {
+      "title": "Payroll Statuses",
+      "description": "Maintain payroll workflow statuses."
+    },
+    "paymentMethods": {
+      "title": "Payment Methods",
+      "description": "Maintain approved salary payment methods."
+    },
+    "common": {
+      "name": "Name",
+      "description": "Description",
+      "status": "Status",
+      "actions": "Actions",
+      "active": "Active",
+      "inactive": "Inactive",
+      "activate": "Activate",
+      "deactivate": "Deactivate",
+      "add": "Add Payroll Option",
+      "create": "Create",
+      "cancel": "Cancel",
+      "empty": "No options configured"
+    },
+    "messages": {
+      "operationFailed": "The operation could not be completed."
+    }
+  },
   "hrmLeaves": {
-    "summary": { "pending": "Pending Review", "onLeaveToday": "On Leave Today", "monthlyDays": "Monthly Leave Days" },
-    "filters": { "search": "Search Leave Requests", "searchPlaceholder": "Search staff name, email, position, or reason", "staff": "Staff Member", "allStaff": "All Staff", "leaveType": "Leave Type", "allLeaveTypes": "All Leave Types", "status": "Status", "allStatuses": "All Statuses" },
-    "table": { "staff": "Staff Member", "leaveType": "Leave Type", "duration": "Duration / Date Range", "reason": "Reason", "status": "Status", "approvedBy": "Approved By", "actions": "Actions", "days": "{count} day(s)" },
-    "drawer": { "title": "Request Leave", "editTitle": "Edit Leave Request", "description": "Enter the request details. Leave duration is calculated automatically.", "calculatedDays": "Calculated leave days" },
-    "fields": { "staff": "Staff Member", "leaveType": "Leave Type", "startDate": "Start Date", "endDate": "End Date", "reason": "Reason / Notes", "initialStatus": "Initial Status" },
-    "placeholders": { "selectStaff": "Select staff member...", "selectLeaveType": "Select leave type...", "selectStatus": "Select initial status...", "reason": "Explain the reason for this leave request" },
-    "status": { "PENDING": "Pending", "APPROVED": "Approved", "REJECTED": "Rejected" },
-    "actions": { "requestLeave": "Request Leave", "approve": "Approve", "reject": "Reject", "edit": "Edit", "delete": "Delete", "cancel": "Cancel", "close": "Close", "submit": "Submit Request", "saveChanges": "Save Changes", "saving": "Saving..." },
-    "empty": { "title": "No Leave Requests Found", "description": "No leave requests match the selected filters.", "action": "Create First Request" },
-    "delete": { "title": "Delete Leave Request", "description": "Are you sure you want to delete this leave request? This action cannot be undone." },
-    "pagination": { "rowsPerPage": "Rows per page:", "of": "of" },
-    "messages": { "created": "Leave request submitted successfully.", "updated": "Leave request updated successfully.", "approved": "Leave request approved and attendance synchronized.", "rejected": "Leave request rejected successfully.", "deleted": "Leave request deleted successfully.", "loadFailed": "Leave requests could not be loaded.", "operationFailed": "The operation could not be completed. Please try again.", "unauthenticated": "Sign in to access leave management.", "forbidden": "You do not have permission to manage this leave request.", "staffProfileRequired": "Your account must be linked to a staff profile before requesting leave.", "staffNotFound": "The selected staff member could not be found.", "leaveTypeNotFound": "Select an active leave type.", "statusNotFound": "Leave statuses are not configured. Run the database seed.", "notFound": "The selected leave request could not be found.", "invalidRelations": "One or more selected leave values are invalid." },
-    "validation": { "required": "This field is required.", "dateInvalid": "Select a valid date.", "dateRangeInvalid": "End date must be on or after the start date.", "reasonTooLong": "The reason must not exceed 2,000 characters.", "statusInvalid": "Select Approved or Rejected." }
+    "summary": {
+      "pending": "Pending Review",
+      "onLeaveToday": "On Leave Today",
+      "monthlyDays": "Monthly Leave Days"
+    },
+    "filters": {
+      "search": "Search Leave Requests",
+      "searchPlaceholder": "Search staff name, email, position, or reason",
+      "staff": "Staff Member",
+      "allStaff": "All Staff",
+      "leaveType": "Leave Type",
+      "allLeaveTypes": "All Leave Types",
+      "status": "Status",
+      "allStatuses": "All Statuses"
+    },
+    "table": {
+      "staff": "Staff Member",
+      "leaveType": "Leave Type",
+      "duration": "Duration / Date Range",
+      "reason": "Reason",
+      "status": "Status",
+      "approvedBy": "Approved By",
+      "actions": "Actions",
+      "days": "{count} day(s)"
+    },
+    "drawer": {
+      "title": "Request Leave",
+      "editTitle": "Edit Leave Request",
+      "description": "Enter the request details. Leave duration is calculated automatically.",
+      "calculatedDays": "Calculated leave days"
+    },
+    "fields": {
+      "staff": "Staff Member",
+      "leaveType": "Leave Type",
+      "startDate": "Start Date",
+      "endDate": "End Date",
+      "reason": "Reason / Notes",
+      "initialStatus": "Initial Status"
+    },
+    "placeholders": {
+      "selectStaff": "Select staff member...",
+      "selectLeaveType": "Select leave type...",
+      "selectStatus": "Select initial status...",
+      "reason": "Explain the reason for this leave request"
+    },
+    "status": {
+      "PENDING": "Pending",
+      "APPROVED": "Approved",
+      "REJECTED": "Rejected"
+    },
+    "actions": {
+      "requestLeave": "Request Leave",
+      "approve": "Approve",
+      "reject": "Reject",
+      "edit": "Edit",
+      "delete": "Delete",
+      "cancel": "Cancel",
+      "close": "Close",
+      "submit": "Submit Request",
+      "saveChanges": "Save Changes",
+      "saving": "Saving..."
+    },
+    "empty": {
+      "title": "No Leave Requests Found",
+      "description": "No leave requests match the selected filters.",
+      "action": "Create First Request"
+    },
+    "delete": {
+      "title": "Delete Leave Request",
+      "description": "Are you sure you want to delete this leave request? This action cannot be undone."
+    },
+    "pagination": {
+      "rowsPerPage": "Rows per page:",
+      "of": "of"
+    },
+    "messages": {
+      "created": "Leave request submitted successfully.",
+      "updated": "Leave request updated successfully.",
+      "approved": "Leave request approved and attendance synchronized.",
+      "rejected": "Leave request rejected successfully.",
+      "deleted": "Leave request deleted successfully.",
+      "loadFailed": "Leave requests could not be loaded.",
+      "operationFailed": "The operation could not be completed. Please try again.",
+      "unauthenticated": "Sign in to access leave management.",
+      "forbidden": "You do not have permission to manage this leave request.",
+      "staffProfileRequired": "Your account must be linked to a staff profile before requesting leave.",
+      "staffNotFound": "The selected staff member could not be found.",
+      "leaveTypeNotFound": "Select an active leave type.",
+      "statusNotFound": "Leave statuses are not configured. Run the database seed.",
+      "notFound": "The selected leave request could not be found.",
+      "invalidRelations": "One or more selected leave values are invalid."
+    },
+    "validation": {
+      "required": "This field is required.",
+      "dateInvalid": "Select a valid date.",
+      "dateRangeInvalid": "End date must be on or after the start date.",
+      "reasonTooLong": "The reason must not exceed 2,000 characters.",
+      "statusInvalid": "Select Approved or Rejected."
+    }
   },
   "crmLeads": {
-    "summary": { "totalActive": "Total Active Leads", "pipelineValue": "Pipeline Value", "followUpsToday": "Follow-ups Today", "conversionRate": "Conversion Rate" },
-    "filters": { "search": "Search", "searchPlaceholder": "Search leads, companies, or contacts", "source": "Source", "allSources": "All Sources", "status": "Status", "allStatuses": "All Statuses", "assigned": "Assigned Staff", "allStaff": "All Staff" },
-    "views": { "table": "Table", "kanban": "Pipeline" }, "table": { "lead": "Lead Title / Company", "contact": "Contact Person", "source": "Source", "status": "Status", "value": "Estimated Value", "assigned": "Assigned Staff", "followUp": "Next Follow-up", "actions": "Actions" },
-    "fields": { "title": "Lead Title", "company": "Company Name", "contact": "Contact Name", "email": "Email", "phone": "Phone", "source": "Lead Source", "status": "Pipeline Status", "assigned": "Assigned Staff", "value": "Estimated Value", "currency": "Currency", "followUp": "Next Follow-up", "notes": "Notes" },
-    "placeholders": { "source": "Select lead source...", "status": "Select pipeline status...", "unassigned": "Unassigned" }, "drawer": { "addTitle": "Create New Lead", "editTitle": "Edit Lead", "description": "Enter the opportunity, contact, ownership, and follow-up details." },
-    "actions": { "newLead": "New Lead", "activity": "Log Activity", "convert": "Convert to Client", "edit": "Edit", "delete": "Delete", "cancel": "Cancel", "create": "Create Lead", "save": "Save Changes", "saving": "Saving..." },
-    "activity": { "title": "Lead Activity & History", "type": "Activity Type", "subject": "Title", "description": "Description / Notes", "dueDate": "Due Date", "add": "Add Activity", "history": "Activity Timeline", "empty": "No activities have been logged yet.", "types": { "CALL": "Call", "MEETING": "Meeting", "EMAIL": "Email", "NOTE": "Note", "FOLLOW_UP": "Follow-up" } },
-    "activities": { "leadCreated": "Lead Created", "converted": "Converted to Active Client", "statusChanged": "Status changed to {status}" }, "kanban": { "empty": "No leads in this stage" }, "empty": { "title": "No Leads Found", "description": "No leads match the selected pipeline filters." },
-    "pagination": { "rowsPerPage": "Rows per page:", "of": "of" }, "delete": { "title": "Delete Lead", "description": "Delete this unconverted lead? This action cannot be undone." },
-    "messages": { "created": "Lead created successfully.", "updated": "Lead updated successfully.", "deleted": "Lead deleted successfully.", "statusUpdated": "Pipeline status updated successfully.", "activityAdded": "Activity logged successfully.", "converted": "Lead converted to an active client successfully.", "loadFailed": "Leads could not be loaded.", "operationFailed": "The lead operation could not be completed.", "unauthenticated": "Sign in to access CRM leads.", "forbidden": "You do not have permission to manage CRM leads.", "notFound": "The selected lead could not be found.", "invalidRelations": "Select valid active source, status, and staff values.", "staffProfileRequired": "A linked staff profile or assigned staff member is required to log this activity.", "alreadyConverted": "This lead has already been converted.", "wonStatusMissing": "Configure an active WON lead status before conversion.", "clientEmailExists": "A client with this email address already exists.", "deleteBlocked": "Converted leads or leads linked to contracts cannot be deleted." },
-    "validation": { "invalid": "Review the submitted lead information.", "required": "This field is required.", "emailInvalid": "Enter a valid email address.", "valueInvalid": "Enter a valid estimated value.", "dateInvalid": "Enter a valid follow-up date.", "tooLong": "This value is too long.", "activityTypeInvalid": "Select a valid activity type." }
+    "summary": {
+      "totalActive": "Total Active Leads",
+      "pipelineValue": "Pipeline Value",
+      "followUpsToday": "Follow-ups Today",
+      "conversionRate": "Conversion Rate"
+    },
+    "filters": {
+      "search": "Search",
+      "searchPlaceholder": "Search leads, companies, or contacts",
+      "source": "Source",
+      "allSources": "All Sources",
+      "status": "Status",
+      "allStatuses": "All Statuses",
+      "assigned": "Assigned Staff",
+      "allStaff": "All Staff"
+    },
+    "views": {
+      "table": "Table",
+      "kanban": "Pipeline"
+    },
+    "table": {
+      "lead": "Lead Title / Company",
+      "contact": "Contact Person",
+      "source": "Source",
+      "status": "Status",
+      "value": "Estimated Value",
+      "assigned": "Assigned Staff",
+      "followUp": "Next Follow-up",
+      "actions": "Actions"
+    },
+    "fields": {
+      "title": "Lead Title",
+      "company": "Company Name",
+      "contact": "Contact Name",
+      "email": "Email",
+      "phone": "Phone",
+      "source": "Lead Source",
+      "status": "Pipeline Status",
+      "assigned": "Assigned Staff",
+      "value": "Estimated Value",
+      "currency": "Currency",
+      "followUp": "Next Follow-up",
+      "notes": "Notes"
+    },
+    "placeholders": {
+      "source": "Select lead source...",
+      "status": "Select pipeline status...",
+      "unassigned": "Unassigned"
+    },
+    "drawer": {
+      "addTitle": "Create New Lead",
+      "editTitle": "Edit Lead",
+      "description": "Enter the opportunity, contact, ownership, and follow-up details."
+    },
+    "actions": {
+      "newLead": "New Lead",
+      "activity": "Log Activity",
+      "convert": "Convert to Client",
+      "edit": "Edit",
+      "delete": "Delete",
+      "cancel": "Cancel",
+      "create": "Create Lead",
+      "save": "Save Changes",
+      "saving": "Saving..."
+    },
+    "activity": {
+      "title": "Lead Activity & History",
+      "type": "Activity Type",
+      "subject": "Title",
+      "description": "Description / Notes",
+      "dueDate": "Due Date",
+      "add": "Add Activity",
+      "history": "Activity Timeline",
+      "empty": "No activities have been logged yet.",
+      "types": {
+        "CALL": "Call",
+        "MEETING": "Meeting",
+        "EMAIL": "Email",
+        "NOTE": "Note",
+        "FOLLOW_UP": "Follow-up"
+      }
+    },
+    "activities": {
+      "leadCreated": "Lead Created",
+      "converted": "Converted to Active Client",
+      "statusChanged": "Status changed to {status}"
+    },
+    "kanban": {
+      "empty": "No leads in this stage"
+    },
+    "empty": {
+      "title": "No Leads Found",
+      "description": "No leads match the selected pipeline filters."
+    },
+    "pagination": {
+      "rowsPerPage": "Rows per page:",
+      "of": "of"
+    },
+    "delete": {
+      "title": "Delete Lead",
+      "description": "Delete this unconverted lead? This action cannot be undone."
+    },
+    "messages": {
+      "created": "Lead created successfully.",
+      "updated": "Lead updated successfully.",
+      "deleted": "Lead deleted successfully.",
+      "statusUpdated": "Pipeline status updated successfully.",
+      "activityAdded": "Activity logged successfully.",
+      "converted": "Lead converted to an active client successfully.",
+      "loadFailed": "Leads could not be loaded.",
+      "operationFailed": "The lead operation could not be completed.",
+      "unauthenticated": "Sign in to access CRM leads.",
+      "forbidden": "You do not have permission to manage CRM leads.",
+      "notFound": "The selected lead could not be found.",
+      "invalidRelations": "Select valid active source, status, and staff values.",
+      "staffProfileRequired": "A linked staff profile or assigned staff member is required to log this activity.",
+      "alreadyConverted": "This lead has already been converted.",
+      "wonStatusMissing": "Configure an active WON lead status before conversion.",
+      "clientEmailExists": "A client with this email address already exists.",
+      "deleteBlocked": "Converted leads or leads linked to contracts cannot be deleted."
+    },
+    "validation": {
+      "invalid": "Review the submitted lead information.",
+      "required": "This field is required.",
+      "emailInvalid": "Enter a valid email address.",
+      "valueInvalid": "Enter a valid estimated value.",
+      "dateInvalid": "Enter a valid follow-up date.",
+      "tooLong": "This value is too long.",
+      "activityTypeInvalid": "Select a valid activity type."
+    }
   },
   "crmVisitors": {
-    "summary": { "totalToday": "Visitors Today", "activeGuests": "Active Guests in Building", "completedToday": "Completed Visits Today", "convertedCount": "Visitor-to-Lead Conversions" },
-    "filters": { "search": "Search", "searchPlaceholder": "Search name, company, phone, or email", "host": "Host Staff", "allHosts": "All Host Staff", "status": "Status", "allStatuses": "All Statuses", "dateRange": "Visit Date" },
-    "ranges": { "TODAY": "Today", "LAST_7_DAYS": "Last 7 Days", "LAST_30_DAYS": "Last 30 Days", "ALL": "All Dates" },
-    "table": { "visitor": "Visitor Information", "purpose": "Purpose of Visit", "host": "Host Staff", "times": "Check-In & Check-Out", "duration": "Duration", "status": "Status", "actions": "Actions" },
-    "fields": { "name": "Visitor Full Name", "phone": "Phone Number", "email": "Email Address", "company": "Company / Organization", "purpose": "Purpose of Visit", "host": "Host Staff Member", "notes": "Notes" },
-    "purposes": { "INTERVIEW": "Interview", "BUSINESS_MEETING": "Business Meeting", "VENDOR_DELIVERY": "Vendor / Delivery", "CLIENT_CONSULTATION": "Client Consultation", "OTHER": "Other" },
-    "status": { "CHECKED_IN": "Checked In", "COMPLETED": "Completed", "CONVERTED": "Lead Created" },
-    "form": { "addTitle": "Log New Visitor", "editTitle": "Edit Visitor", "description": "Record guest contact details and assign an active staff host.", "emailHelp": "An email address is required only when converting the visitor into a lead." },
-    "placeholders": { "purpose": "Select visit purpose...", "host": "Select host staff member..." },
-    "actions": { "add": "Log New Visitor", "checkout": "Check Out", "convert": "Convert to Lead", "edit": "Edit", "delete": "Delete", "cancel": "Cancel", "save": "Save Changes", "checkin": "Check In Visitor", "saving": "Saving...", "converting": "Converting..." },
-    "convert": { "title": "Convert Visitor to Lead", "description": "Create a new CRM lead from this visitor and assign it to the host staff member?" },
-    "conversion": { "activityTitle": "Visitor Converted to Lead", "activityDescription": "This opportunity originated from a front-desk visitor record.", "note": "Converted to Lead: {title}" },
-    "empty": { "title": "No Visitor Records Found", "description": "No visitor entries match the selected host, status, and date filters." },
-    "pagination": { "rowsPerPage": "Rows per page:", "of": "of" }, "delete": { "title": "Delete Visitor Record", "description": "Delete this visitor record? This action cannot be undone." },
-    "messages": { "created": "Visitor checked in successfully.", "updated": "Visitor details updated successfully.", "checkedOut": "Visitor checked out successfully.", "converted": "Visitor converted to a CRM lead successfully.", "deleted": "Visitor record deleted successfully.", "loadFailed": "Visitor records could not be loaded.", "operationFailed": "The visitor operation could not be completed.", "unauthenticated": "Sign in to access visitor management.", "forbidden": "You do not have permission to manage visitor records.", "notFound": "The selected visitor could not be found.", "invalidHost": "Select a valid active host staff member.", "alreadyCheckedOut": "This visitor has already checked out.", "alreadyConverted": "This visitor has already been converted to a lead.", "emailRequiredForLead": "Add an email address to the visitor before converting to a lead.", "pipelineOptionsMissing": "Configure active NEW lead status and WALK_IN source options before conversion." },
-    "validation": { "invalid": "Review the submitted visitor information.", "required": "This field is required.", "emailInvalid": "Enter a valid email address.", "tooLong": "This value is too long." }
+    "summary": {
+      "totalToday": "Visitors Today",
+      "activeGuests": "Active Guests in Building",
+      "completedToday": "Completed Visits Today",
+      "convertedCount": "Visitor-to-Lead Conversions"
+    },
+    "filters": {
+      "search": "Search",
+      "searchPlaceholder": "Search name, company, phone, or email",
+      "host": "Host Staff",
+      "allHosts": "All Host Staff",
+      "status": "Status",
+      "allStatuses": "All Statuses",
+      "dateRange": "Visit Date"
+    },
+    "ranges": {
+      "TODAY": "Today",
+      "LAST_7_DAYS": "Last 7 Days",
+      "LAST_30_DAYS": "Last 30 Days",
+      "ALL": "All Dates"
+    },
+    "table": {
+      "visitor": "Visitor Information",
+      "purpose": "Purpose of Visit",
+      "host": "Host Staff",
+      "times": "Check-In & Check-Out",
+      "duration": "Duration",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "fields": {
+      "name": "Visitor Full Name",
+      "phone": "Phone Number",
+      "email": "Email Address",
+      "company": "Company / Organization",
+      "purpose": "Purpose of Visit",
+      "host": "Host Staff Member",
+      "notes": "Notes"
+    },
+    "purposes": {
+      "INTERVIEW": "Interview",
+      "BUSINESS_MEETING": "Business Meeting",
+      "VENDOR_DELIVERY": "Vendor / Delivery",
+      "CLIENT_CONSULTATION": "Client Consultation",
+      "OTHER": "Other"
+    },
+    "status": {
+      "CHECKED_IN": "Checked In",
+      "COMPLETED": "Completed",
+      "CONVERTED": "Lead Created"
+    },
+    "form": {
+      "addTitle": "Log New Visitor",
+      "editTitle": "Edit Visitor",
+      "description": "Record guest contact details and assign an active staff host.",
+      "emailHelp": "An email address is required only when converting the visitor into a lead."
+    },
+    "placeholders": {
+      "purpose": "Select visit purpose...",
+      "host": "Select host staff member..."
+    },
+    "actions": {
+      "add": "Log New Visitor",
+      "checkout": "Check Out",
+      "convert": "Convert to Lead",
+      "edit": "Edit",
+      "delete": "Delete",
+      "cancel": "Cancel",
+      "save": "Save Changes",
+      "checkin": "Check In Visitor",
+      "saving": "Saving...",
+      "converting": "Converting..."
+    },
+    "convert": {
+      "title": "Convert Visitor to Lead",
+      "description": "Create a new CRM lead from this visitor and assign it to the host staff member?"
+    },
+    "conversion": {
+      "activityTitle": "Visitor Converted to Lead",
+      "activityDescription": "This opportunity originated from a front-desk visitor record.",
+      "note": "Converted to Lead: {title}"
+    },
+    "empty": {
+      "title": "No Visitor Records Found",
+      "description": "No visitor entries match the selected host, status, and date filters."
+    },
+    "pagination": {
+      "rowsPerPage": "Rows per page:",
+      "of": "of"
+    },
+    "delete": {
+      "title": "Delete Visitor Record",
+      "description": "Delete this visitor record? This action cannot be undone."
+    },
+    "messages": {
+      "created": "Visitor checked in successfully.",
+      "updated": "Visitor details updated successfully.",
+      "checkedOut": "Visitor checked out successfully.",
+      "converted": "Visitor converted to a CRM lead successfully.",
+      "deleted": "Visitor record deleted successfully.",
+      "loadFailed": "Visitor records could not be loaded.",
+      "operationFailed": "The visitor operation could not be completed.",
+      "unauthenticated": "Sign in to access visitor management.",
+      "forbidden": "You do not have permission to manage visitor records.",
+      "notFound": "The selected visitor could not be found.",
+      "invalidHost": "Select a valid active host staff member.",
+      "alreadyCheckedOut": "This visitor has already checked out.",
+      "alreadyConverted": "This visitor has already been converted to a lead.",
+      "emailRequiredForLead": "Add an email address to the visitor before converting to a lead.",
+      "pipelineOptionsMissing": "Configure active NEW lead status and WALK_IN source options before conversion."
+    },
+    "validation": {
+      "invalid": "Review the submitted visitor information.",
+      "required": "This field is required.",
+      "emailInvalid": "Enter a valid email address.",
+      "tooLong": "This value is too long."
+    }
   },
   "crmClients": {
-    "summary": { "totalActive": "Total Active Clients", "lifetimeRevenue": "Lifetime Client Value", "activeProjects": "Active Linked Projects", "pendingBalance": "Outstanding Invoices" },
-    "filters": { "search": "Search", "searchPlaceholder": "Search company, contact, email, or phone", "manager": "Account Manager", "allManagers": "All Account Managers", "status": "Status", "allStatuses": "All Statuses" },
-    "table": { "company": "Company & Contact", "manager": "Account Manager", "metrics": "Linked Records", "status": "Status", "revenue": "Total Revenue", "actions": "Actions" },
-    "metrics": { "projects": "Projects", "contracts": "Contracts", "invoices": "Invoices" },
-    "fields": { "company": "Company Name", "contact": "Primary Contact Name", "email": "Email Address", "phone": "Phone Number", "address": "Address", "tax": "Tax ID / Registration Number", "manager": "Account Manager", "status": "Status", "notes": "Notes", "created": "Client Since" },
-    "status": { "ACTIVE": "Active", "INACTIVE": "Inactive" }, "placeholders": { "manager": "No account manager assigned" },
-    "form": { "addTitle": "Add Client", "editTitle": "Edit Client", "description": "Maintain the client contact, ownership, and account details." },
-    "tabs": { "overview": "Overview & Contact", "relationships": "Projects & Contracts", "finance": "Invoices & Revenue", "activity": "Activity & History" },
-    "detail": { "title": "Client Profile", "manager": "Account Manager", "leadOrigin": "Converted Lead Origin", "projects": "Linked Projects", "contracts": "Linked Contracts", "paidRevenue": "Paid Revenue", "pendingInvoices": "Pending Invoice Balance", "invoice": "Invoice", "dueDate": "Due Date", "amount": "Amount" },
-    "activity": { "addTitle": "Log Client Activity", "type": "Activity Type", "subject": "Title", "description": "Description / Notes", "dueDate": "Follow-up Due Date", "add": "Add Activity", "types": { "CALL": "Call", "MEETING": "Meeting", "EMAIL": "Email", "NOTE": "Note", "FOLLOW_UP": "Follow-up" } },
-    "actions": { "add": "Add Client", "view": "View Profile", "activity": "Log Activity", "edit": "Edit", "delete": "Delete", "changeStatus": "Change Status", "cancel": "Cancel", "close": "Close", "create": "Create Client", "save": "Save Changes", "saving": "Saving..." },
-    "empty": { "title": "No Clients Found", "description": "No clients match the selected filters.", "projects": "No projects are linked to this client.", "contracts": "No contracts are linked to this client.", "invoices": "No invoices are linked to this client.", "activities": "No client or originating lead activities have been logged." },
-    "pagination": { "rowsPerPage": "Rows per page:", "of": "of" }, "delete": { "title": "Delete Client", "description": "Delete this client? This action cannot be undone." },
-    "messages": { "created": "Client created successfully.", "updated": "Client updated successfully.", "statusUpdated": "Client status updated successfully.", "deleted": "Client deleted successfully.", "activityAdded": "Client activity logged successfully.", "loadFailed": "Clients could not be loaded.", "operationFailed": "The client operation could not be completed.", "unauthenticated": "Sign in to access CRM clients.", "forbidden": "You do not have permission to manage CRM clients.", "notFound": "The selected client could not be found.", "emailExists": "A client with this email address already exists.", "invalidManager": "Select a valid active account manager.", "staffProfileRequired": "Your account must be linked to a staff profile to log client activity.", "deleteBlocked": "This client has active projects or contracts. Deactivate the client or close those records before deletion." },
-    "validation": { "invalid": "Review the submitted client information.", "required": "This field is required.", "emailInvalid": "Enter a valid email address.", "statusInvalid": "Select a valid client status.", "tooLong": "This value is too long.", "activityTypeInvalid": "Select a valid activity type.", "dateInvalid": "Enter a valid follow-up date." }
+    "summary": {
+      "totalActive": "Total Active Clients",
+      "lifetimeRevenue": "Lifetime Client Value",
+      "activeProjects": "Active Linked Projects",
+      "pendingBalance": "Outstanding Invoices"
+    },
+    "filters": {
+      "search": "Search",
+      "searchPlaceholder": "Search company, contact, email, or phone",
+      "manager": "Account Manager",
+      "allManagers": "All Account Managers",
+      "status": "Status",
+      "allStatuses": "All Statuses"
+    },
+    "table": {
+      "company": "Company & Contact",
+      "manager": "Account Manager",
+      "metrics": "Linked Records",
+      "status": "Status",
+      "revenue": "Total Revenue",
+      "actions": "Actions"
+    },
+    "metrics": {
+      "projects": "Projects",
+      "contracts": "Contracts",
+      "invoices": "Invoices"
+    },
+    "fields": {
+      "company": "Company Name",
+      "contact": "Primary Contact Name",
+      "email": "Email Address",
+      "phone": "Phone Number",
+      "address": "Address",
+      "tax": "Tax ID / Registration Number",
+      "manager": "Account Manager",
+      "status": "Status",
+      "notes": "Notes",
+      "created": "Client Since"
+    },
+    "status": {
+      "ACTIVE": "Active",
+      "INACTIVE": "Inactive"
+    },
+    "placeholders": {
+      "manager": "No account manager assigned"
+    },
+    "form": {
+      "addTitle": "Add Client",
+      "editTitle": "Edit Client",
+      "description": "Maintain the client contact, ownership, and account details."
+    },
+    "tabs": {
+      "overview": "Overview & Contact",
+      "relationships": "Projects & Contracts",
+      "finance": "Invoices & Revenue",
+      "activity": "Activity & History"
+    },
+    "detail": {
+      "title": "Client Profile",
+      "manager": "Account Manager",
+      "leadOrigin": "Converted Lead Origin",
+      "projects": "Linked Projects",
+      "contracts": "Linked Contracts",
+      "paidRevenue": "Paid Revenue",
+      "pendingInvoices": "Pending Invoice Balance",
+      "invoice": "Invoice",
+      "dueDate": "Due Date",
+      "amount": "Amount"
+    },
+    "activity": {
+      "addTitle": "Log Client Activity",
+      "type": "Activity Type",
+      "subject": "Title",
+      "description": "Description / Notes",
+      "dueDate": "Follow-up Due Date",
+      "add": "Add Activity",
+      "types": {
+        "CALL": "Call",
+        "MEETING": "Meeting",
+        "EMAIL": "Email",
+        "NOTE": "Note",
+        "FOLLOW_UP": "Follow-up"
+      }
+    },
+    "actions": {
+      "add": "Add Client",
+      "view": "View Profile",
+      "activity": "Log Activity",
+      "edit": "Edit",
+      "delete": "Delete",
+      "changeStatus": "Change Status",
+      "cancel": "Cancel",
+      "close": "Close",
+      "create": "Create Client",
+      "save": "Save Changes",
+      "saving": "Saving..."
+    },
+    "empty": {
+      "title": "No Clients Found",
+      "description": "No clients match the selected filters.",
+      "projects": "No projects are linked to this client.",
+      "contracts": "No contracts are linked to this client.",
+      "invoices": "No invoices are linked to this client.",
+      "activities": "No client or originating lead activities have been logged."
+    },
+    "pagination": {
+      "rowsPerPage": "Rows per page:",
+      "of": "of"
+    },
+    "delete": {
+      "title": "Delete Client",
+      "description": "Delete this client? This action cannot be undone."
+    },
+    "messages": {
+      "created": "Client created successfully.",
+      "updated": "Client updated successfully.",
+      "statusUpdated": "Client status updated successfully.",
+      "deleted": "Client deleted successfully.",
+      "activityAdded": "Client activity logged successfully.",
+      "loadFailed": "Clients could not be loaded.",
+      "operationFailed": "The client operation could not be completed.",
+      "unauthenticated": "Sign in to access CRM clients.",
+      "forbidden": "You do not have permission to manage CRM clients.",
+      "notFound": "The selected client could not be found.",
+      "emailExists": "A client with this email address already exists.",
+      "invalidManager": "Select a valid active account manager.",
+      "staffProfileRequired": "Your account must be linked to a staff profile to log client activity.",
+      "deleteBlocked": "This client has active projects or contracts. Deactivate the client or close those records before deletion."
+    },
+    "validation": {
+      "invalid": "Review the submitted client information.",
+      "required": "This field is required.",
+      "emailInvalid": "Enter a valid email address.",
+      "statusInvalid": "Select a valid client status.",
+      "tooLong": "This value is too long.",
+      "activityTypeInvalid": "Select a valid activity type.",
+      "dateInvalid": "Enter a valid follow-up date."
+    }
   },
-  "crmLeadOptions": { "statuses": { "title": "Lead Statuses", "description": "Maintain the stages used by the visual sales pipeline." }, "sources": { "title": "Lead Sources", "description": "Maintain the channels used to capture new sales opportunities." }, "common": { "name": "Name", "description": "Description", "status": "Status", "actions": "Actions", "active": "Active", "inactive": "Inactive", "activate": "Activate", "deactivate": "Deactivate", "create": "Add Option", "add": "Create CRM Option", "cancel": "Cancel", "empty": "No options configured" } },
+  "crmLeadOptions": {
+    "statuses": {
+      "title": "Lead Statuses",
+      "description": "Maintain the stages used by the visual sales pipeline."
+    },
+    "sources": {
+      "title": "Lead Sources",
+      "description": "Maintain the channels used to capture new sales opportunities."
+    },
+    "common": {
+      "name": "Name",
+      "description": "Description",
+      "status": "Status",
+      "actions": "Actions",
+      "active": "Active",
+      "inactive": "Inactive",
+      "activate": "Activate",
+      "deactivate": "Deactivate",
+      "create": "Add Option",
+      "add": "Create CRM Option",
+      "cancel": "Cancel",
+      "empty": "No options configured"
+    }
+  },
   "hrmReports": {
     "tabs": {
-      "payroll": { "label": "Payroll & Financials", "tableTitle": "Staff Payroll History", "icon": "tabler-report-money" },
-      "attendance": { "label": "Attendance & Absenteeism", "tableTitle": "Staff Attendance Metrics", "icon": "tabler-calendar-stats" },
-      "leaves": { "label": "Leave Balances", "tableTitle": "Staff Leave Usage", "icon": "tabler-calendar-off" },
-      "contracts": { "label": "Contract Expirations", "tableTitle": "Upcoming Contract Expirations", "icon": "tabler-file-time" }
+      "payroll": {
+        "label": "Payroll & Financials",
+        "tableTitle": "Staff Payroll History",
+        "icon": "tabler-report-money"
+      },
+      "attendance": {
+        "label": "Attendance & Absenteeism",
+        "tableTitle": "Staff Attendance Metrics",
+        "icon": "tabler-calendar-stats"
+      },
+      "leaves": {
+        "label": "Leave Balances",
+        "tableTitle": "Staff Leave Usage",
+        "icon": "tabler-calendar-off"
+      },
+      "contracts": {
+        "label": "Contract Expirations",
+        "tableTitle": "Upcoming Contract Expirations",
+        "icon": "tabler-file-time"
+      }
     },
-    "filters": { "dateRange": "Date Range", "startDate": "Start Date", "endDate": "End Date", "staff": "Staff Member", "allStaff": "All Staff" },
-    "datePresets": { "thisMonth": "This Month", "lastQuarter": "Last Quarter", "yearToDate": "Year-to-Date", "custom": "Custom Range" },
-    "actions": { "exportCsv": "Export CSV", "print": "Print Report" },
-    "kpis": { "baseSalary": "Total Base Salary", "allowances": "Total Allowances", "deductions": "Total Deductions", "netPayout": "Total Net Payout", "workingDays": "Working Days", "presenceRate": "Presence Rate", "hoursLogged": "Hours Logged", "absences": "Total Absences", "approvedLeaveDays": "Approved Leave Days", "pendingRequests": "Pending Requests", "leaveTypesUsed": "Leave Types Used", "activeContracts": "Active Contracts", "expiring30": "Expiring in 30 Days", "expiring90": "Expiring in 31–90 Days", "expiredInRange": "Expired in Range" },
-    "chart": { "title": "{report} Trend", "netPayout": "Net Payout", "deductions": "Deductions", "approvedDays": "Approved Days", "expirations": "Expirations", "contractStarts": "Contract Starts" },
-    "table": { "period": "Period", "staff": "Staff Member", "position": "Position", "baseSalary": "Base Salary", "allowances": "Allowances", "deductions": "Deductions", "netPayout": "Net Payout", "status": "Status", "paymentMethod": "Payment Method", "present": "Present", "absent": "Absent", "leave": "Leave", "hours": "Hours Logged", "presenceRate": "Presence Rate", "approvedDays": "Approved Days", "pending": "Pending", "leaveBreakdown": "Leave Type Breakdown", "allowance": "Allowance", "remaining": "Remaining", "contractNumber": "Contract Number", "contractType": "Contract Type", "endDate": "End Date", "daysRemaining": "Days Remaining", "renewalStatus": "Renewal Status" },
-    "status": { "DRAFT": "Draft", "PENDING": "Pending", "PAID": "Paid", "PRESENT": "Present", "ABSENT": "Absent", "LEAVE": "Leave", "ACTIVE": "Active", "EXPIRED": "Expired", "TERMINATED": "Terminated", "DUE_SOON": "Renewal Due Soon", "UPCOMING": "Upcoming Renewal" },
-    "common": { "records": "{count} report record(s)", "notConfigured": "Not configured" },
+    "filters": {
+      "dateRange": "Date Range",
+      "startDate": "Start Date",
+      "endDate": "End Date",
+      "staff": "Staff Member",
+      "allStaff": "All Staff"
+    },
+    "datePresets": {
+      "thisMonth": "This Month",
+      "lastQuarter": "Last Quarter",
+      "yearToDate": "Year-to-Date",
+      "custom": "Custom Range"
+    },
+    "actions": {
+      "exportCsv": "Export CSV",
+      "print": "Print Report"
+    },
+    "kpis": {
+      "baseSalary": "Total Base Salary",
+      "allowances": "Total Allowances",
+      "deductions": "Total Deductions",
+      "netPayout": "Total Net Payout",
+      "workingDays": "Working Days",
+      "presenceRate": "Presence Rate",
+      "hoursLogged": "Hours Logged",
+      "absences": "Total Absences",
+      "approvedLeaveDays": "Approved Leave Days",
+      "pendingRequests": "Pending Requests",
+      "leaveTypesUsed": "Leave Types Used",
+      "activeContracts": "Active Contracts",
+      "expiring30": "Expiring in 30 Days",
+      "expiring90": "Expiring in 31–90 Days",
+      "expiredInRange": "Expired in Range"
+    },
+    "chart": {
+      "title": "{report} Trend",
+      "netPayout": "Net Payout",
+      "deductions": "Deductions",
+      "approvedDays": "Approved Days",
+      "expirations": "Expirations",
+      "contractStarts": "Contract Starts"
+    },
+    "table": {
+      "period": "Period",
+      "staff": "Staff Member",
+      "position": "Position",
+      "baseSalary": "Base Salary",
+      "allowances": "Allowances",
+      "deductions": "Deductions",
+      "netPayout": "Net Payout",
+      "status": "Status",
+      "paymentMethod": "Payment Method",
+      "present": "Present",
+      "absent": "Absent",
+      "leave": "Leave",
+      "hours": "Hours Logged",
+      "presenceRate": "Presence Rate",
+      "approvedDays": "Approved Days",
+      "pending": "Pending",
+      "leaveBreakdown": "Leave Type Breakdown",
+      "allowance": "Allowance",
+      "remaining": "Remaining",
+      "contractNumber": "Contract Number",
+      "contractType": "Contract Type",
+      "endDate": "End Date",
+      "daysRemaining": "Days Remaining",
+      "renewalStatus": "Renewal Status"
+    },
+    "status": {
+      "DRAFT": "Draft",
+      "PENDING": "Pending",
+      "PAID": "Paid",
+      "PRESENT": "Present",
+      "ABSENT": "Absent",
+      "LEAVE": "Leave",
+      "ACTIVE": "Active",
+      "EXPIRED": "Expired",
+      "TERMINATED": "Terminated",
+      "DUE_SOON": "Renewal Due Soon",
+      "UPCOMING": "Upcoming Renewal"
+    },
+    "common": {
+      "records": "{count} report record(s)",
+      "notConfigured": "Not configured"
+    },
+    "pagination": {
+      "rowsPerPage": "Rows per page:",
+      "of": "of"
+    },
+    "empty": {
+      "title": "No Report Data Found",
+      "description": "No HRM records match the selected report filters and date range."
+    },
+    "print": {
+      "generated": "Generated"
+    },
+    "messages": {
+      "csvReady": "CSV report downloaded successfully.",
+      "loadFailed": "The HRM report could not be loaded.",
+      "unauthenticated": "Sign in to view HRM reports.",
+      "forbidden": "You do not have permission to view HRM reports.",
+      "invalidReport": "Select a valid HRM report type.",
+      "invalidDates": "Select a valid start and end date.",
+      "dateRangeTooLarge": "The selected date range is too large.",
+      "staffNotFound": "The selected staff member could not be found."
+    }
+  },
+  "financeReports": {
+    "tabs": {
+      "income": { "label": "Income", "tableTitle": "Income Transactions", "icon": "tabler-trending-up" },
+      "expenses": { "label": "Expenses", "tableTitle": "Expense Transactions", "icon": "tabler-trending-down" },
+      "salary": { "label": "Salary / Payroll", "tableTitle": "Salary & Payroll Records", "icon": "tabler-users-dollar" },
+      "inventory": { "label": "Inventory", "tableTitle": "Inventory Valuation", "icon": "tabler-packages" },
+      "loans": { "label": "Loans", "tableTitle": "Loan Portfolio", "icon": "tabler-building-bank" }
+    },
+    "filters": {
+      "search": "Search report",
+      "searchPlaceholder": "Search the current report...",
+      "dateRange": "Date Range",
+      "startDate": "Start Date",
+      "endDate": "End Date",
+      "currency": "Display Currency",
+      "exchangeRate": "USD / AFN Rate"
+    },
+    "datePresets": {
+      "thisMonth": "This Month",
+      "lastMonth": "Last Month",
+      "thisQuarter": "This Quarter",
+      "thisYear": "This Year",
+      "custom": "Custom Range"
+    },
+    "actions": {
+      "exportPdf": "Export PDF",
+      "exportCsv": "Export CSV / Excel",
+      "print": "Print Report"
+    },
+    "charts": {
+      "titles": {
+        "income": { "trend": "Monthly Income Trend", "distribution": "Income Distribution by Category" },
+        "expenses": { "trend": "Monthly Operational Cost", "distribution": "Expenses by Category" },
+        "salary": { "trend": "Monthly Payroll Composition" },
+        "inventory": { "trend": "Top Items by Stock Value", "distribution": "Stock Quantity by Category" },
+        "loans": { "distribution": "Issued, Repaid & Remaining Loans" }
+      },
+      "series": {
+        "income": "Income", "expenses": "Expenses", "baseSalary": "Base Salary",
+        "bonuses": "Bonuses", "deductions": "Deductions", "stockValue": "Stock Value"
+      },
+      "labels": { "issued": "Issued", "repaid": "Repaid", "remaining": "Remaining" },
+      "total": "Total",
+      "empty": "No chart data is available for the selected range."
+    },
+    "kpis": {
+      "grossIncome": "Total Gross Income",
+      "totalTransactions": "Total Transactions",
+      "averageTransaction": "Average Transaction Value",
+      "operationalExpense": "Total Operational Expense",
+      "topExpenseCategory": "Top Expense Category",
+      "approvedPending": "Recorded / Pending",
+      "payrollDisbursed": "Total Payroll Disbursed",
+      "totalDeductions": "Total Deductions",
+      "activeStaffPaid": "Active Staff Paid",
+      "stockValuation": "Total Stock Valuation",
+      "skuCount": "Total SKU Count",
+      "lowStockCount": "Low Stock / Reorder Alerts",
+      "activeLoanBalance": "Total Active Loan Balance",
+      "totalRepaid": "Total Repaid to Date",
+      "monthlyRecovery": "Monthly Recovery Projection"
+    },
+    "table": {
+      "date": "Date",
+      "reference": "Reference #",
+      "sourceCategory": "Source / Category",
+      "amountLocal": "Amount (Local)",
+      "baseAmountUsd": "Base Amount (USD)",
+      "paymentMethod": "Payment Method",
+      "status": "Status",
+      "expenseTitle": "Expense Title",
+      "category": "Category",
+      "vendorPayee": "Vendor / Payee",
+      "amount": "Amount",
+      "staffName": "Staff Name",
+      "designation": "Designation",
+      "month": "Month",
+      "baseSalary": "Base Salary",
+      "bonuses": "Bonuses",
+      "deductions": "Deductions",
+      "netPaid": "Net Paid Amount",
+      "paymentStatus": "Payment Status",
+      "sku": "SKU",
+      "itemName": "Item Name",
+      "inStockQty": "In-Stock Qty",
+      "unitCost": "Unit Cost",
+      "totalAssetValue": "Total Asset Value",
+      "reorderStatus": "Reorder Status",
+      "loanNumber": "Loan #",
+      "borrower": "Borrower",
+      "loanType": "Type",
+      "totalLoan": "Total Loan",
+      "repaid": "Repaid",
+      "remainingBalance": "Remaining Balance",
+      "issueDate": "Issue Date"
+    },
+    "status": {
+      "PAID": "Paid", "APPROVED": "Approved", "ACTIVE": "Active", "PARTIAL": "Partial",
+      "PENDING": "Pending", "DRAFT": "Draft", "OVERDUE": "Overdue", "RECORDED": "Recorded",
+      "IN_STOCK": "In Stock", "LOW_STOCK": "Low Stock", "OUT_OF_STOCK": "Out of Stock",
+      "CANCELLED": "Cancelled", "CLOSED": "Closed", "REPAID": "Repaid"
+    },
+    "loanTypes": { "STAFF": "Staff", "BANK": "Bank", "EXTERNAL": "External" },
+    "common": {
+      "records": "{count} report record(s)",
+      "notAvailable": "Not available"
+    },
     "pagination": { "rowsPerPage": "Rows per page:", "of": "of" },
-    "empty": { "title": "No Report Data Found", "description": "No HRM records match the selected report filters and date range." },
+    "empty": {
+      "title": "No Report Data Found",
+      "description": "No finance records match the selected report filters and date range."
+    },
     "print": { "generated": "Generated" },
-    "messages": { "csvReady": "CSV report downloaded successfully.", "loadFailed": "The HRM report could not be loaded.", "unauthenticated": "Sign in to view HRM reports.", "forbidden": "You do not have permission to view HRM reports.", "invalidReport": "Select a valid HRM report type.", "invalidDates": "Select a valid start and end date.", "dateRangeTooLarge": "The selected date range is too large.", "staffNotFound": "The selected staff member could not be found." }
+    "messages": { "loadFailed": "The finance report could not be loaded." }
   },
   "optionsManagement": {
     "common": {
@@ -782,8 +1710,16 @@
       "emptyDescription": "Add Annual, Sick, Casual, Unpaid, or another approved leave type.",
       "deleteTitle": "Delete Leave Type",
       "deleteDescription": "Delete \"{name}\"? This action cannot be undone.",
-      "fields": { "name": "Leave Type Name", "namePlaceholder": "e.g., Annual Leave", "description": "Description", "descriptionPlaceholder": "Eligibility, balance, or internal guidance" },
-      "table": { "title": "Leave Type", "description": "Description" }
+      "fields": {
+        "name": "Leave Type Name",
+        "namePlaceholder": "e.g., Annual Leave",
+        "description": "Description",
+        "descriptionPlaceholder": "Eligibility, balance, or internal guidance"
+      },
+      "table": {
+        "title": "Leave Type",
+        "description": "Description"
+      }
     },
     "messages": {
       "unauthenticated": "Sign in to access system options.",
@@ -821,6 +1757,12 @@
     "rowsPerPage": "Rows per page:",
     "of": "of",
     "editPermissions": "Edit Permissions",
+    "deleteRole": "Delete Role",
+    "deleteRoleConfirmation": "Delete {name}? This custom role and its permission assignments will be permanently removed.",
+    "revokeInvitation": "Revoke Invitation",
+    "revokeInvitationConfirmation": "Revoke the pending invitation for {name}? Its activation link will stop working immediately.",
+    "removeUserAccess": "Delete User / Remove Access",
+    "removeUserAccessConfirmation": "Remove access for {name}? The account will be disabled and signed out while linked staff and historical records remain intact.",
     "usersAssigned": "{count} assigned users",
     "permissionsAssigned": "{count} permissions",
     "systemRole": "System role",
@@ -983,9 +1925,14 @@
     "messages": {
       "permissionsUpdated": "Role permissions updated successfully.",
       "roleCreated": "Role created successfully.",
+      "roleDeleted": "Custom role deleted successfully.",
+      "roleInUse": "This role is assigned to one or more users. Reassign them before deleting it.",
       "roleActivated": "Role activated successfully.",
       "roleDeactivated": "Role deactivated successfully.",
       "userInvited": "Invitation email sent successfully.",
+      "invitationRevoked": "Invitation revoked successfully.",
+      "invitationNotPending": "This invitation is no longer pending.",
+      "userAccessRemoved": "User access removed successfully.",
       "invitationEmailFailed": "The invitation email could not be delivered. No user account was created.",
       "statusUpdated": "Account status updated successfully.",
       "roleAssigned": "User role updated successfully.",
@@ -1193,8 +2140,8 @@
       "remaining": "Remaining Days",
       "amount": "Total Amount",
       "status": "Status",
-      "actions": "Actions"
-      ,"contract": "Contract & Title",
+      "actions": "Actions",
+      "contract": "Contract & Title",
       "serviceDuration": "Service & Duration",
       "endRemaining": "End Date & Remaining"
     },
@@ -1212,8 +2159,8 @@
       "delete": "Delete",
       "cancel": "Cancel",
       "runAudit": "Run Expiration Check",
-      "runningAudit": "Checking…"
-      ,"changeStatus": "Change Status"
+      "runningAudit": "Checking…",
+      "changeStatus": "Change Status"
     },
     "form": {
       "addTitle": "Create Contract",
@@ -1260,8 +2207,8 @@
       "clientContact": "Client Contact",
       "managerContact": "Manager Contact",
       "noNotifications": "No notifications sent",
-      "noNotificationsDescription": "Expiration reminders for this contract will appear here."
-      ,"createdAt": "Created Date"
+      "noNotificationsDescription": "Expiration reminders for this contract will appear here.",
+      "createdAt": "Created Date"
     },
     "reminders": {
       "30_DAY": "30-day expiration reminder",
@@ -1315,32 +2262,246 @@
     }
   },
   "contractOptions": {
-    "types": { "title": "Contract Types", "description": "Services that can be sold under a contract." },
-    "durations": { "title": "Contract Durations", "description": "Standard terms used to calculate contract end dates." },
-    "levels": { "title": "Service Levels", "description": "Contract tiers and delivery levels." },
-    "countries": { "title": "Contract Countries", "description": "Countries available for contract classification." },
-    "statuses": { "title": "Contract Statuses", "description": "Workflow states used by client contracts." },
-    "invoiceStatuses": { "title": "Invoice Statuses", "description": "Payment states used by contract invoices." },
-    "paymentMethods": { "title": "Payment Methods", "description": "Approved methods for recording invoice payments." },
+    "types": {
+      "title": "Contract Types",
+      "description": "Services that can be sold under a contract."
+    },
+    "durations": {
+      "title": "Contract Durations",
+      "description": "Standard terms used to calculate contract end dates."
+    },
+    "levels": {
+      "title": "Service Levels",
+      "description": "Contract tiers and delivery levels."
+    },
+    "countries": {
+      "title": "Contract Countries",
+      "description": "Countries available for contract classification."
+    },
+    "statuses": {
+      "title": "Contract Statuses",
+      "description": "Workflow states used by client contracts."
+    },
+    "invoiceStatuses": {
+      "title": "Invoice Statuses",
+      "description": "Payment states used by contract invoices."
+    },
+    "paymentMethods": {
+      "title": "Payment Methods",
+      "description": "Approved methods for recording invoice payments."
+    },
     "durationHint": "Use an English number and time unit, for example: 1 Year, 18 Months, or 90 Days.",
     "deleteDescription": "Delete option {name}? Options used by contracts cannot be deleted.",
-    "common": { "name": "Name", "description": "Description", "status": "Status", "actions": "Actions", "active": "Active", "inactive": "Inactive", "activate": "Activate", "deactivate": "Deactivate", "add": "Add Contract Option", "edit": "Edit Contract Option", "create": "Create", "save": "Save Changes", "saving": "Saving…", "cancel": "Cancel", "empty": "No options configured" }
+    "common": {
+      "name": "Name",
+      "description": "Description",
+      "status": "Status",
+      "actions": "Actions",
+      "active": "Active",
+      "inactive": "Inactive",
+      "activate": "Activate",
+      "deactivate": "Deactivate",
+      "add": "Add Contract Option",
+      "edit": "Edit Contract Option",
+      "create": "Create",
+      "save": "Save Changes",
+      "saving": "Saving…",
+      "cancel": "Cancel",
+      "empty": "No options configured"
+    }
   },
   "contractInvoices": {
-    "kpis": { "totalInvoiced": "Total Invoiced", "allInvoices": "All generated invoices", "paidRevenue": "Paid Revenue", "paidInvoices": "Payments posted to Finance", "overdueInvoices": "Overdue Invoices", "overdueCount": "{count} overdue invoice(s)", "outstanding": "Outstanding Balance", "pendingInvoices": "Unpaid and partially paid" },
-    "filters": { "search": "Search", "searchPlaceholder": "Search invoice, contract, or client", "status": "Invoice status", "allStatuses": "All statuses", "client": "Client", "allClients": "All clients", "contract": "Contract", "allContracts": "All contracts", "fromDate": "Due date from", "toDate": "Due date to", "clear": "Clear filters" },
-    "table": { "invoiceContract": "Invoice & Contract", "client": "Client", "issueDue": "Issue & Due Date", "amountCurrency": "Amount & Currency", "baseAmount": "Base Amount", "status": "Status", "actions": "Actions" },
-    "status": { "OVERDUE": "Overdue" },
-    "actions": { "create": "Create Invoice", "save": "Save Changes", "saving": "Saving…", "viewPrint": "View / Print Invoice", "recordPayment": "Record Payment", "edit": "Edit", "delete": "Delete", "changeStatus": "Change Status", "cancel": "Cancel", "close": "Close", "confirmPayment": "Confirm Payment", "printDownload": "Print / Download PDF" },
-    "form": { "createTitle": "Create Invoice", "editTitle": "Edit Invoice", "description": "Generate and maintain an invoice against a client contract.", "selectContractHelp": "Select a contract to populate the client.", "baseAmount": "Calculated base amount ({currency})" },
-    "fields": { "contract": "Contract", "client": "Client", "amount": "Invoice Amount", "currency": "Currency", "exchangeRate": "USD/AFN Exchange Rate", "issueDate": "Issue Date", "dueDate": "Due Date", "status": "Status", "invoiceNumber": "Invoice Number" },
-    "placeholders": { "contract": "Search and select a contract" },
-    "payment": { "title": "Record Invoice Payment", "date": "Payment Date", "amount": "Payment Amount", "method": "Payment Method", "notes": "Payment Notes", "ledgerNotice": "Confirming this payment marks the invoice as paid and creates a linked FinanceIncome ledger entry.", "recording": "Recording…" },
-    "print": { "title": "Printable Invoice", "invoice": "INVOICE", "from": "From", "billTo": "Bill To", "taxId": "Tax ID", "paymentTerms": "Payment Terms", "netDays": "Net {days} days", "item": "Contract / Item", "service": "Service Type", "rate": "Base Rate", "total": "Total", "amountDue": "Amount Due", "thankYou": "Thank you for your business.", "footer": "Please reference the invoice number when making payment.", "stamp": "Company stamp" },
-    "empty": { "title": "No invoices found", "description": "Create an invoice or adjust the current search and filters." },
-    "delete": { "title": "Delete Invoice", "description": "Delete invoice {name}? This action cannot be undone." },
-    "pagination": { "rowsPerPage": "Rows per page", "of": "of" },
-    "messages": { "created": "Invoice created successfully.", "updated": "Invoice updated successfully.", "statusUpdated": "Invoice status updated successfully.", "deleted": "Invoice deleted successfully.", "paymentRecorded": "Payment recorded and FinanceIncome updated successfully.", "loadFailed": "Invoices could not be loaded.", "optionsLoadFailed": "Invoice form options could not be loaded.", "operationFailed": "The invoice operation could not be completed.", "paymentFailed": "The payment could not be recorded.", "paymentRequired": "Use Record Payment to mark an invoice as paid and create its FinanceIncome entry.", "notFound": "Invoice not found.", "duplicate": "An invoice with this number already exists.", "paidLocked": "Paid invoices are locked because they are synchronized with FinanceIncome.", "paidDeleteBlocked": "Paid invoices cannot be deleted because their ledger entry must be preserved.", "alreadyPaid": "This invoice has already been paid.", "paymentOptionsMissing": "Configure Paid status, payment methods, and Contract Payment income type first.", "unauthenticated": "Sign in to manage invoices.", "forbidden": "You do not have permission to manage invoices." },
-    "validation": { "required": "This field is required.", "amountInvalid": "Enter an amount greater than zero.", "dateInvalid": "Enter a valid date.", "notesTooLong": "Payment notes must not exceed 1,000 characters.", "invalidContract": "Select a valid contract and linked client.", "invalidStatus": "Select a valid invoice status.", "paidViaPaymentOnly": "Use Record Payment to mark an invoice as paid.", "dateRangeInvalid": "Due date must be on or after the issue date.", "fullPaymentRequired": "Payment amount must equal the full invoice amount." }
+    "kpis": {
+      "totalInvoiced": "Total Invoiced",
+      "allInvoices": "All generated invoices",
+      "paidRevenue": "Paid Revenue",
+      "paidInvoices": "Payments posted to Finance",
+      "overdueInvoices": "Overdue Invoices",
+      "overdueCount": "{count} overdue invoice(s)",
+      "outstanding": "Outstanding Balance",
+      "pendingInvoices": "Unpaid and partially paid"
+    },
+    "filters": {
+      "search": "Search",
+      "searchPlaceholder": "Search invoice, contract, or client",
+      "status": "Invoice status",
+      "allStatuses": "All statuses",
+      "client": "Client",
+      "allClients": "All clients",
+      "contract": "Contract",
+      "allContracts": "All contracts",
+      "fromDate": "Due date from",
+      "toDate": "Due date to",
+      "clear": "Clear filters"
+    },
+    "table": {
+      "invoiceContract": "Invoice & Contract",
+      "client": "Client",
+      "issueDue": "Issue & Due Date",
+      "amountCurrency": "Amount & Currency",
+      "baseAmount": "Base Amount",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "status": {
+      "OVERDUE": "Overdue"
+    },
+    "actions": {
+      "create": "Create Invoice",
+      "save": "Save Changes",
+      "saving": "Saving…",
+      "viewPrint": "View / Print Invoice",
+      "recordPayment": "Record Payment",
+      "edit": "Edit",
+      "delete": "Delete",
+      "changeStatus": "Change Status",
+      "cancel": "Cancel",
+      "close": "Close",
+      "confirmPayment": "Confirm Payment",
+      "printDownload": "Print / Download PDF"
+    },
+    "form": {
+      "createTitle": "Create Invoice",
+      "editTitle": "Edit Invoice",
+      "description": "Generate and maintain an invoice against a client contract.",
+      "selectContractHelp": "Select a contract to populate the client.",
+      "baseAmount": "Calculated base amount ({currency})"
+    },
+    "fields": {
+      "contract": "Contract",
+      "client": "Client",
+      "amount": "Invoice Amount",
+      "currency": "Currency",
+      "exchangeRate": "USD/AFN Exchange Rate",
+      "issueDate": "Issue Date",
+      "dueDate": "Due Date",
+      "status": "Status",
+      "invoiceNumber": "Invoice Number"
+    },
+    "placeholders": {
+      "contract": "Search and select a contract"
+    },
+    "payment": {
+      "title": "Record Invoice Payment",
+      "date": "Payment Date",
+      "amount": "Payment Amount",
+      "method": "Payment Method",
+      "notes": "Payment Notes",
+      "ledgerNotice": "Confirming this payment marks the invoice as paid and creates a linked FinanceIncome ledger entry.",
+      "recording": "Recording…"
+    },
+    "print": {
+      "title": "Printable Invoice",
+      "invoice": "INVOICE",
+      "from": "From",
+      "billTo": "Bill To",
+      "taxId": "Tax ID",
+      "paymentTerms": "Payment Terms",
+      "netDays": "Net {days} days",
+      "item": "Contract / Item",
+      "service": "Service Type",
+      "rate": "Base Rate",
+      "total": "Total",
+      "amountDue": "Amount Due",
+      "thankYou": "Thank you for your business.",
+      "footer": "Please reference the invoice number when making payment.",
+      "stamp": "Company stamp"
+    },
+    "empty": {
+      "title": "No invoices found",
+      "description": "Create an invoice or adjust the current search and filters."
+    },
+    "delete": {
+      "title": "Delete Invoice",
+      "description": "Delete invoice {name}? This action cannot be undone."
+    },
+    "pagination": {
+      "rowsPerPage": "Rows per page",
+      "of": "of"
+    },
+    "messages": {
+      "created": "Invoice created successfully.",
+      "updated": "Invoice updated successfully.",
+      "statusUpdated": "Invoice status updated successfully.",
+      "deleted": "Invoice deleted successfully.",
+      "paymentRecorded": "Payment recorded and FinanceIncome updated successfully.",
+      "loadFailed": "Invoices could not be loaded.",
+      "optionsLoadFailed": "Invoice form options could not be loaded.",
+      "operationFailed": "The invoice operation could not be completed.",
+      "paymentFailed": "The payment could not be recorded.",
+      "paymentRequired": "Use Record Payment to mark an invoice as paid and create its FinanceIncome entry.",
+      "notFound": "Invoice not found.",
+      "duplicate": "An invoice with this number already exists.",
+      "paidLocked": "Paid invoices are locked because they are synchronized with FinanceIncome.",
+      "paidDeleteBlocked": "Paid invoices cannot be deleted because their ledger entry must be preserved.",
+      "alreadyPaid": "This invoice has already been paid.",
+      "paymentOptionsMissing": "Configure Paid status, payment methods, and Contract Payment income type first.",
+      "unauthenticated": "Sign in to manage invoices.",
+      "forbidden": "You do not have permission to manage invoices."
+    },
+    "validation": {
+      "required": "This field is required.",
+      "amountInvalid": "Enter an amount greater than zero.",
+      "dateInvalid": "Enter a valid date.",
+      "notesTooLong": "Payment notes must not exceed 1,000 characters.",
+      "invalidContract": "Select a valid contract and linked client.",
+      "invalidStatus": "Select a valid invoice status.",
+      "paidViaPaymentOnly": "Use Record Payment to mark an invoice as paid.",
+      "dateRangeInvalid": "Due date must be on or after the issue date.",
+      "fullPaymentRequired": "Payment amount must equal the full invoice amount."
+    }
+  },
+  "inventoryManagement": {
+    "metrics": { "totalValue": "Total Stock Value", "totalItems": "Total Items", "lowStock": "Low Stock Alerts", "outOfStock": "Out of Stock", "usdHint": "Converted to USD", "itemsHint": "Distinct inventory records", "lowStockHint": "At or below reorder level", "outOfStockHint": "Items with no stock remaining" },
+    "filters": { "search": "Search inventory", "searchPlaceholder": "Item name or SKU code...", "searchCategories": "Search categories", "searchCategoriesPlaceholder": "Category name or code...", "category": "Category", "status": "Status", "stock": "Stock Status", "allCategories": "All categories", "allStatuses": "All statuses", "allStock": "All stock levels", "clear": "Clear filters" },
+    "stockStatus": { "IN_STOCK": "In Stock", "LOW_STOCK": "Low Stock", "OUT_OF_STOCK": "Out of Stock" },
+    "table": { "sku": "SKU", "item": "Item Name", "category": "Category", "quantity": "Qty in Stock", "unitPrice": "Unit Price", "totalValue": "Total Value", "reorderLevel": "Reorder Level", "status": "Status", "actions": "Actions" },
+    "actions": { "add": "Add Inventory Item", "create": "Create Item", "edit": "Edit Item", "save": "Save Changes", "saving": "Saving...", "adjust": "Adjust Quantity", "delete": "Delete", "cancel": "Cancel" },
+    "fields": { "name": "Item Name", "sku": "SKU Code", "category": "Category", "quantity": "Quantity in Stock", "unitPrice": "Unit Price", "currency": "Currency", "exchangeRate": "USD / AFN Exchange Rate", "reorderLevel": "Reorder Level", "status": "Status", "baseAmount": "USD Unit Value", "baseTotal": "USD Total Value", "currentStock": "Current Stock" },
+    "placeholders": { "autoSku": "Leave blank to auto-generate" },
+    "form": { "addTitle": "Add Inventory Item", "editTitle": "Edit Inventory Item", "description": "Maintain item identity, pricing, stock thresholds, and locked currency values.", "statusNotice": "Low-stock and out-of-stock statuses are assigned automatically from quantity and reorder level." },
+    "adjust": { "title": "Adjust Inventory Quantity", "description": "Record stock movement for {item}.", "stockIn": "Stock In", "stockOut": "Stock Out", "quantity": "Movement Quantity" },
+    "categoryActions": { "add": "Add Category", "edit": "Edit Category", "activate": "Activate", "deactivate": "Deactivate", "delete": "Delete Category" },
+    "categoryStatus": { "active": "Active", "inactive": "Inactive" },
+    "categoryForm": { "addTitle": "Add Inventory Category", "editTitle": "Edit Inventory Category", "name": "Category Name", "description": "Description" },
+    "categoryEmpty": { "title": "No inventory categories found", "description": "Add a category or adjust the current search." },
+    "categoryDelete": { "title": "Delete Inventory Category", "description": "Delete this inventory category? Categories used by inventory items cannot be deleted." },
+    "categoryMessages": { "created": "Inventory category created successfully.", "updated": "Inventory category updated successfully.", "statusUpdated": "Inventory category status updated successfully.", "deleted": "Inventory category deleted successfully.", "duplicate": "An inventory category with this name already exists.", "inUse": "This category is assigned to inventory items and cannot be deleted." },
+    "common": { "rowsPerPage": "Rows per page:", "of": "of" },
+    "empty": { "title": "No inventory items found", "description": "Add an inventory item or adjust the current search and filters." },
+    "delete": { "title": "Delete Inventory Item", "description": "Delete this inventory item? This action cannot be undone." },
+    "messages": { "created": "Inventory item created successfully.", "updated": "Inventory item updated successfully.", "adjusted": "Inventory quantity adjusted successfully.", "deleted": "Inventory item deleted successfully.", "loadFailed": "Inventory records could not be loaded.", "operationFailed": "The inventory operation could not be completed.", "duplicateSku": "An inventory item with this SKU already exists.", "notFound": "Inventory item was not found.", "insufficientStock": "Stock out quantity exceeds the available inventory.", "invalidOptionType": "The requested option type is not supported.", "unauthenticated": "Authentication is required.", "forbidden": "You do not have permission for this action." },
+    "validation": { "required": "This field is required.", "nameTooLong": "Item name must not exceed 150 characters.", "skuInvalid": "Use 2-50 letters, numbers, hyphens, or underscores for the SKU.", "quantityInvalid": "Enter a valid non-negative whole number.", "priceInvalid": "Enter a unit price greater than zero.", "currencyInvalid": "Select AFN or USD.", "rateInvalid": "Enter an exchange rate greater than zero.", "adjustmentInvalid": "Enter a whole quantity greater than zero.", "invalidRelation": "Select a valid inventory category and status.", "statusMissing": "Required inventory stock statuses are not configured.", "categoryNameInvalid": "Use 2-100 English letters, numbers, spaces, or basic punctuation.", "descriptionTooLong": "Description must not exceed 1,000 characters." }
+  },
+  "financeSalary": {
+    "metrics": { "total": "Total Monthly Payroll", "paid": "Paid Salaries", "pending": "Pending Payroll", "loans": "Total Loan Deductions", "baseCurrency": "Reported in {currency}", "paidHint": "Processed salaries this month", "pendingHint": "Draft salaries awaiting payment", "loansHint": "Scheduled staff loan recovery" },
+    "filters": { "search": "Search payroll", "searchPlaceholder": "Staff name or email...", "month": "Payroll Month", "status": "Status", "allStatuses": "All statuses", "clear": "Clear filters" },
+    "table": { "staff": "Staff Member", "monthDays": "Month & Days", "baseSalary": "Base Salary", "earnedBonus": "Earned & Bonus", "loanDeduction": "Loan Deduction", "payable": "Net Payable", "status": "Status", "actions": "Actions" },
+    "actions": { "generate": "Generate Payroll for {month}", "generating": "Generating payroll...", "view": "View Payslip", "edit": "Edit Payroll Adjustments", "markPaid": "Mark as Paid", "delete": "Delete Record", "cancel": "Cancel", "save": "Save Adjustments", "saving": "Saving...", "close": "Close", "print": "Print Payslip" },
+    "fields": { "workedDays": "Worked Days", "offDays": "Off Days", "bonus": "Bonus / Allowances", "loanDeduction": "Loan Deduction", "notes": "Timesheet Summary Notes", "currency": "Currency", "exchangeRate": "USD / AFN Exchange Rate", "dailyRate": "Daily Rate", "earnedSalary": "Earned Salary", "payableAmount": "Net Payable Amount", "baseAmount": "Base Amount", "paymentDate": "Payment Date", "processor": "Processing Officer" },
+    "form": { "title": "Payroll Adjustments", "description": "Adjust attendance, bonus, deduction, and locked transaction values before payment.", "liveCalculation": "Live Payroll Calculation", "paidLocked": "Paid payroll records are locked and cannot be adjusted." },
+    "payslip": { "title": "Official Payslip", "employee": "Employee Details", "designation": "Designation", "payrollMonth": "Payroll Month", "earnings": "Earnings", "deductions": "Deductions", "baseSalary": "Monthly Base Salary", "earnedPay": "Worked Days Earned Pay", "bonus": "Bonus / Allowances", "loan": "Staff Loan Repayment", "offDays": "Off Days / Unpaid Days", "netPayable": "Net Payable Amount", "signature": "Authorized signature", "notProcessed": "Not processed" },
+    "status": { "DRAFT": "Draft", "PAID": "Paid" },
+    "common": { "notAvailable": "-", "rowsPerPage": "Rows per page:", "of": "of", "days": "{worked} / {total} days", "bonus": "Bonus: {amount}", "noLoan": "No deduction" },
+    "empty": { "title": "No payroll records found", "description": "Generate payroll for this month or adjust the current search and filters." },
+    "delete": { "title": "Delete payroll record", "description": "Delete the draft payroll for {name}? This action cannot be recovered." },
+    "pay": { "title": "Mark salary as paid", "description": "Confirm payment for {name}. Any scheduled staff loan deduction will be posted to the active loan balance.", "confirm": "Confirm Payment" },
+    "validation": { "required": "This field is required.", "monthInvalid": "Select a valid payroll month.", "daysInvalid": "Enter a valid whole number of days.", "numberInvalid": "Enter a valid non-negative amount.", "notesTooLong": "Timesheet notes must not exceed 5,000 characters.", "currencyInvalid": "Select AFN or USD.", "rateInvalid": "Enter an exchange rate greater than zero.", "daysExceedMonth": "Worked and off days cannot exceed the number of days in this payroll month.", "invalidStaff": "The selected staff member is invalid." },
+    "messages": { "unauthenticated": "Authentication is required.", "forbidden": "You do not have permission for this action.", "loadFailed": "Payroll records could not be loaded.", "optionsLoadFailed": "Payroll options could not be loaded.", "detailLoadFailed": "Payslip details could not be loaded.", "notFound": "Payroll record was not found.", "duplicate": "Payroll already exists for this staff member and month.", "noEligibleStaff": "No active staff members are available for payroll generation.", "generated": "{created} payroll records generated; {skipped} existing records skipped.", "updated": "Payroll adjustments saved successfully.", "created": "Payroll record created successfully.", "paid": "Salary marked paid and loan repayment posted successfully.", "alreadyPaid": "This salary has already been paid.", "paidLocked": "Paid payroll records cannot be changed or deleted.", "deleted": "Draft payroll record deleted successfully.", "processorMissing": "Your user account is not linked to an active staff profile.", "operationFailed": "The payroll operation could not be completed." }
+  },
+  "financeLoans": {
+    "metrics": { "active": "Total Active Issued Loans", "repaid": "Total Repaid Amount", "recovery": "Monthly Recovery Expectation", "portfolio": "Total Loan Portfolio", "usdHint": "Converted to USD", "activeHint": "Outstanding active and approved loans", "repaidHint": "Recovered across all loans", "recoveryHint": "Expected monthly deductions", "portfolioHint": "Original issued value" },
+    "filters": { "search": "Search loans", "searchPlaceholder": "Loan number, borrower, or staff...", "status": "Status", "type": "Loan Type", "allStatuses": "All statuses", "allTypes": "All loan types", "clear": "Clear filters" },
+    "types": { "STAFF": "Staff Loan", "EXTERNAL": "External Entity", "BANK": "Bank / Company" },
+    "table": { "loan": "Loan", "borrower": "Borrower", "total": "Total Amount", "monthly": "Monthly Deduction", "repaid": "Repaid", "remaining": "Remaining Balance", "status": "Status", "date": "Issue Date", "actions": "Actions" },
+    "actions": { "add": "Create Loan", "create": "Create Loan", "save": "Save Changes", "saving": "Saving...", "cancel": "Cancel", "close": "Close", "view": "View Details", "repay": "Record Repayment", "print": "Print Statement", "delete": "Delete Loan" },
+    "fields": { "loanType": "Loan Type", "staff": "Staff Member", "entity": "External Entity Name", "total": "Total Amount", "currency": "Currency", "exchangeRate": "USD / AFN Exchange Rate", "monthly": "Monthly Deduction", "issueDate": "Issue Date", "reason": "Reason / Notes", "amountBase": "USD Base Amount", "loanNumber": "Loan Number", "approver": "Approved By", "repaid": "Repaid Amount", "remaining": "Remaining Balance", "status": "Status", "repayment": "Repayment Amount" },
+    "form": { "title": "Create Loan", "description": "Record a staff advance or an external financing arrangement with locked currency values.", "calculation": "Financial Preview" },
+    "repayment": { "title": "Record Loan Repayment", "description": "Apply a repayment to {loan}. The amount is capped at the outstanding balance.", "confirm": "Record Repayment" },
+    "detail": { "title": "Loan Details", "financial": "Financial Breakdown", "borrower": "Borrower & Approval", "statement": "Loan Statement" },
+    "common": { "notAvailable": "-", "rowsPerPage": "Rows per page:", "of": "of", "active": "Active", "unassigned": "Unassigned" },
+    "empty": { "title": "No loans found", "description": "Create a loan or adjust the current search and filters." },
+    "validation": { "required": "This field is required.", "amountInvalid": "Enter an amount greater than zero.", "rateInvalid": "Enter an exchange rate greater than zero.", "dateInvalid": "Select a valid issue date.", "entityRequired": "Enter the external entity name.", "staffRequired": "Select a staff member.", "monthlyTooHigh": "Monthly deduction cannot exceed the total amount.", "reasonTooLong": "Reason must not exceed 5,000 characters." },
+    "messages": { "unauthenticated": "Authentication is required.", "forbidden": "You do not have permission for this action.", "loadFailed": "Loans could not be loaded.", "detailLoadFailed": "Loan details could not be loaded.", "created": "Loan created successfully.", "updated": "Loan updated successfully.", "deleted": "Loan deleted successfully.", "repaid": "Loan repayment recorded successfully.", "notFound": "Loan was not found.", "invalidRelation": "The selected staff member or status is invalid.", "repaymentBlocked": "This loan has no outstanding balance.", "deleteBlocked": "Loans with recorded repayments cannot be deleted.", "operationFailed": "The loan operation could not be completed." }
   }
 }

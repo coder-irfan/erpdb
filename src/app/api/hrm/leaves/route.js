@@ -105,14 +105,17 @@ export async function GET(request) {
         }),
         prisma.hrmstaffleave.count({ where: { ...scopeWhere, status: { is: { value: 'PENDING', category: 'LEAVE_STATUS' } } } }),
         prisma.hrmstaffleave.findMany({ where: { ...scopeWhere, status: { is: { value: 'APPROVED', category: 'LEAVE_STATUS' } }, start_date: { lte: todayDate }, end_date: { gte: todayDate } }, distinct: ['staff_id'], select: { staff_id: true } }),
-        prisma.hrmstaffleave.findMany({ where: { ...scopeWhere, status: { is: { value: 'APPROVED', category: 'LEAVE_STATUS' } }, start_date: { lte: monthEnd }, end_date: { gte: monthStart } }, select: { start_date: true, end_date: true } })
+        prisma.hrmstaffleave.findMany({ where: { ...scopeWhere, status: { is: { value: 'APPROVED', category: 'LEAVE_STATUS' } }, start_date: { lte: monthEnd }, end_date: { gte: monthStart } }, select: { start_date: true, end_date: true, total_days: true } })
       ])
 
     const monthlyDays = approvedMonth.reduce((total, leave) => {
       const clippedStart = leave.start_date < monthStart ? monthStart : leave.start_date
       const clippedEnd = leave.end_date > monthEnd ? monthEnd : leave.end_date
 
-      return total + Math.floor((clippedEnd.getTime() - clippedStart.getTime()) / 86_400_000) + 1
+      const overlapDays = Math.floor((clippedEnd.getTime() - clippedStart.getTime()) / 86_400_000) + 1
+      const fullRangeDays = Math.floor((leave.end_date.getTime() - leave.start_date.getTime()) / 86_400_000) + 1
+
+      return total + Number(leave.total_days) * (overlapDays / fullRangeDays)
     }, 0)
 
     return Response.json({
@@ -157,15 +160,17 @@ export async function POST(request) {
     leave_type_id: payload?.leave_type_id,
     start_date: payload?.start_date,
     end_date: payload?.end_date,
+    total_days: payload?.total_days == null ? '' : String(payload.total_days),
     status_id: payload?.status_id || '',
     reason: payload?.reason || ''
   })
 
   if (!validation.success) return responseError(validation.issues[0]?.message, 400, 'VALIDATION_ERROR')
 
-  const totalDays = calculateLeaveDays(validation.output.start_date, validation.output.end_date)
+  const calendarDays = calculateLeaveDays(validation.output.start_date, validation.output.end_date)
+  const totalDays = validation.output.total_days ? Number(validation.output.total_days) : calendarDays
 
-  if (totalDays < 1) return responseError(context.dictionary.validation.dateRangeInvalid, 400, 'INVALID_DATE_RANGE')
+  if (totalDays < 0.5 || totalDays > calendarDays) return responseError(context.dictionary.validation.dateRangeInvalid, 400, 'INVALID_DATE_RANGE')
 
   try {
     const [staff, leaveType, pendingStatus, selectedStatus] = await Promise.all([
@@ -193,7 +198,7 @@ export async function POST(request) {
           status_id: status.id,
           start_date: parseLeaveDate(validation.output.start_date),
           end_date: parseLeaveDate(validation.output.end_date),
-          total_days: totalDays,
+          total_days: new Prisma.Decimal(totalDays),
           reason: validation.output.reason || null,
           approved_by_id: isApproved ? context.staff?.id || null : null,
           approved_by_user_id: isApproved ? context.authorization.session.user.id : null

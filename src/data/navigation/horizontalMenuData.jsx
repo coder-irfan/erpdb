@@ -100,23 +100,23 @@ const horizontalMenuData = dictionary => [
     children: [
       {
         label: dictionary.navigation.incomes,
-        href: '/finance/incomes',
-        permission: 'finance_income:read'
+        href: '/finance/income',
+        permission: 'finance:read'
       },
       {
         label: dictionary.navigation.expenses,
         href: '/finance/expenses',
-        permission: 'finance_expense:read'
+        permission: 'finance:read'
       },
       {
         label: dictionary.navigation.salary,
         href: '/finance/salary',
-        permission: 'finance_salary:read'
+        permission: 'finance:read'
       },
       {
         label: dictionary.navigation.loans,
         href: '/finance/loans',
-        permission: 'finance_loan:read'
+        permission: 'finance:read'
       },
       {
         label: dictionary.navigation.inventory,
@@ -183,6 +183,18 @@ const horizontalMenuData = dictionary => [
             label: dictionary.navigation.contractOptions,
             href: '/options/contracts',
             permission: 'options:read'
+          }
+        ]
+      },
+      {
+        label: dictionary.navigation.financeManagement,
+        icon: 'tabler-cash-banknote',
+        permission: 'finance_inventory:read',
+        children: [
+          {
+            label: dictionary.navigation.inventoryCategories,
+            href: '/options/finance-management/inventory-categories',
+            permission: 'finance_inventory:read'
           }
         ]
       }

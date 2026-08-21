@@ -1,9 +1,17 @@
 const hasSuperAdminRole = session => session?.user?.roles?.includes('super_admin') === true
 
+const permissionAliases = {
+  'finance_salary:read': ['hrm_payroll:read'],
+  'finance_salary:write': ['hrm_payroll:write'],
+  'finance_salary:delete': ['hrm_payroll:delete']
+}
+
 export const hasPermission = (session, requiredPermissionKey) => {
   if (!requiredPermissionKey) return false
 
-  return hasSuperAdminRole(session) || session?.user?.permissions?.includes(requiredPermissionKey) === true
+  const permissions = session?.user?.permissions || []
+
+  return hasSuperAdminRole(session) || permissions.includes(requiredPermissionKey) || permissionAliases[requiredPermissionKey]?.some(permission => permissions.includes(permission)) === true
 }
 
 export const hasAnyPermission = (session, permissionKeys) => {

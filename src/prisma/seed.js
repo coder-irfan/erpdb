@@ -38,6 +38,7 @@ const permissions = [
   { key: 'crm_visitor:write', module: 'CRM', description: 'Check in, update, check out, and convert visitors' },
   { key: 'crm_visitor:delete', module: 'CRM', description: 'Delete visitor records' },
   { key: 'tasks:read', module: 'Tasks', description: 'View tasks' },
+  { key: 'tasks:read_assigned', module: 'Tasks', description: 'View and update assigned tasks' },
   { key: 'tasks:write', module: 'Tasks', description: 'Create and update tasks' },
   { key: 'tasks:delete', module: 'Tasks', description: 'Delete tasks' },
   { key: 'finance:read', module: 'Finance', description: 'View finance records' },
@@ -211,6 +212,20 @@ const leadSources = [
   { label: 'Other', value: 'OTHER', color_code: 'secondary', sort_order: 5 }
 ]
 
+const taskStatuses = [
+  { label: 'To Do', value: 'TO_DO', color_code: 'secondary', sort_order: 1, is_default: true },
+  { label: 'In Progress', value: 'IN_PROGRESS', color_code: 'primary', sort_order: 2 },
+  { label: 'Review', value: 'REVIEW', color_code: 'warning', sort_order: 3 },
+  { label: 'Completed', value: 'COMPLETED', color_code: 'success', sort_order: 4 }
+]
+
+const taskPriorities = [
+  { label: 'Low', value: 'LOW', color_code: 'success', sort_order: 1 },
+  { label: 'Medium', value: 'MEDIUM', color_code: 'info', sort_order: 2, is_default: true },
+  { label: 'High', value: 'HIGH', color_code: 'warning', sort_order: 3 },
+  { label: 'Urgent', value: 'URGENT', color_code: 'error', sort_order: 4 }
+]
+
 const main = async () => {
   const passwordHash = await bcrypt.hash('Admin123!', 10)
 
@@ -339,6 +354,22 @@ const main = async () => {
         where: { category_value: { category: 'LEAD_SOURCE', value: leadSource.value } },
         update: { ...leadSource, is_active: true },
         create: { category: 'LEAD_SOURCE', ...leadSource, is_active: true }
+      })
+    }
+
+    for (const taskStatus of taskStatuses) {
+      await transaction.option.upsert({
+        where: { category_value: { category: 'TASK_STATUS', value: taskStatus.value } },
+        update: { ...taskStatus, is_active: true },
+        create: { category: 'TASK_STATUS', ...taskStatus, is_active: true }
+      })
+    }
+
+    for (const taskPriority of taskPriorities) {
+      await transaction.option.upsert({
+        where: { category_value: { category: 'TASK_PRIORITY', value: taskPriority.value } },
+        update: { ...taskPriority, is_active: true },
+        create: { category: 'TASK_PRIORITY', ...taskPriority, is_active: true }
       })
     }
 

@@ -13,8 +13,15 @@ import Typography from '@mui/material/Typography'
 import { toast } from 'sonner'
 
 import CustomAvatar from '@core/components/mui/Avatar'
-import { createRole, toggleRoleStatus, updateRolePermissions } from '@/app/actions/roleActions'
-import { assignUserRole, inviteUser, updateUserStatus } from '@/app/actions/userActions'
+import { createRole, deleteRole, toggleRoleStatus, updateRolePermissions } from '@/app/actions/roleActions'
+import {
+  assignUserRole,
+  inviteUser,
+  removeUserAccess,
+  revokeUserInvitation,
+  updateUserStatus
+} from '@/app/actions/userActions'
+import ConfirmDeleteModal from '@/components/dialogs/ConfirmDeleteModal'
 
 import CreateRoleDialog from './CreateRoleDialog'
 import InviteUserDialog from './InviteUserDialog'
@@ -39,6 +46,8 @@ const RolesPermissionsView = ({
   const [createRoleOpen, setCreateRoleOpen] = useState(false)
   const [inviteOpen, setInviteOpen] = useState(false)
   const [busyRoleId, setBusyRoleId] = useState(null)
+  const [roleToDelete, setRoleToDelete] = useState(null)
+  const [isDeletingRole, setIsDeletingRole] = useState(false)
 
   const activeRoles = roles.filter(role => role.isActive)
 
@@ -102,6 +111,26 @@ const RolesPermissionsView = ({
     setBusyRoleId(null)
   }
 
+  const handleRoleDelete = async () => {
+    if (!roleToDelete) return
+
+    setIsDeletingRole(true)
+
+    const result = await runAction(
+      () => deleteRole({ roleId: roleToDelete.id, locale }),
+      dictionary.messages.operationFailed
+    )
+
+    if (!result.success) toast.error(result.error)
+    else {
+      setRoles(current => current.filter(role => role.id !== roleToDelete.id))
+      setRoleToDelete(null)
+      toast.success(result.message)
+    }
+
+    setIsDeletingRole(false)
+  }
+
   const handleInvite = async values => {
     const result = await runAction(() => inviteUser({ ...values, locale }), dictionary.messages.operationFailed)
 
@@ -141,6 +170,42 @@ const RolesPermissionsView = ({
   const handleRoleChange = async (userId, roleId) => {
     const result = await runAction(
       () => assignUserRole({ userId, roleId, locale }),
+      dictionary.messages.operationFailed
+    )
+
+    if (!result.success) {
+      toast.error(result.error)
+
+      return false
+    }
+
+    setUsers(current => current.map(user => (user.id === userId ? result.data : user)))
+    toast.success(result.message)
+
+    return true
+  }
+
+  const handleInvitationRevoke = async userId => {
+    const result = await runAction(
+      () => revokeUserInvitation({ userId, locale }),
+      dictionary.messages.operationFailed
+    )
+
+    if (!result.success) {
+      toast.error(result.error)
+
+      return false
+    }
+
+    setUsers(current => current.map(user => (user.id === userId ? result.data : user)))
+    toast.success(result.message)
+
+    return true
+  }
+
+  const handleUserAccessRemove = async userId => {
+    const result = await runAction(
+      () => removeUserAccess({ userId, locale }),
       dictionary.messages.operationFailed
     )
 
@@ -227,15 +292,27 @@ const RolesPermissionsView = ({
                   }
                   label={role.isActive ? dictionary.activeRole : dictionary.inactiveRole}
                 />
-                <Button
-                  className='mt-auto self-start'
-                  variant='tonal'
-                  startIcon={<i className='tabler-edit' />}
-                  disabled={isProtected}
-                  onClick={() => setPermissionRole(role)}
-                >
-                  {dictionary.editPermissions}
-                </Button>
+                <div className='mt-auto flex flex-wrap gap-2'>
+                  <Button
+                    variant='tonal'
+                    startIcon={<i className='tabler-edit' />}
+                    disabled={isProtected}
+                    onClick={() => setPermissionRole(role)}
+                  >
+                    {dictionary.editPermissions}
+                  </Button>
+                  {!role.isSystem && (
+                    <Button
+                      variant='tonal'
+                      color='error'
+                      startIcon={<i className='tabler-trash' />}
+                      disabled={assignedUsers > 0 || busyRoleId === role.id}
+                      onClick={() => setRoleToDelete(role)}
+                    >
+                      {dictionary.deleteRole}
+                    </Button>
+                  )}
+                </div>
               </CardContent>
             </Card>
           )
@@ -249,6 +326,8 @@ const RolesPermissionsView = ({
         onInvite={() => setInviteOpen(true)}
         onStatusChange={handleStatusChange}
         onRoleChange={handleRoleChange}
+        onInvitationRevoke={handleInvitationRevoke}
+        onUserAccessRemove={handleUserAccessRemove}
         translations={dictionary}
       />
 
@@ -276,6 +355,18 @@ const RolesPermissionsView = ({
         onClose={() => setInviteOpen(false)}
         onSubmit={handleInvite}
         translations={dictionary}
+      />
+
+      <ConfirmDeleteModal
+        open={Boolean(roleToDelete)}
+        title={dictionary.deleteRole}
+        description={dictionary.deleteRoleConfirmation}
+        itemName={roleToDelete?.displayName}
+        confirmText={dictionary.deleteRole}
+        cancelText={dictionary.cancel}
+        loading={isDeletingRole}
+        onClose={() => setRoleToDelete(null)}
+        onConfirm={handleRoleDelete}
       />
     </div>
   )

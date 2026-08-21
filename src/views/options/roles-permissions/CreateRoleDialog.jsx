@@ -3,10 +3,8 @@
 import { useEffect } from 'react'
 
 import Button from '@mui/material/Button'
-import Dialog from '@mui/material/Dialog'
-import DialogActions from '@mui/material/DialogActions'
-import DialogContent from '@mui/material/DialogContent'
-import DialogTitle from '@mui/material/DialogTitle'
+import Divider from '@mui/material/Divider'
+import Drawer from '@mui/material/Drawer'
 import IconButton from '@mui/material/IconButton'
 import Typography from '@mui/material/Typography'
 import { valibotResolver } from '@hookform/resolvers/valibot'
@@ -53,22 +51,28 @@ const CreateRoleDialog = ({ open, groups, onClose, onSubmit, translations }) => 
   }
 
   return (
-    <Dialog open={open} onClose={handleClose} fullWidth maxWidth='md'>
-      <DialogTitle className='flex items-start justify-between gap-4'>
-        <span>
+    <Drawer
+      anchor='right'
+      open={open}
+      onClose={isSubmitting ? undefined : handleClose}
+      slotProps={{ paper: { className: 'is-full sm:is-[680px] lg:is-[760px]' } }}
+    >
+      <div className='flex items-start justify-between gap-4 p-6'>
+        <div>
           <Typography variant='h5' component='span'>
             {translations.createRoleForm.title}
           </Typography>
           <Typography component='span' className='mt-1 block' color='text.secondary'>
             {translations.createRoleForm.description}
           </Typography>
-        </span>
+        </div>
         <IconButton onClick={handleClose} disabled={isSubmitting} aria-label={translations.close}>
           <i className='tabler-x' />
         </IconButton>
-      </DialogTitle>
-      <form onSubmit={handleSubmit(submitForm)} noValidate>
-        <DialogContent dividers className='flex flex-col gap-6'>
+      </div>
+      <Divider />
+      <form className='flex min-bs-0 flex-1 flex-col' onSubmit={handleSubmit(submitForm)} noValidate>
+        <div className='flex flex-1 flex-col gap-6 overflow-y-auto p-6'>
           <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
             <CustomTextField
               fullWidth
@@ -107,8 +111,9 @@ const CreateRoleDialog = ({ open, groups, onClose, onSubmit, translations }) => 
             translations={translations}
             disabled={isSubmitting}
           />
-        </DialogContent>
-        <DialogActions className='p-6'>
+        </div>
+        <Divider />
+        <div className='flex justify-end gap-3 p-6'>
           <Button variant='tonal' color='secondary' onClick={handleClose} disabled={isSubmitting}>
             {translations.cancel}
           </Button>
@@ -117,9 +122,9 @@ const CreateRoleDialog = ({ open, groups, onClose, onSubmit, translations }) => 
               {translations.createRoleForm.submit}
             </LoadingButtonContent>
           </Button>
-        </DialogActions>
+        </div>
       </form>
-    </Dialog>
+    </Drawer>
   )
 }
 

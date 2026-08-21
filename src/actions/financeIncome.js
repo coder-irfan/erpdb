@@ -1,0 +1,659 @@
+'use server'
+
+import { revalidatePath } from 'next/cache'
+
+import { Prisma } from '@prisma/client'
+import { safeParse } from 'valibot'
+
+import { i18n } from '@/configs/i18n'
+import { getFinanceIncomeDictionary } from '@/data/dictionaries/financeIncome'
+import { authorizeAction } from '@/libs/actionAuthorization'
+import { getCompanySetupRecord } from '@/libs/companySetup'
+import { prisma } from '@/libs/prisma'
+import { createFinanceIncomeSchema } from '@/schemas/financeIncome'
+import { toUtcDateOnly } from '@/utils/contractDuration'
+import { convertToBaseCurrency, toFiniteNumber } from '@/utils/formatCurrency'
+
+const READ_PERMISSIONS = ['finance:read', 'finance_income:read']
+const WRITE_PERMISSIONS = ['finance:write']
+const DELETE_PERMISSIONS = ['finance:delete']
+const DEFAULT_PAGE_SIZE = 10
+const MAX_PAGE_SIZE = 100
+const STATUSES = new Set(['PAID', 'PARTIAL', 'PENDING'])
+
+const DEFAULT_INCOME_TYPES = [
+  ['Contract Payment', 'CONTRACT_PAYMENT', 'success', 1, true],
+  ['Project Revenue', 'PROJECT_REVENUE', 'primary', 2, false],
+  ['Service Income', 'SERVICE_INCOME', 'info', 3, false],
+  ['Other Income', 'OTHER_INCOME', 'secondary', 4, false]
+]
+
+const optionSelect = {
+  id: true,
+  label: true,
+  value: true,
+  color_code: true,
+  is_default: true
+}
+
+const staffSelect = {
+  id: true,
+  first_name: true,
+  last_name: true,
+  email: true,
+  position: true
+}
+
+const clientSelect = {
+  id: true,
+  company_name: true,
+  primary_contact_name: true,
+  email: true,
+  phone: true,
+  address: true
+}
+
+const projectSelect = {
+  id: true,
+  project_code: true,
+  title: true,
+  client_id: true,
+  contract_id: true
+}
+
+const contractSelect = {
+  id: true,
+  contract_number: true,
+  title: true,
+  client_id: true,
+  total_amount: true,
+  currency: true,
+  start_date: true,
+  end_date: true,
+  status: { select: optionSelect }
+}
+
+const invoiceSelect = {
+  id: true,
+  invoice_number: true,
+  contract_id: true,
+  client_id: true,
+  amount: true,
+  currency: true,
+  exchange_rate: true,
+  issued_date: true,
+  due_date: true,
+  status: { select: optionSelect }
+}
+
+const incomeSelect = {
+  id: true,
+  invoice_id: true,
+  client_id: true,
+  contract_id: true,
+  project_id: true,
+  received_by_id: true,
+  status: true,
+  name: true,
+  pay_details: true,
+  income_type_id: true,
+  total_amount: true,
+  paid_amount: true,
+  remind_amount: true,
+  exchange_rate: true,
+  total_usd: true,
+  remind_date: true,
+  created_at: true,
+  updated_at: true,
+  amount_base: true,
+  currency: true,
+  client: { select: clientSelect },
+  project: { select: projectSelect },
+  contract: { select: contractSelect },
+  invoice: { select: invoiceSelect },
+  received_by: { select: staffSelect },
+  income_type: { select: optionSelect }
+}
+
+const normalizeLocale = locale => (i18n.locales.includes(locale) ? locale : i18n.defaultLocale)
+const normalizeId = value => (typeof value === 'string' ? value.trim() : '')
+const iso = value => value?.toISOString() || null
+const numberString = (value, scale = 2) => (value == null ? null : toFiniteNumber(value).toFixed(scale))
+const withFullName = staff => staff ? { ...staff, full_name: `${staff.first_name} ${staff.last_name}`.trim() } : null
+
+const normalizeIncome = income => ({
+  ...income,
+  total_amount: numberString(income.total_amount),
+  paid_amount: numberString(income.paid_amount),
+  remind_amount: numberString(income.remind_amount),
+  exchange_rate: numberString(income.exchange_rate, 4),
+  total_usd: numberString(income.total_usd),
+  amount_base: numberString(income.amount_base),
+  remind_date: iso(income.remind_date),
+  created_at: iso(income.created_at),
+  updated_at: iso(income.updated_at),
+  contract: income.contract
+    ? {
+        ...income.contract,
+        total_amount: numberString(income.contract.total_amount),
+        start_date: iso(income.contract.start_date),
+        end_date: iso(income.contract.end_date)
+      }
+    : null,
+  invoice: income.invoice
+    ? {
+        ...income.invoice,
+        amount: numberString(income.invoice.amount),
+        exchange_rate: numberString(income.invoice.exchange_rate, 4),
+        issued_date: iso(income.invoice.issued_date),
+        due_date: iso(income.invoice.due_date)
+      }
+    : null,
+  received_by: withFullName(income.received_by)
+})
+
+const getContext = async (payload, permissions) => {
+  const locale = normalizeLocale(payload?.locale)
+  const translations = getFinanceIncomeDictionary(locale)
+  const authorization = await authorizeAction(permissions)
+
+  if (!authorization.authorized) {
+    return {
+      authorized: false,
+      code: authorization.code,
+      error: authorization.code === 'UNAUTHENTICATED' ? translations.messages.unauthenticated : translations.messages.forbidden,
+      translations
+    }
+  }
+
+  return { authorized: true, session: authorization.session, translations, locale }
+}
+
+const revalidateIncomePages = () => {
+  revalidatePath('/[lang]/finance/income', 'page')
+  revalidatePath('/[lang]/finance/incomes', 'page')
+  revalidatePath('/[lang]/projects', 'page')
+  revalidatePath('/[lang]/contracts/invoices', 'page')
+}
+
+const ensureIncomeTypes = async () => {
+  await prisma.$transaction(
+    DEFAULT_INCOME_TYPES.map(([label, value, colorCode, sortOrder, isDefault]) =>
+      prisma.option.upsert({
+        where: { category_value: { category: 'INCOME_TYPE', value } },
+        update: {},
+        create: {
+          category: 'INCOME_TYPE',
+          label,
+          value,
+          color_code: colorCode,
+          sort_order: sortOrder,
+          is_default: isDefault,
+          is_active: true
+        }
+      })
+    )
+  )
+}
+
+const validationPayload = payload => ({
+  name: payload?.name ?? '',
+  client_id: payload?.client_id ?? '',
+  project_id: payload?.project_id ?? '',
+  contract_id: payload?.contract_id ?? '',
+  invoice_id: payload?.invoice_id ?? '',
+  income_type_id: payload?.income_type_id ?? '',
+  total_amount: String(payload?.total_amount ?? ''),
+  paid_amount: String(payload?.paid_amount ?? '0'),
+  currency: payload?.currency ?? 'AFN',
+  exchange_rate: String(payload?.exchange_rate ?? '65'),
+  received_by_id: payload?.received_by_id ?? '',
+  pay_details: payload?.pay_details ?? '',
+  remind_date: payload?.remind_date ?? ''
+})
+
+const derivePaymentValues = (totalAmount, paidAmount) => {
+  const remaining = Math.max(0, totalAmount - paidAmount)
+  const status = paidAmount >= totalAmount ? 'PAID' : paidAmount > 0 ? 'PARTIAL' : 'PENDING'
+
+  return { remaining, status }
+}
+
+const prepareIncomeData = async (values, translations, currentId = null) => {
+  const ids = {
+    client: normalizeId(values.client_id),
+    project: normalizeId(values.project_id),
+    contract: normalizeId(values.contract_id),
+    invoice: normalizeId(values.invoice_id),
+    receiver: normalizeId(values.received_by_id),
+    incomeType: normalizeId(values.income_type_id)
+  }
+
+  const [client, project, contract, invoice, receiver, incomeType, setup] = await Promise.all([
+    ids.client ? prisma.crmclient.findUnique({ where: { id: ids.client }, select: { id: true } }) : null,
+    ids.project ? prisma.project.findUnique({ where: { id: ids.project }, select: { id: true, client_id: true, contract_id: true } }) : null,
+    ids.contract ? prisma.contract.findUnique({ where: { id: ids.contract }, select: { id: true, client_id: true } }) : null,
+    ids.invoice
+      ? prisma.contractinvoice.findUnique({
+          where: { id: ids.invoice },
+          select: { id: true, client_id: true, contract_id: true, payment_income: { select: { id: true } } }
+        })
+      : null,
+    ids.receiver ? prisma.hrmstaff.findUnique({ where: { id: ids.receiver }, select: { id: true } }) : null,
+    prisma.option.findFirst({
+      where: { id: ids.incomeType, category: 'INCOME_TYPE' },
+      select: { id: true, is_active: true }
+    }),
+    getCompanySetupRecord()
+  ])
+
+  if (
+    (ids.client && !client) ||
+    (ids.project && !project) ||
+    (ids.contract && !contract) ||
+    (ids.invoice && !invoice) ||
+    (ids.receiver && !receiver) ||
+    !incomeType ||
+    !incomeType.is_active
+  ) {
+    return { success: false, error: translations.validation.invalidRelation }
+  }
+
+  if (invoice?.payment_income && invoice.payment_income.id !== currentId) {
+    return { success: false, error: translations.messages.invoiceInUse }
+  }
+
+  const relatedClientIds = [ids.client, project?.client_id, contract?.client_id, invoice?.client_id].filter(Boolean)
+  const uniqueClientIds = new Set(relatedClientIds)
+
+  if (uniqueClientIds.size > 1 || (invoice && ids.contract && invoice.contract_id !== ids.contract)) {
+    return { success: false, error: translations.validation.invalidRelation }
+  }
+
+  const totalAmount = toFiniteNumber(values.total_amount)
+  const paidAmount = toFiniteNumber(values.paid_amount)
+  const exchangeRate = toFiniteNumber(values.exchange_rate)
+
+  if (totalAmount <= 0 || exchangeRate <= 0 || paidAmount < 0) {
+    return { success: false, error: translations.validation.positiveInvalid }
+  }
+
+  const { remaining, status } = derivePaymentValues(totalAmount, paidAmount)
+  const baseCurrency = setup.currency_code || 'AFN'
+  const amountBase = convertToBaseCurrency(totalAmount, values.currency, exchangeRate, baseCurrency)
+  const totalUsd = values.currency === 'USD' ? totalAmount : totalAmount / exchangeRate
+  const reminderDate = values.remind_date ? toUtcDateOnly(values.remind_date) : null
+
+  if (values.remind_date && !reminderDate) {
+    return { success: false, error: translations.validation.dateInvalid }
+  }
+
+  return {
+    success: true,
+    data: {
+      name: values.name,
+      client_id: relatedClientIds[0] || null,
+      project_id: ids.project || null,
+      contract_id: ids.contract || invoice?.contract_id || null,
+      invoice_id: ids.invoice || null,
+      received_by_id: ids.receiver || null,
+      income_type_id: ids.incomeType,
+      total_amount: new Prisma.Decimal(totalAmount),
+      paid_amount: new Prisma.Decimal(paidAmount),
+      remind_amount: new Prisma.Decimal(remaining),
+      status,
+      currency: values.currency,
+      exchange_rate: new Prisma.Decimal(exchangeRate),
+      total_usd: new Prisma.Decimal(totalUsd),
+      amount_base: new Prisma.Decimal(amountBase),
+      pay_details: values.pay_details || null,
+      remind_date: reminderDate
+    }
+  }
+}
+
+export const getFinanceIncomes = async (payload = {}) => {
+  const context = await getContext(payload, READ_PERMISSIONS)
+
+  if (!context.authorized) return { success: false, code: context.code, error: context.error }
+
+  const page = Math.max(1, Number.parseInt(payload.page, 10) || 1)
+  const limit = Math.min(MAX_PAGE_SIZE, Math.max(1, Number.parseInt(payload.limit, 10) || DEFAULT_PAGE_SIZE))
+  const search = typeof payload.search === 'string' ? payload.search.trim() : ''
+  const clientId = normalizeId(payload.clientId)
+  const projectId = normalizeId(payload.projectId)
+  const typeId = normalizeId(payload.typeId)
+  const status = STATUSES.has(payload.status) ? payload.status : ''
+
+  const where = {
+    AND: [
+      clientId ? { client_id: clientId } : {},
+      projectId ? { project_id: projectId } : {},
+      typeId ? { income_type_id: typeId } : {},
+      status ? { status } : {},
+      search
+        ? {
+            OR: [
+              { name: { contains: search } },
+              { pay_details: { contains: search } },
+              { client: { is: { company_name: { contains: search } } } },
+              { project: { is: { title: { contains: search } } } }
+            ]
+          }
+        : {}
+    ]
+  }
+
+  try {
+    await ensureIncomeTypes()
+
+    const [setup, totalCount, incomes, summaryRows] = await Promise.all([
+      getCompanySetupRecord(),
+      prisma.financeincome.count({ where }),
+      prisma.financeincome.findMany({
+        where,
+        select: incomeSelect,
+        orderBy: [{ remind_date: 'asc' }, { created_at: 'desc' }],
+        skip: (page - 1) * limit,
+        take: limit
+      }),
+      prisma.financeincome.findMany({
+        select: {
+          amount_base: true,
+          paid_amount: true,
+          remind_amount: true,
+          currency: true,
+          exchange_rate: true,
+          remind_date: true,
+          status: true
+        }
+      })
+    ])
+
+    const baseCurrency = setup.currency_code || 'AFN'
+    const today = toUtcDateOnly(new Date())
+
+    const summary = summaryRows.reduce(
+      (totals, row) => {
+        const paidBase = convertToBaseCurrency(row.paid_amount, row.currency, row.exchange_rate, baseCurrency)
+        const remainingBase = convertToBaseCurrency(row.remind_amount, row.currency, row.exchange_rate, baseCurrency)
+
+        totals.totalIncome += toFiniteNumber(row.amount_base)
+        totals.totalCollected += paidBase
+        totals.pendingReceivables += remainingBase
+
+        if (row.status !== 'PAID' && row.remind_date && row.remind_date < today) {
+          totals.overdueReceivables += remainingBase
+        }
+
+        return totals
+      },
+      { totalIncome: 0, totalCollected: 0, pendingReceivables: 0, overdueReceivables: 0 }
+    )
+
+    return {
+      success: true,
+      data: {
+        incomes: incomes.map(normalizeIncome),
+        totalCount,
+        page,
+        baseCurrency,
+        summary
+      }
+    }
+  } catch {
+    return { success: false, code: 'INCOME_LOAD_FAILED', error: context.translations.messages.loadFailed }
+  }
+}
+
+export const getFinanceIncomeFormOptions = async (payload = {}) => {
+  const context = await getContext(payload, READ_PERMISSIONS)
+
+  if (!context.authorized) return { success: false, code: context.code, error: context.error }
+
+  try {
+    await ensureIncomeTypes()
+
+    const [clients, projects, contracts, invoices, staff, incomeTypes, setup] = await Promise.all([
+      prisma.crmclient.findMany({ select: clientSelect, orderBy: { company_name: 'asc' }, take: 500 }),
+      prisma.project.findMany({ select: projectSelect, orderBy: { created_at: 'desc' }, take: 500 }),
+      prisma.contract.findMany({ select: contractSelect, orderBy: { created_at: 'desc' }, take: 500 }),
+      prisma.contractinvoice.findMany({
+        select: { ...invoiceSelect, payment_income: { select: { id: true } } },
+        orderBy: { created_at: 'desc' },
+        take: 500
+      }),
+      prisma.hrmstaff.findMany({
+        where: { status: { not: 'TERMINATED' } },
+        select: staffSelect,
+        orderBy: [{ first_name: 'asc' }, { last_name: 'asc' }],
+        take: 500
+      }),
+      prisma.option.findMany({
+        where: { category: 'INCOME_TYPE', is_active: true },
+        select: optionSelect,
+        orderBy: [{ sort_order: 'asc' }, { label: 'asc' }]
+      }),
+      getCompanySetupRecord()
+    ])
+
+    return {
+      success: true,
+      data: {
+        clients,
+        projects,
+        contracts: contracts.map(contract => ({
+          ...contract,
+          total_amount: numberString(contract.total_amount),
+          start_date: iso(contract.start_date),
+          end_date: iso(contract.end_date)
+        })),
+        invoices: invoices.map(invoice => ({
+          ...invoice,
+          amount: numberString(invoice.amount),
+          exchange_rate: numberString(invoice.exchange_rate, 4),
+          issued_date: iso(invoice.issued_date),
+          due_date: iso(invoice.due_date)
+        })),
+        staff: staff.map(withFullName),
+        incomeTypes,
+        baseCurrency: setup.currency_code || 'AFN',
+        exchangeRate: setup.usd_afn_exchange_rate || '65.0000'
+      }
+    }
+  } catch {
+    return { success: false, code: 'INCOME_OPTIONS_LOAD_FAILED', error: context.translations.messages.optionsLoadFailed }
+  }
+}
+
+export const getFinanceIncomeDetail = async (id, payload = {}) => {
+  const context = await getContext(payload, READ_PERMISSIONS)
+
+  if (!context.authorized) return { success: false, code: context.code, error: context.error }
+
+  try {
+    const income = await prisma.financeincome.findUnique({
+      where: { id: normalizeId(id) },
+      select: incomeSelect
+    })
+
+    if (!income) return { success: false, code: 'NOT_FOUND', error: context.translations.messages.notFound }
+
+    return { success: true, data: normalizeIncome(income) }
+  } catch {
+    return { success: false, code: 'INCOME_DETAIL_LOAD_FAILED', error: context.translations.messages.detailLoadFailed }
+  }
+}
+
+export const createFinanceIncome = async (payload = {}) => {
+  const context = await getContext(payload, WRITE_PERMISSIONS)
+
+  if (!context.authorized) return { success: false, code: context.code, error: context.error }
+
+  const validation = safeParse(createFinanceIncomeSchema(context.translations.validation), validationPayload(payload))
+
+  if (!validation.success) {
+    return { success: false, code: 'VALIDATION_ERROR', error: validation.issues[0]?.message }
+  }
+
+  try {
+    await ensureIncomeTypes()
+    const prepared = await prepareIncomeData(validation.output, context.translations)
+
+    if (!prepared.success) return { success: false, code: 'VALIDATION_ERROR', error: prepared.error }
+
+    const created = await prisma.$transaction(async transaction => {
+      const income = await transaction.financeincome.create({ data: prepared.data, select: { id: true, status: true } })
+
+      await transaction.auditlog.create({
+        data: {
+          user_id: context.session.user.id,
+          action: 'FINANCE_INCOME_CREATED',
+          module: 'FINANCE',
+          details: { incomeId: income.id, status: income.status, totalAmount: prepared.data.total_amount.toString() }
+        }
+      })
+
+      return income
+    })
+
+    revalidateIncomePages()
+
+    return { success: true, data: created, message: context.translations.messages.created }
+  } catch (error) {
+    return {
+      success: false,
+      code: error?.code === 'P2002' ? 'INVOICE_IN_USE' : 'INCOME_CREATE_FAILED',
+      error: error?.code === 'P2002' ? context.translations.messages.invoiceInUse : context.translations.messages.operationFailed
+    }
+  }
+}
+
+export const updateFinanceIncome = async (id, payload = {}) => {
+  const context = await getContext(payload, WRITE_PERMISSIONS)
+
+  if (!context.authorized) return { success: false, code: context.code, error: context.error }
+
+  const incomeId = normalizeId(id)
+  const validation = safeParse(createFinanceIncomeSchema(context.translations.validation), validationPayload(payload))
+
+  if (!incomeId || !validation.success) {
+    return { success: false, code: 'VALIDATION_ERROR', error: validation.issues?.[0]?.message || context.translations.messages.notFound }
+  }
+
+  try {
+    const current = await prisma.financeincome.findUnique({ where: { id: incomeId }, select: { id: true, status: true } })
+
+    if (!current) return { success: false, code: 'NOT_FOUND', error: context.translations.messages.notFound }
+
+    const prepared = await prepareIncomeData(validation.output, context.translations, current.id)
+
+    if (!prepared.success) return { success: false, code: 'VALIDATION_ERROR', error: prepared.error }
+
+    await prisma.$transaction([
+      prisma.financeincome.update({ where: { id: incomeId }, data: prepared.data }),
+      prisma.auditlog.create({
+        data: {
+          user_id: context.session.user.id,
+          action: 'FINANCE_INCOME_UPDATED',
+          module: 'FINANCE',
+          details: { incomeId, previousStatus: current.status, status: prepared.data.status }
+        }
+      })
+    ])
+
+    revalidateIncomePages()
+
+    return { success: true, data: { id: incomeId }, message: context.translations.messages.updated }
+  } catch (error) {
+    return {
+      success: false,
+      code: error?.code === 'P2002' ? 'INVOICE_IN_USE' : 'INCOME_UPDATE_FAILED',
+      error: error?.code === 'P2002' ? context.translations.messages.invoiceInUse : context.translations.messages.operationFailed
+    }
+  }
+}
+
+export const markFinanceIncomePaid = async (id, payload = {}) => {
+  const context = await getContext(payload, WRITE_PERMISSIONS)
+
+  if (!context.authorized) return { success: false, code: context.code, error: context.error }
+
+  const incomeId = normalizeId(id)
+
+  try {
+    const income = await prisma.financeincome.findUnique({
+      where: { id: incomeId },
+      select: { id: true, total_amount: true, paid_amount: true, status: true }
+    })
+
+    if (!income) return { success: false, code: 'NOT_FOUND', error: context.translations.messages.notFound }
+
+    await prisma.$transaction([
+      prisma.financeincome.update({
+        where: { id: income.id },
+        data: { paid_amount: income.total_amount, remind_amount: new Prisma.Decimal(0), status: 'PAID' }
+      }),
+      prisma.auditlog.create({
+        data: {
+          user_id: context.session.user.id,
+          action: 'FINANCE_INCOME_MARKED_PAID',
+          module: 'FINANCE',
+          details: {
+            incomeId: income.id,
+            previousStatus: income.status,
+            previousPaidAmount: income.paid_amount.toString(),
+            paidAmount: income.total_amount.toString()
+          }
+        }
+      })
+    ])
+
+    revalidateIncomePages()
+
+    return { success: true, message: context.translations.messages.markedPaid }
+  } catch {
+    return { success: false, code: 'INCOME_PAYMENT_FAILED', error: context.translations.messages.operationFailed }
+  }
+}
+
+export const deleteFinanceIncome = async (id, payload = {}) => {
+  const context = await getContext(payload, DELETE_PERMISSIONS)
+
+  if (!context.authorized) return { success: false, code: context.code, error: context.error }
+
+  const incomeId = normalizeId(id)
+
+  try {
+    const income = await prisma.financeincome.findUnique({
+      where: { id: incomeId },
+      select: { id: true, name: true, invoice_id: true, total_amount: true, currency: true }
+    })
+
+    if (!income) return { success: false, code: 'NOT_FOUND', error: context.translations.messages.notFound }
+
+    await prisma.$transaction([
+      prisma.financeincome.delete({ where: { id: income.id } }),
+      prisma.auditlog.create({
+        data: {
+          user_id: context.session.user.id,
+          action: 'FINANCE_INCOME_DELETED',
+          module: 'FINANCE',
+          details: {
+            incomeId: income.id,
+            name: income.name,
+            invoiceId: income.invoice_id,
+            totalAmount: income.total_amount.toString(),
+            currency: income.currency
+          }
+        }
+      })
+    ])
+
+    revalidateIncomePages()
+
+    return { success: true, message: context.translations.messages.deleted }
+  } catch {
+    return { success: false, code: 'INCOME_DELETE_FAILED', error: context.translations.messages.operationFailed }
+  }
+}

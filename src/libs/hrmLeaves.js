@@ -37,6 +37,7 @@ export const leaveSelect = {
 
 export const normalizeLeave = leave => ({
   ...leave,
+  total_days: Number(leave.total_days),
   start_date: leaveDateToString(leave.start_date),
   end_date: leaveDateToString(leave.end_date),
   created_at: leave.created_at.toISOString(),

@@ -16,6 +16,7 @@ import Typography from '@mui/material/Typography'
 import { Avatar } from '@mui/material'
 
 import CustomTextField from '@core/components/mui/TextField'
+import ConfirmDeleteModal from '@/components/dialogs/ConfirmDeleteModal'
 import LoadingButtonContent from '@/components/LoadingButtonContent'
 import DashboardTablePagination from '@/components/table/DashboardTablePagination'
 import EntityActionsMenu from '@/components/table/EntityActionsMenu'
@@ -40,7 +41,17 @@ const formatDate = (value, locale) => {
   }
 }
 
-const UsersTable = ({ users, roles, locale, onInvite, onStatusChange, onRoleChange, translations }) => {
+const UsersTable = ({
+  users,
+  roles,
+  locale,
+  onInvite,
+  onStatusChange,
+  onRoleChange,
+  onInvitationRevoke,
+  onUserAccessRemove,
+  translations
+}) => {
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(0)
   const [rowsPerPage, setRowsPerPage] = useState(10)
@@ -48,6 +59,8 @@ const UsersTable = ({ users, roles, locale, onInvite, onStatusChange, onRoleChan
   const [roleUser, setRoleUser] = useState(null)
   const [selectedRoleId, setSelectedRoleId] = useState('')
   const [isRoleSaving, setIsRoleSaving] = useState(false)
+  const [confirmAction, setConfirmAction] = useState(null)
+  const [isConfirming, setIsConfirming] = useState(false)
 
   const currentUserIsSuperAdmin = users.some(user => user.isCurrentUser && user.isSuperAdmin)
   const assignableRoles = currentUserIsSuperAdmin ? roles : roles.filter(role => role.name !== 'super_admin')
@@ -103,6 +116,23 @@ const UsersTable = ({ users, roles, locale, onInvite, onStatusChange, onRoleChan
       if (succeeded) setRoleUser(null)
     } finally {
       setIsRoleSaving(false)
+    }
+  }
+
+  const confirmUserAction = async () => {
+    if (!confirmAction) return
+
+    setIsConfirming(true)
+
+    try {
+      const succeeded =
+        confirmAction.type === 'revoke'
+          ? await onInvitationRevoke(confirmAction.user.id)
+          : await onUserAccessRemove(confirmAction.user.id)
+
+      if (succeeded) setConfirmAction(null)
+    } finally {
+      setIsConfirming(false)
     }
   }
 
@@ -208,6 +238,20 @@ const UsersTable = ({ users, roles, locale, onInvite, onStatusChange, onRoleChan
                               icon: 'tabler-user-cog',
                               disabled: protectedUser || busyUserId === user.id,
                               onClick: () => openRoleDialog(user)
+                            },
+                            user.status === 'PENDING_ACTIVATION' && {
+                              label: translations.revokeInvitation,
+                              icon: 'tabler-mail-x',
+                              color: 'error',
+                              disabled: protectedUser || busyUserId === user.id,
+                              onClick: () => setConfirmAction({ type: 'revoke', user })
+                            },
+                            {
+                              label: translations.removeUserAccess,
+                              icon: 'tabler-user-x',
+                              color: 'error',
+                              disabled: protectedUser || busyUserId === user.id,
+                              onClick: () => setConfirmAction({ type: 'remove', user })
                             }
                           ]}
                           statusOptions={
@@ -277,6 +321,26 @@ const UsersTable = ({ users, roles, locale, onInvite, onStatusChange, onRoleChan
           </Button>
         </DialogActions>
       </Dialog>
+
+      <ConfirmDeleteModal
+        open={Boolean(confirmAction)}
+        title={
+          confirmAction?.type === 'revoke' ? translations.revokeInvitation : translations.removeUserAccess
+        }
+        description={
+          confirmAction?.type === 'revoke'
+            ? translations.revokeInvitationConfirmation
+            : translations.removeUserAccessConfirmation
+        }
+        itemName={confirmAction?.user.email}
+        confirmText={
+          confirmAction?.type === 'revoke' ? translations.revokeInvitation : translations.removeUserAccess
+        }
+        cancelText={translations.cancel}
+        loading={isConfirming}
+        onClose={() => setConfirmAction(null)}
+        onConfirm={confirmUserAction}
+      />
     </>
   )
 }

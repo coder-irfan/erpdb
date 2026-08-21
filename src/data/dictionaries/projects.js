@@ -1,18 +1,157 @@
 const translations = {
   en: {
-    metrics: { active: 'Active Projects', activeHint: 'Currently in progress', budget: 'Total Budget', budgetHint: 'Converted to {currency}', hours: 'Hours Overview', hoursHint: '{actual} logged of {estimated} estimated', overdue: 'Overdue Projects', overdueHint: 'Past due without completion' },
-    filters: { search: 'Search projects', searchPlaceholder: 'Code, title, or sponsor...', client: 'Client', manager: 'Project manager', status: 'Status', priority: 'Priority', allClients: 'All clients', allManagers: 'All managers', allStatuses: 'All statuses', allPriorities: 'All priorities', clear: 'Clear filters' },
-    table: { project: 'Code & Title', client: 'Client', team: 'Manager & Team', timeline: 'Timeline', hours: 'Hours Progress', budget: 'Budget', status: 'Status & Priority', actions: 'Actions' },
-    actions: { add: 'New Project', view: 'View Details', edit: 'Edit Project', manageMembers: 'Manage Members', delete: 'Delete Project', cancel: 'Cancel', create: 'Create Project', save: 'Save Changes', saving: 'Saving...', assign: 'Assign Member', remove: 'Remove', link: 'Update Contract', unlink: 'Unlink Contract', close: 'Close' },
-    form: { addTitle: 'Create Project', editTitle: 'Edit Project', description: 'Set the project scope, ownership, timeline, and locked financial values.', basePreview: 'Base amount ({currency})', optional: 'Optional' },
-    fields: { title: 'Title', description: 'Description', client: 'Client', contract: 'Contract', manager: 'Project Manager', status: 'Status', priority: 'Priority', area: 'Project Area', sponsor: 'Project Sponsor', estimatedHours: 'Estimated Hours', actualHours: 'Actual Hours', budget: 'Budget', currency: 'Currency', exchangeRate: 'USD / AFN Exchange Rate', startDate: 'Start Date', endDate: 'End Date', actualEndDate: 'Actual End Date', member: 'Staff Member', role: 'Project Role' },
-    placeholders: { client: 'Select client', contract: 'No linked contract', manager: 'Select manager', status: 'Select status', priority: 'Select priority', member: 'Select staff', role: 'e.g. Lead Developer' },
-    detail: { overview: 'Overview & Info', team: 'Team Members', contract: 'Contract', timesheets: 'Hours & Timesheets', finances: 'Finances', scope: 'Project Scope', financial: 'Financial Breakdown', timeline: 'Timeline & Progress', noMembers: 'No team members assigned.', noContract: 'No contract is linked to this project.', noTimesheets: 'No project timesheets have been logged.', noFinances: 'No project financial records are available.', revenue: 'Total Revenue', expenses: 'Total Expenses', profit: 'Net Profitability', transactionAmount: 'Transaction Budget', baseAmount: 'Base Budget', rate: 'Locked Exchange Rate', assigned: 'Assigned', staff: 'Staff', date: 'Date', hours: 'Hours', note: 'Description', type: 'Type', amount: 'Amount' },
-    common: { notAvailable: '—', overdue: 'Overdue', completed: 'Completed', unassigned: 'Unassigned', noTeam: 'No team', loading: 'Loading...', of: 'of', rowsPerPage: 'Rows per page:' },
+    metrics: {
+      active: 'Active Projects',
+      activeHint: 'Currently in progress',
+      budget: 'Total Budget',
+      budgetHint: 'Converted to {currency}',
+      hours: 'Hours Overview',
+      hoursHint: '{actual} logged of {estimated} estimated',
+      overdue: 'Overdue Projects',
+      overdueHint: 'Past due without completion'
+    },
+    filters: {
+      search: 'Search projects',
+      searchPlaceholder: 'Code, title, or sponsor...',
+      client: 'Client',
+      manager: 'Project manager',
+      status: 'Status',
+      priority: 'Priority',
+      allClients: 'All clients',
+      allManagers: 'All managers',
+      allStatuses: 'All statuses',
+      allPriorities: 'All priorities',
+      clear: 'Clear filters'
+    },
+    table: {
+      project: 'Code & Title',
+      client: 'Client',
+      team: 'Manager & Team',
+      timeline: 'Timeline',
+      hours: 'Hours Progress',
+      budget: 'Budget',
+      status: 'Status & Priority',
+      actions: 'Actions'
+    },
+    actions: {
+      add: 'New Project',
+      view: 'View Details',
+      edit: 'Edit Project',
+      manageMembers: 'Manage Members',
+      delete: 'Delete Project',
+      cancel: 'Cancel',
+      create: 'Create Project',
+      save: 'Save Changes',
+      saving: 'Saving...',
+      assign: 'Assign Member',
+      remove: 'Remove',
+      link: 'Update Contract',
+      unlink: 'Unlink Contract',
+      close: 'Close'
+    },
+    form: {
+      addTitle: 'Create Project',
+      editTitle: 'Edit Project',
+      description: 'Set the project scope, ownership, timeline, and locked financial values.',
+      basePreview: 'Base amount ({currency})',
+      optional: 'Optional'
+    },
+    fields: {
+      title: 'Title',
+      description: 'Description',
+      client: 'Client',
+      contract: 'Contract',
+      manager: 'Project Manager',
+      status: 'Status',
+      priority: 'Priority',
+      area: 'Project Area',
+      sponsor: 'Project Sponsor',
+      estimatedHours: 'Estimated Hours',
+      actualHours: 'Actual Hours',
+      budget: 'Budget',
+      currency: 'Currency',
+      exchangeRate: 'USD / AFN Exchange Rate',
+      startDate: 'Start Date',
+      endDate: 'End Date',
+      actualEndDate: 'Actual End Date',
+      member: 'Staff Member',
+      role: 'Project Role'
+    },
+    placeholders: {
+      client: 'Select client',
+      contract: 'No linked contract',
+      manager: 'Select manager',
+      status: 'Select status',
+      priority: 'Select priority',
+      member: 'Select staff',
+      role: 'e.g. Lead Developer'
+    },
+    detail: {
+      overview: 'Overview & Info',
+      team: 'Team Members',
+      contract: 'Contract',
+      timesheets: 'Hours & Timesheets',
+      finances: 'Finances',
+      scope: 'Project Scope',
+      financial: 'Financial Breakdown',
+      timeline: 'Timeline & Progress',
+      noMembers: 'No team members assigned.',
+      noContract: 'No contract is linked to this project.',
+      noTimesheets: 'No project timesheets have been logged.',
+      noFinances: 'No project financial records are available.',
+      revenue: 'Total Revenue',
+      expenses: 'Total Expenses',
+      profit: 'Net Profitability',
+      transactionAmount: 'Transaction Budget',
+      baseAmount: 'Base Budget',
+      rate: 'Locked Exchange Rate',
+      assigned: 'Assigned',
+      staff: 'Staff',
+      date: 'Date',
+      hours: 'Hours',
+      note: 'Description',
+      type: 'Type',
+      amount: 'Amount'
+    },
+    common: {
+      notAvailable: '—',
+      overdue: 'Overdue',
+      completed: 'Completed',
+      unassigned: 'Unassigned',
+      noTeam: 'No team',
+      loading: 'Loading...',
+      of: 'of',
+      rowsPerPage: 'Rows per page:'
+    },
     empty: { title: 'No projects found', description: 'Create a project or adjust the current search and filters.' },
     delete: { title: 'Delete project', description: 'Delete {name}? This cannot be undone.' },
-    validation: { required: 'This field is required.', titleTooLong: 'Title must not exceed 191 characters.', numberInvalid: 'Enter a valid non-negative number.', positiveInvalid: 'Enter a value greater than zero.', dateInvalid: 'Enter a valid date.', dateRangeInvalid: 'End date must be on or after start date.', invalidRelation: 'One or more selected records are invalid.', duplicateMember: 'This staff member is already assigned to the project.' },
-    messages: { unauthenticated: 'Authentication is required.', forbidden: 'You do not have permission for this action.', loadFailed: 'Projects could not be loaded.', optionsLoadFailed: 'Project form options could not be loaded.', detailLoadFailed: 'Project details could not be loaded.', notFound: 'Project was not found.', created: 'Project created successfully.', updated: 'Project updated successfully.', deleted: 'Project deleted successfully.', memberAssigned: 'Team member assigned successfully.', memberRemoved: 'Team member removed successfully.', contractUpdated: 'Linked contract updated successfully.', operationFailed: 'The operation could not be completed.', duplicate: 'A conflicting project record already exists.', inUse: 'This project has linked operational or financial records and cannot be deleted.' }
+    validation: {
+      required: 'This field is required.',
+      titleTooLong: 'Title must not exceed 191 characters.',
+      numberInvalid: 'Enter a valid non-negative number.',
+      positiveInvalid: 'Enter a value greater than zero.',
+      dateInvalid: 'Enter a valid date.',
+      dateRangeInvalid: 'End date must be on or after start date.',
+      invalidRelation: 'One or more selected records are invalid.',
+      duplicateMember: 'This staff member is already assigned to the project.'
+    },
+    messages: {
+      unauthenticated: 'Authentication is required.',
+      forbidden: 'You do not have permission for this action.',
+      loadFailed: 'Projects could not be loaded.',
+      optionsLoadFailed: 'Project form options could not be loaded.',
+      detailLoadFailed: 'Project details could not be loaded.',
+      notFound: 'Project was not found.',
+      created: 'Project created successfully.',
+      updated: 'Project updated successfully.',
+      deleted: 'Project deleted successfully.',
+      memberAssigned: 'Team member assigned successfully.',
+      memberRemoved: 'Team member removed successfully.',
+      contractUpdated: 'Linked contract updated successfully.',
+      operationFailed: 'The operation could not be completed.',
+      duplicate: 'A conflicting project record already exists.',
+      inUse: 'This project has linked operational or financial records and cannot be deleted.'
+    }
   }
 }
 
@@ -20,4 +159,3 @@ translations.fa = translations.en
 translations.ps = translations.en
 
 export const getProjectsDictionary = locale => translations[locale] || translations.en
-

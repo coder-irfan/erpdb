@@ -50,15 +50,17 @@ export async function PUT(request, routeContext) {
     leave_type_id: payload?.leave_type_id,
     start_date: payload?.start_date,
     end_date: payload?.end_date,
+    total_days: payload?.total_days == null ? String(Number(existing.total_days)) : String(payload.total_days),
     status_id: payload?.status_id || '',
     reason: payload?.reason || ''
   })
 
   if (!validation.success) return responseError(validation.issues[0]?.message, 400, 'VALIDATION_ERROR')
 
-  const totalDays = calculateLeaveDays(validation.output.start_date, validation.output.end_date)
+  const calendarDays = calculateLeaveDays(validation.output.start_date, validation.output.end_date)
+  const totalDays = validation.output.total_days ? Number(validation.output.total_days) : calendarDays
 
-  if (totalDays < 1) return responseError(dictionary.validation.dateRangeInvalid, 400, 'INVALID_DATE_RANGE')
+  if (totalDays < 0.5 || totalDays > calendarDays) return responseError(dictionary.validation.dateRangeInvalid, 400, 'INVALID_DATE_RANGE')
 
   try {
     const [staff, leaveType] = await Promise.all([
@@ -81,7 +83,7 @@ export async function PUT(request, routeContext) {
           leave_type_id: validation.output.leave_type_id,
           start_date: parseLeaveDate(validation.output.start_date),
           end_date: parseLeaveDate(validation.output.end_date),
-          total_days: totalDays,
+          total_days: new Prisma.Decimal(totalDays),
           reason: validation.output.reason || null
         },
         select: leaveSelect
