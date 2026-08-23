@@ -379,6 +379,59 @@ export const updateProject = async (id, payload = {}) => {
   }
 }
 
+export const updateProjectStatus = async (id, statusId, payload = {}) => {
+  const context = await getContext(payload, WRITE_PERMISSIONS)
+
+  if (!context.authorized) return { success: false, code: context.code, error: context.error }
+  const projectId = normalizeId(id)
+  const normalizedStatusId = normalizeId(statusId)
+
+  if (!projectId || !normalizedStatusId) {
+    return { success: false, code: 'VALIDATION_ERROR', error: context.translations.validation.invalidRelation }
+  }
+
+  try {
+    const [project, status] = await Promise.all([
+      prisma.project.findUnique({ where: { id: projectId }, select: { id: true, project_code: true } }),
+      prisma.option.findFirst({
+        where: { id: normalizedStatusId, category: 'PROJECT_STATUS', is_active: true },
+        select: { id: true, value: true }
+      })
+    ])
+
+    if (!project) return { success: false, code: 'NOT_FOUND', error: context.translations.messages.notFound }
+
+    if (!status) {
+      return { success: false, code: 'VALIDATION_ERROR', error: context.translations.validation.invalidRelation }
+    }
+
+    const updated = await prisma.$transaction(async transaction => {
+      const result = await transaction.project.update({
+        where: { id: projectId },
+        data: { status_id: status.id },
+        select: projectSelect
+      })
+
+      await transaction.auditlog.create({
+        data: {
+          user_id: context.session.user.id,
+          action: 'PROJECT_STATUS_UPDATED',
+          module: 'PROJECTS',
+          details: { projectId, projectCode: project.project_code, status: status.value }
+        }
+      })
+
+      return result
+    })
+
+    revalidateProjects()
+
+    return { success: true, data: normalizeProject(updated), message: context.translations.messages.statusUpdated }
+  } catch {
+    return { success: false, code: 'STATUS_UPDATE_FAILED', error: context.translations.messages.operationFailed }
+  }
+}
+
 export const deleteProject = async (id, payload = {}) => {
   const context = await getContext(payload, DELETE_PERMISSIONS)
 

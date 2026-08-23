@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 
 import { valibotResolver } from '@hookform/resolvers/valibot'
 import Button from '@mui/material/Button'
@@ -15,8 +15,6 @@ import CustomTextField from '@core/components/mui/TextField'
 import LoadingButtonContent from '@/components/LoadingButtonContent'
 import { createVisitorSchema } from '@/schemas/crm/visitors'
 
-const PURPOSES = ['INTERVIEW', 'BUSINESS_MEETING', 'VENDOR_DELIVERY', 'CLIENT_CONSULTATION', 'OTHER']
-
 const EMPTY_VALUES = {
   full_name: '',
   phone: '',
@@ -28,6 +26,9 @@ const EMPTY_VALUES = {
 }
 
 const VisitorFormDrawer = ({ open, visitor, staff, locale, dictionary, onClose, onSaved }) => {
+  const [purposes, setPurposes] = useState([])
+  const [purposesLoading, setPurposesLoading] = useState(false)
+
   const {
     control,
     handleSubmit,
@@ -55,6 +56,34 @@ const VisitorFormDrawer = ({ open, visitor, staff, locale, dictionary, onClose, 
         : EMPTY_VALUES
     )
   }, [open, reset, visitor])
+
+  useEffect(() => {
+    if (!open) return
+    let active = true
+
+    const loadPurposes = async () => {
+      setPurposesLoading(true)
+
+      try {
+        const response = await fetch('/api/options/crm/visitors', { cache: 'no-store' })
+        const result = await response.json()
+
+        if (!active) return
+        if (!response.ok || !result.success) return toast.error(result.error || dictionary.messages.loadFailed)
+        setPurposes(result.data.options)
+      } catch {
+        if (active) toast.error(dictionary.messages.loadFailed)
+      } finally {
+        if (active) setPurposesLoading(false)
+      }
+    }
+
+    loadPurposes()
+
+    return () => {
+      active = false
+    }
+  }, [dictionary.messages.loadFailed, open])
 
   const submit = async values => {
     try {
@@ -89,7 +118,9 @@ const VisitorFormDrawer = ({ open, visitor, staff, locale, dictionary, onClose, 
   }
 
   const purposeOptions =
-    visitor?.purpose && !PURPOSES.includes(visitor.purpose) ? [visitor.purpose, ...PURPOSES] : PURPOSES
+    visitor?.purpose && !purposes.some(option => option.value === visitor.purpose)
+      ? [{ id: `current-${visitor.id}`, label: dictionary.purposes[visitor.purpose] || visitor.purpose, value: visitor.purpose }, ...purposes]
+      : purposes
 
   return (
     <Drawer
@@ -180,21 +211,23 @@ const VisitorFormDrawer = ({ open, visitor, staff, locale, dictionary, onClose, 
                   label={dictionary.fields.purpose}
                   error={Boolean(errors.purpose)}
                   helperText={errors.purpose?.message}
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || purposesLoading}
                   slotProps={{
                     select: {
                       displayEmpty: true,
                       renderValue: selected =>
-                        selected ? dictionary.purposes[selected] || selected : dictionary.placeholders.purpose
+                        selected
+                          ? purposeOptions.find(option => option.value === selected)?.label || selected
+                          : dictionary.placeholders.purpose
                     }
                   }}
                 >
                   <MenuItem value='' disabled>
                     {dictionary.placeholders.purpose}
                   </MenuItem>
-                  {purposeOptions.map(value => (
-                    <MenuItem key={value} value={value}>
-                      {dictionary.purposes[value] || value}
+                  {purposeOptions.map(option => (
+                    <MenuItem key={option.id} value={option.value}>
+                      {option.label}
                     </MenuItem>
                   ))}
                 </CustomTextField>

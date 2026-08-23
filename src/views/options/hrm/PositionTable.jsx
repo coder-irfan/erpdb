@@ -19,6 +19,7 @@ import DashboardTablePagination from '@/components/table/DashboardTablePaginatio
 import EntityActionsMenu from '@/components/table/EntityActionsMenu'
 import TableEmptyStateRow from '@/components/table/TableEmptyStateRow'
 import TableSkeletonRows from '@/components/table/TableSkeletonRows'
+import ResponsiveDataTable from '@/components/tables/ResponsiveDataTable'
 
 import PositionForm from './PositionForm'
 
@@ -137,6 +138,33 @@ const PositionTable = ({ initialResult, initialError, canCreate, canUpdate, canD
     }
   }
 
+  const renderActions = option => (
+    <EntityActionsMenu
+      actions={[
+        canUpdate && {
+          label: dictionary.common.edit,
+          icon: 'tabler-edit',
+          disabled: busyId === option.id,
+          onClick: () => openEditForm(option)
+        },
+        canUpdate && {
+          label: option.is_active ? dictionary.common.deactivate : dictionary.common.activate,
+          icon: option.is_active ? 'tabler-toggle-right' : 'tabler-toggle-left',
+          disabled: busyId === option.id,
+          onClick: () => handleStatusToggle(option)
+        },
+        canDelete && {
+          label: dictionary.common.delete,
+          icon: 'tabler-trash',
+          color: 'error',
+          disabled: busyId === option.id,
+          onClick: () => setDeleteTarget(option)
+        }
+      ]}
+      moreActionsLabel={dictionary.common.actions}
+    />
+  )
+
   return (
     <>
       <Card>
@@ -146,13 +174,13 @@ const PositionTable = ({ initialResult, initialError, canCreate, canUpdate, canD
           </CardContent>
         )}
         <CardContent>
-          <div className='mb-4 mt-5 flex flex-wrap items-center justify-between gap-4'>
+          <div className='flex flex-wrap items-center justify-between gap-4'>
             <CustomTextField
               value={searchInput}
               onChange={event => setSearchInput(event.target.value)}
               label={dictionary.common.search}
               placeholder={dictionary.positions.searchPlaceholder}
-              className='is-full sm:is-[300px]'
+              className='is-full sm:is-[340px]'
               slotProps={{ input: { startAdornment: <i className='tabler-search text-textSecondary' /> } }}
             />
             {canCreate && (
@@ -168,74 +196,110 @@ const PositionTable = ({ initialResult, initialError, canCreate, canUpdate, canD
           </div>
         </CardContent>
 
-        <div className='overflow-x-auto'>
-          <table className={tableStyles.table}>
-            <thead>
-              <tr>
-                <th>{dictionary.positions.table.title}</th>
-                <th>{dictionary.positions.table.description}</th>
-                <th>{dictionary.common.status}</th>
-                <th>{dictionary.common.createdDate}</th>
-                <th className='text-end'>{dictionary.common.actions}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                <TableSkeletonRows columns={5} />
-              ) : options.length === 0 ? (
-                <TableEmptyStateRow
-                  colSpan={5}
-                  icon='tabler-briefcase'
-                  title={dictionary.positions.emptyTitle}
-                  description={dictionary.positions.emptyDescription}
-                  actionLabel={canCreate ? dictionary.positions.addFirst : null}
-                  onAction={canCreate ? openCreateForm : null}
-                />
-              ) : (
-                options.map(option => (
-                  <tr key={option.id}>
-                    <td>
-                      <div className='flex min-is-[250px] items-center gap-3'>
-                        <Avatar variant='rounded' className='bg-primaryLighter text-primary'></Avatar>
-                        <Typography color='text.primary' className='min-is-[210px] font-medium'>
-                          {option.name}
+        <ResponsiveDataTable
+          mobileRows={options}
+          loading={loading}
+          getMobileRowId={option => option.id}
+          renderMobilePrimary={option => (
+            <div className='flex min-is-0 items-center gap-3'>
+              <Avatar variant='rounded' className='bg-primaryLighter text-primary w-7 h-7 lg:w-10 lg:h-10' />
+              <div className='min-is-0'>
+                <Typography color='text.primary' className='truncate font-medium'>
+                  {option.name}
+                </Typography>
+                <Typography color='text.secondary' variant='body2' className='line-clamp-2'>
+                  {option.description || dictionary.common.noDescription}
+                </Typography>
+              </div>
+            </div>
+          )}
+          renderMobileStatus={option => (
+            <Chip
+              size='small'
+              variant='tonal'
+              color={option.is_active ? 'success' : 'secondary'}
+              label={option.is_active ? dictionary.common.active : dictionary.common.inactive}
+            />
+          )}
+          renderMobileActions={renderActions}
+          mobileMetadata={[
+            {
+              id: 'created',
+              label: dictionary.common.createdDate,
+              render: option => formatDate(option.created_at, locale)
+            }
+          ]}
+          emptyState={{
+            icon: 'tabler-briefcase',
+            title: dictionary.positions.emptyTitle,
+            description: dictionary.positions.emptyDescription,
+            actionLabel: canCreate ? dictionary.positions.addFirst : undefined,
+            onAction: canCreate ? openCreateForm : undefined
+          }}
+        >
+          <div className='overflow-x-auto'>
+            <table className={tableStyles.table}>
+              <thead>
+                <tr>
+                  <th>{dictionary.positions.table.title}</th>
+                  <th>{dictionary.positions.table.description}</th>
+                  <th>{dictionary.common.status}</th>
+                  <th>{dictionary.common.createdDate}</th>
+                  <th className='text-end'>{dictionary.common.actions}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {loading ? (
+                  <TableSkeletonRows columns={5} />
+                ) : options.length === 0 ? (
+                  <TableEmptyStateRow
+                    colSpan={5}
+                    icon='tabler-briefcase'
+                    title={dictionary.positions.emptyTitle}
+                    description={dictionary.positions.emptyDescription}
+                    actionLabel={canCreate ? dictionary.positions.addFirst : null}
+                    onAction={canCreate ? openCreateForm : null}
+                  />
+                ) : (
+                  options.map(option => (
+                    <tr key={option.id}>
+                      <td>
+                        <div className='flex min-is-[250px] items-center gap-3'>
+                          <Avatar
+                            variant='rounded'
+                            className='bg-primaryLighter text-primary w-7 h-7 lg:w-10 lg:h-10'
+                          ></Avatar>
+                          <Typography color='text.primary' className='min-is-[210px] font-medium'>
+                            {option.name}
+                          </Typography>
+                        </div>
+                      </td>
+                      <td>
+                        <Typography
+                          color='text.secondary'
+                          className='max-is-[440px] truncate'
+                          title={option.description || ''}
+                        >
+                          {option.description || dictionary.common.noDescription}
                         </Typography>
-                      </div>
-                    </td>
-                    <td>
-                      <Typography
-                        color='text.secondary'
-                        className='max-is-[440px] truncate'
-                        title={option.description || ''}
-                      >
-                        {option.description || dictionary.common.noDescription}
-                      </Typography>
-                    </td>
-                    <td>
-                      <Chip
-                        size='small'
-                        variant='tonal'
-                        color={option.is_active ? 'success' : 'secondary'}
-                        label={option.is_active ? dictionary.common.active : dictionary.common.inactive}
-                      />
-                    </td>
-                    <td>{formatDate(option.created_at, locale)}</td>
-                    <td className='text-end'>
-                      <EntityActionsMenu
-                        actions={[
-                          canUpdate && { label: dictionary.common.edit, icon: 'tabler-edit', disabled: busyId === option.id, onClick: () => openEditForm(option) },
-                          canUpdate && { label: option.is_active ? dictionary.common.deactivate : dictionary.common.activate, icon: option.is_active ? 'tabler-toggle-right' : 'tabler-toggle-left', disabled: busyId === option.id, onClick: () => handleStatusToggle(option) },
-                          canDelete && { label: dictionary.common.delete, icon: 'tabler-trash', color: 'error', disabled: busyId === option.id, onClick: () => setDeleteTarget(option) }
-                        ]}
-                        moreActionsLabel={dictionary.common.actions}
-                      />
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                      </td>
+                      <td>
+                        <Chip
+                          size='small'
+                          variant='tonal'
+                          color={option.is_active ? 'success' : 'secondary'}
+                          label={option.is_active ? dictionary.common.active : dictionary.common.inactive}
+                        />
+                      </td>
+                      <td>{formatDate(option.created_at, locale)}</td>
+                      <td className='text-end'>{renderActions(option)}</td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </ResponsiveDataTable>
 
         <DashboardTablePagination
           count={totalCount}

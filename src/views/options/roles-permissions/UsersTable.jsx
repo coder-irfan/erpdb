@@ -21,6 +21,7 @@ import LoadingButtonContent from '@/components/LoadingButtonContent'
 import DashboardTablePagination from '@/components/table/DashboardTablePagination'
 import EntityActionsMenu from '@/components/table/EntityActionsMenu'
 import TableEmptyStateRow from '@/components/table/TableEmptyStateRow'
+import ResponsiveDataTable from '@/components/tables/ResponsiveDataTable'
 
 import tableStyles from '@core/styles/table.module.css'
 
@@ -136,6 +137,48 @@ const UsersTable = ({
     }
   }
 
+  const renderActions = user => {
+    const protectedUser = user.isCurrentUser || user.isSuperAdmin
+    const currentStatusIsSelectable = ['ACTIVE', 'INACTIVE', 'SUSPENDED'].includes(user.status)
+
+    return (
+      <EntityActionsMenu
+        actions={[
+          {
+            label: translations.editUserRole,
+            icon: 'tabler-user-cog',
+            disabled: protectedUser || busyUserId === user.id,
+            onClick: () => openRoleDialog(user)
+          },
+          user.status === 'PENDING_ACTIVATION' && {
+            label: translations.revokeInvitation,
+            icon: 'tabler-mail-x',
+            color: 'error',
+            disabled: protectedUser || busyUserId === user.id,
+            onClick: () => setConfirmAction({ type: 'revoke', user })
+          },
+          {
+            label: translations.removeUserAccess,
+            icon: 'tabler-user-x',
+            color: 'error',
+            disabled: protectedUser || busyUserId === user.id,
+            onClick: () => setConfirmAction({ type: 'remove', user })
+          }
+        ]}
+        statusOptions={
+          currentStatusIsSelectable
+            ? ['ACTIVE', 'INACTIVE', 'SUSPENDED'].map(status => ({ id: status, label: translations.status[status] }))
+            : []
+        }
+        currentStatus={user.status}
+        statusDisabled={protectedUser || busyUserId === user.id}
+        changeStatusLabel={translations.changeStatus}
+        moreActionsLabel={translations.table.actions}
+        onStatusChange={status => handleStatusChange(user.id, status)}
+      />
+    )
+  }
+
   return (
     <>
       <Card>
@@ -161,38 +204,88 @@ const UsersTable = ({
             </Button>
           </div>
         </CardContent>
-        <div className='overflow-x-auto'>
-          <table className={tableStyles.table}>
-            <thead>
-              <tr>
-                <th>{translations.table.user}</th>
-                <th>{translations.table.role}</th>
-                <th>{translations.table.status}</th>
-                <th>{translations.table.invitedDate}</th>
-                <th>{translations.table.invitedBy}</th>
-                <th className='text-end'>{translations.table.actions}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {paginatedUsers.length === 0 ? (
-                <TableEmptyStateRow
-                  colSpan={6}
-                  icon='tabler-users-plus'
-                  title={translations.noUsers}
-                  description={translations.usersDescription}
-                  actionLabel={translations.inviteUser}
-                  onAction={onInvite}
-                />
-              ) : (
-                paginatedUsers.map(user => {
-                  const protectedUser = user.isCurrentUser || user.isSuperAdmin
-                  const currentStatusIsSelectable = ['ACTIVE', 'INACTIVE', 'SUSPENDED'].includes(user.status)
-
-                  return (
+        <ResponsiveDataTable
+          mobileRows={paginatedUsers}
+          getMobileRowId={user => user.id}
+          renderMobilePrimary={user => (
+            <div className='flex min-is-0 items-center gap-3'>
+              <Avatar variant='rounded' className='bg-primaryLighter text-primary w-7 h-7 lg:w-10 lg:h-10' />
+              <div className='min-is-0'>
+                <Typography color='text.primary' className='truncate font-medium'>
+                  {user.name || translations.table.notAssigned}
+                </Typography>
+                <Typography variant='body2' color='text.secondary' className='truncate'>
+                  {user.email}
+                </Typography>
+              </div>
+            </div>
+          )}
+          renderMobileStatus={user => (
+            <Chip
+              size='small'
+              variant='tonal'
+              color={STATUS_COLORS[user.status] || 'default'}
+              label={translations.status[user.status] || user.status}
+            />
+          )}
+          renderMobileActions={renderActions}
+          mobileMetadata={[
+            {
+              id: 'role',
+              label: translations.table.role,
+              render: user =>
+                user.roles.length ? user.roles.map(role => role.displayName).join(', ') : translations.table.notAssigned
+            },
+            {
+              id: 'invited-date',
+              label: translations.table.invitedDate,
+              render: user => formatDate(user.createdAt, locale)
+            },
+            {
+              id: 'invited-by',
+              label: translations.table.invitedBy,
+              render: user => user.invitedBy?.name || translations.table.system
+            }
+          ]}
+          emptyState={{
+            icon: 'tabler-users-plus',
+            title: translations.noUsers,
+            description: translations.usersDescription,
+            actionLabel: translations.inviteUser,
+            onAction: onInvite
+          }}
+        >
+          <div className='overflow-x-auto'>
+            <table className={tableStyles.table}>
+              <thead>
+                <tr>
+                  <th>{translations.table.user}</th>
+                  <th>{translations.table.role}</th>
+                  <th>{translations.table.status}</th>
+                  <th>{translations.table.invitedDate}</th>
+                  <th>{translations.table.invitedBy}</th>
+                  <th className='text-end'>{translations.table.actions}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {paginatedUsers.length === 0 ? (
+                  <TableEmptyStateRow
+                    colSpan={6}
+                    icon='tabler-users-plus'
+                    title={translations.noUsers}
+                    description={translations.usersDescription}
+                    actionLabel={translations.inviteUser}
+                    onAction={onInvite}
+                  />
+                ) : (
+                  paginatedUsers.map(user => (
                     <tr key={user.id}>
                       <td>
                         <div className='flex min-is-[250px] items-center gap-3'>
-                          <Avatar variant='rounded' className='bg-primaryLighter text-primary'></Avatar>
+                          <Avatar
+                            variant='rounded'
+                            className='bg-primaryLighter text-primary w-7 h-7 lg:w-10 lg:h-10'
+                          ></Avatar>
                           <div className='flex flex-col'>
                             <Typography color='text.primary' className='font-medium'>
                               {user.name || translations.table.notAssigned}
@@ -230,52 +323,14 @@ const UsersTable = ({
                       </td>
                       <td>{formatDate(user.createdAt, locale)}</td>
                       <td>{user.invitedBy?.name || translations.table.system}</td>
-                      <td className='text-end'>
-                        <EntityActionsMenu
-                          actions={[
-                            {
-                              label: translations.editUserRole,
-                              icon: 'tabler-user-cog',
-                              disabled: protectedUser || busyUserId === user.id,
-                              onClick: () => openRoleDialog(user)
-                            },
-                            user.status === 'PENDING_ACTIVATION' && {
-                              label: translations.revokeInvitation,
-                              icon: 'tabler-mail-x',
-                              color: 'error',
-                              disabled: protectedUser || busyUserId === user.id,
-                              onClick: () => setConfirmAction({ type: 'revoke', user })
-                            },
-                            {
-                              label: translations.removeUserAccess,
-                              icon: 'tabler-user-x',
-                              color: 'error',
-                              disabled: protectedUser || busyUserId === user.id,
-                              onClick: () => setConfirmAction({ type: 'remove', user })
-                            }
-                          ]}
-                          statusOptions={
-                            currentStatusIsSelectable
-                              ? ['ACTIVE', 'INACTIVE', 'SUSPENDED'].map(status => ({
-                                  id: status,
-                                  label: translations.status[status]
-                                }))
-                              : []
-                          }
-                          currentStatus={user.status}
-                          statusDisabled={protectedUser || busyUserId === user.id}
-                          changeStatusLabel={translations.changeStatus}
-                          moreActionsLabel={translations.table.actions}
-                          onStatusChange={status => handleStatusChange(user.id, status)}
-                        />
-                      </td>
+                      <td className='text-end'>{renderActions(user)}</td>
                     </tr>
-                  )
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </ResponsiveDataTable>
         <DashboardTablePagination
           count={filteredUsers.length}
           page={page}
@@ -324,18 +379,14 @@ const UsersTable = ({
 
       <ConfirmDeleteModal
         open={Boolean(confirmAction)}
-        title={
-          confirmAction?.type === 'revoke' ? translations.revokeInvitation : translations.removeUserAccess
-        }
+        title={confirmAction?.type === 'revoke' ? translations.revokeInvitation : translations.removeUserAccess}
         description={
           confirmAction?.type === 'revoke'
             ? translations.revokeInvitationConfirmation
             : translations.removeUserAccessConfirmation
         }
         itemName={confirmAction?.user.email}
-        confirmText={
-          confirmAction?.type === 'revoke' ? translations.revokeInvitation : translations.removeUserAccess
-        }
+        confirmText={confirmAction?.type === 'revoke' ? translations.revokeInvitation : translations.removeUserAccess}
         cancelText={translations.cancel}
         loading={isConfirming}
         onClose={() => setConfirmAction(null)}

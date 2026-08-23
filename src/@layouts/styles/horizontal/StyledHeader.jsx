@@ -20,8 +20,7 @@ const StyledHeader = styled.header`
   }
 
   &.${horizontalLayoutClasses.headerBlur} {
-    backdrop-filter: blur(6px);
-    background-color: rgb(var(--background-color-rgb) / 0.3);
+    background-color: var(--mui-palette-background-paper);
   }
 
   &.${horizontalLayoutClasses.headerFixed} {

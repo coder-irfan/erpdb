@@ -1,7 +1,7 @@
 'use client'
 
 // React Imports
-import { useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 
 // MUI Imports
 import { ThemeProvider, createTheme } from '@mui/material/styles'
@@ -46,6 +46,27 @@ const CustomThemeProvider = props => {
     }
   }
 
+  useEffect(() => {
+    const root = document.documentElement
+    const primaryColorLight = settings.primaryColorLight || themeConfig.primaryColorLight
+    const secondaryColorLight = settings.secondaryColorLight || themeConfig.secondaryColorLight
+    const primaryColorDark = settings.primaryColorDark || themeConfig.primaryColorDark
+    const secondaryColorDark = settings.secondaryColorDark || themeConfig.secondaryColorDark
+
+    root.style.setProperty('--primary-color-light', primaryColorLight)
+    root.style.setProperty('--secondary-color-light', secondaryColorLight)
+    root.style.setProperty('--primary-color-dark', primaryColorDark)
+    root.style.setProperty('--secondary-color-dark', secondaryColorDark)
+    root.style.setProperty('--primary-color', currentMode === 'dark' ? primaryColorDark : primaryColorLight)
+    root.style.setProperty('--secondary-color', currentMode === 'dark' ? secondaryColorDark : secondaryColorLight)
+  }, [
+    currentMode,
+    settings.primaryColorLight,
+    settings.secondaryColorLight,
+    settings.primaryColorDark,
+    settings.secondaryColorDark
+  ])
+
   // Keep the light and dark palettes defined in colorSchemes.js authoritative.
   const theme = useMemo(() => {
     const coreTheme = defaultCoreTheme(settings, currentMode, direction)
@@ -57,7 +78,15 @@ const CustomThemeProvider = props => {
       }
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [settings.skin, currentMode, direction])
+  }, [
+    settings.skin,
+    settings.primaryColorLight,
+    settings.secondaryColorLight,
+    settings.primaryColorDark,
+    settings.secondaryColorDark,
+    currentMode,
+    direction
+  ])
 
   return (
     <AppRouterCacheProvider

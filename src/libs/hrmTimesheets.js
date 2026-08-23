@@ -19,7 +19,8 @@ const attendanceSelect = {
   notes: true,
   created_at: true,
   updated_at: true,
-  staff: { select: { id: true, first_name: true, last_name: true, position: true, email: true } }
+  staff: { select: { id: true, first_name: true, last_name: true, position: true, email: true } },
+  project: { select: { id: true, title: true } }
 }
 
 export const getKabulToday = () =>

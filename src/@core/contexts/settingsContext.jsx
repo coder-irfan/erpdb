@@ -14,8 +14,7 @@ const lockedLayoutSettings = {
   layout: 'horizontal',
   navbarContentWidth: 'wide',
   contentWidth: 'wide',
-  footerContentWidth: 'wide',
-  primaryColor: themeConfig.primaryColor
+  footerContentWidth: 'wide'
 }
 
 const lockLayoutSettings = settings => ({ ...settings, ...lockedLayoutSettings })
@@ -31,7 +30,10 @@ export const SettingsProvider = props => {
     navbarContentWidth: themeConfig.navbar.contentWidth,
     contentWidth: themeConfig.contentWidth,
     footerContentWidth: themeConfig.footer.contentWidth,
-    primaryColor: themeConfig.primaryColor
+    primaryColorLight: themeConfig.primaryColorLight,
+    secondaryColorLight: themeConfig.secondaryColorLight,
+    primaryColorDark: themeConfig.primaryColorDark,
+    secondaryColorDark: themeConfig.secondaryColorDark
   }
 
   const updatedInitialSettings = lockLayoutSettings({
@@ -46,9 +48,20 @@ export const SettingsProvider = props => {
   )
 
   // State
-  const [_settingsState, _updateSettingsState] = useState(
-    lockLayoutSettings(JSON.stringify(settingsCookie) !== '{}' ? settingsCookie : updatedInitialSettings)
-  )
+  const [_settingsState, _updateSettingsState] = useState(() => {
+    const persistedSettings = JSON.stringify(settingsCookie) !== '{}' ? settingsCookie : {}
+
+    return lockLayoutSettings({
+      ...updatedInitialSettings,
+      ...persistedSettings,
+      primaryColorLight:
+        persistedSettings.primaryColorLight || persistedSettings.primaryColor || themeConfig.primaryColorLight,
+      secondaryColorLight:
+        persistedSettings.secondaryColorLight || persistedSettings.secondaryColor || themeConfig.secondaryColorLight,
+      primaryColorDark: persistedSettings.primaryColorDark || themeConfig.primaryColorDark,
+      secondaryColorDark: persistedSettings.secondaryColorDark || themeConfig.secondaryColorDark
+    })
+  })
 
   const updateSettings = (settings, options) => {
     const { updateCookie = true } = options || {}

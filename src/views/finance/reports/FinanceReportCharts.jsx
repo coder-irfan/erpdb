@@ -27,9 +27,7 @@ const FinanceChartCard = ({ chart, title, dictionary, locale, currency, loading 
   const labels = (chart?.labels || []).map(label => dictionary.labels?.[label] || label)
 
   const formatter = value =>
-    chart?.value_kind === 'quantity'
-      ? toFiniteNumber(value).toLocaleString()
-      : formatCurrency(value, locale, currency)
+    chart?.value_kind === 'quantity' ? toFiniteNumber(value).toLocaleString() : formatCurrency(value, locale, currency)
 
   const series = isDistribution
     ? (chart?.series || []).map(toFiniteNumber)
@@ -38,7 +36,12 @@ const FinanceChartCard = ({ chart, title, dictionary, locale, currency, loading 
           name: dictionary.series?.[item.key] || item.key,
           data: (item.data || []).map(toFiniteNumber)
         }))
-      : [{ name: dictionary.series?.[chart?.series_key] || chart?.series_key || '', data: (chart?.values || []).map(toFiniteNumber) }]
+      : [
+          {
+            name: dictionary.series?.[chart?.series_key] || chart?.series_key || '',
+            data: (chart?.values || []).map(toFiniteNumber)
+          }
+        ]
 
   const hasData = isDistribution
     ? series.some(value => value > 0)
@@ -52,7 +55,9 @@ const FinanceChartCard = ({ chart, title, dictionary, locale, currency, loading 
         stroke: { width: 0 },
         dataLabels: { enabled: true, formatter: value => `${Math.round(value)}%` },
         legend: { position: 'bottom', fontFamily: theme.typography.fontFamily },
-        plotOptions: { pie: { donut: { size: '66%', labels: { show: true, total: { show: true, label: dictionary.total } } } } },
+        plotOptions: {
+          pie: { donut: { size: '66%', labels: { show: true, total: { show: true, label: dictionary.total } } } }
+        },
         tooltip: { y: { formatter } },
         responsive: [{ breakpoint: 600, options: { chart: { height: 300 }, legend: { position: 'bottom' } } }]
       }
@@ -60,7 +65,18 @@ const FinanceChartCard = ({ chart, title, dictionary, locale, currency, loading 
         chart: {
           parentHeightOffset: 0,
           stacked: Boolean(chart?.stacked),
-          toolbar: { show: true, tools: { download: true, selection: false, zoom: true, zoomin: true, zoomout: true, pan: false, reset: true } },
+          toolbar: {
+            show: true,
+            tools: {
+              download: true,
+              selection: false,
+              zoom: true,
+              zoomin: true,
+              zoomout: true,
+              pan: false,
+              reset: true
+            }
+          },
           animations: { enabled: true }
         },
         colors: COLORS,
@@ -74,11 +90,18 @@ const FinanceChartCard = ({ chart, title, dictionary, locale, currency, loading 
           reversed: theme.direction === 'rtl',
           axisBorder: { color: 'var(--mui-palette-divider)' },
           axisTicks: { show: false },
-          labels: { trim: true, rotate: -35, style: { colors: 'var(--mui-palette-text-secondary)', fontFamily: theme.typography.fontFamily } }
+          labels: {
+            trim: true,
+            rotate: -35,
+            style: { colors: 'var(--mui-palette-text-secondary)', fontFamily: theme.typography.fontFamily }
+          }
         },
         yaxis: {
           opposite: theme.direction === 'rtl',
-          labels: { formatter, style: { colors: 'var(--mui-palette-text-secondary)', fontFamily: theme.typography.fontFamily } }
+          labels: {
+            formatter,
+            style: { colors: 'var(--mui-palette-text-secondary)', fontFamily: theme.typography.fontFamily }
+          }
         },
         tooltip: { y: { formatter } }
       }
@@ -86,7 +109,9 @@ const FinanceChartCard = ({ chart, title, dictionary, locale, currency, loading 
   return (
     <Card className='report-chart-card min-is-0'>
       <CardContent>
-        <Typography variant='h6' className='mb-4'>{title}</Typography>
+        <Typography variant='h6' className='mb-4'>
+          {title}
+        </Typography>
         {loading ? (
           <Skeleton variant='rounded' height={320} />
         ) : !hasData ? (
@@ -97,7 +122,13 @@ const FinanceChartCard = ({ chart, title, dictionary, locale, currency, loading 
             <Typography color='text.secondary'>{dictionary.empty}</Typography>
           </div>
         ) : (
-          <AppReactApexCharts type={isDistribution ? 'donut' : chart.type || 'bar'} height={320} width='100%' options={options} series={series} />
+          <AppReactApexCharts
+            type={isDistribution ? 'donut' : chart.type || 'bar'}
+            height={320}
+            width='100%'
+            options={options}
+            series={series}
+          />
         )}
       </CardContent>
     </Card>

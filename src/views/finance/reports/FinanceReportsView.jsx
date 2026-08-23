@@ -15,10 +15,16 @@ import { toast } from 'sonner'
 
 import CustomTextField from '@core/components/mui/TextField'
 import DashboardTablePagination from '@/components/table/DashboardTablePagination'
+import TableFiltersPopover from '@/components/table/TableFiltersPopover'
 import { toFiniteNumber } from '@/utils/formatCurrency'
 
 import FinanceReportCharts from './FinanceReportCharts'
 import FinanceReportTable from './FinanceReportTable'
+import ExpenseReportPrintDocument from './ExpenseReportPrintDocument'
+import IncomeReportPrintDocument from './IncomeReportPrintDocument'
+import InventoryReportPrintDocument from './InventoryReportPrintDocument'
+import LoanReportPrintDocument from './LoanReportPrintDocument'
+import PayrollMasterReportPrintDocument from './PayrollMasterReportPrintDocument'
 
 const REPORT_TYPES = ['income', 'expenses', 'salary', 'inventory', 'loans']
 const EMPTY_REPORT = { summary: {}, rows: [], charts: {}, display_currency: 'AFN', report_exchange_rate: 65 }
@@ -57,6 +63,15 @@ const getPresetRange = preset => {
 
 const escapeCsv = value => `"${String(value ?? '').replaceAll('"', '""')}"`
 
+const rowCategory = (tab, row) => {
+  if (tab === 'income') return row.source
+  if (tab === 'expenses' || tab === 'inventory') return row.category
+  if (tab === 'salary') return row.designation
+  if (tab === 'loans') return row.type
+
+  return ''
+}
+
 const FinanceReportsView = ({ locale, dictionary, setup, generatedAt }) => {
   const initialRange = getPresetRange('this_month')
   const initialCurrency = ['AFN', 'USD'].includes(setup.currency_code) ? setup.currency_code : 'AFN'
@@ -69,6 +84,7 @@ const FinanceReportsView = ({ locale, dictionary, setup, generatedAt }) => {
   const [rateInput, setRateInput] = useState(initialRate)
   const [reportRate, setReportRate] = useState(initialRate)
   const [search, setSearch] = useState('')
+  const [category, setCategory] = useState('')
   const [data, setData] = useState(EMPTY_REPORT)
   const [loading, setLoading] = useState(true)
   const [page, setPage] = useState(0)
@@ -117,7 +133,9 @@ const FinanceReportsView = ({ locale, dictionary, setup, generatedAt }) => {
   const formatDate = useCallback(
     value =>
       value
-        ? new Intl.DateTimeFormat(localeMap[locale] || localeMap.en, { dateStyle: 'medium', timeZone: 'UTC' }).format(new Date(value))
+        ? new Intl.DateTimeFormat(localeMap[locale] || localeMap.en, { dateStyle: 'medium', timeZone: 'UTC' }).format(
+            new Date(value)
+          )
         : dictionary.common.notAvailable,
     [dictionary.common.notAvailable, locale]
   )
@@ -131,19 +149,35 @@ const FinanceReportsView = ({ locale, dictionary, setup, generatedAt }) => {
     [locale]
   )
 
+  const categoryOptions = useMemo(
+    () => [...new Set((data.rows || []).map(row => rowCategory(reportType, row)).filter(Boolean))].sort(),
+    [data.rows, reportType]
+  )
+
   const rows = useMemo(() => {
     const sourceRows = data.rows || []
     const query = search.trim().toLocaleLowerCase(locale)
 
-    if (!query) return sourceRows
+    return sourceRows.filter(row => {
+      const matchesCategory = !category || rowCategory(reportType, row) === category
 
-    return sourceRows.filter(row =>
-      Object.values(row).some(value => typeof value === 'string' && value.toLocaleLowerCase(locale).includes(query))
-    )
-  }, [data.rows, locale, search])
+      const matchesSearch =
+        !query ||
+        Object.values(row).some(value => typeof value === 'string' && value.toLocaleLowerCase(locale).includes(query))
+
+      return matchesCategory && matchesSearch
+    })
+  }, [category, data.rows, locale, reportType, search])
 
   const pageRows = rows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
   const activeReport = dictionary.tabs[reportType]
+  const printDocumentProps = { data: { ...data, rows }, setup, locale, startDate, endDate }
+
+  const activeFilterCount =
+    Number(datePreset !== 'this_month') +
+    Number(displayCurrency !== initialCurrency) +
+    Number(toFiniteNumber(reportRate) !== toFiniteNumber(initialRate)) +
+    Number(Boolean(category))
 
   const changePreset = preset => {
     setDatePreset(preset)
@@ -162,24 +196,106 @@ const FinanceReportsView = ({ locale, dictionary, setup, generatedAt }) => {
 
     const configurations = {
       income: {
-        header: [headers.date, headers.reference, headers.sourceCategory, headers.amountLocal, headers.baseAmountUsd, headers.paymentMethod, headers.status],
-        row: item => [item.date, item.reference, item.source, item.amount_local, item.amount_usd, item.payment_method, item.status]
+        header: [
+          headers.date,
+          headers.reference,
+          headers.sourceCategory,
+          headers.amountLocal,
+          headers.baseAmountUsd,
+          headers.paymentMethod,
+          headers.status
+        ],
+        row: item => [
+          item.date,
+          item.reference,
+          item.source,
+          item.amount_local,
+          item.amount_usd,
+          item.payment_method,
+          item.status
+        ]
       },
       expenses: {
-        header: [headers.date, headers.expenseTitle, headers.category, headers.vendorPayee, headers.amount, headers.paymentMethod, headers.status],
-        row: item => [item.date, item.title, item.category, item.payee, item.amount_display, item.payment_method, item.status]
+        header: [
+          headers.date,
+          headers.expenseTitle,
+          headers.category,
+          headers.vendorPayee,
+          headers.amount,
+          headers.paymentMethod,
+          headers.status
+        ],
+        row: item => [
+          item.date,
+          item.title,
+          item.category,
+          item.payee,
+          item.amount_display,
+          item.payment_method,
+          item.status
+        ]
       },
       salary: {
-        header: [headers.staffName, headers.designation, headers.month, headers.baseSalary, headers.bonuses, headers.deductions, headers.netPaid, headers.paymentStatus],
-        row: item => [item.staff_name, item.designation, item.month, item.base_salary, item.bonus, item.deductions, item.net_paid, item.status]
+        header: [
+          headers.staffName,
+          headers.designation,
+          headers.month,
+          headers.baseSalary,
+          headers.bonuses,
+          headers.deductions,
+          headers.netPaid,
+          headers.paymentStatus
+        ],
+        row: item => [
+          item.staff_name,
+          item.designation,
+          item.month,
+          item.base_salary,
+          item.bonus,
+          item.deductions,
+          item.net_paid,
+          item.status
+        ]
       },
       inventory: {
-        header: [headers.sku, headers.itemName, headers.category, headers.inStockQty, headers.unitCost, headers.totalAssetValue, headers.reorderStatus],
-        row: item => [item.sku, item.name, item.category, item.quantity, item.unit_cost, item.total_value, item.reorder_status]
+        header: [
+          headers.sku,
+          headers.itemName,
+          headers.category,
+          headers.inStockQty,
+          headers.unitCost,
+          headers.totalAssetValue,
+          headers.reorderStatus
+        ],
+        row: item => [
+          item.sku,
+          item.name,
+          item.category,
+          item.quantity,
+          item.unit_cost,
+          item.total_value,
+          item.reorder_status
+        ]
       },
       loans: {
-        header: [headers.loanNumber, headers.borrower, headers.loanType, headers.totalLoan, headers.repaid, headers.remainingBalance, headers.issueDate],
-        row: item => [item.loan_number, item.borrower, item.type, item.total, item.repaid, item.remaining, item.issue_date]
+        header: [
+          headers.loanNumber,
+          headers.borrower,
+          headers.loanType,
+          headers.totalLoan,
+          headers.repaid,
+          headers.remainingBalance,
+          headers.issueDate
+        ],
+        row: item => [
+          item.loan_number,
+          item.borrower,
+          item.type,
+          item.total,
+          item.repaid,
+          item.remaining,
+          item.issue_date
+        ]
       }
     }
 
@@ -211,7 +327,7 @@ const FinanceReportsView = ({ locale, dictionary, setup, generatedAt }) => {
   return (
     <div className='finance-report-print hrm-report-print flex flex-col gap-6'>
       <Card className='no-print'>
-        <CardContent className='flex flex-wrap items-end gap-3'>
+        <CardContent className='flex flex-wrap items-center justify-between gap-3'>
           <CustomTextField
             label={dictionary.filters.search}
             placeholder={dictionary.filters.searchPlaceholder}
@@ -223,75 +339,133 @@ const FinanceReportsView = ({ locale, dictionary, setup, generatedAt }) => {
             className='is-full sm:is-[260px]'
             slotProps={{ input: { startAdornment: <i className='tabler-search' /> } }}
           />
-          <CustomTextField
-            select
-            label={dictionary.filters.dateRange}
-            value={datePreset}
-            onChange={event => changePreset(event.target.value)}
-            className='is-full sm:is-[170px]'
-          >
-            <MenuItem value='this_month'>{dictionary.datePresets.thisMonth}</MenuItem>
-            <MenuItem value='last_month'>{dictionary.datePresets.lastMonth}</MenuItem>
-            <MenuItem value='this_quarter'>{dictionary.datePresets.thisQuarter}</MenuItem>
-            <MenuItem value='this_year'>{dictionary.datePresets.thisYear}</MenuItem>
-            <MenuItem value='custom'>{dictionary.datePresets.custom}</MenuItem>
-          </CustomTextField>
-          <CustomTextField
-            type='date'
-            label={dictionary.filters.startDate}
-            value={startDate}
-            onChange={event => {
-              setStartDate(event.target.value)
-              setDatePreset('custom')
-              setPage(0)
-            }}
-            className='is-full sm:is-[155px]'
-          />
-          <CustomTextField
-            type='date'
-            label={dictionary.filters.endDate}
-            value={endDate}
-            onChange={event => {
-              setEndDate(event.target.value)
-              setDatePreset('custom')
-              setPage(0)
-            }}
-            className='is-full sm:is-[155px]'
-          />
-          <div className='flex flex-col gap-1'>
-            <Typography variant='caption' color='text.secondary'>{dictionary.filters.currency}</Typography>
-            <ToggleButtonGroup
-              exclusive
-              size='small'
-              value={displayCurrency}
-              aria-label={dictionary.filters.currency}
-              onChange={(_, value) => {
-                if (value) {
-                  setDisplayCurrency(value)
+          <div className='flex is-full flex-wrap items-center gap-2 sm:is-auto sm:justify-end'>
+            <TableFiltersPopover activeCount={activeFilterCount} locale={locale}>
+              <CustomTextField
+                select
+                label={dictionary.filters.dateRange}
+                value={datePreset}
+                onChange={event => changePreset(event.target.value)}
+                className='is-full'
+              >
+                <MenuItem value='this_month'>{dictionary.datePresets.thisMonth}</MenuItem>
+                <MenuItem value='last_month'>{dictionary.datePresets.lastMonth}</MenuItem>
+                <MenuItem value='this_quarter'>{dictionary.datePresets.thisQuarter}</MenuItem>
+                <MenuItem value='this_year'>{dictionary.datePresets.thisYear}</MenuItem>
+                <MenuItem value='custom'>{dictionary.datePresets.custom}</MenuItem>
+              </CustomTextField>
+              <CustomTextField
+                type='date'
+                label={dictionary.filters.startDate}
+                value={startDate}
+                onChange={event => {
+                  setStartDate(event.target.value)
+                  setDatePreset('custom')
                   setPage(0)
-                }
-              }}
+                }}
+                className='is-full'
+              />
+              <CustomTextField
+                type='date'
+                label={dictionary.filters.endDate}
+                value={endDate}
+                onChange={event => {
+                  setEndDate(event.target.value)
+                  setDatePreset('custom')
+                  setPage(0)
+                }}
+                className='is-full'
+              />
+              <CustomTextField
+                select
+                label={dictionary.filters.category}
+                value={category}
+                onChange={event => {
+                  setCategory(event.target.value)
+                  setPage(0)
+                }}
+                className='is-full'
+              >
+                <MenuItem value=''>{dictionary.filters.allCategories}</MenuItem>
+                {categoryOptions.map(option => (
+                  <MenuItem key={option} value={option}>
+                    {option}
+                  </MenuItem>
+                ))}
+              </CustomTextField>
+              <div className='flex flex-col gap-1'>
+                <Typography variant='caption' color='text.secondary'>
+                  {dictionary.filters.currency}
+                </Typography>
+                <ToggleButtonGroup
+                  exclusive
+                  size='small'
+                  value={displayCurrency}
+                  aria-label={dictionary.filters.currency}
+                  onChange={(_, value) => {
+                    if (value) {
+                      setDisplayCurrency(value)
+                      setPage(0)
+                    }
+                  }}
+                >
+                  <ToggleButton value='AFN'>AFN</ToggleButton>
+                  <ToggleButton value='USD'>USD</ToggleButton>
+                </ToggleButtonGroup>
+              </div>
+              <CustomTextField
+                type='number'
+                label={dictionary.filters.exchangeRate}
+                value={rateInput}
+                onChange={event => setRateInput(event.target.value)}
+                className='is-full'
+                slotProps={{ htmlInput: { min: 0.0001, step: 0.0001 } }}
+              />
+              {activeFilterCount > 0 && (
+                <Button
+                  variant='tonal'
+                  color='secondary'
+                  onClick={() => {
+                    const range = getPresetRange('this_month')
+
+                    setDatePreset('this_month')
+                    setStartDate(range.start)
+                    setEndDate(range.end)
+                    setDisplayCurrency(initialCurrency)
+                    setRateInput(initialRate)
+                    setReportRate(initialRate)
+                    setCategory('')
+                    setPage(0)
+                  }}
+                >
+                  {dictionary.filters.clear}
+                </Button>
+              )}
+            </TableFiltersPopover>
+            <Button
+              variant='tonal'
+              color='secondary'
+              startIcon={<i className='tabler-file-type-pdf' />}
+              disabled={loading || rows.length === 0}
+              onClick={() => printReport('pdf')}
             >
-              <ToggleButton value='AFN'>AFN</ToggleButton>
-              <ToggleButton value='USD'>USD</ToggleButton>
-            </ToggleButtonGroup>
-          </div>
-          <CustomTextField
-            type='number'
-            label={dictionary.filters.exchangeRate}
-            value={rateInput}
-            onChange={event => setRateInput(event.target.value)}
-            className='is-full sm:is-[145px]'
-            slotProps={{ htmlInput: { min: 0.0001, step: 0.0001 } }}
-          />
-          <div className='ms-auto flex flex-wrap gap-2'>
-            <Button variant='tonal' color='secondary' startIcon={<i className='tabler-file-type-pdf' />} disabled={loading || rows.length === 0} onClick={() => printReport('pdf')}>
               {dictionary.actions.exportPdf}
             </Button>
-            <Button variant='tonal' color='secondary' startIcon={<i className='tabler-file-spreadsheet' />} disabled={loading || rows.length === 0} onClick={exportCsv}>
+            <Button
+              variant='tonal'
+              color='secondary'
+              startIcon={<i className='tabler-file-spreadsheet' />}
+              disabled={loading || rows.length === 0}
+              onClick={exportCsv}
+            >
               {dictionary.actions.exportCsv}
             </Button>
-            <Button variant='contained' startIcon={<i className='tabler-printer' />} disabled={loading} onClick={() => printReport('print')}>
+            <Button
+              variant='contained'
+              startIcon={<i className='tabler-printer' />}
+              disabled={loading}
+              onClick={() => printReport('print')}
+            >
               {dictionary.actions.print}
             </Button>
           </div>
@@ -305,55 +479,83 @@ const FinanceReportsView = ({ locale, dictionary, setup, generatedAt }) => {
           scrollButtons='auto'
           onChange={(_, value) => {
             setReportType(value)
+            setCategory('')
             setData(EMPTY_REPORT)
             setLoading(true)
             setPage(0)
           }}
         >
           {REPORT_TYPES.map(type => (
-            <Tab key={type} value={type} icon={<i className={dictionary.tabs[type].icon} />} iconPosition='start' label={dictionary.tabs[type].label} />
+            <Tab
+              key={type}
+              value={type}
+              icon={<i className={dictionary.tabs[type].icon} />}
+              iconPosition='start'
+              label={dictionary.tabs[type].label}
+            />
           ))}
         </Tabs>
       </Card>
 
       <div className='report-print-header hidden border-b-2 border-black pb-5 text-black'>
         <div className='flex items-start justify-between gap-6'>
-          <div>{setup.company_logo ? <img src={setup.company_logo} alt={setup.company_name} className='max-h-16 max-w-44 object-contain' /> : null}</div>
+          <div>
+            {setup.company_logo ? (
+              <img src={setup.company_logo} alt={setup.company_name} className='max-h-16 max-w-44 object-contain' />
+            ) : null}
+          </div>
           <div className='text-end'>
             <Typography className='text-xl font-bold text-black'>{setup.company_name}</Typography>
             <Typography className='whitespace-pre-line text-sm text-black'>{setup.company_address}</Typography>
-            <Typography className='text-sm text-black'>{[setup.company_phone, setup.company_email].filter(Boolean).join(' · ')}</Typography>
+            <Typography className='text-sm text-black'>
+              {[setup.company_phone, setup.company_email].filter(Boolean).join(' · ')}
+            </Typography>
           </div>
         </div>
         <div className='mt-6 text-center'>
-          <Typography component='h1' className='text-2xl font-bold text-black'>{activeReport.label}</Typography>
-          <Typography className='text-black'>{formatDate(`${startDate}T00:00:00.000Z`)} — {formatDate(`${endDate}T00:00:00.000Z`)}</Typography>
-          <Typography className='text-sm text-black'>{dictionary.filters.currency}: {displayCurrency} · {dictionary.filters.exchangeRate}: {reportRate}</Typography>
-          <Typography className='text-xs text-black'>{dictionary.print.generated}: {formatDateTime(generatedAt)}</Typography>
+          <Typography component='h1' className='text-2xl font-bold text-black'>
+            {activeReport.label}
+          </Typography>
+          <Typography className='text-black'>
+            {formatDate(`${startDate}T00:00:00.000Z`)} — {formatDate(`${endDate}T00:00:00.000Z`)}
+          </Typography>
+          <Typography className='text-sm text-black'>
+            {dictionary.filters.currency}: {displayCurrency} · {dictionary.filters.exchangeRate}: {reportRate}
+          </Typography>
+          <Typography className='text-xs text-black'>
+            {dictionary.print.generated}: {formatDateTime(generatedAt)}
+          </Typography>
         </div>
       </div>
-
-      <FinanceReportCharts
-        tab={reportType}
-        charts={data.charts}
-        loading={loading}
-        dictionary={dictionary.charts}
-        locale={locale}
-        currency={displayCurrency}
-      />
 
       <Card className='report-table-card'>
         <CardContent className='flex flex-wrap items-center justify-between gap-2 border-be border-divider'>
           <div>
             <Typography variant='h5'>{activeReport.tableTitle}</Typography>
-            <Typography variant='body2' color='text.secondary'>{dictionary.common.records.replace('{count}', String(rows.length))}</Typography>
+            <Typography variant='body2' color='text.secondary'>
+              {dictionary.common.records.replace('{count}', String(rows.length))}
+            </Typography>
           </div>
         </CardContent>
         <div className='screen-report-table no-scrollbar overflow-x-auto scroll-smooth'>
-          <FinanceReportTable tab={reportType} rows={pageRows} loading={loading} dictionary={dictionary} locale={locale} displayCurrency={displayCurrency} />
+          <FinanceReportTable
+            tab={reportType}
+            rows={pageRows}
+            loading={loading}
+            dictionary={dictionary}
+            locale={locale}
+            displayCurrency={displayCurrency}
+          />
         </div>
         <div className='print-report-table hidden'>
-          <FinanceReportTable tab={reportType} rows={rows} loading={false} dictionary={dictionary} locale={locale} displayCurrency={displayCurrency} />
+          <FinanceReportTable
+            tab={reportType}
+            rows={rows}
+            loading={false}
+            dictionary={dictionary}
+            locale={locale}
+            displayCurrency={displayCurrency}
+          />
         </div>
         <div className='no-print'>
           <DashboardTablePagination
@@ -372,10 +574,31 @@ const FinanceReportsView = ({ locale, dictionary, setup, generatedAt }) => {
         </div>
       </Card>
 
+      <FinanceReportCharts
+        tab={reportType}
+        charts={data.charts}
+        loading={loading}
+        dictionary={dictionary.charts}
+        locale={locale}
+        currency={displayCurrency}
+      />
+
+      <div className='hidden print:block'>
+        {reportType === 'income' && <IncomeReportPrintDocument {...printDocumentProps} />}
+        {reportType === 'expenses' && <ExpenseReportPrintDocument {...printDocumentProps} />}
+        {reportType === 'loans' && <LoanReportPrintDocument {...printDocumentProps} />}
+        {reportType === 'inventory' && <InventoryReportPrintDocument {...printDocumentProps} />}
+        {reportType === 'salary' && <PayrollMasterReportPrintDocument {...printDocumentProps} />}
+      </div>
+
       <style jsx global>{`
         @media print {
-          .finance-report-print .screen-report-table { display: none !important; }
-          .finance-report-print .print-report-table { display: block !important; }
+          .finance-report-print .screen-report-table {
+            display: none !important;
+          }
+          .finance-report-print .print-report-table {
+            display: block !important;
+          }
         }
       `}</style>
     </div>

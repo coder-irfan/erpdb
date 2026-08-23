@@ -15,7 +15,13 @@ const theme = (settings, mode, direction) => {
   return {
     direction,
     components: overrides(settings.skin),
-    colorSchemes: colorSchemes(settings.skin),
+    colorSchemes: colorSchemes(
+      settings.skin,
+      settings.primaryColorLight,
+      settings.secondaryColorLight,
+      settings.primaryColorDark,
+      settings.secondaryColorDark
+    ),
     ...spacing,
     shape: {
       borderRadius: 6,

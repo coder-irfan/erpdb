@@ -10,6 +10,7 @@ import { getFinanceSalaryDictionary } from '@/data/dictionaries/financeSalary'
 import { authorizeAction } from '@/libs/actionAuthorization'
 import { getCompanySetupRecord } from '@/libs/companySetup'
 import { prisma } from '@/libs/prisma'
+import { getBrandingSettings } from '@/libs/systemSettings'
 import {
   createFinanceSalarySchema,
   financeSalaryAdjustmentSchema,
@@ -308,9 +309,10 @@ export const getFinanceSalaryDetail = async (id, payload = {}) => {
   try {
     const salaryId = normalizeId(id)
 
-    const [salary, setup, paymentAudit] = await Promise.all([
+    const [salary, setup, branding, paymentAudit] = await Promise.all([
       prisma.financesalary.findUnique({ where: { id: salaryId }, select: salarySelect }),
       getCompanySetupRecord(),
+      getBrandingSettings(),
       prisma.auditlog.findFirst({
         where: {
           action: 'FINANCE_SALARY_PAID',
@@ -335,7 +337,13 @@ export const getFinanceSalaryDetail = async (id, payload = {}) => {
           }
         : null
 
-    return { success: true, data: { salary: { ...normalizeSalary(salary), processor_identity: salary.processed_by ? null : auditedProcessor }, company: setup } }
+    return {
+      success: true,
+      data: {
+        salary: { ...normalizeSalary(salary), processor_identity: salary.processed_by ? null : auditedProcessor },
+        company: { ...setup, company_logo: setup.company_logo || branding.lightLogoUrl || null }
+      }
+    }
   } catch {
     return { success: false, code: 'SALARY_DETAIL_LOAD_FAILED', error: context.translations.messages.detailLoadFailed }
   }

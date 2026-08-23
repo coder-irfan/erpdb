@@ -18,10 +18,12 @@ import EntityActionsMenu from '@/components/table/EntityActionsMenu'
 import TableEmptyStateRow from '@/components/table/TableEmptyStateRow'
 import TableFiltersPopover from '@/components/table/TableFiltersPopover'
 import TableSkeletonRows from '@/components/table/TableSkeletonRows'
+import ResponsiveDataTable from '@/components/tables/ResponsiveDataTable'
 import { formatCurrency } from '@/utils/formatCurrency'
 
 import StaffContractDetailDialog from './StaffContractDetailDialog'
-import StaffContractDrawer from './StaffContractDrawer'
+import ContractFormDrawer from '@/views/contracts/ContractFormDrawer'
+import StaffContractStatsCards from './StaffContractStatsCards'
 
 import tableStyles from '@core/styles/table.module.css'
 
@@ -37,9 +39,10 @@ const STATUS_COLORS = {
 const formatDate = (value, locale) =>
   value ? new Intl.DateTimeFormat(localeMap[locale] || 'en-US', { dateStyle: 'medium' }).format(new Date(value)) : '—'
 
-const StaffContractsView = ({ initialResult, initialError, formOptions, canWrite, locale, dictionary }) => {
+const StaffContractsView = ({ initialResult, initialError, formOptions, canWrite, locale, dictionary, contractDictionary }) => {
   const [contracts, setContracts] = useState(initialResult.contracts)
   const [totalCount, setTotalCount] = useState(initialResult.totalCount)
+  const [summary, setSummary] = useState(initialResult.summary || { active: 0, expiringSoon: 0, draft: 0, totalValue: 0 })
   const [page, setPage] = useState(Math.max(0, initialResult.page - 1))
   const [rowsPerPage, setRowsPerPage] = useState(10)
   const [searchInput, setSearchInput] = useState('')
@@ -53,7 +56,7 @@ const StaffContractsView = ({ initialResult, initialError, formOptions, canWrite
   const [viewingContract, setViewingContract] = useState(null)
 
   const currencyCode = formOptions.setup.currency_code || 'AFN'
-  const filterPolicies = useMemo(() => formOptions.policies, [formOptions.policies])
+  const filterContractTypes = useMemo(() => formOptions.contractTypes || [], [formOptions.contractTypes])
 
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -85,6 +88,7 @@ const StaffContractsView = ({ initialResult, initialError, formOptions, canWrite
 
       setContracts(result.data.contracts)
       setTotalCount(result.data.totalCount)
+      setSummary(result.data.summary)
     } catch {
       toast.error(dictionary.messages.loadFailed)
     } finally {
@@ -115,6 +119,7 @@ const StaffContractsView = ({ initialResult, initialError, formOptions, canWrite
     })
 
     if (!contracts.some(item => item.id === contract.id)) setTotalCount(current => current + 1)
+    void refreshData()
   }
 
   const handleStatusChange = async (contract, nextStatusId) => {
@@ -132,6 +137,7 @@ const StaffContractsView = ({ initialResult, initialError, formOptions, canWrite
       }
 
       setContracts(current => current.map(item => (item.id === contract.id ? result.data : item)))
+      await refreshData()
       toast.success(result.message)
     } catch {
       toast.error(dictionary.messages.operationFailed)
@@ -140,8 +146,41 @@ const StaffContractsView = ({ initialResult, initialError, formOptions, canWrite
     }
   }
 
+  const renderContractActions = contract => (
+    <EntityActionsMenu
+      actions={[
+        { label: dictionary.actions.view, icon: 'tabler-eye', onClick: () => setViewingContract(contract) },
+        {
+          label: dictionary.actions.print,
+          icon: 'tabler-printer',
+          onClick: () => window.open(`/${locale}/hrm/contracts/${contract.id}/print`, '_blank', 'noopener,noreferrer')
+        },
+        canWrite && { label: dictionary.actions.edit, icon: 'tabler-edit', onClick: () => openEdit(contract) }
+      ]}
+      statusOptions={
+        canWrite
+          ? formOptions.statuses.map(status => ({
+              ...status,
+              label: dictionary.status[status.value] || status.label
+            }))
+          : []
+      }
+      currentStatus={contract.status_id}
+      statusDisabled={busyId === contract.id}
+      changeStatusLabel={dictionary.actions.changeStatus}
+      moreActionsLabel={dictionary.table.actions}
+      onStatusChange={nextStatusId => handleStatusChange(contract, nextStatusId)}
+    />
+  )
+
   return (
     <div className='flex flex-col md:gap-4 gap-2'>
+      <StaffContractStatsCards
+        summary={summary}
+        locale={locale}
+        currency={currencyCode}
+        dictionary={dictionary.stats}
+      />
       <Card>
         <CardContent className='flex flex-wrap items-center justify-between gap-4 border-be border-divider'>
           <CustomTextField
@@ -195,7 +234,7 @@ const StaffContractsView = ({ initialResult, initialError, formOptions, canWrite
                   select: {
                     displayEmpty: true,
                     renderValue: selectedId =>
-                      filterPolicies.find(policy => policy.id === selectedId)?.label ||
+                      filterContractTypes.find(type => type.id === selectedId)?.label ||
                       dictionary.filters.allContractTypes
                   }
                 }}
@@ -205,9 +244,9 @@ const StaffContractsView = ({ initialResult, initialError, formOptions, canWrite
                 }}
               >
                 <MenuItem value=''>{dictionary.filters.allContractTypes}</MenuItem>
-                {filterPolicies.map(policy => (
-                  <MenuItem key={policy.id} value={policy.id}>
-                    {policy.label}
+                {filterContractTypes.map(type => (
+                  <MenuItem key={type.id} value={type.id}>
+                    {type.label}
                   </MenuItem>
                 ))}
               </CustomTextField>
@@ -220,7 +259,48 @@ const StaffContractsView = ({ initialResult, initialError, formOptions, canWrite
           </div>
         </CardContent>
         {initialError && <Alert severity='error'>{initialError}</Alert>}
-        <div className='no-scrollbar overflow-x-auto scroll-smooth'>
+        <ResponsiveDataTable
+          mobileRows={contracts}
+          loading={loading}
+          getMobileRowId={contract => contract.id}
+          renderMobilePrimary={contract => (
+            <div>
+              <Typography className='font-semibold' color='primary.main'>{contract.contract_number}</Typography>
+              <Typography variant='body2' color='text.secondary'>{contract.staff.full_name}</Typography>
+            </div>
+          )}
+          renderMobileStatus={contract => (
+            <Chip
+              size='small'
+              variant='tonal'
+              color={STATUS_COLORS[contract.status.value] || 'default'}
+              label={dictionary.status[contract.status.value] || contract.status.label}
+            />
+          )}
+          renderMobileActions={renderContractActions}
+          mobileMetadata={[
+            { id: 'position', label: dictionary.table.position, render: contract => contract.position_title },
+            { id: 'type', label: dictionary.table.contractType, render: contract => contract.contract_type.label },
+            {
+              id: 'salary',
+              label: dictionary.table.salary,
+              render: contract => formatCurrency(contract.base_salary, locale, contract.currency || currencyCode)
+            },
+            {
+              id: 'period',
+              label: dictionary.table.period,
+              render: contract => `${formatDate(contract.start_date, locale)} — ${formatDate(contract.end_date, locale)}`
+            }
+          ]}
+          emptyState={{
+            icon: 'tabler-file-certificate',
+            title: dictionary.table.emptyTitle,
+            description: dictionary.table.emptyDescription,
+            actionLabel: canWrite ? dictionary.actions.addFirst : undefined,
+            onAction: canWrite ? openCreate : undefined
+          }}
+        >
+          <div className='no-scrollbar overflow-x-auto scroll-smooth'>
           <table className={tableStyles.table}>
             <thead>
               <tr>
@@ -290,33 +370,15 @@ const StaffContractsView = ({ initialResult, initialError, formOptions, canWrite
                       />
                     </td>
                     <td className='text-end'>
-                      <EntityActionsMenu
-                        actions={[
-                          { label: dictionary.actions.view, icon: 'tabler-eye', onClick: () => setViewingContract(contract) },
-                          { label: dictionary.actions.print, icon: 'tabler-printer', onClick: () => window.open(`/${locale}/hrm/contracts/${contract.id}/print`, '_blank', 'noopener,noreferrer') },
-                          canWrite && { label: dictionary.actions.edit, icon: 'tabler-edit', onClick: () => openEdit(contract) }
-                        ]}
-                        statusOptions={
-                          canWrite
-                            ? formOptions.statuses.map(status => ({
-                                ...status,
-                                label: dictionary.status[status.value] || status.label
-                              }))
-                            : []
-                        }
-                        currentStatus={contract.status_id}
-                        statusDisabled={busyId === contract.id}
-                        changeStatusLabel={dictionary.actions.changeStatus}
-                        moreActionsLabel={dictionary.table.actions}
-                        onStatusChange={nextStatusId => handleStatusChange(contract, nextStatusId)}
-                      />
+                      {renderContractActions(contract)}
                     </td>
                   </tr>
                 ))
               )}
             </tbody>
           </table>
-        </div>
+          </div>
+        </ResponsiveDataTable>
         <DashboardTablePagination
           count={totalCount}
           page={page}
@@ -331,12 +393,13 @@ const StaffContractsView = ({ initialResult, initialError, formOptions, canWrite
         />
       </Card>
 
-      <StaffContractDrawer
+      <ContractFormDrawer
         open={drawerOpen}
         contract={editingContract}
-        options={formOptions}
+        formOptions={formOptions}
         locale={locale}
-        dictionary={dictionary}
+        dictionary={contractDictionary}
+        defaultTarget='HRM'
         onClose={() => setDrawerOpen(false)}
         onSaved={handleSaved}
       />

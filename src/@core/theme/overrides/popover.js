@@ -4,13 +4,14 @@ const popover = skin => ({
       transitionDuration: 300
     },
     styleOverrides: {
-      paper: {
+      paper: ({ theme }) => ({
+        backgroundColor: theme.palette.mode === 'dark' ? '#151515' : '#F5F4F7',
         ...(skin === 'bordered'
-          ? { boxShadow: 'none', border: '1px solid var(--mui-palette-divider)' }
+          ? { boxShadow: '0 8px 22px rgb(0 0 0 / 0.12)', border: '1px solid var(--mui-palette-divider)' }
           : {
-              boxShadow: 'var(--mui-customShadows-sm)'
+              boxShadow: '0 10px 28px rgb(0 0 0 / 0.14)'
             })
-      }
+      })
     }
   }
 })

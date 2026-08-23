@@ -14,6 +14,7 @@ import Tabs from '@mui/material/Tabs'
 import Typography from '@mui/material/Typography'
 import { toast } from 'sonner'
 
+import ResponsiveDataTable from '@/components/tables/ResponsiveDataTable'
 import { formatCurrency, toFiniteNumber } from '@/utils/formatCurrency'
 
 const localeMap = { en: 'en-US', fa: 'fa-AF', ps: 'ps-AF' }
@@ -179,7 +180,10 @@ const ClientProfileModal = ({
                     </Typography>
                     {client.account_manager ? (
                       <div className='flex min-is-[220px] items-center gap-3'>
-                        <Avatar variant='rounded' className='bg-primaryLighter text-primary'></Avatar>
+                        <Avatar
+                          variant='rounded'
+                          className='bg-primaryLighter text-primary w-7 h-7 lg:w-10 lg:h-10'
+                        ></Avatar>
                         <div>
                           <Typography className='font-medium'>{client.account_manager.full_name}</Typography>
                           <Typography variant='body2' color='text.secondary'>
@@ -297,40 +301,68 @@ const ClientProfileModal = ({
                     </div>
                   </div>
                   {client.invoices.length ? (
-                    <div className='no-scrollbar overflow-x-auto scroll-smooth rounded border border-divider'>
-                      <table className='w-full'>
-                        <thead>
-                          <tr className='border-be border-divider bg-actionHover'>
-                            <th className='p-3 text-start'>{dictionary.detail.invoice}</th>
-                            <th className='p-3 text-start'>{dictionary.table.status}</th>
-                            <th className='p-3 text-start'>{dictionary.detail.dueDate}</th>
-                            <th className='p-3 text-end'>{dictionary.detail.amount}</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {client.invoices.map(invoice => (
-                            <tr
-                              key={invoice.id}
-                              className='border-be border-divider transition-colors hover:bg-actionHover'
-                            >
-                              <td className='p-3 font-medium'>{invoice.invoice_number}</td>
-                              <td className='p-3'>
-                                <Chip
-                                  size='small'
-                                  variant='tonal'
-                                  color={invoice.status.value === 'PAID' ? 'success' : 'warning'}
-                                  label={invoice.status.label}
-                                />
-                              </td>
-                              <td className='p-3'>{formatDate(invoice.due_date, locale)}</td>
-                              <td className='p-3 text-end font-semibold'>
-                                {formatCurrency(invoice.amount, locale, invoice.currency || currencyCode)}
-                              </td>
+                    <ResponsiveDataTable
+                      mobileRows={client.invoices}
+                      getMobileRowId={invoice => invoice.id}
+                      renderMobilePrimary={invoice => (
+                        <Typography className='font-semibold'>{invoice.invoice_number}</Typography>
+                      )}
+                      renderMobileStatus={invoice => (
+                        <Chip
+                          size='small'
+                          variant='tonal'
+                          color={invoice.status.value === 'PAID' ? 'success' : 'warning'}
+                          label={invoice.status.label}
+                        />
+                      )}
+                      mobileMetadata={[
+                        {
+                          id: 'dueDate',
+                          label: dictionary.detail.dueDate,
+                          render: invoice => formatDate(invoice.due_date, locale)
+                        },
+                        {
+                          id: 'amount',
+                          label: dictionary.detail.amount,
+                          render: invoice => formatCurrency(invoice.amount, locale, invoice.currency || currencyCode)
+                        }
+                      ]}
+                    >
+                      <div className='no-scrollbar overflow-x-auto scroll-smooth rounded border border-divider'>
+                        <table className='w-full'>
+                          <thead>
+                            <tr className='border-be border-divider bg-actionHover'>
+                              <th className='p-3 text-start'>{dictionary.detail.invoice}</th>
+                              <th className='p-3 text-start'>{dictionary.table.status}</th>
+                              <th className='p-3 text-start'>{dictionary.detail.dueDate}</th>
+                              <th className='p-3 text-end'>{dictionary.detail.amount}</th>
                             </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
+                          </thead>
+                          <tbody>
+                            {client.invoices.map(invoice => (
+                              <tr
+                                key={invoice.id}
+                                className='border-be border-divider transition-colors hover:bg-actionHover'
+                              >
+                                <td className='p-3 font-medium'>{invoice.invoice_number}</td>
+                                <td className='p-3'>
+                                  <Chip
+                                    size='small'
+                                    variant='tonal'
+                                    color={invoice.status.value === 'PAID' ? 'success' : 'warning'}
+                                    label={invoice.status.label}
+                                  />
+                                </td>
+                                <td className='p-3'>{formatDate(invoice.due_date, locale)}</td>
+                                <td className='p-3 text-end font-semibold'>
+                                  {formatCurrency(invoice.amount, locale, invoice.currency || currencyCode)}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </ResponsiveDataTable>
                   ) : (
                     <EmptyPanel icon='tabler-receipt-off' title={dictionary.empty.invoices} />
                   )}

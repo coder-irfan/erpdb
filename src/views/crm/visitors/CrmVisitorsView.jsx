@@ -22,7 +22,7 @@ const EMPTY = {
   visitors: [],
   totalCount: 0,
   summary: { totalToday: 0, activeGuests: 0, completedToday: 0, convertedCount: 0 },
-  options: { staff: [] }
+  options: { staff: [], purposes: [] }
 }
 
 const CrmVisitorsView = ({ locale, dictionary, canWrite, canDelete }) => {
@@ -149,7 +149,7 @@ const CrmVisitorsView = ({ locale, dictionary, canWrite, canDelete }) => {
             placeholder={dictionary.filters.searchPlaceholder}
             value={searchInput}
             onChange={event => setSearchInput(event.target.value)}
-            className='is-full sm:is-[300px]'
+            className='is-full sm:is-[340px]'
             slotProps={{ input: { startAdornment: <i className='tabler-search' /> } }}
           />
           <div className='flex is-full flex-wrap items-center gap-3 sm:is-auto sm:justify-end'>

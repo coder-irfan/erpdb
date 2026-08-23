@@ -9,6 +9,7 @@ import DashboardTablePagination from '@/components/table/DashboardTablePaginatio
 import EntityActionsMenu from '@/components/table/EntityActionsMenu'
 import TableEmptyStateRow from '@/components/table/TableEmptyStateRow'
 import TableSkeletonRows from '@/components/table/TableSkeletonRows'
+import ResponsiveDataTable from '@/components/tables/ResponsiveDataTable'
 import { toDateInputValue } from '@/utils/contractDuration'
 import { formatCurrency } from '@/utils/formatCurrency'
 
@@ -43,6 +44,7 @@ const FinanceIncomeTable = ({
   onPageChange,
   onRowsPerPageChange,
   onView,
+  onPrint,
   onEdit,
   onMarkPaid,
   onDelete,
@@ -52,9 +54,85 @@ const FinanceIncomeTable = ({
 
   today.setHours(0, 0, 0, 0)
 
+  const renderActions = income => (
+    <EntityActionsMenu
+      moreActionsLabel={dictionary.table.actions}
+      actions={[
+        { label: dictionary.actions.view, icon: 'tabler-eye', onClick: () => onView(income) },
+        { label: 'Print Receipt', icon: 'tabler-printer', onClick: () => onPrint(income) },
+        canWrite && { label: dictionary.actions.edit, icon: 'tabler-edit', onClick: () => onEdit(income) },
+        canWrite && income.status !== 'PAID' && {
+          label: dictionary.actions.markPaid,
+          icon: 'tabler-circle-check',
+          disabled: busyId === income.id,
+          onClick: () => onMarkPaid(income)
+        },
+        canDelete && { label: dictionary.actions.delete, icon: 'tabler-trash', color: 'error', onClick: () => onDelete(income) }
+      ]}
+    />
+  )
+
   return (
     <>
-      <div className='no-scrollbar overflow-x-auto scroll-smooth'>
+      <ResponsiveDataTable
+        mobileRows={data.incomes}
+        loading={loading}
+        getMobileRowId={income => income.id}
+        onRowClick={onView}
+        renderMobilePrimary={income => (
+          <div className='flex min-is-0 items-center gap-3'>
+            <span className='flex size-9 shrink-0 items-center justify-center rounded bg-successLighter text-success'>
+              <i className='tabler-cash-banknote' />
+            </span>
+            <div className='min-is-0'>
+              <Typography className='truncate font-medium'>{income.name}</Typography>
+              <Typography variant='caption' color='text.secondary' className='block truncate'>
+                {income.project ? `${income.project.project_code} · ${income.project.title}` : income.client?.company_name || dictionary.common.notAvailable}
+              </Typography>
+            </div>
+          </div>
+        )}
+        renderMobileStatus={income => (
+          <Chip
+            size='small'
+            variant='tonal'
+            color={STATUS_COLORS[income.status] || 'secondary'}
+            label={dictionary.status[income.status] || income.status}
+          />
+        )}
+        renderMobileActions={renderActions}
+        mobileMetadata={[
+          { id: 'type', label: dictionary.table.type, render: income => income.income_type.label },
+          {
+            id: 'amount',
+            label: dictionary.table.amounts,
+            render: income => formatCurrency(income.total_amount, locale, income.currency)
+          },
+          {
+            id: 'paid-due',
+            label: `${dictionary.table.paid} / ${dictionary.table.due}`,
+            render: income => `${formatCurrency(income.paid_amount, locale, income.currency)} / ${formatCurrency(income.remind_amount, locale, income.currency)}`
+          },
+          {
+            id: 'receiver',
+            label: dictionary.table.receiver,
+            render: income => income.received_by?.full_name || dictionary.common.unassigned
+          },
+          {
+            id: 'reminder',
+            label: dictionary.table.reminder,
+            render: income => toDateInputValue(income.remind_date) || dictionary.common.notAvailable
+          }
+        ]}
+        emptyState={{
+          icon: 'tabler-cash-off',
+          title: dictionary.empty.title,
+          description: dictionary.empty.description,
+          actionLabel: canWrite ? dictionary.actions.add : undefined,
+          onAction: canWrite ? onAdd : undefined
+        }}
+      >
+        <div className='no-scrollbar overflow-x-auto scroll-smooth'>
         <table className={tableStyles.table}>
           <thead>
             <tr>
@@ -142,20 +220,7 @@ const FinanceIncomeTable = ({
                       />
                     </td>
                     <td className='text-end' onClick={event => event.stopPropagation()}>
-                      <EntityActionsMenu
-                        moreActionsLabel={dictionary.table.actions}
-                        actions={[
-                          { label: dictionary.actions.view, icon: 'tabler-eye', onClick: () => onView(income) },
-                          canWrite && { label: dictionary.actions.edit, icon: 'tabler-edit', onClick: () => onEdit(income) },
-                          canWrite && income.status !== 'PAID' && {
-                            label: dictionary.actions.markPaid,
-                            icon: 'tabler-circle-check',
-                            disabled: busyId === income.id,
-                            onClick: () => onMarkPaid(income)
-                          },
-                          canDelete && { label: dictionary.actions.delete, icon: 'tabler-trash', color: 'error', onClick: () => onDelete(income) }
-                        ]}
-                      />
+                      {renderActions(income)}
                     </td>
                   </tr>
                 )
@@ -163,7 +228,8 @@ const FinanceIncomeTable = ({
             )}
           </tbody>
         </table>
-      </div>
+        </div>
+      </ResponsiveDataTable>
       <DashboardTablePagination
         count={data.totalCount}
         page={page}

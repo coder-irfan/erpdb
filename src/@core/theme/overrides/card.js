@@ -18,6 +18,9 @@ const card = skin => {
       styleOverrides: {
         root: ({ theme }) => ({
           padding: theme.spacing(6),
+          '@media (max-width:599.95px)': {
+            padding: theme.spacing(4)
+          },
           '& + .MuiCardContent-root, & + .MuiCardActions-root': {
             paddingBlockStart: 0
           },
@@ -45,6 +48,9 @@ const card = skin => {
       styleOverrides: {
         root: ({ theme }) => ({
           padding: theme.spacing(6),
+          '@media (max-width:599.95px)': {
+            padding: theme.spacing(4)
+          },
           color: 'var(--mui-palette-text-secondary)',
           '&:last-child': {
             paddingBlockEnd: theme.spacing(6)
@@ -63,6 +69,9 @@ const card = skin => {
       styleOverrides: {
         root: ({ theme }) => ({
           padding: theme.spacing(6),
+          '@media (max-width:599.95px)': {
+            padding: theme.spacing(4)
+          },
           '& .MuiButtonBase-root:not(:first-of-type)': {
             marginInlineStart: theme.spacing(4)
           },

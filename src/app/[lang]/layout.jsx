@@ -27,6 +27,7 @@ import { prisma } from '@/libs/prisma'
 
 // Style Imports
 import '@/app/globals.css'
+import '@/styles/print.css'
 import '@fortawesome/fontawesome-svg-core/styles.css'
 
 // Generated Icon CSS Imports

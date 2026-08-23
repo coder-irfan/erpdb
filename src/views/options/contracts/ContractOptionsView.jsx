@@ -24,20 +24,29 @@ import ConfirmDeleteModal from '@/components/dialogs/ConfirmDeleteModal'
 import LoadingButtonContent from '@/components/LoadingButtonContent'
 import EntityActionsMenu from '@/components/table/EntityActionsMenu'
 import TableEmptyStateRow from '@/components/table/TableEmptyStateRow'
+import ResponsiveDataTable from '@/components/tables/ResponsiveDataTable'
 
 import tableStyles from '@core/styles/table.module.css'
 
-const SECTIONS = [
-  { category: 'CONTRACT_TYPE', key: 'types', icon: 'tabler-category' },
+export const CONTRACT_OPTION_SECTIONS = [
   { category: 'CONTRACT_DURATION', key: 'durations', icon: 'tabler-calendar-time' },
-  { category: 'CONTRACT_LEVEL', key: 'levels', icon: 'tabler-layers-subtract' },
-  { category: 'CONTRACT_COUNTRY', key: 'countries', icon: 'tabler-world' },
-  { category: 'CONTRACT_STATUS', key: 'statuses', icon: 'tabler-progress-check' },
+  { category: 'CONTRACT_CLAUSE', key: 'clauses', icon: 'tabler-file-text' }
+]
+
+export const INVOICE_OPTION_SECTIONS = [
   { category: 'INVOICE_STATUS', key: 'invoiceStatuses', icon: 'tabler-receipt' },
   { category: 'PAYMENT_METHOD', key: 'paymentMethods', icon: 'tabler-credit-card' }
 ]
 
-const ContractOptionsView = ({ initialData, canWrite, canDelete, locale, dictionary, managementDictionary }) => {
+const ContractOptionsView = ({
+  initialData,
+  canWrite,
+  canDelete,
+  locale,
+  dictionary,
+  managementDictionary,
+  sections = CONTRACT_OPTION_SECTIONS
+}) => {
   const [data, setData] = useState(initialData)
   const [formCategory, setFormCategory] = useState(null)
   const [editingOption, setEditingOption] = useState(null)
@@ -125,9 +134,20 @@ const ContractOptionsView = ({ initialData, canWrite, canDelete, locale, diction
     }
   }
 
+  const renderActions = option => (
+    <EntityActionsMenu
+      actions={[
+        canWrite && { label: managementDictionary.common.edit, icon: 'tabler-edit', disabled: busyId === option.id, onClick: () => openEdit(option) },
+        canWrite && { label: option.is_active ? dictionary.common.deactivate : dictionary.common.activate, icon: option.is_active ? 'tabler-toggle-right' : 'tabler-toggle-left', disabled: busyId === option.id, onClick: () => toggle(option) },
+        canDelete && { label: managementDictionary.common.delete, icon: 'tabler-trash', color: 'error', disabled: busyId === option.id, onClick: () => setDeleteTarget(option) }
+      ]}
+      moreActionsLabel={dictionary.common.actions}
+    />
+  )
+
   return (
     <div className='grid grid-cols-1 gap-6 xl:grid-cols-2'>
-      {SECTIONS.map(section => (
+      {sections.map(section => (
         <Card key={section.category}>
           <div className='flex items-center justify-between gap-4 p-5'>
             <div className='flex items-center gap-3'>
@@ -152,7 +172,22 @@ const ContractOptionsView = ({ initialData, canWrite, canDelete, locale, diction
               </Button>
             )}
           </div>
-          <div className='no-scrollbar overflow-x-auto'>
+          <ResponsiveDataTable
+            mobileRows={data[section.category]}
+            getMobileRowId={option => option.id}
+            renderMobilePrimary={option => (
+              <div className='min-is-0'>
+                <Typography className='truncate font-medium' color='text.primary'>{option.name}</Typography>
+                <Typography variant='body2' color='text.secondary' className='line-clamp-2'>{option.description || '—'}</Typography>
+              </div>
+            )}
+            renderMobileStatus={option => (
+              <Chip size='small' variant='tonal' color={option.is_active ? 'success' : 'secondary'} label={option.is_active ? dictionary.common.active : dictionary.common.inactive} />
+            )}
+            renderMobileActions={renderActions}
+            emptyState={{ icon: section.icon, title: dictionary.common.empty, actionLabel: canWrite ? dictionary.common.create : undefined, onAction: canWrite ? () => openCreate(section.category) : undefined }}
+          >
+            <div className='no-scrollbar overflow-x-auto'>
             <table className={tableStyles.table}>
               <thead>
                 <tr>
@@ -190,21 +225,15 @@ const ContractOptionsView = ({ initialData, canWrite, canDelete, locale, diction
                         />
                       </td>
                       <td className='text-end'>
-                        <EntityActionsMenu
-                          actions={[
-                            canWrite && { label: managementDictionary.common.edit, icon: 'tabler-edit', disabled: busyId === option.id, onClick: () => openEdit(option) },
-                            canWrite && { label: option.is_active ? dictionary.common.deactivate : dictionary.common.activate, icon: option.is_active ? 'tabler-toggle-right' : 'tabler-toggle-left', disabled: busyId === option.id, onClick: () => toggle(option) },
-                            canDelete && { label: managementDictionary.common.delete, icon: 'tabler-trash', color: 'error', disabled: busyId === option.id, onClick: () => setDeleteTarget(option) }
-                          ]}
-                          moreActionsLabel={dictionary.common.actions}
-                        />
+                        {renderActions(option)}
                       </td>
                     </tr>
                   ))
                 )}
               </tbody>
             </table>
-          </div>
+            </div>
+          </ResponsiveDataTable>
         </Card>
       ))}
 

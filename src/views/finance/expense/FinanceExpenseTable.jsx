@@ -9,6 +9,7 @@ import DashboardTablePagination from '@/components/table/DashboardTablePaginatio
 import EntityActionsMenu from '@/components/table/EntityActionsMenu'
 import TableEmptyStateRow from '@/components/table/TableEmptyStateRow'
 import TableSkeletonRows from '@/components/table/TableSkeletonRows'
+import ResponsiveDataTable from '@/components/tables/ResponsiveDataTable'
 import { toDateInputValue } from '@/utils/contractDuration'
 import { formatCurrency } from '@/utils/formatCurrency'
 
@@ -41,12 +42,74 @@ const FinanceExpenseTable = ({
   onPageChange,
   onRowsPerPageChange,
   onView,
+  onPrint,
   onEdit,
   onDelete,
   onAdd
-}) => (
-  <>
-    <div className='no-scrollbar overflow-x-auto scroll-smooth'>
+}) => {
+  const renderActions = expense => (
+    <EntityActionsMenu
+      moreActionsLabel={dictionary.table.actions}
+      actions={[
+        { label: dictionary.actions.view, icon: 'tabler-eye', onClick: () => onView(expense) },
+        { label: 'Print Voucher', icon: 'tabler-printer', onClick: () => onPrint(expense) },
+        canWrite && { label: dictionary.actions.edit, icon: 'tabler-edit', onClick: () => onEdit(expense) },
+        canDelete && { label: dictionary.actions.delete, icon: 'tabler-trash', color: 'error', onClick: () => onDelete(expense) }
+      ]}
+    />
+  )
+
+  return (
+    <>
+      <ResponsiveDataTable
+        mobileRows={data.expenses}
+        loading={loading}
+        getMobileRowId={expense => expense.id}
+        onRowClick={onView}
+        renderMobilePrimary={expense => (
+          <div className='flex min-is-0 items-center gap-3'>
+            <span className='flex size-9 shrink-0 items-center justify-center rounded bg-errorLighter text-error'>
+              <i className='tabler-receipt-tax' />
+            </span>
+            <Typography className='min-is-0 truncate font-medium'>{expense.details}</Typography>
+          </div>
+        )}
+        renderMobileStatus={expense => (
+          <Chip size='small' variant='tonal' label={expense.expense_type.label} {...typeChipProps(expense.expense_type)} />
+        )}
+        renderMobileActions={renderActions}
+        mobileMetadata={[
+          {
+            id: 'scope',
+            label: dictionary.table.scope,
+            render: expense => expense.project?.title || dictionary.common.generalOverhead
+          },
+          {
+            id: 'spent-by',
+            label: dictionary.table.scope,
+            render: expense => expense.spent_by?.full_name || dictionary.common.unassigned
+          },
+          { id: 'date', label: dictionary.table.date, render: expense => toDateInputValue(expense.expense_date) },
+          {
+            id: 'quantity',
+            label: dictionary.table.quantity,
+            render: expense => `${expense.quantity} × ${formatCurrency(expense.unit_price, locale, expense.currency)}`
+          },
+          {
+            id: 'subtotal',
+            label: dictionary.table.subtotal,
+            render: expense => formatCurrency(expense.sub_total, locale, expense.currency)
+          }
+        ]}
+        emptyState={{
+          icon: 'tabler-receipt-off',
+          title: dictionary.empty.title,
+          description: dictionary.empty.description,
+          actionLabel: canWrite ? dictionary.actions.add : undefined,
+          onAction: canWrite ? onAdd : undefined
+        }}
+      >
+        <div className='no-scrollbar overflow-x-auto scroll-smooth'>
       <table className={tableStyles.table}>
         <thead>
           <tr>
@@ -120,31 +183,26 @@ const FinanceExpenseTable = ({
                   </Tooltip>
                 </td>
                 <td className='text-end' onClick={event => event.stopPropagation()}>
-                  <EntityActionsMenu
-                    moreActionsLabel={dictionary.table.actions}
-                    actions={[
-                      { label: dictionary.actions.view, icon: 'tabler-eye', onClick: () => onView(expense) },
-                      canWrite && { label: dictionary.actions.edit, icon: 'tabler-edit', onClick: () => onEdit(expense) },
-                      canDelete && { label: dictionary.actions.delete, icon: 'tabler-trash', color: 'error', onClick: () => onDelete(expense) }
-                    ]}
-                  />
+                  {renderActions(expense)}
                 </td>
               </tr>
             ))
           )}
         </tbody>
       </table>
-    </div>
-    <DashboardTablePagination
-      count={data.totalCount}
-      page={page}
-      rowsPerPage={rowsPerPage}
-      rowsPerPageLabel={dictionary.common.rowsPerPage}
-      ofLabel={dictionary.common.of}
-      onPageChange={onPageChange}
-      onRowsPerPageChange={onRowsPerPageChange}
-    />
-  </>
-)
+        </div>
+      </ResponsiveDataTable>
+      <DashboardTablePagination
+        count={data.totalCount}
+        page={page}
+        rowsPerPage={rowsPerPage}
+        rowsPerPageLabel={dictionary.common.rowsPerPage}
+        ofLabel={dictionary.common.of}
+        onPageChange={onPageChange}
+        onRowsPerPageChange={onRowsPerPageChange}
+      />
+    </>
+  )
+}
 
 export default FinanceExpenseTable

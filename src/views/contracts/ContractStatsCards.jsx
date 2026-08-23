@@ -6,7 +6,7 @@ import Typography from '@mui/material/Typography'
 
 import { formatCurrency, toFiniteNumber } from '@/utils/formatCurrency'
 
-const ContractStatsCards = ({ summary, locale, currency, dictionary }) => {
+const ContractStatsCards = ({ summary, locale, currency, dictionary, variant = 'default' }) => {
   const toneClasses = {
     success: 'bg-successLighter text-success',
     warning: 'bg-secondaryLighter text-secondary',
@@ -14,7 +14,7 @@ const ContractStatsCards = ({ summary, locale, currency, dictionary }) => {
     info: 'bg-infoLighter text-info'
   }
 
-  const cards = [
+  const standardCards = [
     {
       label: dictionary.kpis.active,
       value: summary.activeCount,
@@ -44,6 +44,15 @@ const ContractStatsCards = ({ summary, locale, currency, dictionary }) => {
       tone: 'info'
     }
   ]
+
+  const otherCards = [
+    { label: 'Total Contracts', value: summary.totalCount || 0, detail: 'Other and third-party agreements', icon: 'tabler-files', tone: 'primary' },
+    { label: 'Active', value: summary.activeCount, detail: 'Currently active', icon: 'tabler-file-check', tone: 'success' },
+    { label: 'Expiring Soon', value: summary.expiringCount, detail: 'Within 30 days', icon: 'tabler-clock-exclamation', tone: 'warning' },
+    { label: 'Total Value', value: formatCurrency(toFiniteNumber(summary.totalValue), locale, currency), detail: dictionary.kpis.baseCurrency.replace('{currency}', currency), icon: 'tabler-cash', tone: 'info' }
+  ]
+
+  const cards = variant === 'others' ? otherCards : standardCards
 
   return (
     <div className='no-scrollbar flex w-full snap-x items-stretch gap-4 overflow-x-auto pb-2'>

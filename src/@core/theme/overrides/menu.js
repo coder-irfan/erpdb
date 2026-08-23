@@ -17,8 +17,10 @@ const menu = skin => ({
         maxHeight: 320,
         overflowY: 'auto',
         marginBlockStart: theme.spacing(0.5),
+        backgroundColor: theme.palette.mode === 'dark' ? '#151515' : '#F5F4F7',
+        boxShadow: '0 10px 28px rgb(0 0 0 / 0.14)',
         ...(skin !== 'bordered' && {
-          boxShadow: 'var(--mui-customShadows-lg)'
+          boxShadow: '0 10px 28px rgb(0 0 0 / 0.14)'
         })
       })
     }

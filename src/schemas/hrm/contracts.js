@@ -67,8 +67,10 @@ export const createStaffContractSchema = customMessages => {
   const messages = { ...defaultMessages, ...customMessages }
 
   return object({
+    target_category: optional(literal('HRM'), 'HRM'),
     staff_id: requiredText(messages),
     contract_type_id: requiredText(messages),
+    template_id: requiredText(messages),
     position_title: requiredText(messages),
     base_salary: salaryValue(messages),
     currency: picklist(['AFN', 'USD'], messages.required),

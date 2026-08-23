@@ -62,14 +62,15 @@ export async function GET(request) {
   const todayWhere = { ...sharedWhere, visited_at: { gte: today, lt: new Date(today.getTime() + DAY_MS) } }
 
   try {
-    const [visitors, totalCount, totalToday, activeGuests, completedToday, convertedCount, staff] = await Promise.all([
+    const [visitors, totalCount, totalToday, activeGuests, completedToday, convertedCount, staff, purposes] = await Promise.all([
       prisma.crmvisitor.findMany({ where, include: visitorInclude, orderBy: { visited_at: 'desc' }, skip: (page - 1) * limit, take: limit }),
       prisma.crmvisitor.count({ where }),
       prisma.crmvisitor.count({ where: todayWhere }),
       prisma.crmvisitor.count({ where: { ...sharedWhere, status: 'CHECKED_IN', check_out_time: null } }),
       prisma.crmvisitor.count({ where: { ...todayWhere, status: 'COMPLETED' } }),
       prisma.crmvisitor.count({ where: { ...sharedWhere, converted_lead_id: { not: null } } }),
-      prisma.hrmstaff.findMany({ where: { status: 'ACTIVE' }, select: { id: true, first_name: true, last_name: true, position: true }, orderBy: [{ first_name: 'asc' }, { last_name: 'asc' }] })
+      prisma.hrmstaff.findMany({ where: { status: 'ACTIVE' }, select: { id: true, first_name: true, last_name: true, position: true }, orderBy: [{ first_name: 'asc' }, { last_name: 'asc' }] }),
+      prisma.option.findMany({ where: { category: 'VISITOR_PURPOSE' }, select: { id: true, label: true, value: true } })
     ])
 
     return Response.json({ success: true, data: {
@@ -78,7 +79,10 @@ export async function GET(request) {
       page,
       totalPages: Math.max(1, Math.ceil(totalCount / limit)),
       summary: { totalToday, activeGuests, completedToday, convertedCount },
-      options: { staff: staff.map(item => ({ ...item, full_name: `${item.first_name} ${item.last_name}`.trim() })) }
+      options: {
+        staff: staff.map(item => ({ ...item, full_name: `${item.first_name} ${item.last_name}`.trim() })),
+        purposes
+      }
     } })
   } catch (error) {
     console.error('CRM visitors query failed', error)

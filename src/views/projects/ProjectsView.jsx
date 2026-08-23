@@ -9,7 +9,7 @@ import MenuItem from '@mui/material/MenuItem'
 import { toast } from 'sonner'
 
 import CustomTextField from '@core/components/mui/TextField'
-import { deleteProject, getProjectFormOptions, getProjects } from '@/actions/projects'
+import { deleteProject, getProjectFormOptions, getProjects, updateProjectStatus } from '@/actions/projects'
 import ConfirmDeleteModal from '@/components/dialogs/ConfirmDeleteModal'
 import TableFiltersPopover from '@/components/table/TableFiltersPopover'
 
@@ -40,6 +40,7 @@ const ProjectsView = ({ locale, dictionary, canWrite, canDelete }) => {
   const [refreshKey, setRefreshKey] = useState(0)
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [deleting, setDeleting] = useState(false)
+  const [statusUpdating, setStatusUpdating] = useState(null)
 
   useEffect(() => {
     const timeout = setTimeout(() => { setSearch(searchInput.trim()); setPage(0) }, 350)
@@ -47,13 +48,13 @@ const ProjectsView = ({ locale, dictionary, canWrite, canDelete }) => {
     return () => clearTimeout(timeout)
   }, [searchInput])
 
-  const loadData = useCallback(async () => {
-    setLoading(true)
+  const loadData = useCallback(async (showLoading = true) => {
+    if (showLoading) setLoading(true)
     const result = await getProjects({ page: page + 1, limit: rowsPerPage, search, clientId, managerId, statusId, priorityId, locale })
 
     if (result.success) setData(result.data)
     else toast.error(result.error || dictionary.messages.loadFailed)
-    setLoading(false)
+    if (showLoading) setLoading(false)
   }, [clientId, dictionary.messages.loadFailed, locale, managerId, page, priorityId, rowsPerPage, search, statusId])
 
   const loadOptions = useCallback(async () => {
@@ -85,6 +86,49 @@ const ProjectsView = ({ locale, dictionary, canWrite, canDelete }) => {
     setDeleting(false)
   }
 
+  const changeStatus = async (project, nextStatusId) => {
+    if (nextStatusId === project.status_id) return
+    const nextStatus = options.statuses.find(option => option.id === nextStatusId)
+
+    if (!nextStatus) return
+    setStatusUpdating(project.id)
+    setData(current => ({
+      ...current,
+      projects: current.projects.map(item =>
+        item.id === project.id ? { ...item, status_id: nextStatus.id, status: nextStatus } : item
+      )
+    }))
+
+    try {
+      const result = await updateProjectStatus(project.id, nextStatusId, { locale })
+
+      if (!result.success) {
+        setData(current => ({
+          ...current,
+          projects: current.projects.map(item => (item.id === project.id ? project : item))
+        }))
+        toast.error(result.error || dictionary.messages.operationFailed)
+
+        return
+      }
+
+      setData(current => ({
+        ...current,
+        projects: current.projects.map(item => (item.id === project.id ? result.data : item))
+      }))
+      toast.success(result.message)
+      await loadData(false)
+    } catch {
+      setData(current => ({
+        ...current,
+        projects: current.projects.map(item => (item.id === project.id ? project : item))
+      }))
+      toast.error(dictionary.messages.operationFailed)
+    } finally {
+      setStatusUpdating(null)
+    }
+  }
+
   const activeFilters = [clientId, managerId, statusId, priorityId].filter(Boolean).length
   const resetFilters = () => { setClientId(''); setManagerId(''); setStatusId(''); setPriorityId(''); setPage(0) }
   const selectFilter = (label, value, setter, items, emptyLabel) => <CustomTextField select label={label} value={value} onChange={event => { setter(event.target.value); setPage(0) }} className='is-full'><MenuItem value=''>{emptyLabel}</MenuItem>{items.map(item => <MenuItem key={item.id} value={item.id}>{item.label || item.full_name || item.company_name}</MenuItem>)}</CustomTextField>
@@ -106,7 +150,7 @@ const ProjectsView = ({ locale, dictionary, canWrite, canDelete }) => {
             {canWrite && <Button variant='contained' startIcon={<i className='tabler-plus' />} onClick={openCreate}>{dictionary.actions.add}</Button>}
           </div>
         </CardContent>
-        <ProjectTableView data={data} loading={loading} page={page} rowsPerPage={rowsPerPage} locale={locale} dictionary={dictionary} canWrite={canWrite} canDelete={canDelete} onPageChange={(_, value) => setPage(value)} onRowsPerPageChange={event => { setRowsPerPage(Number(event.target.value)); setPage(0) }} onView={project => openDetail(project, 0)} onEdit={openEdit} onMembers={project => openDetail(project, 1)} onDelete={setDeleteTarget} onAdd={openCreate} />
+        <ProjectTableView data={data} loading={loading} statusUpdating={statusUpdating} page={page} rowsPerPage={rowsPerPage} locale={locale} dictionary={dictionary} canWrite={canWrite} canDelete={canDelete} statusOptions={options.statuses} onPageChange={(_, value) => setPage(value)} onRowsPerPageChange={event => { setRowsPerPage(Number(event.target.value)); setPage(0) }} onView={project => openDetail(project, 0)} onEdit={openEdit} onMembers={project => openDetail(project, 1)} onDelete={setDeleteTarget} onStatusChange={changeStatus} onAdd={openCreate} />
       </Card>
       <ProjectFormDrawer open={formOpen} project={editing} options={options} locale={locale} dictionary={dictionary} onClose={() => setFormOpen(false)} onSaved={refresh} />
       <ProjectDetailModal open={Boolean(detailId)} projectId={detailId} initialTab={detailTab} locale={locale} baseCurrency={data.baseCurrency} dictionary={dictionary} options={options} canWrite={canWrite} refreshKey={refreshKey} onClose={() => setDetailId(null)} onEdit={project => { setDetailId(null); openEdit(project) }} onChanged={refresh} />
@@ -116,4 +160,3 @@ const ProjectsView = ({ locale, dictionary, canWrite, canDelete }) => {
 }
 
 export default ProjectsView
-

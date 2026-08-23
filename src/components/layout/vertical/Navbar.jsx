@@ -2,10 +2,10 @@
 import LayoutNavbar from '@layouts/components/vertical/Navbar'
 import NavbarContent from './NavbarContent'
 
-const Navbar = () => {
+const Navbar = ({ dictionary }) => {
   return (
     <LayoutNavbar>
-      <NavbarContent />
+      <NavbarContent dictionary={dictionary} />
     </LayoutNavbar>
   )
 }

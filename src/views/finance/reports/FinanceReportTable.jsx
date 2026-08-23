@@ -1,9 +1,12 @@
+'use client'
+
 import Chip from '@mui/material/Chip'
 import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
 
 import TableEmptyStateRow from '@/components/table/TableEmptyStateRow'
 import TableSkeletonRows from '@/components/table/TableSkeletonRows'
+import ResponsiveDataTable from '@/components/tables/ResponsiveDataTable'
 import { formatCurrency } from '@/utils/formatCurrency'
 
 import tableStyles from '@core/styles/table.module.css'
@@ -25,7 +28,11 @@ const STATUS_COLORS = {
   RECORDED: 'info'
 }
 
-const normalizeStatus = value => String(value || '').trim().toUpperCase().replaceAll(' ', '_')
+const normalizeStatus = value =>
+  String(value || '')
+    .trim()
+    .toUpperCase()
+    .replaceAll(' ', '_')
 
 const StatusBadge = ({ value, dictionary }) => {
   const normalized = normalizeStatus(value)
@@ -55,8 +62,12 @@ const TABLES = {
     render: (row, { dictionary, locale }) => (
       <>
         <td className='whitespace-nowrap'>{row.date}</td>
-        <td><PrimarySecondary primary={row.reference} secondary={row.name} /></td>
-        <td><PrimarySecondary primary={row.source} secondary={row.source_detail} /></td>
+        <td>
+          <PrimarySecondary primary={row.reference} secondary={row.name} />
+        </td>
+        <td>
+          <PrimarySecondary primary={row.source} secondary={row.source_detail} />
+        </td>
         <td className='whitespace-nowrap font-medium'>{currencyCell(row.amount_local, row.currency, locale)}</td>
         <td className='whitespace-nowrap'>{currencyCell(row.amount_usd, 'USD', locale)}</td>
         <td>
@@ -66,7 +77,9 @@ const TABLES = {
             </Typography>
           </Tooltip>
         </td>
-        <td><StatusBadge value={row.status} dictionary={dictionary} /></td>
+        <td>
+          <StatusBadge value={row.status} dictionary={dictionary} />
+        </td>
       </>
     )
   },
@@ -77,14 +90,18 @@ const TABLES = {
         <td className='whitespace-nowrap'>{row.date}</td>
         <td>
           <Tooltip title={row.title}>
-            <Typography className='max-is-[260px] truncate font-medium' color='text.primary'>{row.title}</Typography>
+            <Typography className='max-is-[260px] truncate font-medium' color='text.primary'>
+              {row.title}
+            </Typography>
           </Tooltip>
         </td>
         <td>{row.category || dictionary.common.notAvailable}</td>
         <td>{row.payee || dictionary.common.notAvailable}</td>
         <td className='whitespace-nowrap font-medium'>{currencyCell(row.amount_display, displayCurrency, locale)}</td>
         <td>{row.payment_method || dictionary.common.notAvailable}</td>
-        <td><StatusBadge value={row.status} dictionary={dictionary} /></td>
+        <td>
+          <StatusBadge value={row.status} dictionary={dictionary} />
+        </td>
       </>
     )
   },
@@ -99,7 +116,9 @@ const TABLES = {
         <td className='whitespace-nowrap text-success'>{currencyCell(row.bonus, displayCurrency, locale)}</td>
         <td className='whitespace-nowrap text-error'>{currencyCell(row.deductions, displayCurrency, locale)}</td>
         <td className='whitespace-nowrap font-semibold'>{currencyCell(row.net_paid, displayCurrency, locale)}</td>
-        <td><StatusBadge value={row.status} dictionary={dictionary} /></td>
+        <td>
+          <StatusBadge value={row.status} dictionary={dictionary} />
+        </td>
       </>
     )
   },
@@ -113,7 +132,9 @@ const TABLES = {
         <td className='text-center'>{row.quantity}</td>
         <td className='whitespace-nowrap'>{currencyCell(row.unit_cost, displayCurrency, locale)}</td>
         <td className='whitespace-nowrap font-semibold'>{currencyCell(row.total_value, displayCurrency, locale)}</td>
-        <td><StatusBadge value={row.reorder_status} dictionary={dictionary} /></td>
+        <td>
+          <StatusBadge value={row.reorder_status} dictionary={dictionary} />
+        </td>
       </>
     )
   },
@@ -125,8 +146,12 @@ const TABLES = {
       return (
         <>
           <td className='whitespace-nowrap font-medium'>{row.loan_number}</td>
-          <td><PrimarySecondary primary={row.borrower || dictionary.common.notAvailable} secondary={localizedStatus} /></td>
-          <td><Chip size='small' variant='outlined' label={dictionary.loanTypes?.[row.type] || row.type} /></td>
+          <td>
+            <PrimarySecondary primary={row.borrower || dictionary.common.notAvailable} secondary={localizedStatus} />
+          </td>
+          <td>
+            <Chip size='small' variant='outlined' label={dictionary.loanTypes?.[row.type] || row.type} />
+          </td>
           <td className='whitespace-nowrap'>{currencyCell(row.total, displayCurrency, locale)}</td>
           <td className='whitespace-nowrap text-success'>{currencyCell(row.repaid, displayCurrency, locale)}</td>
           <td className='whitespace-nowrap font-semibold'>{currencyCell(row.remaining, displayCurrency, locale)}</td>
@@ -141,26 +166,164 @@ const FinanceReportTable = ({ tab, rows, loading, dictionary, locale, displayCur
   const config = TABLES[tab]
   const headers = config.headers
 
+  const renderMobilePrimary = row => {
+    if (tab === 'income') return <PrimarySecondary primary={row.reference} secondary={row.name} />
+    if (tab === 'expenses') return <PrimarySecondary primary={row.title} secondary={row.payee} />
+    if (tab === 'salary') return <PrimarySecondary primary={row.staff_name} secondary={row.designation} />
+    if (tab === 'inventory') return <PrimarySecondary primary={row.sku} secondary={row.name} />
+
+    return <PrimarySecondary primary={row.loan_number} secondary={row.borrower} />
+  }
+
+  const renderMobileStatus = row => (
+    <StatusBadge value={tab === 'inventory' ? row.reorder_status : row.status} dictionary={dictionary} />
+  )
+
+  const mobileMetadata = (() => {
+    if (tab === 'income') {
+      return [
+        { id: 'date', label: dictionary.table.date, render: row => row.date },
+        { id: 'source', label: dictionary.table.sourceCategory, render: row => row.source },
+        {
+          id: 'local-amount',
+          label: dictionary.table.amountLocal,
+          render: row => currencyCell(row.amount_local, row.currency, locale)
+        },
+        {
+          id: 'base-amount',
+          label: dictionary.table.baseAmountUsd,
+          render: row => currencyCell(row.amount_usd, 'USD', locale)
+        },
+        {
+          id: 'payment',
+          label: dictionary.table.paymentMethod,
+          render: row => row.payment_method || dictionary.common.notAvailable
+        }
+      ]
+    }
+
+    if (tab === 'expenses') {
+      return [
+        { id: 'date', label: dictionary.table.date, render: row => row.date },
+        { id: 'category', label: dictionary.table.category, render: row => row.category || dictionary.common.notAvailable },
+        { id: 'payee', label: dictionary.table.vendorPayee, render: row => row.payee || dictionary.common.notAvailable },
+        {
+          id: 'amount',
+          label: dictionary.table.amount,
+          render: row => currencyCell(row.amount_display, displayCurrency, locale)
+        },
+        {
+          id: 'payment',
+          label: dictionary.table.paymentMethod,
+          render: row => row.payment_method || dictionary.common.notAvailable
+        }
+      ]
+    }
+
+    if (tab === 'salary') {
+      return [
+        { id: 'month', label: dictionary.table.month, render: row => row.month },
+        {
+          id: 'base',
+          label: dictionary.table.baseSalary,
+          render: row => currencyCell(row.base_salary, displayCurrency, locale)
+        },
+        {
+          id: 'bonus',
+          label: dictionary.table.bonuses,
+          render: row => currencyCell(row.bonus, displayCurrency, locale)
+        },
+        {
+          id: 'deductions',
+          label: dictionary.table.deductions,
+          render: row => currencyCell(row.deductions, displayCurrency, locale)
+        },
+        {
+          id: 'net',
+          label: dictionary.table.netPaid,
+          render: row => currencyCell(row.net_paid, displayCurrency, locale)
+        }
+      ]
+    }
+
+    if (tab === 'inventory') {
+      return [
+        { id: 'category', label: dictionary.table.category, render: row => row.category },
+        { id: 'quantity', label: dictionary.table.inStockQty, render: row => row.quantity },
+        {
+          id: 'unit-cost',
+          label: dictionary.table.unitCost,
+          render: row => currencyCell(row.unit_cost, displayCurrency, locale)
+        },
+        {
+          id: 'total-value',
+          label: dictionary.table.totalAssetValue,
+          render: row => currencyCell(row.total_value, displayCurrency, locale)
+        }
+      ]
+    }
+
+    return [
+      { id: 'type', label: dictionary.table.loanType, render: row => dictionary.loanTypes?.[row.type] || row.type },
+      {
+        id: 'total',
+        label: dictionary.table.totalLoan,
+        render: row => currencyCell(row.total, displayCurrency, locale)
+      },
+      {
+        id: 'repaid',
+        label: dictionary.table.repaid,
+        render: row => currencyCell(row.repaid, displayCurrency, locale)
+      },
+      {
+        id: 'remaining',
+        label: dictionary.table.remainingBalance,
+        render: row => currencyCell(row.remaining, displayCurrency, locale)
+      },
+      { id: 'date', label: dictionary.table.issueDate, render: row => row.issue_date }
+    ]
+  })()
+
   return (
-    <table className={`${tableStyles.table} ${className}`}>
-      <thead>
-        <tr>{headers.map(header => <th key={header} className='whitespace-nowrap'>{dictionary.table[header]}</th>)}</tr>
-      </thead>
-      <tbody>
-        {loading ? (
-          <TableSkeletonRows columns={headers.length} />
-        ) : rows.length === 0 ? (
-          <TableEmptyStateRow
-            colSpan={headers.length}
-            icon='tabler-report-off'
-            title={dictionary.empty.title}
-            description={dictionary.empty.description}
-          />
-        ) : (
-          rows.map(row => <tr key={row.id}>{config.render(row, { dictionary, locale, displayCurrency })}</tr>)
-        )}
-      </tbody>
-    </table>
+    <ResponsiveDataTable
+      mobileRows={rows}
+      loading={loading}
+      getMobileRowId={row => row.id}
+      renderMobilePrimary={renderMobilePrimary}
+      renderMobileStatus={renderMobileStatus}
+      mobileMetadata={mobileMetadata}
+      emptyState={{
+        icon: 'tabler-report-off',
+        title: dictionary.empty.title,
+        description: dictionary.empty.description
+      }}
+    >
+      <table className={`${tableStyles.table} ${className}`}>
+        <thead>
+          <tr>
+            {headers.map(header => (
+              <th key={header} className='whitespace-nowrap'>
+                {dictionary.table[header]}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {loading ? (
+            <TableSkeletonRows columns={headers.length} />
+          ) : rows.length === 0 ? (
+            <TableEmptyStateRow
+              colSpan={headers.length}
+              icon='tabler-report-off'
+              title={dictionary.empty.title}
+              description={dictionary.empty.description}
+            />
+          ) : (
+            rows.map(row => <tr key={row.id}>{config.render(row, { dictionary, locale, displayCurrency })}</tr>)
+          )}
+        </tbody>
+      </table>
+    </ResponsiveDataTable>
   )
 }
 

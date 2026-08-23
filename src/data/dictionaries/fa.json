@@ -112,8 +112,8 @@
     "contractModule": "قرارداد",
     "contractManagement": "مدیریت قرارداد",
     "financeManagement": "مدیریت مالی",
-    "contractOptions": "گزینه‌های قرارداد",
-    "contractList": "قراردادها",
+    "contractOptions": "مشتریان / مراجعین",
+    "contractList": "قراردادهای مشتریان",
     "contractInvoices": "صورت‌حساب‌ها",
     "crmLeads": "سرنخ‌ها",
     "crmClients": "مشتریان",
@@ -138,7 +138,37 @@
     "crmLeadOptions": "وضعیت‌ها و منابع سرنخ",
     "setupSettings": "تنظیمات سیستم",
     "companySetup": "تنظیمات شرکت",
-    "systemAuditLogs": "ثبت‌های تفتیش سیستم"
+    "systemAuditLogs": "ثبت‌های تفتیش سیستم",
+    "invoiceOptions": "Invoice Options",
+    "otherContracts": "Others",
+    "contractTypes": "Contract Types",
+    "contractTemplates": "Contract Templates",
+    "incomeCategories": "Income Categories",
+    "crmVisitorOptions": "Visitor Purposes"
+  },
+  "notifications": {
+    "title": "اعلان‌ها",
+    "newCount": "{count} جدید",
+    "markAllRead": "علامت‌گذاری همه به‌عنوان خوانده‌شده",
+    "clearAll": "پاک کردن همه",
+    "emptyTitle": "اعلان جدیدی نیست",
+    "emptyDescription": "فعالیت‌های اخیر مرتبط با نقش شما اینجا نمایش داده می‌شود.",
+    "viewAll": "مشاهده همه اعلان‌ها",
+    "performedBy": "انجام‌شده توسط {name}",
+    "systemActor": "سیستم",
+    "actions": "عملیات",
+    "rowsPerPage": "ردیف در هر صفحه:",
+    "of": "از",
+    "deleteAction": "حذف ثبت",
+    "deleteTitle": "حذف ثبت تفتیش",
+    "deleteDescription": "این ثبت تفتیش حذف شود؟ این عمل قابل بازگشت نیست.",
+    "deleteSuccess": "ثبت تفتیش با موفقیت حذف شد.",
+    "deleteFailed": "ثبت تفتیش حذف نشد.",
+    "loadFailed": "ثبت‌های تفتیش بارگیری نشد.",
+    "cancel": "لغو",
+    "auditTitle": "ثبت‌های تفتیش سیستم", "auditDescription": "فعالیت‌های سیستم و رویدادهای امنیتی فیلترشده براساس نقش.", "search": "جستجوی ثبت‌های تفتیش", "category": "دسته", "action": "عمل", "actor": "اجراکننده", "time": "زمان", "module": "ماژول", "noActivity": "فعالیت تفتیشی برای نقش شما موجود نیست.",
+    "entities": { "CONTRACT": "قرارداد", "HRM_CONTRACT": "قرارداد کارمند", "LEAVE": "درخواست رخصتی", "INVOICE": "فاکتور", "FINANCE_INCOME": "درآمد", "FINANCE_EXPENSE": "مصرف", "FINANCE_LOAN": "قرض", "FINANCE_SALARY": "معاش", "HRM_STAFF": "کارمند", "CRM_CLIENT": "مشتری", "CRM_LEAD": "سرنخ", "CRM_VISITOR": "مراجع", "PROJECT": "پروژه", "TASK": "وظیفه", "INVENTORY_ITEM": "جنس موجودی", "OPTION": "گزینه", "USER": "کاربر", "ROLE": "نقش", "SYSTEM": "فعالیت سیستم" },
+    "events": { "CREATED": "ایجاد شد", "UPDATED": "به‌روزرسانی شد", "DELETED": "حذف شد", "STATUS_UPDATED": "وضعیت به‌روزرسانی شد", "PAID": "پرداخت شد", "PAYMENT_RECORDED": "پرداخت ثبت شد", "REPAYMENT_RECORDED": "بازپرداخت ثبت شد", "CHECKED_IN": "ورود ثبت شد", "CHECKED_OUT": "خروج ثبت شد", "CONVERTED": "تبدیل شد", "MARKED_PAID": "پرداخت‌شده علامت خورد", "HOURS_LOGGED": "ساعات ثبت شد", "MEMBER_ASSIGNED": "عضو تعیین شد", "MEMBER_REMOVED": "عضو حذف شد", "QUANTITY_ADJUSTED": "مقدار تنظیم شد", "ACTIVITY_ADDED": "فعالیت افزوده شد", "ACTIVITY_CREATED": "فعالیت ایجاد شد" }
   },
   "auth": {
     "common": {
@@ -262,12 +292,15 @@
   },
   "setupBranding": {
     "tabs": {
+      "theme": "پوسته و ظاهر",
       "general": "اطلاعات عمومی",
       "localization": "محلی‌سازی و پالیسی",
       "branding": "برند و دارایی‌ها",
       "signatories": "امضاکنندگان قانونی"
     },
     "sections": {
+      "themeTitle": "پوسته و ظاهر",
+      "themeDescription": "رنگ‌های اصلی و فرعی مورد استفاده در سراسر برنامه را سفارشی کنید.",
       "generalTitle": "اطلاعات شرکت",
       "generalDescription": "هویت قانونی و اطلاعات تماس اصلی مورد استفاده در سیستم را مدیریت کنید.",
       "localizationTitle": "محلی‌سازی و پالیسی عملیاتی",
@@ -299,6 +332,12 @@
     "saveFailed": "تنظیمات برند ذخیره نشد. لطفاً دوباره تلاش کنید.",
     "invalidLogoPath": "فایل‌های معتبر نشان و آیکون مرورگر را انتخاب کنید.",
     "fields": {
+      "primaryColor": "رنگ اصلی",
+      "secondaryColor": "رنگ فرعی",
+      "primaryColorLight": "رنگ اصلی (حالت روشن)",
+      "secondaryColorLight": "رنگ فرعی (حالت روشن)",
+      "primaryColorDark": "رنگ اصلی (حالت تاریک)",
+      "secondaryColorDark": "رنگ فرعی (حالت تاریک)",
       "appName": "نام برنامه",
       "companyName": "نام قانونی شرکت",
       "companyEmail": "ایمیل شرکت",
@@ -313,9 +352,27 @@
       "workEnd": "زمان پایان کار"
     },
     "validation": {
+      "themeColorInvalid": "رنگ‌های اصلی و فرعی معتبر وارد کنید.",
       "companyNameRequired": "نام قانونی شرکت الزامی است.",
       "workEndAfterStart": "زمان پایان کار باید بعد از زمان شروع باشد.",
       "exchangeRatePositive": "نرخ تبادله دالر/افغانی باید بیشتر از صفر باشد."
+    },
+    "theme": {
+      "lightThemeTitle": "رنگ‌های پوسته روشن",
+      "lightThemeDescription": "رنگ‌های برند برای سطوح روشن.",
+      "darkThemeTitle": "رنگ‌های پوسته تاریک",
+      "darkThemeDescription": "رنگ‌های روشن‌تر برند برای سطوح تاریک.",
+      "hexColorFormats": "یک رنگ هگز ۳ یا ۶ رقمی مانند #022483 وارد کنید.",
+      "invalidHexColor": "یک رنگ هگز معتبر وارد کنید.",
+      "primaryDescription": "برای منو، اقدامات اصلی، پیوندها و حالت‌های تمرکز استفاده می‌شود.",
+      "secondaryDescription": "برای اقدامات کمکی، برجسته‌سازی و رنگ‌های مکمل استفاده می‌شود.",
+      "colorCode": "کد رنگ",
+      "colorFormats": "مقادیر رنگ Hex، RGB و HSL پشتیبانی می‌شوند.",
+      "invalidColor": "یک رنگ معتبر Hex، RGB یا HSL وارد کنید.",
+      "pickColor": "انتخاب {color}",
+      "livePreview": "پیش‌نمایش زنده",
+      "previewTitle": "پیش‌نمایش زنده برند",
+      "previewDescription": "این گرادیانت رنگ‌های اصلی و فرعی واردشده را نمایش می‌دهد."
     },
     "upload": {
       "drop": "تصویر را اینجا بکشید و رها کنید یا فایل را انتخاب کنید.",
@@ -404,16 +461,42 @@
       "noProject": "بدون پروژه"
     },
     "hoursShort": "ساعت",
+    "print": {
+      "title": "گزارش تایم‌شیت و حاضری کارمندان",
+      "individualTitle": "کارت تایم‌شیت فردی کارمند",
+      "employee": "کارمند",
+      "period": "دوره / ماه",
+      "reportReference": "تاریخ گزارش",
+      "generatedOn": "تاریخ صدور",
+      "dateRange": "بازه تاریخ",
+      "reportType": "نوع گزارش",
+      "generalReport": "همه کارمندان / گزارش عمومی",
+      "totalLoggedHours": "مجموع ساعات ثبت‌شده",
+      "totalRecords": "مجموع رکوردها",
+      "presentDays": "روزهای حاضر / به‌موقع",
+      "offLeaveDays": "روزهای رخصتی / غیرحاضر",
+      "dailyLog": "ثبت روزانه حاضری",
+      "day": "روز",
+      "tableTitle": "خلاصه تایم‌شیت",
+      "timeInOut": "زمان (ورود / خروج)",
+      "remarks": "یادداشت‌ها / توضیحات",
+      "generalProject": "عمومی / ندارد",
+      "noRecords": "برای فیلترهای انتخاب‌شده رکورد حاضری وجود ندارد.",
+      "approvals": "تأییدها",
+      "preparedBy": "تهیه‌شده توسط (مدیر منابع بشری)",
+      "approvedBy": "تأیید توسط (مدیریت / امضاکننده مجاز)",
+      "employeeSignature": "امضای کارمند",
+      "supervisorApproval": "تأیید سرپرست / منابع بشری",
+      "signature": "امضا",
+      "officialSeal": "مهر رسمی",
+      "date": "تاریخ",
+      "confidentiality": "محرمانه و اختصاصی",
+      "page": "صفحه",
+      "of": "از",
+      "taxId": "جواز / شماره مالیاتی"
+    },
     "export": {
-      "columns": [
-        "نام کارمند",
-        "سمت",
-        "وضعیت",
-        "ورود",
-        "خروج",
-        "ساعات",
-        "یادداشت"
-      ]
+      "columns": ["نام کارمند", "سمت", "وضعیت", "ورود", "خروج", "ساعات", "یادداشت"]
     },
     "messages": {
       "created": "حاضری با موفقیت ذخیره شد.",
@@ -443,10 +526,17 @@
     }
   },
   "hrmContracts": {
+    "stats": {
+      "active": "قراردادهای فعال",
+      "expiringSoon": "نزدیک به انقضا",
+      "draft": "قراردادهای پیش‌نویس",
+      "totalValue": "ارزش مجموعی"
+    },
     "fields": {
       "contractNumber": "شماره قرارداد",
       "staffMember": "کارمند",
-      "contractType": "پالیسی قرارداد",
+      "contractType": "نوع قرارداد",
+      "template": "شرایط توافق‌شده / قالب",
       "position": "سمت",
       "baseSalary": "معاش توافق‌شده",
       "currency": "ارز",
@@ -455,7 +545,9 @@
       "status": "وضعیت",
       "email": "ایمیل",
       "phone": "تلفن",
-      "tazkiraNo": "شماره تذکره"
+      "tazkiraNo": "شماره تذکره",
+      "fatherName": "نام پدر",
+      "address": "آدرس"
     },
     "filters": {
       "search": "جستجوی قراردادها",
@@ -517,7 +609,8 @@
     },
     "placeholders": {
       "selectStaff": "کارمند را انتخاب کنید",
-      "selectPolicy": "پالیسی قرارداد را انتخاب کنید",
+      "selectPolicy": "قالب قرارداد را انتخاب کنید",
+      "selectContractType": "نوع قرارداد را انتخاب کنید",
       "selectStatus": "وضعیت قرارداد را انتخاب کنید"
     },
     "details": {
@@ -526,12 +619,30 @@
       "noContent": "محتوای سند قرارداد موجود نیست."
     },
     "print": {
-      "title": "قرارداد استخدام",
+      "title": "قرارداد استخدام کارمند",
       "taxId": "جواز / شماره مالیاتی",
       "employeeSignature": "امضای کارمند",
       "employerSignature": "کارفرما / امضاکننده مجاز",
       "signatoryStamp": "امضا یا مهر مجاز",
-      "date": "تاریخ"
+      "date": "تاریخ",
+      "reference": "شماره مرجع",
+      "issuedDate": "تاریخ صدور",
+      "page": "صفحه",
+      "of": "از",
+      "signatures": "امضاها",
+      "officialSeal": "مهر رسمی",
+      "confidentiality": "محرمانه و اختصاصی",
+      "parties": "طرف‌های قرارداد",
+      "employer": "کارفرما",
+      "employee": "مشخصات کارمند",
+      "companyName": "نام شرکت",
+      "authorizedRepresentative": "نماینده مجاز",
+      "representativeTitle": "عنوان نماینده",
+      "terms": "شرایط قرارداد",
+      "baseCurrencyValue": "ارزش به ارز پایه",
+      "exchangeRate": "نرخ تبادله",
+      "guarantor": "ضامن",
+      "legalClauses": "بندهای قانونی و شرایط توافق‌شده"
     },
     "messages": {
       "created": "قرارداد کارمند با موفقیت ایجاد شد.",
@@ -698,20 +809,7 @@
     }
   },
   "hrmPayroll": {
-    "months": [
-      "جنوری",
-      "فبروری",
-      "مارچ",
-      "اپریل",
-      "می",
-      "جون",
-      "جولای",
-      "اگست",
-      "سپتمبر",
-      "اکتوبر",
-      "نومبر",
-      "دسمبر"
-    ],
+    "months": ["جنوری", "فبروری", "مارچ", "اپریل", "می", "جون", "جولای", "اگست", "سپتمبر", "اکتوبر", "نومبر", "دسمبر"],
     "period": {
       "month": "ماه",
       "year": "سال"
@@ -1377,6 +1475,8 @@
       }
     },
     "filters": {
+      "search": "جستجوی گزارش‌ها",
+      "searchPlaceholder": "جستجوی کارمند یا سوابق گزارش...",
       "dateRange": "محدوده تاریخ",
       "startDate": "تاریخ شروع",
       "endDate": "تاریخ پایان",
@@ -1470,7 +1570,16 @@
       "description": "هیچ سابقه منابع بشری با فیلترها و محدوده تاریخ انتخاب‌شده مطابقت ندارد."
     },
     "print": {
-      "generated": "تولیدشده"
+    "generated": "تولیدشده",
+    "signatures": "تأییدها",
+    "preparedBy": "تهیه‌شده توسط (منابع بشری)",
+    "approvedBy": "تأیید توسط",
+    "date": "تاریخ",
+    "officialSeal": "مهر رسمی",
+    "confidentiality": "محرمانه و اختصاصی",
+    "page": "صفحه",
+    "of": "از",
+    "taxId": "جواز / شماره مالیاتی"
     },
     "messages": {
       "csvReady": "گزارش CSV با موفقیت دانلود شد.",
@@ -1485,15 +1594,38 @@
   },
   "financeReports": {
     "tabs": {
-      "income": { "label": "درآمد", "tableTitle": "معاملات درآمد", "icon": "tabler-trending-up" },
-      "expenses": { "label": "مصارف", "tableTitle": "معاملات مصارف", "icon": "tabler-trending-down" },
-      "salary": { "label": "معاش / حقوق", "tableTitle": "سوابق معاش و حقوق", "icon": "tabler-users-dollar" },
-      "inventory": { "label": "موجودی", "tableTitle": "ارزش‌گذاری موجودی", "icon": "tabler-packages" },
-      "loans": { "label": "قرضه‌ها", "tableTitle": "مجموعه قرضه‌ها", "icon": "tabler-building-bank" }
+      "income": {
+        "label": "درآمد",
+        "tableTitle": "معاملات درآمد",
+        "icon": "tabler-trending-up"
+      },
+      "expenses": {
+        "label": "مصارف",
+        "tableTitle": "معاملات مصارف",
+        "icon": "tabler-trending-down"
+      },
+      "salary": {
+        "label": "معاش / حقوق",
+        "tableTitle": "سوابق معاش و حقوق",
+        "icon": "tabler-users-dollar"
+      },
+      "inventory": {
+        "label": "موجودی",
+        "tableTitle": "ارزش‌گذاری موجودی",
+        "icon": "tabler-packages"
+      },
+      "loans": {
+        "label": "قرضه‌ها",
+        "tableTitle": "مجموعه قرضه‌ها",
+        "icon": "tabler-building-bank"
+      }
     },
     "filters": {
       "search": "جستجوی گزارش",
       "searchPlaceholder": "جستجو در گزارش فعلی...",
+      "category": "دسته",
+      "allCategories": "همه دسته‌ها",
+      "clear": "پاک‌کردن فیلترها",
       "dateRange": "محدوده تاریخ",
       "startDate": "تاریخ شروع",
       "endDate": "تاریخ پایان",
@@ -1501,63 +1633,172 @@
       "exchangeRate": "نرخ دالر / افغانی"
     },
     "datePresets": {
-      "thisMonth": "این ماه", "lastMonth": "ماه گذشته", "thisQuarter": "این ربع",
-      "thisYear": "امسال", "custom": "محدوده دلخواه"
+      "thisMonth": "این ماه",
+      "lastMonth": "ماه گذشته",
+      "thisQuarter": "این ربع",
+      "thisYear": "امسال",
+      "custom": "محدوده دلخواه"
     },
     "actions": {
-      "exportPdf": "صدور PDF", "exportCsv": "صدور CSV / Excel", "print": "چاپ گزارش"
+      "exportPdf": "صدور PDF",
+      "exportCsv": "صدور CSV / Excel",
+      "print": "چاپ گزارش"
     },
     "charts": {
       "titles": {
-        "income": { "trend": "روند ماهانه درآمد", "distribution": "توزیع درآمد بر اساس دسته" },
-        "expenses": { "trend": "مصرف عملیاتی ماهانه", "distribution": "مصارف بر اساس دسته" },
-        "salary": { "trend": "ترکیب ماهانه حقوق" },
-        "inventory": { "trend": "اقلام برتر بر اساس ارزش موجودی", "distribution": "توزیع تعداد موجودی بر اساس دسته" },
-        "loans": { "distribution": "قرضه صادرشده، بازپرداخت و مانده" }
+        "income": {
+          "trend": "روند ماهانه درآمد",
+          "distribution": "توزیع درآمد بر اساس دسته"
+        },
+        "expenses": {
+          "trend": "مصرف عملیاتی ماهانه",
+          "distribution": "مصارف بر اساس دسته"
+        },
+        "salary": {
+          "trend": "ترکیب ماهانه حقوق"
+        },
+        "inventory": {
+          "trend": "اقلام برتر بر اساس ارزش موجودی",
+          "distribution": "توزیع تعداد موجودی بر اساس دسته"
+        },
+        "loans": {
+          "distribution": "قرضه صادرشده، بازپرداخت و مانده"
+        }
       },
       "series": {
-        "income": "درآمد", "expenses": "مصارف", "baseSalary": "معاش پایه",
-        "bonuses": "امتیازات", "deductions": "کسورات", "stockValue": "ارزش موجودی"
+        "income": "درآمد",
+        "expenses": "مصارف",
+        "baseSalary": "معاش پایه",
+        "bonuses": "امتیازات",
+        "deductions": "کسورات",
+        "stockValue": "ارزش موجودی"
       },
-      "labels": { "issued": "صادرشده", "repaid": "بازپرداخت‌شده", "remaining": "مانده" },
+      "labels": {
+        "issued": "صادرشده",
+        "repaid": "بازپرداخت‌شده",
+        "remaining": "مانده"
+      },
       "total": "مجموع",
       "empty": "برای محدوده انتخاب‌شده داده نمودار موجود نیست."
     },
     "kpis": {
-      "grossIncome": "مجموع درآمد ناخالص", "totalTransactions": "مجموع معاملات",
-      "averageTransaction": "میانگین ارزش معامله", "operationalExpense": "مجموع مصارف عملیاتی",
-      "topExpenseCategory": "بزرگ‌ترین دسته مصرف", "approvedPending": "ثبت‌شده / در انتظار",
-      "payrollDisbursed": "مجموع معاش پرداخت‌شده", "totalDeductions": "مجموع کسورات",
-      "activeStaffPaid": "کارمندان فعال پرداخت‌شده", "stockValuation": "مجموع ارزش موجودی",
-      "skuCount": "مجموع اقلام", "lowStockCount": "هشدار موجودی کم / سفارش مجدد",
-      "activeLoanBalance": "مجموع مانده قرضه فعال", "totalRepaid": "مجموع بازپرداخت تا امروز",
+      "grossIncome": "مجموع درآمد ناخالص",
+      "totalTransactions": "مجموع معاملات",
+      "averageTransaction": "میانگین ارزش معامله",
+      "operationalExpense": "مجموع مصارف عملیاتی",
+      "topExpenseCategory": "بزرگ‌ترین دسته مصرف",
+      "approvedPending": "ثبت‌شده / در انتظار",
+      "payrollDisbursed": "مجموع معاش پرداخت‌شده",
+      "totalDeductions": "مجموع کسورات",
+      "activeStaffPaid": "کارمندان فعال پرداخت‌شده",
+      "stockValuation": "مجموع ارزش موجودی",
+      "skuCount": "مجموع اقلام",
+      "lowStockCount": "هشدار موجودی کم / سفارش مجدد",
+      "activeLoanBalance": "مجموع مانده قرضه فعال",
+      "totalRepaid": "مجموع بازپرداخت تا امروز",
       "monthlyRecovery": "پیش‌بینی وصول ماهانه"
     },
     "table": {
-      "date": "تاریخ", "reference": "شماره مرجع", "sourceCategory": "منبع / دسته",
-      "amountLocal": "مبلغ (محلی)", "baseAmountUsd": "مبلغ پایه (دالر)", "paymentMethod": "روش پرداخت",
-      "status": "وضعیت", "expenseTitle": "عنوان مصرف", "category": "دسته", "vendorPayee": "فروشنده / دریافت‌کننده",
-      "amount": "مبلغ", "staffName": "نام کارمند", "designation": "سمت", "month": "ماه",
-      "baseSalary": "معاش پایه", "bonuses": "امتیازات", "deductions": "کسورات", "netPaid": "مبلغ خالص پرداختی",
-      "paymentStatus": "وضعیت پرداخت", "sku": "کد کالا", "itemName": "نام کالا", "inStockQty": "تعداد موجود",
-      "unitCost": "قیمت واحد", "totalAssetValue": "مجموع ارزش دارایی", "reorderStatus": "وضعیت سفارش مجدد",
-      "loanNumber": "شماره قرضه", "borrower": "قرض‌گیرنده", "loanType": "نوع", "totalLoan": "مجموع قرضه",
-      "repaid": "بازپرداخت‌شده", "remainingBalance": "مانده", "issueDate": "تاریخ صدور"
+      "date": "تاریخ",
+      "reference": "شماره مرجع",
+      "sourceCategory": "منبع / دسته",
+      "amountLocal": "مبلغ (محلی)",
+      "baseAmountUsd": "مبلغ پایه (دالر)",
+      "paymentMethod": "روش پرداخت",
+      "status": "وضعیت",
+      "expenseTitle": "عنوان مصرف",
+      "category": "دسته",
+      "vendorPayee": "فروشنده / دریافت‌کننده",
+      "amount": "مبلغ",
+      "staffName": "نام کارمند",
+      "designation": "سمت",
+      "month": "ماه",
+      "baseSalary": "معاش پایه",
+      "bonuses": "امتیازات",
+      "deductions": "کسورات",
+      "netPaid": "مبلغ خالص پرداختی",
+      "paymentStatus": "وضعیت پرداخت",
+      "sku": "کد کالا",
+      "itemName": "نام کالا",
+      "inStockQty": "تعداد موجود",
+      "unitCost": "قیمت واحد",
+      "totalAssetValue": "مجموع ارزش دارایی",
+      "reorderStatus": "وضعیت سفارش مجدد",
+      "loanNumber": "شماره قرضه",
+      "borrower": "قرض‌گیرنده",
+      "loanType": "نوع",
+      "totalLoan": "مجموع قرضه",
+      "repaid": "بازپرداخت‌شده",
+      "remainingBalance": "مانده",
+      "issueDate": "تاریخ صدور"
     },
     "status": {
-      "PAID": "پرداخت‌شده", "APPROVED": "تأییدشده", "ACTIVE": "فعال", "PARTIAL": "قسمی",
-      "PENDING": "در انتظار", "DRAFT": "پیش‌نویس", "OVERDUE": "سررسیدگذشته", "RECORDED": "ثبت‌شده",
-      "IN_STOCK": "موجود", "LOW_STOCK": "موجودی کم", "OUT_OF_STOCK": "ناموجود",
-      "CANCELLED": "لغوشده", "CLOSED": "بسته", "REPAID": "تسویه‌شده"
+      "PAID": "پرداخت‌شده",
+      "APPROVED": "تأییدشده",
+      "ACTIVE": "فعال",
+      "PARTIAL": "قسمی",
+      "PENDING": "در انتظار",
+      "DRAFT": "پیش‌نویس",
+      "OVERDUE": "سررسیدگذشته",
+      "RECORDED": "ثبت‌شده",
+      "IN_STOCK": "موجود",
+      "LOW_STOCK": "موجودی کم",
+      "OUT_OF_STOCK": "ناموجود",
+      "CANCELLED": "لغوشده",
+      "CLOSED": "بسته",
+      "REPAID": "تسویه‌شده"
     },
-    "loanTypes": { "STAFF": "کارمند", "BANK": "بانک", "EXTERNAL": "بیرونی" },
-    "common": { "records": "{count} مورد گزارش", "notAvailable": "موجود نیست" },
-    "pagination": { "rowsPerPage": "ردیف در هر صفحه:", "of": "از" },
-    "empty": { "title": "داده‌ای برای گزارش یافت نشد", "description": "هیچ رکورد مالی با فیلترها و محدوده تاریخ انتخاب‌شده مطابقت ندارد." },
-    "print": { "generated": "تولیدشده" },
-    "messages": { "loadFailed": "گزارش مالی بارگذاری نشد." }
+    "loanTypes": {
+      "STAFF": "کارمند",
+      "BANK": "بانک",
+      "EXTERNAL": "بیرونی"
+    },
+    "common": {
+      "records": "{count} مورد گزارش",
+      "notAvailable": "موجود نیست"
+    },
+    "pagination": {
+      "rowsPerPage": "ردیف در هر صفحه:",
+      "of": "از"
+    },
+    "empty": {
+      "title": "داده‌ای برای گزارش یافت نشد",
+      "description": "هیچ رکورد مالی با فیلترها و محدوده تاریخ انتخاب‌شده مطابقت ندارد."
+    },
+    "print": {
+      "generated": "تولیدشده"
+    },
+    "messages": {
+      "loadFailed": "گزارش مالی بارگذاری نشد."
+    }
   },
   "optionsManagement": {
+    "visitorPurposes": {
+      "title": "Visitor Purposes",
+      "description": "Maintain the approved purposes available when logging CRM visitors.",
+      "add": "Add Visitor Purpose",
+      "addTitle": "Create Visitor Purpose",
+      "editTitle": "Edit Visitor Purpose",
+      "searchPlaceholder": "Search visitor purposes or descriptions",
+      "emptyTitle": "No Visitor Purposes Found",
+      "emptyDescription": "Add the first approved purpose for visitor check-ins.",
+      "deleteTitle": "Delete Visitor Purpose",
+      "deleteDescription": "Delete this visitor purpose? Existing visitor records keep their saved purpose.",
+      "fields": { "name": "Title / Name", "description": "Description" }
+    },
+    "incomeCategories": {
+      "title": "Income Categories",
+      "description": "Maintain the active categories available for finance income records.",
+      "add": "Add Income Category",
+      "addTitle": "Create Income Category",
+      "editTitle": "Edit Income Category",
+      "searchPlaceholder": "Search income categories or descriptions",
+      "emptyTitle": "No Income Categories Found",
+      "emptyDescription": "Add the first category used to classify income records.",
+      "deleteTitle": "Delete Income Category",
+      "deleteDescription": "Delete this income category? Categories linked to income records cannot be deleted.",
+      "fields": { "name": "Title / Name", "description": "Description" }
+    },
     "common": {
       "search": "جستجو",
       "status": "وضعیت",
@@ -2114,6 +2355,7 @@
       "saving": "در حال ذخیره…",
       "edit": "ویرایش",
       "view": "مشاهده",
+      "printDocument": "چاپ سند",
       "delete": "حذف",
       "cancel": "لغو",
       "runAudit": "بررسی انقضا",
@@ -2220,13 +2462,17 @@
     }
   },
   "contractOptions": {
+    "hrmTypes": { "title": "HRM / Staff Types", "description": "Employment contract types used for staff agreements." },
+    "customerTypes": { "title": "Customers / Clients", "description": "Contract types used for customer and client agreements." },
+    "financeTypes": { "title": "Invoices / Finance", "description": "Agreement types used for payment and settlement arrangements." },
+    "otherTypes": { "title": "Others", "description": "Vendor, lease, and miscellaneous third-party contract types." },
     "types": {
       "title": "انواع قرارداد",
       "description": "خدمات قابل فروش در قرارداد."
     },
     "durations": {
-      "title": "مدت‌های قرارداد",
-      "description": "مدت‌های معیاری برای محاسبه تاریخ پایان."
+      "title": "شرایط تمدید",
+      "description": "شرایط معیاری برای محاسبه تاریخ پایان و دوره‌های تمدید."
     },
     "levels": {
       "title": "سطوح خدمت",
@@ -2247,6 +2493,10 @@
     "paymentMethods": {
       "title": "روش‌های پرداخت",
       "description": "روش‌های مجاز ثبت پرداخت صورتحساب."
+    },
+    "clauses": {
+      "title": "بندهای حقوقی",
+      "description": "بندهای حقوقی قابل استفاده مجدد برای آماده‌سازی قراردادها."
     },
     "durationHint": "از عدد و واحد انگلیسی استفاده کنید؛ مانند 1 Year، 18 Months یا 90 Days.",
     "deleteDescription": "گزینه {name} حذف شود؟ گزینه مورد استفاده قابل حذف نیست.",
@@ -2410,56 +2660,452 @@
     }
   },
   "inventoryManagement": {
-    "metrics": { "totalValue": "ارزش مجموعی موجودی", "totalItems": "مجموع اقلام", "lowStock": "هشدار موجودی کم", "outOfStock": "ناموجود", "usdHint": "تبدیل‌شده به دالر", "itemsHint": "اقلام متمایز موجودی", "lowStockHint": "برابر یا کمتر از حد سفارش", "outOfStockHint": "اقلام بدون موجودی" },
-    "filters": { "search": "جستجوی موجودی", "searchPlaceholder": "نام قلم یا کود SKU...", "searchCategories": "جستجوی دسته‌بندی‌ها", "searchCategoriesPlaceholder": "نام یا کود دسته‌بندی...", "category": "دسته‌بندی", "status": "وضعیت", "stock": "وضعیت موجودی", "allCategories": "همه دسته‌ها", "allStatuses": "همه وضعیت‌ها", "allStock": "همه سطوح موجودی", "clear": "پاک‌کردن فیلترها" },
-    "stockStatus": { "IN_STOCK": "موجود", "LOW_STOCK": "موجودی کم", "OUT_OF_STOCK": "ناموجود" },
-    "table": { "sku": "SKU", "item": "نام قلم", "category": "دسته‌بندی", "quantity": "تعداد موجود", "unitPrice": "قیمت واحد", "totalValue": "ارزش مجموعی", "reorderLevel": "حد سفارش مجدد", "status": "وضعیت", "actions": "عملیات" },
-    "actions": { "add": "افزودن قلم موجودی", "create": "ایجاد قلم", "edit": "ویرایش قلم", "save": "ذخیره تغییرات", "saving": "در حال ذخیره...", "adjust": "تنظیم مقدار", "delete": "حذف", "cancel": "لغو" },
-    "fields": { "name": "نام قلم", "sku": "کود SKU", "category": "دسته‌بندی", "quantity": "تعداد موجود", "unitPrice": "قیمت واحد", "currency": "واحد پول", "exchangeRate": "نرخ تبادله دالر / افغانی", "reorderLevel": "حد سفارش مجدد", "status": "وضعیت", "baseAmount": "ارزش واحد به دالر", "baseTotal": "ارزش مجموعی به دالر", "currentStock": "موجودی فعلی" },
-    "placeholders": { "autoSku": "برای ایجاد خودکار خالی بگذارید" },
-    "form": { "addTitle": "افزودن قلم موجودی", "editTitle": "ویرایش قلم موجودی", "description": "مشخصات، قیمت، حد موجودی و نرخ قفل‌شده قلم را مدیریت کنید.", "statusNotice": "وضعیت موجودی کم و ناموجود بر اساس تعداد و حد سفارش به‌صورت خودکار تعیین می‌شود." },
-    "adjust": { "title": "تنظیم مقدار موجودی", "description": "گردش موجودی برای {item} را ثبت کنید.", "stockIn": "ورود موجودی", "stockOut": "خروج موجودی", "quantity": "مقدار گردش" },
-    "categoryActions": { "add": "افزودن دسته‌بندی", "edit": "ویرایش دسته‌بندی", "activate": "فعال‌سازی", "deactivate": "غیرفعال‌سازی", "delete": "حذف دسته‌بندی" },
-    "categoryStatus": { "active": "فعال", "inactive": "غیرفعال" },
-    "categoryForm": { "addTitle": "افزودن دسته‌بندی موجودی", "editTitle": "ویرایش دسته‌بندی موجودی", "name": "نام دسته‌بندی", "description": "توضیحات" },
-    "categoryEmpty": { "title": "دسته‌بندی موجودی یافت نشد", "description": "یک دسته‌بندی اضافه کنید یا جستجو را تغییر دهید." },
-    "categoryDelete": { "title": "حذف دسته‌بندی موجودی", "description": "این دسته‌بندی حذف شود؟ دسته‌بندی‌های استفاده‌شده قابل حذف نیستند." },
-    "categoryMessages": { "created": "دسته‌بندی موجودی ایجاد شد.", "updated": "دسته‌بندی موجودی به‌روزرسانی شد.", "statusUpdated": "وضعیت دسته‌بندی به‌روزرسانی شد.", "deleted": "دسته‌بندی موجودی حذف شد.", "duplicate": "دسته‌بندی با این نام موجود است.", "inUse": "این دسته‌بندی به اقلام موجودی وصل است و قابل حذف نیست." },
-    "common": { "rowsPerPage": "سطر در هر صفحه:", "of": "از" },
-    "empty": { "title": "هیچ قلم موجودی یافت نشد", "description": "یک قلم اضافه کنید یا جستجو و فیلترها را تغییر دهید." },
-    "delete": { "title": "حذف قلم موجودی", "description": "این قلم موجودی حذف شود؟ این عمل قابل برگشت نیست." },
-    "messages": { "created": "قلم موجودی با موفقیت ایجاد شد.", "updated": "قلم موجودی با موفقیت به‌روزرسانی شد.", "adjusted": "مقدار موجودی با موفقیت تنظیم شد.", "deleted": "قلم موجودی با موفقیت حذف شد.", "loadFailed": "اطلاعات موجودی بارگذاری نشد.", "operationFailed": "عملیات موجودی تکمیل نشد.", "duplicateSku": "قلمی با این کود SKU موجود است.", "notFound": "قلم موجودی یافت نشد.", "insufficientStock": "مقدار خروج بیشتر از موجودی فعلی است.", "invalidOptionType": "نوع گزینه درخواست‌شده پشتیبانی نمی‌شود.", "unauthenticated": "ورود به سیستم الزامی است.", "forbidden": "اجازه این عملیات را ندارید." },
-    "validation": { "required": "این فیلد الزامی است.", "nameTooLong": "نام قلم نباید بیشتر از ۱۵۰ نویسه باشد.", "skuInvalid": "برای SKU از ۲ تا ۵۰ حرف انگلیسی، عدد، خط تیره یا زیرخط استفاده کنید.", "quantityInvalid": "یک عدد صحیح نامنفی وارد کنید.", "priceInvalid": "قیمت واحد بزرگ‌تر از صفر وارد کنید.", "currencyInvalid": "AFN یا USD را انتخاب کنید.", "rateInvalid": "نرخ تبادله بزرگ‌تر از صفر وارد کنید.", "adjustmentInvalid": "مقدار صحیح بزرگ‌تر از صفر وارد کنید.", "invalidRelation": "دسته‌بندی و وضعیت معتبر انتخاب کنید.", "statusMissing": "وضعیت‌های ضروری موجودی تنظیم نشده‌اند.", "categoryNameInvalid": "از ۲ تا ۱۰۰ حرف انگلیسی، عدد، فاصله یا نشانه ساده استفاده کنید.", "descriptionTooLong": "توضیحات نباید بیشتر از ۱۰۰۰ نویسه باشد." }
+    "metrics": {
+      "totalValue": "ارزش مجموعی موجودی",
+      "totalItems": "مجموع اقلام",
+      "lowStock": "هشدار موجودی کم",
+      "outOfStock": "ناموجود",
+      "usdHint": "تبدیل‌شده به دالر",
+      "itemsHint": "اقلام متمایز موجودی",
+      "lowStockHint": "برابر یا کمتر از حد سفارش",
+      "outOfStockHint": "اقلام بدون موجودی"
+    },
+    "filters": {
+      "search": "جستجوی موجودی",
+      "searchPlaceholder": "نام قلم یا کود SKU...",
+      "searchCategories": "جستجوی دسته‌بندی‌ها",
+      "searchCategoriesPlaceholder": "نام یا کود دسته‌بندی...",
+      "category": "دسته‌بندی",
+      "status": "وضعیت",
+      "stock": "وضعیت موجودی",
+      "allCategories": "همه دسته‌ها",
+      "allStatuses": "همه وضعیت‌ها",
+      "allStock": "همه سطوح موجودی",
+      "clear": "پاک‌کردن فیلترها"
+    },
+    "stockStatus": {
+      "IN_STOCK": "موجود",
+      "LOW_STOCK": "موجودی کم",
+      "OUT_OF_STOCK": "ناموجود"
+    },
+    "table": {
+      "sku": "SKU",
+      "item": "نام قلم",
+      "category": "دسته‌بندی",
+      "quantity": "تعداد موجود",
+    "unitPrice": "قیمت واحد",
+    "totalValue": "ارزش مجموعی",
+    "reorderLevel": "حد سفارش مجدد",
+    "status": "وضعیت",
+    "createdAt": "تاریخ ایجاد",
+    "actions": "عملیات"
+    },
+    "actions": {
+      "add": "افزودن قلم موجودی",
+      "create": "ایجاد قلم",
+      "edit": "ویرایش قلم",
+      "save": "ذخیره تغییرات",
+      "saving": "در حال ذخیره...",
+      "adjust": "تنظیم مقدار",
+      "delete": "حذف",
+      "cancel": "لغو"
+    },
+    "fields": {
+      "name": "نام قلم",
+      "sku": "کود SKU",
+      "category": "دسته‌بندی",
+      "quantity": "تعداد موجود",
+      "unitPrice": "قیمت واحد",
+      "currency": "واحد پول",
+      "exchangeRate": "نرخ تبادله دالر / افغانی",
+      "reorderLevel": "حد سفارش مجدد",
+      "status": "وضعیت",
+      "baseAmount": "ارزش واحد به دالر",
+      "baseTotal": "ارزش مجموعی به دالر",
+      "currentStock": "موجودی فعلی"
+    },
+    "placeholders": {
+      "autoSku": "برای ایجاد خودکار خالی بگذارید"
+    },
+    "form": {
+      "addTitle": "افزودن قلم موجودی",
+      "editTitle": "ویرایش قلم موجودی",
+      "description": "مشخصات، قیمت، حد موجودی و نرخ قفل‌شده قلم را مدیریت کنید.",
+      "statusNotice": "وضعیت موجودی کم و ناموجود بر اساس تعداد و حد سفارش به‌صورت خودکار تعیین می‌شود."
+    },
+    "adjust": {
+      "title": "تنظیم مقدار موجودی",
+      "description": "گردش موجودی برای {item} را ثبت کنید.",
+      "stockIn": "ورود موجودی",
+      "stockOut": "خروج موجودی",
+      "quantity": "مقدار گردش"
+    },
+    "categoryActions": {
+      "add": "افزودن دسته‌بندی",
+      "edit": "ویرایش دسته‌بندی",
+      "activate": "فعال‌سازی",
+      "deactivate": "غیرفعال‌سازی",
+      "delete": "حذف دسته‌بندی"
+    },
+    "categoryStatus": {
+      "active": "فعال",
+      "inactive": "غیرفعال"
+    },
+    "categoryForm": {
+      "addTitle": "افزودن دسته‌بندی موجودی",
+      "editTitle": "ویرایش دسته‌بندی موجودی",
+      "name": "نام دسته‌بندی",
+      "description": "توضیحات"
+    },
+    "categoryEmpty": {
+      "title": "دسته‌بندی موجودی یافت نشد",
+      "description": "یک دسته‌بندی اضافه کنید یا جستجو را تغییر دهید."
+    },
+    "categoryDelete": {
+      "title": "حذف دسته‌بندی موجودی",
+      "description": "این دسته‌بندی حذف شود؟ دسته‌بندی‌های استفاده‌شده قابل حذف نیستند."
+    },
+    "categoryMessages": {
+      "created": "دسته‌بندی موجودی ایجاد شد.",
+      "updated": "دسته‌بندی موجودی به‌روزرسانی شد.",
+      "statusUpdated": "وضعیت دسته‌بندی به‌روزرسانی شد.",
+      "deleted": "دسته‌بندی موجودی حذف شد.",
+      "duplicate": "دسته‌بندی با این نام موجود است.",
+      "inUse": "این دسته‌بندی به اقلام موجودی وصل است و قابل حذف نیست."
+    },
+    "common": {
+      "rowsPerPage": "سطر در هر صفحه:",
+      "of": "از"
+    },
+    "empty": {
+      "title": "هیچ قلم موجودی یافت نشد",
+      "description": "یک قلم اضافه کنید یا جستجو و فیلترها را تغییر دهید."
+    },
+    "delete": {
+      "title": "حذف قلم موجودی",
+      "description": "این قلم موجودی حذف شود؟ این عمل قابل برگشت نیست."
+    },
+    "messages": {
+      "created": "قلم موجودی با موفقیت ایجاد شد.",
+      "updated": "قلم موجودی با موفقیت به‌روزرسانی شد.",
+      "adjusted": "مقدار موجودی با موفقیت تنظیم شد.",
+      "deleted": "قلم موجودی با موفقیت حذف شد.",
+      "loadFailed": "اطلاعات موجودی بارگذاری نشد.",
+      "operationFailed": "عملیات موجودی تکمیل نشد.",
+      "duplicateSku": "قلمی با این کود SKU موجود است.",
+      "notFound": "قلم موجودی یافت نشد.",
+      "insufficientStock": "مقدار خروج بیشتر از موجودی فعلی است.",
+      "invalidOptionType": "نوع گزینه درخواست‌شده پشتیبانی نمی‌شود.",
+      "unauthenticated": "ورود به سیستم الزامی است.",
+      "forbidden": "اجازه این عملیات را ندارید."
+    },
+    "validation": {
+      "required": "این فیلد الزامی است.",
+      "nameTooLong": "نام قلم نباید بیشتر از ۱۵۰ نویسه باشد.",
+      "skuInvalid": "برای SKU از ۲ تا ۵۰ حرف انگلیسی، عدد، خط تیره یا زیرخط استفاده کنید.",
+      "quantityInvalid": "یک عدد صحیح نامنفی وارد کنید.",
+      "priceInvalid": "قیمت واحد بزرگ‌تر از صفر وارد کنید.",
+      "currencyInvalid": "AFN یا USD را انتخاب کنید.",
+      "rateInvalid": "نرخ تبادله بزرگ‌تر از صفر وارد کنید.",
+      "adjustmentInvalid": "مقدار صحیح بزرگ‌تر از صفر وارد کنید.",
+      "invalidRelation": "دسته‌بندی و وضعیت معتبر انتخاب کنید.",
+      "statusMissing": "وضعیت‌های ضروری موجودی تنظیم نشده‌اند.",
+      "categoryNameInvalid": "از ۲ تا ۱۰۰ حرف انگلیسی، عدد، فاصله یا نشانه ساده استفاده کنید.",
+      "descriptionTooLong": "توضیحات نباید بیشتر از ۱۰۰۰ نویسه باشد."
+    }
   },
   "financeSalary": {
-    "metrics": { "total": "مجموع معاش ماهانه", "paid": "معاشات پرداخت‌شده", "pending": "معاشات در انتظار", "loans": "مجموع کسر قرضه", "baseCurrency": "گزارش به {currency}", "paidHint": "معاشات اجراشده این ماه", "pendingHint": "معاشات پیش‌نویس در انتظار پرداخت", "loansHint": "بازپرداخت برنامه‌ریزی‌شده قرضه کارمندان" },
-    "filters": { "search": "جستجوی معاشات", "searchPlaceholder": "نام یا ایمیل کارمند...", "month": "ماه معاش", "status": "وضعیت", "allStatuses": "همه وضعیت‌ها", "clear": "پاک‌کردن فیلترها" },
-    "table": { "staff": "کارمند", "monthDays": "ماه و روزها", "baseSalary": "معاش اساسی", "earnedBonus": "درآمد و امتیاز", "loanDeduction": "کسر قرضه", "payable": "خالص قابل پرداخت", "status": "وضعیت", "actions": "عملیات" },
-    "actions": { "generate": "ایجاد معاشات برای {month}", "generating": "در حال ایجاد معاشات...", "view": "مشاهده فیش معاش", "edit": "ویرایش تعدیلات معاش", "markPaid": "علامت‌گذاری پرداخت‌شده", "delete": "حذف رکورد", "cancel": "لغو", "save": "ذخیره تعدیلات", "saving": "در حال ذخیره...", "close": "بستن", "print": "چاپ فیش معاش" },
-    "fields": { "workedDays": "روزهای کاری", "offDays": "روزهای رخصتی", "bonus": "امتیاز / مزایا", "loanDeduction": "کسر قرضه", "notes": "یادداشت خلاصه حضور", "currency": "واحد پول", "exchangeRate": "نرخ تبادله دالر / افغانی", "dailyRate": "نرخ روزانه", "earnedSalary": "معاش کسب‌شده", "payableAmount": "خالص قابل پرداخت", "baseAmount": "مبلغ پایه", "paymentDate": "تاریخ پرداخت", "processor": "مسئول اجرا" },
-    "form": { "title": "تعدیلات معاش", "description": "حضور، امتیاز، کسورات و مقادیر قفل‌شده را پیش از پرداخت تنظیم کنید.", "liveCalculation": "محاسبه زنده معاش", "paidLocked": "رکوردهای پرداخت‌شده قفل‌اند و قابل تغییر نیستند." },
-    "payslip": { "title": "فیش رسمی معاش", "employee": "مشخصات کارمند", "designation": "سمت", "payrollMonth": "ماه معاش", "earnings": "عایدات", "deductions": "کسورات", "baseSalary": "معاش اساسی ماهانه", "earnedPay": "معاش روزهای کاری", "bonus": "امتیاز / مزایا", "loan": "بازپرداخت قرضه کارمند", "offDays": "روزهای رخصتی / بدون معاش", "netPayable": "خالص قابل پرداخت", "signature": "امضای مجاز", "notProcessed": "اجرا نشده" },
-    "status": { "DRAFT": "پیش‌نویس", "PAID": "پرداخت‌شده" },
-    "common": { "notAvailable": "-", "rowsPerPage": "سطر در هر صفحه:", "of": "از", "days": "{worked} / {total} روز", "bonus": "امتیاز: {amount}", "noLoan": "بدون کسر" },
-    "empty": { "title": "رکورد معاش یافت نشد", "description": "برای این ماه معاش ایجاد کنید یا فیلترها را تغییر دهید." },
-    "delete": { "title": "حذف رکورد معاش", "description": "معاش پیش‌نویس {name} حذف شود؟ این عمل قابل برگشت نیست." },
-    "pay": { "title": "پرداخت معاش", "description": "پرداخت {name} را تأیید کنید. کسر برنامه‌ریزی‌شده قرضه در مانده قرضه ثبت می‌شود.", "confirm": "تأیید پرداخت" },
-    "validation": { "required": "این فیلد الزامی است.", "monthInvalid": "ماه معتبر معاش را انتخاب کنید.", "daysInvalid": "تعداد صحیح روزها را وارد کنید.", "numberInvalid": "مبلغ نامنفی معتبر وارد کنید.", "notesTooLong": "یادداشت نباید بیشتر از ۵۰۰۰ نویسه باشد.", "currencyInvalid": "AFN یا USD را انتخاب کنید.", "rateInvalid": "نرخ تبادله بزرگ‌تر از صفر وارد کنید.", "daysExceedMonth": "مجموع روزهای کاری و رخصتی نباید از روزهای ماه بیشتر باشد.", "invalidStaff": "کارمند انتخاب‌شده معتبر نیست." },
-    "messages": { "unauthenticated": "ورود به سیستم الزامی است.", "forbidden": "اجازه این عملیات را ندارید.", "loadFailed": "رکوردهای معاش بارگذاری نشد.", "optionsLoadFailed": "گزینه‌های معاش بارگذاری نشد.", "detailLoadFailed": "جزئیات فیش معاش بارگذاری نشد.", "notFound": "رکورد معاش یافت نشد.", "duplicate": "برای این کارمند و ماه معاش موجود است.", "noEligibleStaff": "کارمند فعال برای ایجاد معاش موجود نیست.", "generated": "{created} معاش ایجاد و {skipped} رکورد موجود رد شد.", "updated": "تعدیلات معاش ذخیره شد.", "created": "رکورد معاش ایجاد شد.", "paid": "معاش پرداخت و بازپرداخت قرضه ثبت شد.", "alreadyPaid": "این معاش قبلاً پرداخت شده است.", "paidLocked": "معاش پرداخت‌شده قابل تغییر یا حذف نیست.", "deleted": "رکورد پیش‌نویس معاش حذف شد.", "processorMissing": "حساب شما به پروفایل فعال کارمند وصل نیست.", "operationFailed": "عملیات معاش تکمیل نشد." }
+    "metrics": {
+      "total": "مجموع معاش ماهانه",
+      "paid": "معاشات پرداخت‌شده",
+      "pending": "معاشات در انتظار",
+      "loans": "مجموع کسر قرضه",
+      "baseCurrency": "گزارش به {currency}",
+      "paidHint": "معاشات اجراشده این ماه",
+      "pendingHint": "معاشات پیش‌نویس در انتظار پرداخت",
+      "loansHint": "بازپرداخت برنامه‌ریزی‌شده قرضه کارمندان"
+    },
+    "filters": {
+      "search": "جستجوی معاشات",
+      "searchPlaceholder": "نام یا ایمیل کارمند...",
+      "month": "ماه معاش",
+      "status": "وضعیت",
+      "allStatuses": "همه وضعیت‌ها",
+      "clear": "پاک‌کردن فیلترها"
+    },
+    "table": {
+      "staff": "کارمند",
+      "monthDays": "ماه و روزها",
+      "baseSalary": "معاش اساسی",
+      "earnedBonus": "درآمد و امتیاز",
+      "loanDeduction": "کسر قرضه",
+      "payable": "خالص قابل پرداخت",
+      "status": "وضعیت",
+      "actions": "عملیات"
+    },
+    "actions": {
+      "generate": "ایجاد معاشات برای {month}",
+      "generating": "در حال ایجاد معاشات...",
+      "view": "مشاهده فیش معاش",
+      "edit": "ویرایش تعدیلات معاش",
+      "markPaid": "علامت‌گذاری پرداخت‌شده",
+      "delete": "حذف رکورد",
+      "cancel": "لغو",
+      "save": "ذخیره تعدیلات",
+      "saving": "در حال ذخیره...",
+      "close": "بستن",
+      "print": "چاپ فیش معاش"
+    },
+    "fields": {
+      "workedDays": "روزهای کاری",
+      "offDays": "روزهای رخصتی",
+      "bonus": "امتیاز / مزایا",
+      "loanDeduction": "کسر قرضه",
+      "notes": "یادداشت خلاصه حضور",
+      "currency": "واحد پول",
+      "exchangeRate": "نرخ تبادله دالر / افغانی",
+      "dailyRate": "نرخ روزانه",
+      "earnedSalary": "معاش کسب‌شده",
+      "payableAmount": "خالص قابل پرداخت",
+      "baseAmount": "مبلغ پایه",
+      "paymentDate": "تاریخ پرداخت",
+      "processor": "مسئول اجرا"
+    },
+    "form": {
+      "title": "تعدیلات معاش",
+      "description": "حضور، امتیاز، کسورات و مقادیر قفل‌شده را پیش از پرداخت تنظیم کنید.",
+      "liveCalculation": "محاسبه زنده معاش",
+      "paidLocked": "رکوردهای پرداخت‌شده قفل‌اند و قابل تغییر نیستند."
+    },
+    "payslip": {
+      "title": "فیش رسمی معاش",
+      "employee": "مشخصات کارمند",
+      "designation": "سمت",
+      "payrollMonth": "ماه معاش",
+      "earnings": "عایدات",
+      "deductions": "کسورات",
+      "baseSalary": "معاش اساسی ماهانه",
+      "earnedPay": "معاش روزهای کاری",
+      "bonus": "امتیاز / مزایا",
+      "loan": "بازپرداخت قرضه کارمند",
+      "offDays": "روزهای رخصتی / بدون معاش",
+      "netPayable": "خالص قابل پرداخت",
+      "signature": "امضای مجاز",
+      "notProcessed": "اجرا نشده",
+      "print": {
+        "title": "فیش رسمی معاش",
+        "payPeriod": "دوره / ماه معاش",
+        "paymentDate": "تاریخ پرداخت",
+        "pending": "در انتظار",
+        "status": "وضعیت",
+        "employeeInformation": "مشخصات کارمند",
+        "attendanceRate": "خلاصه حاضری و نرخ",
+        "staffMember": "کارمند",
+        "position": "سمت / نقش",
+        "employeeId": "شناسه کارمند",
+        "totalDays": "روزهای مجموعی ماه",
+        "daysWorked": "روزهای کارکرد",
+        "offDays": "روزهای رخصتی / غیرحاضر",
+        "dailyRate": "نرخ روزانه",
+        "salaryBreakdown": "تفکیک معاش",
+        "description": "شرح / کتگوری",
+        "type": "نوع",
+        "amount": "مبلغ",
+        "base": "اساسی",
+        "earning": "عاید",
+        "deduction": "کسر",
+        "baseSalary": "معاش اساسی",
+        "earnedSalary": "معاش به‌دست‌آمده (تناسبی)",
+        "bonus": "امتیاز / مبلغ عملکرد",
+        "loanDeduction": "کسر قرضه / پیش‌پرداخت",
+        "totalNetPayable": "مجموع خالص قابل پرداخت",
+        "equivalent": "معادل",
+        "exchangeRate": "نرخ تبادله",
+        "approvals": "تأییدها",
+        "employeeSignature": "امضای کارمند",
+        "processedApprovedBy": "اجرا / تأیید توسط",
+        "officialSeal": "مهر رسمی",
+        "date": "تاریخ",
+        "confidentiality": "محرمانه و اختصاصی",
+        "page": "صفحه",
+        "of": "از",
+        "taxId": "جواز / شماره مالیاتی"
+      }
+    },
+    "status": {
+      "DRAFT": "پیش‌نویس",
+      "PAID": "پرداخت‌شده"
+    },
+    "common": {
+      "notAvailable": "-",
+      "rowsPerPage": "سطر در هر صفحه:",
+      "of": "از",
+      "days": "{worked} / {total} روز",
+      "bonus": "امتیاز: {amount}",
+      "noLoan": "بدون کسر"
+    },
+    "empty": {
+      "title": "رکورد معاش یافت نشد",
+      "description": "برای این ماه معاش ایجاد کنید یا فیلترها را تغییر دهید."
+    },
+    "delete": {
+      "title": "حذف رکورد معاش",
+      "description": "معاش پیش‌نویس {name} حذف شود؟ این عمل قابل برگشت نیست."
+    },
+    "pay": {
+      "title": "پرداخت معاش",
+      "description": "پرداخت {name} را تأیید کنید. کسر برنامه‌ریزی‌شده قرضه در مانده قرضه ثبت می‌شود.",
+      "confirm": "تأیید پرداخت"
+    },
+    "validation": {
+      "required": "این فیلد الزامی است.",
+      "monthInvalid": "ماه معتبر معاش را انتخاب کنید.",
+      "daysInvalid": "تعداد صحیح روزها را وارد کنید.",
+      "numberInvalid": "مبلغ نامنفی معتبر وارد کنید.",
+      "notesTooLong": "یادداشت نباید بیشتر از ۵۰۰۰ نویسه باشد.",
+      "currencyInvalid": "AFN یا USD را انتخاب کنید.",
+      "rateInvalid": "نرخ تبادله بزرگ‌تر از صفر وارد کنید.",
+      "daysExceedMonth": "مجموع روزهای کاری و رخصتی نباید از روزهای ماه بیشتر باشد.",
+      "invalidStaff": "کارمند انتخاب‌شده معتبر نیست."
+    },
+    "messages": {
+      "unauthenticated": "ورود به سیستم الزامی است.",
+      "forbidden": "اجازه این عملیات را ندارید.",
+      "loadFailed": "رکوردهای معاش بارگذاری نشد.",
+      "optionsLoadFailed": "گزینه‌های معاش بارگذاری نشد.",
+      "detailLoadFailed": "جزئیات فیش معاش بارگذاری نشد.",
+      "notFound": "رکورد معاش یافت نشد.",
+      "duplicate": "برای این کارمند و ماه معاش موجود است.",
+      "noEligibleStaff": "کارمند فعال برای ایجاد معاش موجود نیست.",
+      "generated": "{created} معاش ایجاد و {skipped} رکورد موجود رد شد.",
+      "updated": "تعدیلات معاش ذخیره شد.",
+      "created": "رکورد معاش ایجاد شد.",
+      "paid": "معاش پرداخت و بازپرداخت قرضه ثبت شد.",
+      "alreadyPaid": "این معاش قبلاً پرداخت شده است.",
+      "paidLocked": "معاش پرداخت‌شده قابل تغییر یا حذف نیست.",
+      "deleted": "رکورد پیش‌نویس معاش حذف شد.",
+      "processorMissing": "حساب شما به پروفایل فعال کارمند وصل نیست.",
+      "operationFailed": "عملیات معاش تکمیل نشد."
+    }
   },
   "financeLoans": {
-    "metrics": { "active": "مجموع قرضه‌های فعال", "repaid": "مجموع بازپرداخت", "recovery": "بازپرداخت مورد انتظار ماهانه", "portfolio": "مجموع سبد قرضه", "usdHint": "تبدیل‌شده به دالر", "activeHint": "مانده قرضه‌های فعال و تأییدشده", "repaidHint": "بازپرداخت‌شده در همه قرضه‌ها", "recoveryHint": "کسورات مورد انتظار ماهانه", "portfolioHint": "ارزش اصلی قرضه‌های صادرشده" },
-    "filters": { "search": "جستجوی قرضه‌ها", "searchPlaceholder": "شماره قرضه، قرض‌گیرنده یا کارمند...", "status": "وضعیت", "type": "نوع قرضه", "allStatuses": "همه وضعیت‌ها", "allTypes": "همه انواع قرضه", "clear": "پاک‌کردن فیلترها" },
-    "types": { "STAFF": "قرضه کارمند", "EXTERNAL": "نهاد بیرونی", "BANK": "بانک / شرکت" },
-    "table": { "loan": "قرضه", "borrower": "قرض‌گیرنده", "total": "مبلغ مجموعی", "monthly": "کسر ماهانه", "repaid": "بازپرداخت", "remaining": "مانده", "status": "وضعیت", "date": "تاریخ صدور", "actions": "عملیات" },
-    "actions": { "add": "ایجاد قرضه", "create": "ایجاد قرضه", "save": "ذخیره تغییرات", "saving": "در حال ذخیره...", "cancel": "لغو", "close": "بستن", "view": "مشاهده جزئیات", "repay": "ثبت بازپرداخت", "print": "چاپ صورت‌حساب", "delete": "حذف قرضه" },
-    "fields": { "loanType": "نوع قرضه", "staff": "کارمند", "entity": "نام نهاد بیرونی", "total": "مبلغ مجموعی", "currency": "واحد پول", "exchangeRate": "نرخ تبادله دالر / افغانی", "monthly": "کسر ماهانه", "issueDate": "تاریخ صدور", "reason": "دلیل / یادداشت", "amountBase": "مبلغ پایه دالر", "loanNumber": "شماره قرضه", "approver": "تأییدکننده", "repaid": "مبلغ بازپرداخت", "remaining": "مانده", "status": "وضعیت", "repayment": "مبلغ بازپرداخت" },
-    "form": { "title": "ایجاد قرضه", "description": "پیش‌پرداخت کارمند یا تمویل بیرونی را با مقادیر ارزی قفل‌شده ثبت کنید.", "calculation": "پیش‌نمایش مالی" },
-    "repayment": { "title": "ثبت بازپرداخت قرضه", "description": "بازپرداخت را به {loan} اعمال کنید. مبلغ بیشتر از مانده نخواهد شد.", "confirm": "ثبت بازپرداخت" },
-    "detail": { "title": "جزئیات قرضه", "financial": "تفکیک مالی", "borrower": "قرض‌گیرنده و تأیید", "statement": "صورت‌حساب قرضه" },
-    "common": { "notAvailable": "-", "rowsPerPage": "سطر در هر صفحه:", "of": "از", "active": "فعال", "unassigned": "تعیین‌نشده" },
-    "empty": { "title": "قرضه‌ای یافت نشد", "description": "یک قرضه ایجاد کنید یا جستجو و فیلترها را تغییر دهید." },
-    "validation": { "required": "این فیلد الزامی است.", "amountInvalid": "مبلغ بزرگ‌تر از صفر وارد کنید.", "rateInvalid": "نرخ تبادله بزرگ‌تر از صفر وارد کنید.", "dateInvalid": "تاریخ معتبر صدور را انتخاب کنید.", "entityRequired": "نام نهاد بیرونی را وارد کنید.", "staffRequired": "یک کارمند انتخاب کنید.", "monthlyTooHigh": "کسر ماهانه نمی‌تواند از مبلغ مجموعی بیشتر باشد.", "reasonTooLong": "دلیل نباید بیشتر از ۵۰۰۰ نویسه باشد." },
-    "messages": { "unauthenticated": "ورود به سیستم الزامی است.", "forbidden": "اجازه این عملیات را ندارید.", "loadFailed": "قرضه‌ها بارگذاری نشد.", "detailLoadFailed": "جزئیات قرضه بارگذاری نشد.", "created": "قرضه با موفقیت ایجاد شد.", "updated": "قرضه با موفقیت به‌روزرسانی شد.", "deleted": "قرضه با موفقیت حذف شد.", "repaid": "بازپرداخت قرضه ثبت شد.", "notFound": "قرضه یافت نشد.", "invalidRelation": "کارمند یا وضعیت انتخاب‌شده معتبر نیست.", "repaymentBlocked": "این قرضه مانده ندارد.", "deleteBlocked": "قرضه دارای بازپرداخت قابل حذف نیست.", "operationFailed": "عملیات قرضه تکمیل نشد." }
+    "metrics": {
+      "active": "مجموع قرضه‌های فعال",
+      "repaid": "مجموع بازپرداخت",
+      "recovery": "بازپرداخت مورد انتظار ماهانه",
+      "portfolio": "مجموع سبد قرضه",
+      "usdHint": "تبدیل‌شده به دالر",
+      "activeHint": "مانده قرضه‌های فعال و تأییدشده",
+      "repaidHint": "بازپرداخت‌شده در همه قرضه‌ها",
+      "recoveryHint": "کسورات مورد انتظار ماهانه",
+      "portfolioHint": "ارزش اصلی قرضه‌های صادرشده"
+    },
+    "filters": {
+      "search": "جستجوی قرضه‌ها",
+      "searchPlaceholder": "شماره قرضه، قرض‌گیرنده یا کارمند...",
+      "status": "وضعیت",
+      "type": "نوع قرضه",
+      "allStatuses": "همه وضعیت‌ها",
+      "allTypes": "همه انواع قرضه",
+      "clear": "پاک‌کردن فیلترها"
+    },
+    "types": {
+      "STAFF": "قرضه کارمند",
+      "EXTERNAL": "نهاد بیرونی",
+      "BANK": "بانک / شرکت"
+    },
+    "table": {
+      "loan": "قرضه",
+      "borrower": "قرض‌گیرنده",
+      "total": "مبلغ مجموعی",
+      "monthly": "کسر ماهانه",
+      "repaid": "بازپرداخت",
+      "remaining": "مانده",
+      "status": "وضعیت",
+      "date": "تاریخ صدور",
+      "actions": "عملیات"
+    },
+    "actions": {
+      "add": "ایجاد قرضه",
+      "create": "ایجاد قرضه",
+      "save": "ذخیره تغییرات",
+      "saving": "در حال ذخیره...",
+      "cancel": "لغو",
+      "close": "بستن",
+      "view": "مشاهده جزئیات",
+      "repay": "ثبت بازپرداخت",
+      "print": "چاپ صورت‌حساب",
+      "delete": "حذف قرضه"
+    },
+    "fields": {
+      "loanType": "نوع قرضه",
+      "staff": "کارمند",
+      "entity": "نام نهاد بیرونی",
+      "total": "مبلغ مجموعی",
+      "currency": "واحد پول",
+      "exchangeRate": "نرخ تبادله دالر / افغانی",
+      "monthly": "کسر ماهانه",
+      "issueDate": "تاریخ صدور",
+      "reason": "دلیل / یادداشت",
+      "amountBase": "مبلغ پایه دالر",
+      "loanNumber": "شماره قرضه",
+      "approver": "تأییدکننده",
+      "repaid": "مبلغ بازپرداخت",
+      "remaining": "مانده",
+      "status": "وضعیت",
+      "repayment": "مبلغ بازپرداخت"
+    },
+    "form": {
+      "title": "ایجاد قرضه",
+      "description": "پیش‌پرداخت کارمند یا تمویل بیرونی را با مقادیر ارزی قفل‌شده ثبت کنید.",
+      "calculation": "پیش‌نمایش مالی"
+    },
+    "repayment": {
+      "title": "ثبت بازپرداخت قرضه",
+      "description": "بازپرداخت را به {loan} اعمال کنید. مبلغ بیشتر از مانده نخواهد شد.",
+      "confirm": "ثبت بازپرداخت"
+    },
+    "detail": {
+      "title": "جزئیات قرضه",
+      "financial": "تفکیک مالی",
+      "borrower": "قرض‌گیرنده و تأیید",
+      "statement": "صورت‌حساب قرضه"
+    },
+    "common": {
+      "notAvailable": "-",
+      "rowsPerPage": "سطر در هر صفحه:",
+      "of": "از",
+      "active": "فعال",
+      "unassigned": "تعیین‌نشده"
+    },
+    "empty": {
+      "title": "قرضه‌ای یافت نشد",
+      "description": "یک قرضه ایجاد کنید یا جستجو و فیلترها را تغییر دهید."
+    },
+    "validation": {
+      "required": "این فیلد الزامی است.",
+      "amountInvalid": "مبلغ بزرگ‌تر از صفر وارد کنید.",
+      "rateInvalid": "نرخ تبادله بزرگ‌تر از صفر وارد کنید.",
+      "dateInvalid": "تاریخ معتبر صدور را انتخاب کنید.",
+      "entityRequired": "نام نهاد بیرونی را وارد کنید.",
+      "staffRequired": "یک کارمند انتخاب کنید.",
+      "monthlyTooHigh": "کسر ماهانه نمی‌تواند از مبلغ مجموعی بیشتر باشد.",
+      "reasonTooLong": "دلیل نباید بیشتر از ۵۰۰۰ نویسه باشد."
+    },
+    "messages": {
+      "unauthenticated": "ورود به سیستم الزامی است.",
+      "forbidden": "اجازه این عملیات را ندارید.",
+      "loadFailed": "قرضه‌ها بارگذاری نشد.",
+      "detailLoadFailed": "جزئیات قرضه بارگذاری نشد.",
+      "created": "قرضه با موفقیت ایجاد شد.",
+      "updated": "قرضه با موفقیت به‌روزرسانی شد.",
+      "deleted": "قرضه با موفقیت حذف شد.",
+      "repaid": "بازپرداخت قرضه ثبت شد.",
+      "notFound": "قرضه یافت نشد.",
+      "invalidRelation": "کارمند یا وضعیت انتخاب‌شده معتبر نیست.",
+      "repaymentBlocked": "این قرضه مانده ندارد.",
+      "deleteBlocked": "قرضه دارای بازپرداخت قابل حذف نیست.",
+      "operationFailed": "عملیات قرضه تکمیل نشد."
+    }
   }
 }

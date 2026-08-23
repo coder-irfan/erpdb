@@ -35,6 +35,7 @@ const DEFAULT_VALUES = { name: '', category: 'CONTRACT_POLICY', description: '',
 const FONT_FAMILIES = ['Public Sans', 'Peyda', 'Vazirmatn', 'Arial', 'Georgia', 'Times New Roman', 'monospace']
 const FONT_SIZES = ['12px', '14px', '16px', '18px', '20px', '24px', '28px', '32px']
 const LINE_HEIGHTS = ['1', '1.25', '1.5', '1.75', '2']
+const TEMPLATE_TAGS = ['{{name}}', '{{amount}}', '{{start_date}}', '{{end_date}}', '{{position}}', '{{company_name}}', '{{tazkira_no}}']
 
 const Indent = Extension.create({
   name: 'indent',
@@ -252,6 +253,20 @@ const ContractPolicyForm = ({ open, option, locale, dictionary, onClose, onSaved
           <div>
             <div className='mb-2 text-sm font-medium text-textPrimary'>
               {dictionary.contractPolicies.fields.description}
+            </div>
+            <div className='mb-2 flex flex-wrap gap-2'>
+              {TEMPLATE_TAGS.map(tag => (
+                <Button
+                  key={tag}
+                  type='button'
+                  size='small'
+                  variant='tonal'
+                  disabled={editorDisabled}
+                  onClick={() => editor?.chain().focus().insertContent(tag).run()}
+                >
+                  {tag}
+                </Button>
+              ))}
             </div>
             <div className='overflow-hidden rounded border border-divider transition-colors focus-within:border-primary focus-within:shadow-[0_0_0_3px_rgb(var(--mui-palette-primary-mainChannel)/0.16)]'>
               <div className='flex flex-wrap items-center gap-1 border-be border-divider bg-actionHover p-2'>

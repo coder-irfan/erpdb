@@ -104,6 +104,11 @@ const TextFieldStyled = styled(TextField)(({ theme }) => ({
     }
   },
   '& .MuiInputBase-input': {
+    color: 'rgb(var(--mui-palette-text-primaryChannel) / 0.78)',
+    '&::placeholder': {
+      color: 'rgb(var(--mui-palette-text-primaryChannel) / 0.6)',
+      opacity: 1
+    },
     '&:not(textarea).MuiInputBase-inputSizeSmall': {
       padding: '7.25px 14px'
     },
@@ -145,7 +150,8 @@ const TextFieldStyled = styled(TextField)(({ theme }) => ({
     minHeight: 'unset !important',
     lineHeight: '1.4375em',
     '&.MuiInputBase-input': {
-      paddingInlineEnd: '32px !important'
+      paddingInlineEnd: '32px !important',
+      color: 'rgb(var(--mui-palette-text-primaryChannel) / 0.78)'
     }
   },
   '& .Mui-focused .MuiSelect-select': {

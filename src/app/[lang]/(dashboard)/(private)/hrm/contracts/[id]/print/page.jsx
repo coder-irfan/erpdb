@@ -6,8 +6,9 @@ import Button from '@mui/material/Button'
 
 import { getStaffContractById } from '@/actions/hrm/contracts'
 import PrintButton from '@/components/common/PrintButton'
-import PrintLayout from '@/components/common/PrintLayout'
+import PrintLayout from '@/components/print/PrintLayout'
 import { getDictionary } from '@/utils/getDictionary'
+import StaffContractPrintDocument, { formatDate } from '@/views/hrm/contracts/StaffContractPrintDocument'
 
 const StaffContractPrintPage = async props => {
   const { id, lang } = await props.params
@@ -27,11 +28,33 @@ const StaffContractPrintPage = async props => {
       </div>
       {result.success ? (
         <PrintLayout
-          contract={result.data.contract}
+          title={dictionary.hrmContracts.print.title}
+          documentNumber={result.data.contract.contract_number}
+          date={formatDate(result.data.contract.created_at, lang)}
           setup={result.data.setup}
-          dictionary={dictionary.hrmContracts}
-          locale={lang}
-        />
+          recipientName={result.data.contract.staff.full_name}
+          recipientLabel={dictionary.hrmContracts.print.employeeSignature}
+          labels={{
+            reference: dictionary.hrmContracts.print.reference,
+            issuedDate: dictionary.hrmContracts.print.issuedDate,
+            authorizedRepresentative: dictionary.hrmContracts.print.employerSignature,
+            recipientSignature: dictionary.hrmContracts.print.employeeSignature,
+            signatures: dictionary.hrmContracts.print.signatures,
+            date: dictionary.hrmContracts.print.date,
+            page: dictionary.hrmContracts.print.page,
+            of: dictionary.hrmContracts.print.of,
+            confidentiality: dictionary.hrmContracts.print.confidentiality,
+            officialSeal: dictionary.hrmContracts.print.officialSeal,
+            taxId: dictionary.hrmContracts.print.taxId
+          }}
+        >
+          <StaffContractPrintDocument
+            contract={result.data.contract}
+            setup={result.data.setup}
+            locale={lang}
+            dictionary={dictionary.hrmContracts}
+          />
+        </PrintLayout>
       ) : (
         <Alert severity='error' className='mx-auto max-w-[210mm]'>
           {result.error}

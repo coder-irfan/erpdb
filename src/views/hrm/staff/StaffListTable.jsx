@@ -9,7 +9,7 @@ import CardContent from '@mui/material/CardContent'
 import Chip from '@mui/material/Chip'
 import MenuItem from '@mui/material/MenuItem'
 import Typography from '@mui/material/Typography'
-import { createColumnHelper, flexRender, getCoreRowModel, useReactTable } from '@tanstack/react-table'
+import { createColumnHelper, getCoreRowModel, useReactTable } from '@tanstack/react-table'
 import { toast } from 'sonner'
 
 import { Avatar } from '@mui/material'
@@ -17,17 +17,14 @@ import { Avatar } from '@mui/material'
 import CustomTextField from '@core/components/mui/TextField'
 import DashboardTablePagination from '@/components/table/DashboardTablePagination'
 import EntityActionsMenu from '@/components/table/EntityActionsMenu'
-import TableEmptyStateRow from '@/components/table/TableEmptyStateRow'
 import TableFiltersPopover from '@/components/table/TableFiltersPopover'
-import TableSkeletonRows from '@/components/table/TableSkeletonRows'
+import ResponsiveDataTable from '@/components/tables/ResponsiveDataTable'
 import { formatCurrency } from '@/utils/formatCurrency'
 import { getAvailableStaffUsers, getStaffList, getStaffStats, updateStaffStatus } from '@/actions/hrm/staff'
 
 import StaffDetailModal from './StaffDetailModal'
 import StaffDrawer from './StaffDrawer'
 import StaffStatsCards from './StaffStatsCards'
-
-import tableStyles from '@core/styles/table.module.css'
 
 const columnHelper = createColumnHelper()
 const STATUS_COLORS = { ACTIVE: 'success', INACTIVE: 'secondary', TERMINATED: 'error' }
@@ -195,8 +192,8 @@ const StaffListTable = ({
           const employee = row.original
 
           return (
-            <div className='flex min-is-[250px] items-center gap-3'>
-              <Avatar variant='rounded' className='bg-primaryLighter text-primary'></Avatar>
+            <div className='flex min-is-0 items-center gap-3'>
+              <Avatar variant='rounded' className='bg-primaryLighter text-primary w-7 h-7 lg:w-10 lg:h-10'></Avatar>
               <div className='flex min-is-0 flex-col'>
                 <Typography color='text.primary' className='truncate font-medium'>
                   {employee.full_name}
@@ -240,7 +237,11 @@ const StaffListTable = ({
             <EntityActionsMenu
               actions={[
                 { label: dictionary.actions.view, icon: 'tabler-eye', onClick: () => setDetailStaffId(employee.id) },
-                canUpdate && { label: dictionary.actions.edit, icon: 'tabler-edit', onClick: () => openEditDrawer(employee) }
+                canUpdate && {
+                  label: dictionary.actions.edit,
+                  icon: 'tabler-edit',
+                  onClick: () => openEditDrawer(employee)
+                }
               ]}
               statusOptions={
                 canUpdate
@@ -351,45 +352,20 @@ const StaffListTable = ({
           </div>
         </CardContent>
 
-        <div className='no-scrollbar overflow-x-auto scroll-smooth'>
-          <table className={tableStyles.table}>
-            <thead>
-              {table.getHeaderGroups().map(headerGroup => (
-                <tr key={headerGroup.id}>
-                  {headerGroup.headers.map(header => (
-                    <th key={header.id} className={header.column.id === 'actions' ? 'text-end' : undefined}>
-                      {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
-                    </th>
-                  ))}
-                </tr>
-              ))}
-            </thead>
-            <tbody>
-              {loading ? (
-                <TableSkeletonRows columns={columns.length} />
-              ) : table.getRowModel().rows.length === 0 ? (
-                <TableEmptyStateRow
-                  colSpan={columns.length}
-                  icon='tabler-users-plus'
-                  title={dictionary.table.noResultsTitle}
-                  description={dictionary.table.noResultsDescription}
-                  actionLabel={canCreate ? dictionary.actions.addFirst : null}
-                  onAction={canCreate ? openCreateDrawer : null}
-                />
-              ) : (
-                table.getRowModel().rows.map(row => (
-                  <tr key={row.id}>
-                    {row.getVisibleCells().map(cell => (
-                      <td key={cell.id} className={cell.column.id === 'actions' ? 'text-end' : undefined}>
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                      </td>
-                    ))}
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+        <ResponsiveDataTable
+          table={table}
+          loading={loading}
+          primaryColumnId='staff'
+          statusColumnId='status'
+          actionsColumnId='actions'
+          emptyState={{
+            icon: 'tabler-users-plus',
+            title: dictionary.table.noResultsTitle,
+            description: dictionary.table.noResultsDescription,
+            actionLabel: canCreate ? dictionary.actions.addFirst : null,
+            onAction: canCreate ? openCreateDrawer : null
+          }}
+        />
 
         <DashboardTablePagination
           count={totalCount}

@@ -6,8 +6,19 @@ import { getDictionary } from '@/utils/getDictionary'
 import { hasAnyPermission } from '@/utils/rbac'
 import StaffContractsView from '@/views/hrm/contracts/StaffContractsView'
 
-const EMPTY_RESULT = { contracts: [], totalCount: 0, page: 1, totalPages: 1 }
-const EMPTY_OPTIONS = { staff: [], policies: [], statuses: [], setup: { currency_code: 'AFN' } }
+const EMPTY_RESULT = {
+  contracts: [],
+  totalCount: 0,
+  page: 1,
+  totalPages: 1,
+  summary: { active: 0, expiringSoon: 0, draft: 0, totalValue: 0 }
+}
+
+const EMPTY_OPTIONS = {
+  staff: [], contractTypes: [], policies: [], statuses: [], clients: [], leads: [], invoices: [], templates: [],
+  options: { CONTRACT_TYPES: [], CONTRACT_STATUS: [], CONTRACT_DURATION: [], CONTRACT_COUNTRY: [], CONTRACT_LEVEL: [] },
+  setup: { currency_code: 'AFN' }, baseCurrency: 'AFN', exchangeRate: '65.0000'
+}
 
 const StaffContractsPage = async props => {
   const { lang } = await props.params
@@ -27,6 +38,7 @@ const StaffContractsPage = async props => {
       canWrite={hasAnyPermission(session, ['hrm:write', 'hrm_contract:write'])}
       locale={lang}
       dictionary={dictionary.hrmContracts}
+      contractDictionary={dictionary.contractsMain}
     />
   )
 }

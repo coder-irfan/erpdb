@@ -31,6 +31,10 @@ const button = {
     },
     styleOverrides: {
       root: ({ theme, ownerState }) => ({
+        '@media (max-width:599.95px)': {
+          fontSize: theme.typography.caption.fontSize,
+          minHeight: 32
+        },
         '&.Mui-disabled': {
           opacity: 0.45
         },

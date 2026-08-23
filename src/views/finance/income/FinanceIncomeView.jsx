@@ -18,9 +18,11 @@ import {
 } from '@/actions/financeIncome'
 import ConfirmDeleteModal from '@/components/dialogs/ConfirmDeleteModal'
 import TableFiltersPopover from '@/components/table/TableFiltersPopover'
+import FinancePrintDialog from '@/views/finance/FinancePrintDialog'
 
 import FinanceIncomeDetailModal from './FinanceIncomeDetailModal'
 import FinanceIncomeFormDrawer from './FinanceIncomeFormDrawer'
+import FinanceIncomePrint from './FinanceIncomePrint'
 import FinanceIncomeStatsCards from './FinanceIncomeStatsCards'
 import FinanceIncomeTable from './FinanceIncomeTable'
 
@@ -42,7 +44,7 @@ const EMPTY_OPTIONS = {
   exchangeRate: '65.0000'
 }
 
-const FinanceIncomeView = ({ locale, dictionary, canWrite, canDelete }) => {
+const FinanceIncomeView = ({ locale, dictionary, canWrite, canDelete, setup }) => {
   const [searchInput, setSearchInput] = useState('')
   const [search, setSearch] = useState('')
   const [clientId, setClientId] = useState('')
@@ -61,6 +63,7 @@ const FinanceIncomeView = ({ locale, dictionary, canWrite, canDelete }) => {
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [deleting, setDeleting] = useState(false)
   const [busyId, setBusyId] = useState(null)
+  const [printTarget, setPrintTarget] = useState(null)
 
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -91,10 +94,25 @@ const FinanceIncomeView = ({ locale, dictionary, canWrite, canDelete }) => {
   }, [clientId, dictionary.messages.loadFailed, locale, page, projectId, rowsPerPage, search, status, typeId])
 
   const loadOptions = useCallback(async () => {
-    const result = await getFinanceIncomeFormOptions({ locale })
+    const [result, categoryResponse] = await Promise.all([
+      getFinanceIncomeFormOptions({ locale }),
+      fetch('/api/options/finance/income-categories', { cache: 'no-store' }).catch(() => null)
+    ])
 
-    if (result.success) setOptions(result.data)
-    else toast.error(result.error || dictionary.messages.optionsLoadFailed)
+    if (!result.success) return toast.error(result.error || dictionary.messages.optionsLoadFailed)
+    if (!categoryResponse) return setOptions(result.data)
+
+    try {
+      const categoryResult = await categoryResponse.json()
+
+      setOptions({
+        ...result.data,
+        incomeTypes:
+          categoryResponse.ok && categoryResult.success ? categoryResult.data.options : result.data.incomeTypes
+      })
+    } catch {
+      setOptions(result.data)
+    }
   }, [dictionary.messages.optionsLoadFailed, locale])
 
   useEffect(() => { loadData() }, [loadData])
@@ -212,6 +230,7 @@ const FinanceIncomeView = ({ locale, dictionary, canWrite, canDelete }) => {
           onPageChange={(_, value) => setPage(value)}
           onRowsPerPageChange={event => { setRowsPerPage(Number(event.target.value)); setPage(0) }}
           onView={income => setDetailId(income.id)}
+          onPrint={setPrintTarget}
           onEdit={openEdit}
           onMarkPaid={markPaid}
           onDelete={setDeleteTarget}
@@ -242,6 +261,9 @@ const FinanceIncomeView = ({ locale, dictionary, canWrite, canDelete }) => {
           openEdit(income)
         }}
       />
+      <FinancePrintDialog open={Boolean(printTarget)} title='OFFICIAL PAYMENT RECEIPT' onClose={() => setPrintTarget(null)}>
+        {printTarget && <FinanceIncomePrint income={printTarget} setup={setup} locale={locale} />}
+      </FinancePrintDialog>
       <ConfirmDeleteModal
         open={Boolean(deleteTarget)}
         title={dictionary.delete.title}

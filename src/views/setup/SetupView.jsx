@@ -14,8 +14,10 @@ import Typography from '@mui/material/Typography'
 import { toast } from 'sonner'
 
 import CustomTextField from '@core/components/mui/TextField'
+import { useSettings } from '@core/hooks/useSettings'
 import FileUpload from '@/components/common/FileUpload'
 import LoadingButtonContent from '@/components/LoadingButtonContent'
+import themeConfig from '@/configs/themeConfig'
 
 const LOGO_ACCEPT =
   'image/avif,image/bmp,image/gif,image/jpeg,image/jpg,image/png,image/webp,image/svg+xml,image/x-icon,image/vnd.microsoft.icon'
@@ -28,7 +30,7 @@ const FAVICON_ACCEPT = {
   'image/x-icon': ['.ico']
 }
 
-const getInitialForm = settings => ({
+const getInitialForm = (settings, themeSettings = {}) => ({
   app_name: settings.app_name || 'ERP System',
   company_name: settings.company_name || '',
   company_email: settings.company_email || '',
@@ -40,8 +42,74 @@ const getInitialForm = settings => ({
   currency_code: settings.currency_code || 'AFN',
   usd_afn_exchange_rate: settings.usd_afn_exchange_rate || '65.0000',
   default_work_start: settings.default_work_start || '08:30',
-  default_work_end: settings.default_work_end || '17:30'
+  default_work_end: settings.default_work_end || '17:30',
+  primary_color_light: themeSettings.primaryColorLight || themeSettings.primaryColor || themeConfig.primaryColorLight,
+  secondary_color_light:
+    themeSettings.secondaryColorLight || themeSettings.secondaryColor || themeConfig.secondaryColorLight,
+  primary_color_dark: themeSettings.primaryColorDark || themeConfig.primaryColorDark,
+  secondary_color_dark: themeSettings.secondaryColorDark || themeConfig.secondaryColorDark
 })
+
+const HEX_COLOR_PATTERN = /^#(?:[\da-f]{3}|[\da-f]{6})$/i
+
+const normalizeHex = value => {
+  const normalized = String(value || '').trim()
+
+  if (!HEX_COLOR_PATTERN.test(normalized)) return null
+
+  const hex = normalized.slice(1)
+  const expanded = hex.length === 3 ? [...hex].map(character => character.repeat(2)).join('') : hex
+
+  return `#${expanded.toUpperCase()}`
+}
+
+const isValidColor = value => Boolean(normalizeHex(value))
+
+const ThemeColorControl = ({ name, label, description, value, fallback, onChange, dictionary }) => {
+  const valid = isValidColor(value)
+  const pickerValue = normalizeHex(value) || fallback
+
+  return (
+    <div className='rounded border border-divider p-4'>
+      <div className='mb-4 flex items-center gap-3'>
+        <span
+          className='size-12 shrink-0 rounded-lg border border-divider shadow-sm'
+          style={{ backgroundColor: valid ? value : 'transparent' }}
+          aria-label={`${label} ${dictionary.livePreview}`}
+        />
+        <div>
+          <Typography className='font-semibold'>{label}</Typography>
+          <Typography variant='body2' color='text.secondary'>
+            {description}
+          </Typography>
+        </div>
+      </div>
+      <div className='flex items-start gap-3'>
+        <input
+          type='color'
+          value={pickerValue}
+          onChange={event => onChange({ target: { name, value: event.target.value } })}
+          className='h-10 w-12 cursor-pointer rounded border border-divider bg-transparent p-1'
+          aria-label={dictionary.pickColor.replace('{color}', label)}
+        />
+        <CustomTextField
+          fullWidth
+          name={name}
+          label={dictionary.colorCode}
+          value={value}
+          onChange={onChange}
+          onBlur={() => {
+            const normalized = normalizeHex(value)
+
+            if (normalized) onChange({ target: { name, value: normalized } })
+          }}
+          error={!valid}
+          helperText={!valid ? dictionary.invalidHexColor : dictionary.hexColorFormats}
+        />
+      </div>
+    </div>
+  )
+}
 
 const SettingsCard = ({ title, description, children }) => (
   <Card>
@@ -59,8 +127,9 @@ const SettingsCard = ({ title, description, children }) => (
 
 const SetupView = ({ dictionary, initialSettings, locale }) => {
   const router = useRouter()
+  const { settings, updateSettings } = useSettings()
   const [activeTab, setActiveTab] = useState('general')
-  const [form, setForm] = useState(() => getInitialForm(initialSettings))
+  const [form, setForm] = useState(() => getInitialForm(initialSettings, settings))
   const [companyLogo, setCompanyLogo] = useState(initialSettings.company_logo)
   const [signatoryStamp, setSignatoryStamp] = useState(initialSettings.signatory_stamp)
   const [lightLogoUrl, setLightLogoUrl] = useState(initialSettings.lightLogoUrl)
@@ -85,6 +154,19 @@ const SetupView = ({ dictionary, initialSettings, locale }) => {
 
     if (Number(form.usd_afn_exchange_rate) <= 0) {
       toast.error(dictionary.validation.exchangeRatePositive)
+
+      return
+    }
+
+    const normalizedThemeColors = {
+      primaryColorLight: normalizeHex(form.primary_color_light),
+      secondaryColorLight: normalizeHex(form.secondary_color_light),
+      primaryColorDark: normalizeHex(form.primary_color_dark),
+      secondaryColorDark: normalizeHex(form.secondary_color_dark)
+    }
+
+    if (Object.values(normalizedThemeColors).some(color => !color)) {
+      toast.error(dictionary.validation.themeColorInvalid)
 
       return
     }
@@ -114,7 +196,8 @@ const SetupView = ({ dictionary, initialSettings, locale }) => {
         return
       }
 
-      setForm(getInitialForm(result.data))
+      updateSettings(normalizedThemeColors)
+      setForm(getInitialForm(result.data, normalizedThemeColors))
       setCompanyLogo(result.data.company_logo)
       setSignatoryStamp(result.data.signatory_stamp)
       setLightLogoUrl(result.data.lightLogoUrl)
@@ -162,6 +245,12 @@ const SetupView = ({ dictionary, initialSettings, locale }) => {
             icon={<i className='tabler-signature' />}
             iconPosition='start'
             label={dictionary.tabs.signatories}
+          />
+          <Tab
+            value='theme'
+            icon={<i className='tabler-palette' />}
+            iconPosition='start'
+            label={dictionary.tabs.theme}
           />
         </Tabs>
       </Card>
@@ -352,6 +441,95 @@ const SetupView = ({ dictionary, initialSettings, locale }) => {
               value={form.signatory_title}
               onChange={updateField}
             />
+          </div>
+        </SettingsCard>
+      )}
+
+      {activeTab === 'theme' && (
+        <SettingsCard title={dictionary.sections.themeTitle} description={dictionary.sections.themeDescription}>
+          <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+            <Card variant='outlined'>
+              <CardContent className='flex flex-col gap-4'>
+                <div className='flex items-center gap-3'>
+                  <span className='flex size-10 items-center justify-center rounded bg-primaryLighter text-primary'>
+                    <i className='tabler-sun text-xl' />
+                  </span>
+                  <div>
+                    <Typography variant='h6'>{dictionary.theme.lightThemeTitle}</Typography>
+                    <Typography variant='body2' color='text.secondary'>
+                      {dictionary.theme.lightThemeDescription}
+                    </Typography>
+                  </div>
+                </div>
+                <ThemeColorControl
+                  name='primary_color_light'
+                  label={dictionary.fields.primaryColorLight}
+                  description={dictionary.theme.primaryDescription}
+                  value={form.primary_color_light}
+                  fallback={themeConfig.primaryColorLight}
+                  onChange={updateField}
+                  dictionary={dictionary.theme}
+                />
+                <ThemeColorControl
+                  name='secondary_color_light'
+                  label={dictionary.fields.secondaryColorLight}
+                  description={dictionary.theme.secondaryDescription}
+                  value={form.secondary_color_light}
+                  fallback={themeConfig.secondaryColorLight}
+                  onChange={updateField}
+                  dictionary={dictionary.theme}
+                />
+                <div
+                  className='rounded-lg border border-divider p-4'
+                  style={{
+                    background: `linear-gradient(135deg, ${normalizeHex(form.primary_color_light) || themeConfig.primaryColorLight}, ${normalizeHex(form.secondary_color_light) || themeConfig.secondaryColorLight})`
+                  }}
+                >
+                  <Typography className='font-semibold text-white'>{dictionary.theme.livePreview}</Typography>
+                </div>
+              </CardContent>
+            </Card>
+            <Card variant='outlined'>
+              <CardContent className='flex flex-col gap-4'>
+                <div className='flex items-center gap-3'>
+                  <span className='flex size-10 items-center justify-center rounded bg-actionSelected text-textPrimary'>
+                    <i className='tabler-moon-stars text-xl' />
+                  </span>
+                  <div>
+                    <Typography variant='h6'>{dictionary.theme.darkThemeTitle}</Typography>
+                    <Typography variant='body2' color='text.secondary'>
+                      {dictionary.theme.darkThemeDescription}
+                    </Typography>
+                  </div>
+                </div>
+                <ThemeColorControl
+                  name='primary_color_dark'
+                  label={dictionary.fields.primaryColorDark}
+                  description={dictionary.theme.primaryDescription}
+                  value={form.primary_color_dark}
+                  fallback={themeConfig.primaryColorDark}
+                  onChange={updateField}
+                  dictionary={dictionary.theme}
+                />
+                <ThemeColorControl
+                  name='secondary_color_dark'
+                  label={dictionary.fields.secondaryColorDark}
+                  description={dictionary.theme.secondaryDescription}
+                  value={form.secondary_color_dark}
+                  fallback={themeConfig.secondaryColorDark}
+                  onChange={updateField}
+                  dictionary={dictionary.theme}
+                />
+                <div
+                  className='rounded-lg border border-white/15 p-4'
+                  style={{
+                    background: `linear-gradient(135deg, ${normalizeHex(form.primary_color_dark) || themeConfig.primaryColorDark}, ${normalizeHex(form.secondary_color_dark) || themeConfig.secondaryColorDark})`
+                  }}
+                >
+                  <Typography className='font-semibold text-white'>{dictionary.theme.livePreview}</Typography>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </SettingsCard>
       )}

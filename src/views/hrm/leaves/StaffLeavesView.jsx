@@ -19,6 +19,7 @@ import EntityActionsMenu from '@/components/table/EntityActionsMenu'
 import TableEmptyStateRow from '@/components/table/TableEmptyStateRow'
 import TableFiltersPopover from '@/components/table/TableFiltersPopover'
 import TableSkeletonRows from '@/components/table/TableSkeletonRows'
+import ResponsiveDataTable from '@/components/tables/ResponsiveDataTable'
 
 import LeaveStatsCards from './LeaveStatsCards'
 import StaffLeaveDrawer from './StaffLeaveDrawer'
@@ -167,6 +168,48 @@ const StaffLeavesView = ({ locale, dictionary }) => {
 
   const canCreate = data.canManage || Boolean(data.currentStaffId)
 
+  const renderLeaveActions = leave => {
+    const isPending = leave.status.value === 'PENDING'
+    const canEditOwnPending = leave.staff_id === data.currentStaffId && isPending
+    const canModify = data.canManage || canEditOwnPending
+
+    return (
+      <EntityActionsMenu
+        actions={[
+          data.canManage &&
+            isPending && {
+              label: dictionary.actions.approve,
+              icon: 'tabler-check',
+              disabled: busyId === leave.id,
+              onClick: () => updateStatus(leave, 'APPROVED')
+            },
+          data.canManage &&
+            isPending && {
+              label: dictionary.actions.reject,
+              icon: 'tabler-x',
+              color: 'error',
+              disabled: busyId === leave.id,
+              onClick: () => updateStatus(leave, 'REJECTED')
+            },
+          canModify && {
+            label: dictionary.actions.edit,
+            icon: 'tabler-edit',
+            disabled: busyId === leave.id,
+            onClick: () => openEdit(leave)
+          },
+          canModify && {
+            label: dictionary.actions.delete,
+            icon: 'tabler-trash',
+            color: 'error',
+            disabled: busyId === leave.id,
+            onClick: () => setDeleteTarget(leave)
+          }
+        ]}
+        moreActionsLabel={dictionary.table.actions}
+      />
+    )
+  }
+
   return (
     <div className='flex flex-col md:gap-4 gap-2'>
       <LeaveStatsCards summary={data.summary} dictionary={dictionary} />
@@ -274,42 +317,93 @@ const StaffLeavesView = ({ locale, dictionary }) => {
           </div>
         </CardContent>
 
-        <div className='no-scrollbar overflow-x-auto scroll-smooth'>
-          <table className={tableStyles.table}>
-            <thead>
-              <tr>
-                <th>{dictionary.table.staff}</th>
-                <th>{dictionary.table.leaveType}</th>
-                <th>{dictionary.table.duration}</th>
-                <th>{dictionary.table.reason}</th>
-                <th>{dictionary.table.status}</th>
-                <th>{dictionary.table.approvedBy}</th>
-                <th className='text-end'>{dictionary.table.actions}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                <TableSkeletonRows columns={7} rows={5} />
-              ) : data.leaves.length === 0 ? (
-                <TableEmptyStateRow
-                  colSpan={7}
-                  icon='tabler-calendar-off'
-                  title={dictionary.empty.title}
-                  description={dictionary.empty.description}
-                  actionLabel={canCreate ? dictionary.empty.action : null}
-                  onAction={canCreate ? openCreate : null}
-                />
-              ) : (
-                data.leaves.map(leave => {
-                  const isPending = leave.status.value === 'PENDING'
-                  const canEditOwnPending = leave.staff_id === data.currentStaffId && isPending
-                  const canModify = data.canManage || canEditOwnPending
-
-                  return (
+        <ResponsiveDataTable
+          mobileRows={data.leaves}
+          loading={loading}
+          getMobileRowId={leave => leave.id}
+          renderMobilePrimary={leave => (
+            <div className='flex min-is-0 items-center gap-3'>
+              <Avatar variant='rounded' className='bg-primaryLighter text-primary w-7 h-7 lg:w-10 lg:h-10' />
+              <div className='min-is-0'>
+                <Typography color='text.primary' className='truncate font-medium'>
+                  {leave.staff.full_name}
+                </Typography>
+                <Typography variant='body2' color='text.secondary' className='truncate'>
+                  {leave.staff.position}
+                </Typography>
+              </div>
+            </div>
+          )}
+          renderMobileStatus={leave => (
+            <Chip
+              size='small'
+              variant='tonal'
+              color={STATUS_COLORS[leave.status.value] || 'default'}
+              label={dictionary.status[leave.status.value] || leave.status.label}
+            />
+          )}
+          renderMobileActions={renderLeaveActions}
+          mobileMetadata={[
+            { id: 'leave-type', label: dictionary.table.leaveType, render: leave => leave.leave_type.label },
+            {
+              id: 'duration',
+              label: dictionary.table.duration,
+              render: leave => `${formatDate(leave.start_date, locale)} — ${formatDate(leave.end_date, locale)}`
+            },
+            {
+              id: 'days',
+              label: dictionary.table.duration,
+              render: leave => dictionary.table.days.replace('{count}', leave.total_days)
+            },
+            { id: 'reason', label: dictionary.table.reason, render: leave => leave.reason || '—' },
+            {
+              id: 'approved-by',
+              label: dictionary.table.approvedBy,
+              render: leave => leave.approved_by?.full_name || '—'
+            }
+          ]}
+          emptyState={{
+            icon: 'tabler-calendar-off',
+            title: dictionary.empty.title,
+            description: dictionary.empty.description,
+            actionLabel: canCreate ? dictionary.empty.action : undefined,
+            onAction: canCreate ? openCreate : undefined
+          }}
+        >
+          <div className='no-scrollbar overflow-x-auto scroll-smooth'>
+            <table className={tableStyles.table}>
+              <thead>
+                <tr>
+                  <th>{dictionary.table.staff}</th>
+                  <th>{dictionary.table.leaveType}</th>
+                  <th>{dictionary.table.duration}</th>
+                  <th>{dictionary.table.reason}</th>
+                  <th>{dictionary.table.status}</th>
+                  <th>{dictionary.table.approvedBy}</th>
+                  <th className='text-end'>{dictionary.table.actions}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {loading ? (
+                  <TableSkeletonRows columns={7} rows={5} />
+                ) : data.leaves.length === 0 ? (
+                  <TableEmptyStateRow
+                    colSpan={7}
+                    icon='tabler-calendar-off'
+                    title={dictionary.empty.title}
+                    description={dictionary.empty.description}
+                    actionLabel={canCreate ? dictionary.empty.action : null}
+                    onAction={canCreate ? openCreate : null}
+                  />
+                ) : (
+                  data.leaves.map(leave => (
                     <tr key={leave.id}>
                       <td>
                         <div className='flex min-is-[220px] items-center gap-3'>
-                          <Avatar variant='rounded' className='bg-primaryLighter text-primary'></Avatar>
+                          <Avatar
+                            variant='rounded'
+                            className='bg-primaryLighter text-primary w-7 h-7 lg:w-10 lg:h-10'
+                          ></Avatar>
                           <div>
                             <Typography color='text.primary' className='font-medium'>
                               {leave.staff.full_name}
@@ -356,24 +450,14 @@ const StaffLeavesView = ({ locale, dictionary }) => {
                         />
                       </td>
                       <td>{leave.approved_by?.full_name || '—'}</td>
-                      <td className='text-end'>
-                        <EntityActionsMenu
-                          actions={[
-                            data.canManage && isPending && { label: dictionary.actions.approve, icon: 'tabler-check', disabled: busyId === leave.id, onClick: () => updateStatus(leave, 'APPROVED') },
-                            data.canManage && isPending && { label: dictionary.actions.reject, icon: 'tabler-x', color: 'error', disabled: busyId === leave.id, onClick: () => updateStatus(leave, 'REJECTED') },
-                            canModify && { label: dictionary.actions.edit, icon: 'tabler-edit', disabled: busyId === leave.id, onClick: () => openEdit(leave) },
-                            canModify && { label: dictionary.actions.delete, icon: 'tabler-trash', color: 'error', disabled: busyId === leave.id, onClick: () => setDeleteTarget(leave) }
-                          ]}
-                          moreActionsLabel={dictionary.table.actions}
-                        />
-                      </td>
+                      <td className='text-end'>{renderLeaveActions(leave)}</td>
                     </tr>
-                  )
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </ResponsiveDataTable>
 
         <DashboardTablePagination
           count={data.totalCount}

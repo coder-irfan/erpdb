@@ -13,11 +13,9 @@ import CardHeader from '@mui/material/CardHeader'
 import TablePagination from '@mui/material/TablePagination'
 
 // Third-party Imports
-import classnames from 'classnames'
 import { rankItem } from '@tanstack/match-sorter-utils'
 import {
   createColumnHelper,
-  flexRender,
   getCoreRowModel,
   useReactTable,
   getFilteredRowModel,
@@ -33,9 +31,7 @@ import OptionMenu from '@core/components/option-menu'
 import CustomAvatar from '@core/components/mui/Avatar'
 import CustomTextField from '@core/components/mui/TextField'
 import TablePaginationComponent from '@/components/TablePaginationComponent'
-
-// Style Imports
-import tableStyles from '@core/styles/table.module.css'
+import ResponsiveDataTable from '@/components/tables/ResponsiveDataTable'
 
 const fuzzyFilter = (row, columnId, value, addMeta) => {
   // Rank the item
@@ -205,49 +201,7 @@ const ProjectTables = ({ projectTable }) => {
         }
       />
 
-      <div className='overflow-x-auto'>
-        <table className={tableStyles.table}>
-          <thead>
-            {table.getHeaderGroups().map(headerGroup => (
-              <tr key={headerGroup.id}>
-                {headerGroup.headers.map(header => (
-                  <th key={header.id}>
-                    {header.isPlaceholder ? null : (
-                      <div
-                        className={classnames({
-                          'flex items-center': header.column.getIsSorted(),
-                          'cursor-pointer select-none': header.column.getCanSort()
-                        })}
-                        onClick={header.column.getToggleSortingHandler()}
-                      >
-                        {flexRender(header.column.columnDef.header, header.getContext())}
-                        {{
-                          asc: <i className='tabler-chevron-up text-xl' />,
-                          desc: <i className='tabler-chevron-down text-xl' />
-                        }[header.column.getIsSorted()] ?? null}
-                      </div>
-                    )}
-                  </th>
-                ))}
-              </tr>
-            ))}
-          </thead>
-          <tbody>
-            {table
-              .getRowModel()
-              .rows.slice(0, table.getState().pagination.pageSize)
-              .map(row => {
-                return (
-                  <tr key={row.id} className={classnames({ selected: row.getIsSelected() })}>
-                    {row.getVisibleCells().map(cell => (
-                      <td key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</td>
-                    ))}
-                  </tr>
-                )
-              })}
-          </tbody>
-        </table>
-      </div>
+      <ResponsiveDataTable table={table} primaryColumnId='title' statusColumnId='status' actionsColumnId='actions' emptyState={{ icon: 'tabler-folders-off', title: 'No projects' }} />
       <TablePagination
         rowsPerPageOptions={[5, 7, 10]}
         component={() => <TablePaginationComponent table={table} />}

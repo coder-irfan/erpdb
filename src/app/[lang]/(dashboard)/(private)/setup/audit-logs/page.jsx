@@ -1,3 +1,1 @@
-const AuditLogsPage = () => null
-
-export default AuditLogsPage
+export { default } from '../../options/audit-logs/page'

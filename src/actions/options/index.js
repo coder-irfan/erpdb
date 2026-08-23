@@ -19,15 +19,21 @@ const DEFAULT_PAGE_SIZE = 10
 const MAX_PAGE_SIZE = 100
 
 const CATEGORY_PATHS = {
-  CONTRACT_POLICY: '/[lang]/options/hrm/policies',
+  CONTRACT_POLICY: '/[lang]/options/contract-management/contract-templates',
+  CONTRACT_TYPE_HRM: '/[lang]/options/contract-management/contract-types',
+  CONTRACT_TYPE_CUSTOMER: '/[lang]/options/contract-management/contract-types',
+  CONTRACT_TYPE_FINANCE: '/[lang]/options/contract-management/contract-types',
+  CONTRACT_TYPE_OTHER: '/[lang]/options/contract-management/contract-types',
   STAFF_POSITION: '/[lang]/options/hrm/positions',
   LEAVE_TYPE: '/[lang]/options/hrm/leave-types',
   PAYROLL_STATUS: '/[lang]/options/hrm/payroll',
   PAYROLL_PAYMENT_METHOD: '/[lang]/options/hrm/payroll',
   LEAD_STATUS: '/[lang]/options/crm/leads',
   LEAD_SOURCE: '/[lang]/options/crm/leads',
-  INVOICE_STATUS: '/[lang]/options/contracts',
-  PAYMENT_METHOD: '/[lang]/options/contracts'
+  VISITOR_PURPOSE: '/[lang]/options/crm/visitors',
+  INCOME_TYPE: '/[lang]/options/finance/income-categories',
+  INVOICE_STATUS: '/[lang]/options/contract-management/invoices',
+  PAYMENT_METHOD: '/[lang]/options/contract-management/invoices'
 }
 
 const normalizeLocale = locale => (i18n.locales.includes(locale) ? locale : i18n.defaultLocale)
@@ -40,6 +46,10 @@ const getReadPermissions = category => [
   ...(category === 'LEAVE_TYPE' ? ['hrm:read', 'hrm:write', 'hrm_leave:read', 'hrm_leave:write'] : []),
   ...(category.startsWith('PAYROLL_') ? ['hrm_payroll:read', 'hrm_payroll:write'] : []),
   ...(category.startsWith('LEAD_') ? ['crm:read', 'crm:write', 'crm_lead:read', 'crm_lead:write'] : []),
+  ...(category === 'VISITOR_PURPOSE'
+    ? ['crm:read', 'crm:write', 'crm_visitor:read', 'crm_visitor:write']
+    : []),
+  ...(category === 'INCOME_TYPE' ? ['finance:read', 'finance:write'] : []),
   ...(category.startsWith('CONTRACT_') ? ['contracts:read', 'contracts:write', 'hrm:read'] : [])
 ]
 
@@ -182,6 +192,13 @@ const revalidateOptionPaths = category => {
   if (category === 'STAFF_POSITION') revalidatePath('/[lang]/hrm/staff', 'page')
   if (category === 'LEAVE_TYPE') revalidatePath('/[lang]/hrm/leaves', 'page')
   if (category.startsWith('LEAD_')) revalidatePath('/[lang]/crm/leads', 'page')
+  if (category === 'VISITOR_PURPOSE') revalidatePath('/[lang]/crm/visitors', 'page')
+
+  if (category === 'INCOME_TYPE') {
+    revalidatePath('/[lang]/finance/income', 'page')
+    revalidatePath('/[lang]/finance/incomes', 'page')
+  }
+
   if (category.startsWith('CONTRACT_')) revalidatePath('/[lang]/contracts', 'page')
 
   if (category === 'INVOICE_STATUS' || category === 'PAYMENT_METHOD') {

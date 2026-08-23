@@ -13,7 +13,7 @@ const WRITE_PERMISSIONS = ['options:write', 'finance:write', 'finance_inventory:
 const DELETE_PERMISSIONS = ['options:delete', 'finance:delete', 'finance_inventory:delete']
 const localeFrom = value => (['en', 'fa', 'ps'].includes(value) ? value : 'en')
 const errorResponse = (error, status, code) => Response.json({ success: false, error, code }, { status })
-const optionSelect = { id: true, category: true, label: true, value: true, description: true, is_active: true, is_default: true, sort_order: true }
+const optionSelect = { id: true, category: true, label: true, value: true, description: true, is_active: true, is_default: true, sort_order: true, created_at: true }
 const normalizePayload = payload => ({ name: payload?.name || '', description: payload?.description || '', is_active: payload?.is_active !== false })
 const clean = value => sanitizeHtml(value || '', { allowedTags: [], allowedAttributes: {} }).trim()
 const valueFrom = name => clean(name).toUpperCase().replace(/[^A-Z0-9]+/g, '_').replace(/^_+|_+$/g, '')
@@ -160,4 +160,3 @@ export async function DELETE(request) {
 
   return Response.json({ success: true, message: context.dictionary.categoryMessages.deleted })
 }
-

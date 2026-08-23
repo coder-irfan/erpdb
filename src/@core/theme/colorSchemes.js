@@ -1,11 +1,97 @@
-const colorSchemes = skin => {
+const DEFAULT_COLORS = {
+  primaryLight: '#022483',
+  secondaryLight: '#F38022',
+  primaryDark: '#366AFC',
+  secondaryDark: '#FF9D42'
+}
+
+const normalizeHex = (color, fallback) => {
+  const match = String(color || '')
+    .trim()
+    .match(/^#([\da-f]{3}|[\da-f]{6})$/i)
+
+  if (!match) return fallback
+
+  const hex = match[1].length === 3 ? [...match[1]].map(character => character.repeat(2)).join('') : match[1]
+
+  return `#${hex.toUpperCase()}`
+}
+
+const hexToRgb = hex => [1, 3, 5].map(index => parseInt(hex.slice(index, index + 2), 16))
+
+const rgbToHex = channels =>
+  `#${channels.map(channel => Math.round(channel).toString(16).padStart(2, '0')).join('')}`.toUpperCase()
+
+// Derive interaction colors by mixing the selected main color with white or black.
+const mixColor = (source, target, amount) => {
+  const sourceChannels = hexToRgb(source)
+  const targetChannels = hexToRgb(target)
+
+  return rgbToHex(sourceChannels.map((channel, index) => channel + (targetChannels[index] - channel) * amount))
+}
+
+const relativeLuminance = hex =>
+  hexToRgb(hex)
+    .map(channel => channel / 255)
+    .map(channel => (channel <= 0.03928 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4))
+    .reduce((total, channel, index) => total + channel * [0.2126, 0.7152, 0.0722][index], 0)
+
+const contrastRatio = (first, second) => {
+  const lighter = Math.max(relativeLuminance(first), relativeLuminance(second))
+  const darker = Math.min(relativeLuminance(first), relativeLuminance(second))
+
+  return (lighter + 0.05) / (darker + 0.05)
+}
+
+export const getContrastText = main => {
+  const whiteContrast = contrastRatio(main, '#FFFFFF')
+  const blackContrast = contrastRatio(main, '#000000')
+
+  return whiteContrast >= 3.5 || whiteContrast >= blackContrast ? '#FFFFFF' : '#000000'
+}
+
+const getReadableText = (main, mode) => {
+  const surface = mode === 'dark' ? '#1F1F1F' : '#FFFFFF'
+  const target = mode === 'dark' ? '#FFFFFF' : '#000000'
+
+  for (let amount = 0; amount <= 1; amount += 0.1) {
+    const candidate = mixColor(main, target, amount)
+
+    if (contrastRatio(candidate, surface) >= 4.5) return candidate
+  }
+
+  return target
+}
+
+const createBrandPalette = (color, fallback, mode) => {
+  const main = normalizeHex(color, fallback)
+
+  return {
+    main,
+    light: mixColor(main, '#FFFFFF', 0.18),
+    dark: mixColor(main, '#000000', 0.18),
+    contrastText: getContrastText(main),
+    readableText: getReadableText(main, mode)
+  }
+}
+
+const colorSchemes = (
+  skin,
+  primaryColorLight = DEFAULT_COLORS.primaryLight,
+  secondaryColorLight = DEFAULT_COLORS.secondaryLight,
+  primaryColorDark = DEFAULT_COLORS.primaryDark,
+  secondaryColorDark = DEFAULT_COLORS.secondaryDark
+) => {
+  const lightPrimary = createBrandPalette(primaryColorLight, DEFAULT_COLORS.primaryLight, 'light')
+  const lightSecondary = createBrandPalette(secondaryColorLight, DEFAULT_COLORS.secondaryLight, 'light')
+  const darkPrimary = createBrandPalette(primaryColorDark, DEFAULT_COLORS.primaryDark, 'dark')
+  const darkSecondary = createBrandPalette(secondaryColorDark, DEFAULT_COLORS.secondaryDark, 'dark')
+
   return {
     light: {
       palette: {
         primary: {
-          main: '#022483',
-          light: '#366afc',
-          dark: '#033ee2',
+          ...lightPrimary,
           lighterOpacity: 'rgb(var(--mui-palette-primary-mainChannel) / 0.08)',
           lightOpacity: 'rgb(var(--mui-palette-primary-mainChannel) / 0.16)',
           mainOpacity: 'rgb(var(--mui-palette-primary-mainChannel) / 0.24)',
@@ -13,11 +99,7 @@ const colorSchemes = skin => {
           darkerOpacity: 'rgb(var(--mui-palette-primary-mainChannel) / 0.38)'
         },
         secondary: {
-          main: '#f38022',
-          light: '#f69d56',
-          dark: '#c15c0b',
-          contrastText: '#ffffff',
-          readableText: '#8a3c00',
+          ...lightSecondary,
           lighterOpacity: 'rgb(var(--mui-palette-secondary-mainChannel) / 0.08)',
           lightOpacity: 'rgb(var(--mui-palette-secondary-mainChannel) / 0.16)',
           mainOpacity: 'rgb(var(--mui-palette-secondary-mainChannel) / 0.24)',
@@ -156,9 +238,7 @@ const colorSchemes = skin => {
     dark: {
       palette: {
         primary: {
-          main: '#366afc',
-          light: '#4f7dfc',
-          dark: '#021d69',
+          ...darkPrimary,
           lighterOpacity: 'rgb(var(--mui-palette-primary-mainChannel) / 0.08)',
           lightOpacity: 'rgb(var(--mui-palette-primary-mainChannel) / 0.16)',
           mainOpacity: 'rgb(var(--mui-palette-primary-mainChannel) / 0.24)',
@@ -166,11 +246,7 @@ const colorSchemes = skin => {
           darkerOpacity: 'rgb(var(--mui-palette-primary-mainChannel) / 0.38)'
         },
         secondary: {
-          main: '#f38022',
-          light: '#f69d56',
-          dark: '#c15c0b',
-          contrastText: '#ffffff',
-          readableText: '#f38022',
+          ...darkSecondary,
           lighterOpacity: 'rgb(var(--mui-palette-secondary-mainChannel) / 0.08)',
           lightOpacity: 'rgb(var(--mui-palette-secondary-mainChannel) / 0.16)',
           mainOpacity: 'rgb(var(--mui-palette-secondary-mainChannel) / 0.24)',

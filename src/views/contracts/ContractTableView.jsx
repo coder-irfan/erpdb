@@ -8,6 +8,7 @@ import DashboardTablePagination from '@/components/table/DashboardTablePaginatio
 import EntityActionsMenu from '@/components/table/EntityActionsMenu'
 import TableEmptyStateRow from '@/components/table/TableEmptyStateRow'
 import TableSkeletonRows from '@/components/table/TableSkeletonRows'
+import ResponsiveDataTable from '@/components/tables/ResponsiveDataTable'
 import { toDateInputValue } from '@/utils/contractDuration'
 import { formatCurrency } from '@/utils/formatCurrency'
 
@@ -43,13 +44,86 @@ const ContractTableView = ({
   onPageChange,
   onRowsPerPageChange,
   onView,
+  onPrint,
   onEdit,
   onDelete,
   onStatusChange,
   onAdd
-}) => (
-  <>
-    <div className='no-scrollbar overflow-x-auto scroll-smooth'>
+}) => {
+  const renderActions = contract => (
+    <EntityActionsMenu
+      actions={[
+        { label: dictionary.actions.view, icon: 'tabler-eye', onClick: () => onView(contract) },
+        { label: dictionary.actions.printDocument || 'Print Document', icon: 'tabler-printer', onClick: () => onPrint(contract) },
+        canWrite && { label: dictionary.actions.edit, icon: 'tabler-edit', onClick: () => onEdit(contract) },
+        canDelete && { label: dictionary.actions.delete, icon: 'tabler-trash', color: 'error', onClick: () => onDelete(contract) }
+      ]}
+      statusOptions={canWrite ? data.statuses : []}
+      currentStatus={contract.status_id}
+      statusDisabled={statusUpdating === contract.id}
+      changeStatusLabel={dictionary.actions.changeStatus}
+      moreActionsLabel={dictionary.table.actions}
+      onStatusChange={statusId => onStatusChange(contract, statusId)}
+    />
+  )
+
+  return (
+    <>
+      <ResponsiveDataTable
+        mobileRows={data.contracts}
+        loading={loading}
+        getMobileRowId={contract => contract.id}
+        onRowClick={onView}
+        renderMobilePrimary={contract => (
+          <div className='flex min-is-0 items-center gap-3'>
+            <span className='flex size-9 shrink-0 items-center justify-center rounded bg-primaryLighter text-primary'>
+              <i className='tabler-file-certificate' />
+            </span>
+            <div className='min-is-0'>
+              <Typography variant='body2' className='truncate font-semibold text-primary'>{contract.contract_number}</Typography>
+              <Typography variant='caption' color='text.secondary' className='block truncate'>{contract.title}</Typography>
+            </div>
+          </div>
+        )}
+        renderMobileStatus={contract => (
+          <Chip
+            size='small'
+            variant='tonal'
+            color={STATUS_COLORS[contract.status.value] || 'default'}
+            label={contract.status.label}
+          />
+        )}
+        renderMobileActions={renderActions}
+        mobileMetadata={[
+          { id: 'client', label: dictionary.table.client, render: contract => contract.client.company_name },
+          { id: 'type', label: dictionary.filters.serviceType, render: contract => contract.contract_type.label },
+          {
+            id: 'duration',
+            label: dictionary.table.serviceDuration,
+            render: contract => `${toDateInputValue(contract.start_date)} — ${toDateInputValue(contract.end_date)}`
+          },
+          {
+            id: 'remaining',
+            label: dictionary.table.endRemaining,
+            render: contract => contract.remaining_days < 0
+              ? dictionary.remaining.expired.replace('{days}', Math.abs(contract.remaining_days))
+              : dictionary.remaining.days.replace('{days}', contract.remaining_days)
+          },
+          {
+            id: 'amount',
+            label: dictionary.table.amount,
+            render: contract => formatCurrency(contract.total_amount, locale, contract.currency)
+          }
+        ]}
+        emptyState={{
+          icon: 'tabler-file-off',
+          title: dictionary.empty.title,
+          description: dictionary.empty.description,
+          actionLabel: canWrite ? dictionary.actions.add : undefined,
+          onAction: canWrite ? onAdd : undefined
+        }}
+      >
+        <div className='no-scrollbar overflow-x-auto scroll-smooth'>
       <table className={tableStyles.table}>
         <thead>
           <tr>
@@ -147,19 +221,7 @@ const ContractTableView = ({
                     />
                   </td>
                   <td className='text-end' onClick={event => event.stopPropagation()}>
-                    <EntityActionsMenu
-                      actions={[
-                        { label: dictionary.actions.view, icon: 'tabler-eye', onClick: () => onView(contract) },
-                        canWrite && { label: dictionary.actions.edit, icon: 'tabler-edit', onClick: () => onEdit(contract) },
-                        canDelete && { label: dictionary.actions.delete, icon: 'tabler-trash', color: 'error', onClick: () => onDelete(contract) }
-                      ]}
-                      statusOptions={canWrite ? data.statuses : []}
-                      currentStatus={contract.status_id}
-                      statusDisabled={statusUpdating === contract.id}
-                      changeStatusLabel={dictionary.actions.changeStatus}
-                      moreActionsLabel={dictionary.table.actions}
-                      onStatusChange={statusId => onStatusChange(contract, statusId)}
-                    />
+                    {renderActions(contract)}
                   </td>
                 </tr>
               )
@@ -167,17 +229,19 @@ const ContractTableView = ({
           )}
         </tbody>
       </table>
-    </div>
-    <DashboardTablePagination
-      count={data.totalCount}
-      page={page}
-      rowsPerPage={rowsPerPage}
-      rowsPerPageLabel={dictionary.pagination.rowsPerPage}
-      ofLabel={dictionary.pagination.of}
-      onPageChange={onPageChange}
-      onRowsPerPageChange={onRowsPerPageChange}
-    />
-  </>
-)
+        </div>
+      </ResponsiveDataTable>
+      <DashboardTablePagination
+        count={data.totalCount}
+        page={page}
+        rowsPerPage={rowsPerPage}
+        rowsPerPageLabel={dictionary.pagination.rowsPerPage}
+        ofLabel={dictionary.pagination.of}
+        onPageChange={onPageChange}
+        onRowsPerPageChange={onRowsPerPageChange}
+      />
+    </>
+  )
+}
 
 export default ContractTableView

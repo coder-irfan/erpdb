@@ -21,6 +21,7 @@ import DashboardTablePagination from '@/components/table/DashboardTablePaginatio
 import EntityActionsMenu from '@/components/table/EntityActionsMenu'
 import TableEmptyStateRow from '@/components/table/TableEmptyStateRow'
 import TableSkeletonRows from '@/components/table/TableSkeletonRows'
+import ResponsiveDataTable from '@/components/tables/ResponsiveDataTable'
 
 import ContractPolicyForm from './ContractPolicyForm'
 
@@ -149,6 +150,18 @@ const ContractPolicyTable = ({ initialResult, initialError, canCreate, canUpdate
     }
   }
 
+  const renderActions = option => (
+    <EntityActionsMenu
+      actions={[
+        { label: dictionary.common.view, icon: 'tabler-eye', onClick: () => setViewingOption(option) },
+        canUpdate && { label: dictionary.common.edit, icon: 'tabler-edit', disabled: busyId === option.id, onClick: () => openEditForm(option) },
+        canUpdate && { label: option.is_active ? dictionary.common.deactivate : dictionary.common.activate, icon: option.is_active ? 'tabler-toggle-right' : 'tabler-toggle-left', disabled: busyId === option.id, onClick: () => handleStatusToggle(option) },
+        canDelete && { label: dictionary.common.delete, icon: 'tabler-trash', color: 'error', disabled: busyId === option.id, onClick: () => setDeletingOption(option) }
+      ]}
+      moreActionsLabel={dictionary.common.actions}
+    />
+  )
+
   return (
     <>
       <Card>
@@ -158,7 +171,7 @@ const ContractPolicyTable = ({ initialResult, initialError, canCreate, canUpdate
           </CardContent>
         )}
         <CardContent>
-          <div className='mb-4 mt-5 flex flex-wrap items-center justify-between gap-4'>
+          <div className='flex flex-wrap items-center justify-between gap-4'>
             <CustomTextField
               value={searchInput}
               onChange={event => setSearchInput(event.target.value)}
@@ -180,7 +193,24 @@ const ContractPolicyTable = ({ initialResult, initialError, canCreate, canUpdate
           </div>
         </CardContent>
 
-        <div className='overflow-x-auto'>
+        <ResponsiveDataTable
+          mobileRows={options}
+          loading={loading}
+          getMobileRowId={option => option.id}
+          renderMobilePrimary={option => (
+            <div className='min-is-0'>
+              <Typography color='text.primary' className='truncate font-medium'>{option.name}</Typography>
+              <Typography color='text.secondary' className='line-clamp-2'>{getDescriptionPreview(option.description) || dictionary.common.noDescription}</Typography>
+            </div>
+          )}
+          renderMobileStatus={option => (
+            <Chip size='small' variant='tonal' color={option.is_active ? 'success' : 'secondary'} label={option.is_active ? dictionary.common.active : dictionary.common.inactive} />
+          )}
+          renderMobileActions={renderActions}
+          mobileMetadata={[{ id: 'created', label: dictionary.common.createdDate, render: option => formatDate(option.created_at, locale) }]}
+          emptyState={{ icon: 'tabler-file-description', title: dictionary.contractPolicies.emptyTitle, description: dictionary.contractPolicies.emptyDescription, actionLabel: canCreate ? dictionary.contractPolicies.addFirst : undefined, onAction: canCreate ? openCreateForm : undefined }}
+        >
+          <div className='overflow-x-auto'>
           <table className={tableStyles.table}>
             <thead>
               <tr>
@@ -229,35 +259,7 @@ const ContractPolicyTable = ({ initialResult, initialError, canCreate, canUpdate
                       </td>
                       <td>{formatDate(option.created_at, locale)}</td>
                       <td className='text-end'>
-                        <EntityActionsMenu
-                          actions={[
-                            {
-                              label: dictionary.common.view,
-                              icon: 'tabler-eye',
-                              onClick: () => setViewingOption(option)
-                            },
-                            canUpdate && {
-                              label: dictionary.common.edit,
-                              icon: 'tabler-edit',
-                              disabled: busyId === option.id,
-                              onClick: () => openEditForm(option)
-                            },
-                            canUpdate && {
-                              label: option.is_active ? dictionary.common.deactivate : dictionary.common.activate,
-                              icon: option.is_active ? 'tabler-toggle-right' : 'tabler-toggle-left',
-                              disabled: busyId === option.id,
-                              onClick: () => handleStatusToggle(option)
-                            },
-                            canDelete && {
-                              label: dictionary.common.delete,
-                              icon: 'tabler-trash',
-                              color: 'error',
-                              disabled: busyId === option.id,
-                              onClick: () => setDeletingOption(option)
-                            }
-                          ]}
-                          moreActionsLabel={dictionary.common.actions}
-                        />
+                        {renderActions(option)}
                       </td>
                     </tr>
                   )
@@ -265,7 +267,8 @@ const ContractPolicyTable = ({ initialResult, initialError, canCreate, canUpdate
               )}
             </tbody>
           </table>
-        </div>
+          </div>
+        </ResponsiveDataTable>
 
         <DashboardTablePagination
           count={totalCount}

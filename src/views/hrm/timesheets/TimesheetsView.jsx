@@ -22,9 +22,11 @@ import EntityActionsMenu from '@/components/table/EntityActionsMenu'
 import TableEmptyStateRow from '@/components/table/TableEmptyStateRow'
 import TableFiltersPopover from '@/components/table/TableFiltersPopover'
 import TableSkeletonRows from '@/components/table/TableSkeletonRows'
+import ResponsiveDataTable from '@/components/tables/ResponsiveDataTable'
 
 import AttendanceDrawer from './AttendanceDrawer'
 import AttendanceStatsCards from './AttendanceStatsCards'
+import TimesheetPrintDocument from './TimesheetPrintDocument'
 
 import tableStyles from '@core/styles/table.module.css'
 
@@ -55,7 +57,7 @@ const formatDate = (value, locale) =>
 
 const escapeCsv = value => `"${String(value ?? '').replaceAll('"', '""')}"`
 
-const TimesheetsView = ({ initialDate, canWrite, canDelete, defaultWorkHours, locale, dictionary }) => {
+const TimesheetsView = ({ initialDate, canWrite, canDelete, defaultWorkHours, printSetup, locale, dictionary }) => {
   const [selectedDate, setSelectedDate] = useState(initialDate)
   const [data, setData] = useState(EMPTY_DATA)
   const [loading, setLoading] = useState(true)
@@ -69,6 +71,8 @@ const TimesheetsView = ({ initialDate, canWrite, canDelete, defaultWorkHours, lo
   const [editingRecord, setEditingRecord] = useState(null)
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [deleteLoading, setDeleteLoading] = useState(false)
+  const [printData, setPrintData] = useState(null)
+  const [printLoadingId, setPrintLoadingId] = useState(null)
 
   const changeDate = nextDate => {
     setSelectedDate(nextDate)
@@ -120,6 +124,14 @@ const TimesheetsView = ({ initialDate, canWrite, canDelete, defaultWorkHours, lo
     return () => clearTimeout(timeout)
   }, [searchInput])
 
+  useEffect(() => {
+    if (!printData) return undefined
+
+    const timeout = window.setTimeout(() => window.print(), 50)
+
+    return () => window.clearTimeout(timeout)
+  }, [printData])
+
   const openCreate = () => {
     setEditingRecord(null)
     setDrawerOpen(true)
@@ -170,6 +182,67 @@ const TimesheetsView = ({ initialDate, canWrite, canDelete, defaultWorkHours, lo
     link.click()
     URL.revokeObjectURL(url)
   }
+
+  const printStaffTimecard = async record => {
+    const [year, month] = selectedDate.split('-')
+
+    setPrintLoadingId(record.id)
+
+    try {
+      const params = new URLSearchParams({
+        date: selectedDate,
+        month: String(Number(month)),
+        year,
+        staff_id: record.staff_id,
+        locale,
+        page: '1',
+        limit: '100'
+      })
+
+      const response = await fetch(`/api/hrm/timesheets?${params.toString()}`, { cache: 'no-store' })
+      const result = await response.json()
+
+      if (!response.ok || !result.success) {
+        toast.error(result.error || dictionary.messages.loadFailed)
+
+        return
+      }
+
+      setPrintData({ staff: record.staff, records: result.data.records, period: `${year}-${month}` })
+    } catch {
+      toast.error(dictionary.messages.loadFailed)
+    } finally {
+      setPrintLoadingId(null)
+    }
+  }
+
+  const renderRecordActions = record => (
+    <EntityActionsMenu
+      actions={[
+        {
+          label: dictionary.actions.print,
+          icon: 'tabler-printer',
+          disabled: printLoadingId === record.id,
+          onClick: () => printStaffTimecard(record)
+        },
+        canWrite && {
+          label: dictionary.actions.edit,
+          icon: 'tabler-edit',
+          onClick: () => {
+            setEditingRecord(record)
+            setDrawerOpen(true)
+          }
+        },
+        canDelete && {
+          label: dictionary.actions.delete,
+          icon: 'tabler-trash',
+          color: 'error',
+          onClick: () => setDeleteTarget(record)
+        }
+      ]}
+      moreActionsLabel={dictionary.table.actions}
+    />
+  )
 
   return (
     <div className='attendance-print-report flex flex-col gap-6'>
@@ -243,9 +316,6 @@ const TimesheetsView = ({ initialDate, canWrite, canDelete, defaultWorkHours, lo
             <Button variant='tonal' startIcon={<i className='tabler-file-download' />} onClick={exportCsv}>
               {dictionary.actions.export}
             </Button>
-            <Button variant='tonal' startIcon={<i className='tabler-printer' />} onClick={() => window.print()}>
-              {dictionary.actions.print}
-            </Button>
             {canWrite && (
               <Button variant='contained' startIcon={<i className='tabler-user-plus' />} onClick={openCreate}>
                 {dictionary.actions.mark}
@@ -254,95 +324,132 @@ const TimesheetsView = ({ initialDate, canWrite, canDelete, defaultWorkHours, lo
           </div>
         </CardContent>
         {error && <Alert severity='error'>{error}</Alert>}
-        <div className='no-scrollbar overflow-x-auto scroll-smooth'>
-          <table className={tableStyles.table}>
-            <thead>
-              <tr>
-                <th>{dictionary.fields.staff}</th>
-                <th>{dictionary.fields.position}</th>
-                <th>{dictionary.fields.status}</th>
-                <th>{dictionary.fields.checkIn}</th>
-                <th>{dictionary.fields.checkOut}</th>
-                <th>{dictionary.fields.hours}</th>
-                <th>{dictionary.fields.notes}</th>
-                <th className='no-print text-end'>{dictionary.table.actions}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                <TableSkeletonRows columns={8} />
-              ) : data.records.length === 0 ? (
-                <TableEmptyStateRow
-                  colSpan={8}
-                  icon='tabler-calendar-time'
-                  title={dictionary.table.emptyTitle}
-                  description={dictionary.table.emptyDescription}
-                  actionLabel={canWrite && data.unmarkedStaff.length > 0 ? dictionary.actions.mark : undefined}
-                  onAction={canWrite && data.unmarkedStaff.length > 0 ? openCreate : undefined}
-                />
-              ) : (
-                data.records.map(record => (
-                  <tr key={record.id}>
-                    <td>
-                      <div className='flex min-is-[250px] items-center gap-3'>
-                        <Avatar variant='rounded' className='bg-primaryLighter text-primary'></Avatar>
-                        <div className='flex min-is-0 flex-col'>
-                          <Typography color='text.primary' className='font-medium'>
-                            {record.staff.full_name}
-                          </Typography>
-                          <Typography variant='body2' color='text.secondary'>
-                            {record.staff.email}
-                          </Typography>
+        <ResponsiveDataTable
+          mobileRows={data.records}
+          loading={loading}
+          getMobileRowId={record => record.id}
+          renderMobilePrimary={record => (
+            <div className='flex min-is-0 items-center gap-3'>
+              <Avatar variant='rounded' className='bg-primaryLighter text-primary w-7 h-7 lg:w-10 lg:h-10' />
+              <div className='min-is-0'>
+                <Typography color='text.primary' className='truncate font-medium'>
+                  {record.staff.full_name}
+                </Typography>
+                <Typography variant='body2' color='text.secondary' className='truncate'>
+                  {record.staff.email}
+                </Typography>
+              </div>
+            </div>
+          )}
+          renderMobileStatus={record => (
+            <Chip
+              size='small'
+              variant='tonal'
+              color={STATUS_COLORS[record.status]}
+              label={dictionary.status[record.status]}
+            />
+          )}
+          renderMobileActions={renderRecordActions}
+          mobileMetadata={[
+            { id: 'position', label: dictionary.fields.position, render: record => record.staff.position },
+            { id: 'check-in', label: dictionary.fields.checkIn, render: record => record.check_in_time || '—' },
+            { id: 'check-out', label: dictionary.fields.checkOut, render: record => record.check_out_time || '—' },
+            {
+              id: 'hours',
+              label: dictionary.fields.hours,
+              render: record =>
+                record.hours_worked ? `${Number(record.hours_worked).toFixed(2)} ${dictionary.hoursShort}` : '—'
+            },
+            { id: 'notes', label: dictionary.fields.notes, render: record => record.notes || '—' }
+          ]}
+          emptyState={{
+            icon: 'tabler-calendar-time',
+            title: dictionary.table.emptyTitle,
+            description: dictionary.table.emptyDescription,
+            actionLabel: canWrite && data.unmarkedStaff.length > 0 ? dictionary.actions.mark : undefined,
+            onAction: canWrite && data.unmarkedStaff.length > 0 ? openCreate : undefined
+          }}
+        >
+          <div className='no-scrollbar overflow-x-auto scroll-smooth'>
+            <table className={tableStyles.table}>
+              <thead>
+                <tr>
+                  <th>{dictionary.fields.staff}</th>
+                  <th>{dictionary.fields.position}</th>
+                  <th>{dictionary.fields.status}</th>
+                  <th>{dictionary.fields.checkIn}</th>
+                  <th>{dictionary.fields.checkOut}</th>
+                  <th>{dictionary.fields.hours}</th>
+                  <th>{dictionary.fields.notes}</th>
+                  <th className='no-print text-end'>{dictionary.table.actions}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {loading ? (
+                  <TableSkeletonRows columns={8} />
+                ) : data.records.length === 0 ? (
+                  <TableEmptyStateRow
+                    colSpan={8}
+                    icon='tabler-calendar-time'
+                    title={dictionary.table.emptyTitle}
+                    description={dictionary.table.emptyDescription}
+                    actionLabel={canWrite && data.unmarkedStaff.length > 0 ? dictionary.actions.mark : undefined}
+                    onAction={canWrite && data.unmarkedStaff.length > 0 ? openCreate : undefined}
+                  />
+                ) : (
+                  data.records.map(record => (
+                    <tr key={record.id}>
+                      <td>
+                        <div className='flex min-is-[250px] items-center gap-3'>
+                          <Avatar
+                            variant='rounded'
+                            className='bg-primaryLighter text-primary w-7 h-7 lg:w-10 lg:h-10'
+                          ></Avatar>
+                          <div className='flex min-is-0 flex-col'>
+                            <Typography color='text.primary' className='font-medium'>
+                              {record.staff.full_name}
+                            </Typography>
+                            <Typography variant='body2' color='text.secondary'>
+                              {record.staff.email}
+                            </Typography>
+                          </div>
                         </div>
-                      </div>
-                    </td>
-                    <td>{record.staff.position}</td>
-                    <td>
-                      <Chip
-                        size='small'
-                        variant='tonal'
-                        color={STATUS_COLORS[record.status]}
-                        label={dictionary.status[record.status]}
-                      />
-                    </td>
-                    <td>{record.check_in_time || '—'}</td>
-                    <td>{record.check_out_time || '—'}</td>
-                    <td>
-                      {record.hours_worked ? `${Number(record.hours_worked).toFixed(2)} ${dictionary.hoursShort}` : '—'}
-                    </td>
-                    <td>
-                      {record.notes ? (
-                        <Tooltip title={record.notes} arrow>
-                          <Typography variant='body2' className='max-is-[180px] truncate'>
-                            {record.notes}
-                          </Typography>
-                        </Tooltip>
-                      ) : (
-                        '—'
-                      )}
-                    </td>
-                    <td className='no-print text-end'>
-                      <EntityActionsMenu
-                        actions={[
-                          canWrite && {
-                            label: dictionary.actions.edit,
-                            icon: 'tabler-edit',
-                            onClick: () => {
-                              setEditingRecord(record)
-                              setDrawerOpen(true)
-                            }
-                          },
-                          canDelete && { label: dictionary.actions.delete, icon: 'tabler-trash', color: 'error', onClick: () => setDeleteTarget(record) }
-                        ]}
-                        moreActionsLabel={dictionary.table.actions}
-                      />
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                      </td>
+                      <td>{record.staff.position}</td>
+                      <td>
+                        <Chip
+                          size='small'
+                          variant='tonal'
+                          color={STATUS_COLORS[record.status]}
+                          label={dictionary.status[record.status]}
+                        />
+                      </td>
+                      <td>{record.check_in_time || '—'}</td>
+                      <td>{record.check_out_time || '—'}</td>
+                      <td>
+                        {record.hours_worked
+                          ? `${Number(record.hours_worked).toFixed(2)} ${dictionary.hoursShort}`
+                          : '—'}
+                      </td>
+                      <td>
+                        {record.notes ? (
+                          <Tooltip title={record.notes} arrow>
+                            <Typography variant='body2' className='max-is-[180px] truncate'>
+                              {record.notes}
+                            </Typography>
+                          </Tooltip>
+                        ) : (
+                          '—'
+                        )}
+                      </td>
+                      <td className='no-print text-end'>{renderRecordActions(record)}</td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </ResponsiveDataTable>
         <div className='no-print'>
           <DashboardTablePagination
             count={data.totalCount}
@@ -382,6 +489,9 @@ const TimesheetsView = ({ initialDate, canWrite, canDelete, defaultWorkHours, lo
         onConfirm={confirmDelete}
         onClose={() => setDeleteTarget(null)}
       />
+      {printData && (
+        <TimesheetPrintDocument {...printData} locale={locale} dictionary={dictionary} setup={printSetup} />
+      )}
     </div>
   )
 }

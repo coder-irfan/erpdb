@@ -130,9 +130,20 @@ const contractStatuses = [
 ]
 
 const contractTypes = [
-  { label: 'Website', value: 'WEBSITE', sort_order: 1 },
-  { label: 'Digital Marketing', value: 'DIGITAL_MARKETING', sort_order: 2 },
-  { label: 'Maintenance', value: 'MAINTENANCE', sort_order: 3 }
+  { category: 'CONTRACT_TYPE_HRM', label: 'Employment', value: 'EMPLOYMENT', sort_order: 1 },
+  { category: 'CONTRACT_TYPE_HRM', label: 'Contractor', value: 'CONTRACTOR', sort_order: 2 },
+  { category: 'CONTRACT_TYPE_HRM', label: 'Internship', value: 'INTERNSHIP', sort_order: 3 },
+  { category: 'CONTRACT_TYPE_HRM', label: 'Hybrid', value: 'HYBRID', sort_order: 4 },
+  { category: 'CONTRACT_TYPE_CUSTOMER', label: 'SLA', value: 'SLA', sort_order: 1 },
+  { category: 'CONTRACT_TYPE_CUSTOMER', label: 'Fixed-Price', value: 'FIXED_PRICE', sort_order: 2 },
+  { category: 'CONTRACT_TYPE_CUSTOMER', label: 'Retainer', value: 'RETAINER', sort_order: 3 },
+  { category: 'CONTRACT_TYPE_CUSTOMER', label: 'NDA', value: 'NDA', sort_order: 4 },
+  { category: 'CONTRACT_TYPE_FINANCE', label: 'Payment Schedule', value: 'PAYMENT_SCHEDULE', sort_order: 1 },
+  { category: 'CONTRACT_TYPE_FINANCE', label: 'Installment Agreement', value: 'INSTALLMENT_AGREEMENT', sort_order: 2 },
+  { category: 'CONTRACT_TYPE_FINANCE', label: 'Settlement', value: 'SETTLEMENT', sort_order: 3 },
+  { category: 'CONTRACT_TYPE_OTHER', label: 'Vendor Supply', value: 'VENDOR_SUPPLY', sort_order: 1 },
+  { category: 'CONTRACT_TYPE_OTHER', label: 'Office Lease', value: 'OFFICE_LEASE', sort_order: 2 },
+  { category: 'CONTRACT_TYPE_OTHER', label: 'External NDA', value: 'EXTERNAL_NDA', sort_order: 3 }
 ]
 
 const contractDurations = [
@@ -255,9 +266,9 @@ const main = async () => {
 
     for (const contractType of contractTypes) {
       await transaction.option.upsert({
-        where: { category_value: { category: 'CONTRACT_TYPE', value: contractType.value } },
+        where: { category_value: { category: contractType.category, value: contractType.value } },
         update: { ...contractType, is_active: true },
-        create: { category: 'CONTRACT_TYPE', ...contractType, is_active: true }
+        create: { ...contractType, is_active: true }
       })
     }
 

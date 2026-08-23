@@ -17,6 +17,7 @@ import DashboardTablePagination from '@/components/table/DashboardTablePaginatio
 import EntityActionsMenu from '@/components/table/EntityActionsMenu'
 import TableEmptyStateRow from '@/components/table/TableEmptyStateRow'
 import TableSkeletonRows from '@/components/table/TableSkeletonRows'
+import ResponsiveDataTable from '@/components/tables/ResponsiveDataTable'
 
 import LeaveTypeForm from './LeaveTypeForm'
 
@@ -117,6 +118,41 @@ const LeaveTypeTable = ({ initialResult, initialError, canCreate, canUpdate, can
     }
   }
 
+  const openCreate = () => {
+    setEditingOption(null)
+    setFormOpen(true)
+  }
+
+  const renderOptionActions = option => (
+    <EntityActionsMenu
+      actions={[
+        canUpdate && {
+          label: dictionary.common.edit,
+          icon: 'tabler-edit',
+          disabled: busyId === option.id,
+          onClick: () => {
+            setEditingOption(option)
+            setFormOpen(true)
+          }
+        },
+        canUpdate && {
+          label: option.is_active ? dictionary.common.deactivate : dictionary.common.activate,
+          icon: option.is_active ? 'tabler-toggle-right' : 'tabler-toggle-left',
+          disabled: busyId === option.id,
+          onClick: () => toggleStatus(option)
+        },
+        canDelete && {
+          label: dictionary.common.delete,
+          icon: 'tabler-trash',
+          color: 'error',
+          disabled: busyId === option.id,
+          onClick: () => setDeleteTarget(option)
+        }
+      ]}
+      moreActionsLabel={dictionary.common.actions}
+    />
+  )
+
   return (
     <>
       <Card>
@@ -126,7 +162,7 @@ const LeaveTypeTable = ({ initialResult, initialError, canCreate, canUpdate, can
           </CardContent>
         )}
         <CardContent>
-          <div className='mb-4 mt-5 flex flex-wrap items-center justify-between gap-4'>
+          <div className='flex flex-wrap items-center justify-between gap-4'>
             <CustomTextField
               value={searchInput}
               onChange={event => setSearchInput(event.target.value)}
@@ -139,10 +175,7 @@ const LeaveTypeTable = ({ initialResult, initialError, canCreate, canUpdate, can
               <Button
                 variant='contained'
                 startIcon={<i className='tabler-plus' />}
-                onClick={() => {
-                  setEditingOption(null)
-                  setFormOpen(true)
-                }}
+                onClick={openCreate}
                 className='is-full sm:is-auto'
               >
                 {dictionary.leaveTypes.add}
@@ -150,7 +183,43 @@ const LeaveTypeTable = ({ initialResult, initialError, canCreate, canUpdate, can
             )}
           </div>
         </CardContent>
-        <div className='overflow-x-auto'>
+        <ResponsiveDataTable
+          mobileRows={options}
+          loading={loading}
+          getMobileRowId={option => option.id}
+          renderMobilePrimary={option => (
+            <div className='min-is-0'>
+              <Typography color='text.primary' className='truncate font-medium'>{option.name}</Typography>
+              <Typography variant='body2' color='text.secondary' className='line-clamp-2'>
+                {option.description || dictionary.common.noDescription}
+              </Typography>
+            </div>
+          )}
+          renderMobileStatus={option => (
+            <Chip
+              size='small'
+              variant='tonal'
+              color={option.is_active ? 'success' : 'secondary'}
+              label={option.is_active ? dictionary.common.active : dictionary.common.inactive}
+            />
+          )}
+          renderMobileActions={renderOptionActions}
+          mobileMetadata={[
+            {
+              id: 'created',
+              label: dictionary.common.createdDate,
+              render: option => formatDate(option.created_at, locale)
+            }
+          ]}
+          emptyState={{
+            icon: 'tabler-calendar-off',
+            title: dictionary.leaveTypes.emptyTitle,
+            description: dictionary.leaveTypes.emptyDescription,
+            actionLabel: canCreate ? dictionary.leaveTypes.addFirst : undefined,
+            onAction: canCreate ? openCreate : undefined
+          }}
+        >
+          <div className='overflow-x-auto'>
           <table className={tableStyles.table}>
             <thead>
               <tr>
@@ -207,29 +276,15 @@ const LeaveTypeTable = ({ initialResult, initialError, canCreate, canUpdate, can
                     </td>
                     <td>{formatDate(option.created_at, locale)}</td>
                     <td className='text-end'>
-                      <EntityActionsMenu
-                        actions={[
-                          canUpdate && {
-                            label: dictionary.common.edit,
-                            icon: 'tabler-edit',
-                            disabled: busyId === option.id,
-                            onClick: () => {
-                              setEditingOption(option)
-                              setFormOpen(true)
-                            }
-                          },
-                          canUpdate && { label: option.is_active ? dictionary.common.deactivate : dictionary.common.activate, icon: option.is_active ? 'tabler-toggle-right' : 'tabler-toggle-left', disabled: busyId === option.id, onClick: () => toggleStatus(option) },
-                          canDelete && { label: dictionary.common.delete, icon: 'tabler-trash', color: 'error', disabled: busyId === option.id, onClick: () => setDeleteTarget(option) }
-                        ]}
-                        moreActionsLabel={dictionary.common.actions}
-                      />
+                      {renderOptionActions(option)}
                     </td>
                   </tr>
                 ))
               )}
             </tbody>
           </table>
-        </div>
+          </div>
+        </ResponsiveDataTable>
         <DashboardTablePagination
           count={totalCount}
           page={page}

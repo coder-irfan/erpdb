@@ -6,7 +6,7 @@ import { getDictionary } from '@/utils/getDictionary'
 import { hasAnyPermission } from '@/utils/rbac'
 import ContractOptionsView from '@/views/options/contracts/ContractOptionsView'
 
-const CATEGORIES = ['CONTRACT_TYPE', 'CONTRACT_DURATION', 'CONTRACT_LEVEL', 'CONTRACT_COUNTRY', 'CONTRACT_STATUS', 'INVOICE_STATUS', 'PAYMENT_METHOD']
+const CATEGORIES = ['CONTRACT_DURATION', 'CONTRACT_CLAUSE']
 
 const ContractOptionsPage = async props => {
   const { lang } = await props.params

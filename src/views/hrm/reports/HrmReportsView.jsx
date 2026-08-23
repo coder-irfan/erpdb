@@ -18,10 +18,12 @@ import DashboardTablePagination from '@/components/table/DashboardTablePaginatio
 import TableEmptyStateRow from '@/components/table/TableEmptyStateRow'
 import TableSkeletonRows from '@/components/table/TableSkeletonRows'
 import TableFiltersPopover from '@/components/table/TableFiltersPopover'
+import ResponsiveDataTable from '@/components/tables/ResponsiveDataTable'
 import { formatCurrency, toFiniteNumber } from '@/utils/formatCurrency'
 
 import ReportStatsCards from './ReportStatsCards'
 import ReportTrendChart from './ReportTrendChart'
+import ActiveHrmReportPrint from './HrmReportPrintDocuments'
 
 import tableStyles from '@core/styles/table.module.css'
 
@@ -63,6 +65,8 @@ const HrmReportsView = ({ locale, dictionary, setup, generatedAt }) => {
   const [startDate, setStartDate] = useState(initialRange.start)
   const [endDate, setEndDate] = useState(initialRange.end)
   const [staffId, setStaffId] = useState('')
+  const [searchInput, setSearchInput] = useState('')
+  const [search, setSearch] = useState('')
   const [data, setData] = useState(EMPTY_REPORT)
   const [staffOptions, setStaffOptions] = useState([])
   const [loading, setLoading] = useState(true)
@@ -162,6 +166,15 @@ const HrmReportsView = ({ locale, dictionary, setup, generatedAt }) => {
     loadReport()
   }, [loadReport])
 
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      setSearch(searchInput.trim())
+      setPage(0)
+    }, 350)
+
+    return () => clearTimeout(timeout)
+  }, [searchInput])
+
   const changePreset = value => {
     setDatePreset(value)
     setPage(0)
@@ -174,7 +187,17 @@ const HrmReportsView = ({ locale, dictionary, setup, generatedAt }) => {
     }
   }
 
-  const rows = data.rows || []
+  const rows = useMemo(() => {
+    const sourceRows = data.rows || []
+    const query = search.toLocaleLowerCase(locale)
+
+    if (!query) return sourceRows
+
+    return sourceRows.filter(row =>
+      Object.values(row).some(value => typeof value === 'string' && value.toLocaleLowerCase(locale).includes(query))
+    )
+  }, [data.rows, locale, search])
+
   const paginatedRows = rows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
   const selectedStaff = staffOptions.find(staff => staff.id === staffId)
   const activeReport = dictionary.tabs[reportType]
@@ -392,7 +415,7 @@ const HrmReportsView = ({ locale, dictionary, setup, generatedAt }) => {
 
   const staffCell = row => (
     <div className='flex min-is-[210px] items-center gap-3'>
-      <Avatar variant='rounded' className='bg-primaryLighter text-primary'></Avatar>
+      <Avatar variant='rounded' className='bg-primaryLighter text-primary w-7 h-7 lg:w-10 lg:h-10'></Avatar>
       <div className='flex min-is-0 flex-col'>
         <Typography className='font-medium' color='text.primary'>
           {row.staff_name}
@@ -403,6 +426,136 @@ const HrmReportsView = ({ locale, dictionary, setup, generatedAt }) => {
       </div>
     </div>
   )
+
+  const renderMobilePrimary = row => {
+    if (reportType === 'contracts') {
+      return (
+        <div className='min-is-0'>
+          <Typography className='truncate font-mono font-semibold' color='primary.main'>
+            {row.contract_number}
+          </Typography>
+          <Typography variant='body2' color='text.secondary' className='truncate'>
+            {row.staff_name}
+          </Typography>
+        </div>
+      )
+    }
+
+    return (
+      <div className='flex min-is-0 items-center gap-3'>
+        <Avatar variant='rounded' className='bg-primaryLighter text-primary w-7 h-7 lg:w-10 lg:h-10' />
+        <div className='min-is-0'>
+          <Typography className='truncate font-medium' color='text.primary'>
+            {row.staff_name}
+          </Typography>
+          <Typography variant='body2' color='text.secondary' className='truncate'>
+            {row.position}
+          </Typography>
+        </div>
+      </div>
+    )
+  }
+
+  const renderMobileStatus = row => {
+    if (reportType === 'payroll') {
+      return (
+        <Chip
+          size='small'
+          variant='tonal'
+          color={PAYROLL_STATUS_COLORS[row.status] || 'default'}
+          label={dictionary.status[row.status] || row.status_label}
+        />
+      )
+    }
+
+    if (reportType === 'attendance') {
+      return (
+        <Chip
+          size='small'
+          variant='tonal'
+          color={row.presence_rate >= 80 ? 'success' : row.presence_rate >= 60 ? 'warning' : 'error'}
+          label={`${row.presence_rate}%`}
+        />
+      )
+    }
+
+    if (reportType === 'leaves') {
+      return (
+        <Chip
+          size='small'
+          variant='tonal'
+          color='warning'
+          label={`${dictionary.table.pending}: ${row.pending_requests}`}
+        />
+      )
+    }
+
+    return (
+      <Chip
+        size='small'
+        variant='tonal'
+        color={row.renewal_status === 'DUE_SOON' ? 'warning' : 'info'}
+        label={dictionary.status[row.renewal_status]}
+      />
+    )
+  }
+
+  const getMobileMetadata = () => {
+    if (reportType === 'payroll') {
+      return [
+        { id: 'period', label: dictionary.table.period, render: row => formatMonth(row.period) },
+        {
+          id: 'base',
+          label: dictionary.table.baseSalary,
+          render: row => formatCurrency(row.base_salary, locale, row.currency)
+        },
+        {
+          id: 'allowances',
+          label: dictionary.table.allowances,
+          render: row => formatCurrency(row.allowances, locale, row.currency)
+        },
+        {
+          id: 'deductions',
+          label: dictionary.table.deductions,
+          render: row => formatCurrency(row.deductions, locale, row.currency)
+        },
+        {
+          id: 'net',
+          label: dictionary.table.netPayout,
+          render: row => formatCurrency(row.net_payout, locale, row.currency)
+        }
+      ]
+    }
+
+    if (reportType === 'attendance') {
+      return [
+        { id: 'present', label: dictionary.table.present, render: row => row.present },
+        { id: 'absent', label: dictionary.table.absent, render: row => row.absent },
+        { id: 'leave', label: dictionary.table.leave, render: row => row.leave },
+        { id: 'hours', label: dictionary.table.hours, render: row => row.total_hours }
+      ]
+    }
+
+    if (reportType === 'leaves') {
+      return [
+        { id: 'approved', label: dictionary.table.approvedDays, render: row => row.approved_days },
+        {
+          id: 'breakdown',
+          label: dictionary.table.leaveBreakdown,
+          render: row =>
+            row.leave_types.length ? row.leave_types.map(item => `${item.name}: ${item.days}`).join(', ') : '—'
+        },
+        { id: 'allowance', label: dictionary.table.allowance, render: () => dictionary.common.notConfigured },
+        { id: 'remaining', label: dictionary.table.remaining, render: () => dictionary.common.notConfigured }
+      ]
+    }
+
+    return [
+      { id: 'type', label: dictionary.table.contractType, render: row => row.contract_type },
+      { id: 'end-date', label: dictionary.table.endDate, render: row => formatDate(row.end_date) },
+      { id: 'days', label: dictionary.table.daysRemaining, render: row => row.days_remaining }
+    ]
+  }
 
   const renderTable = () => {
     if (reportType === 'payroll') {
@@ -601,90 +754,102 @@ const HrmReportsView = ({ locale, dictionary, setup, generatedAt }) => {
 
   return (
     <div className='hrm-report-print flex flex-col gap-6'>
-      <div className='no-print flex flex-wrap items-center justify-end gap-2'>
-        <TableFiltersPopover
-          activeCount={Number(Boolean(staffId)) + Number(datePreset !== 'this_month')}
-          locale={locale}
-        >
+      <Card className='no-print'>
+        <CardContent className='flex flex-wrap items-center justify-between gap-3'>
           <CustomTextField
-            select
-            label={dictionary.filters.dateRange}
-            value={datePreset}
-            onChange={event => changePreset(event.target.value)}
-            className='is-full'
-          >
-            <MenuItem value='this_month'>{dictionary.datePresets.thisMonth}</MenuItem>
-            <MenuItem value='last_quarter'>{dictionary.datePresets.lastQuarter}</MenuItem>
-            <MenuItem value='year_to_date'>{dictionary.datePresets.yearToDate}</MenuItem>
-            <MenuItem value='custom'>{dictionary.datePresets.custom}</MenuItem>
-          </CustomTextField>
-          <CustomTextField
-            type='date'
-            label={dictionary.filters.startDate}
-            value={startDate}
-            onChange={event => {
-              setStartDate(event.target.value)
-              setDatePreset('custom')
-              setPage(0)
-            }}
-            className='is-full'
+            label={dictionary.filters.search}
+            placeholder={dictionary.filters.searchPlaceholder}
+            value={searchInput}
+            onChange={event => setSearchInput(event.target.value)}
+            className='is-full sm:is-[320px]'
+            slotProps={{ input: { startAdornment: <i className='tabler-search text-textSecondary' /> } }}
           />
-          <CustomTextField
-            type='date'
-            label={dictionary.filters.endDate}
-            value={endDate}
-            onChange={event => {
-              setEndDate(event.target.value)
-              setDatePreset('custom')
-              setPage(0)
-            }}
-            className='is-full'
-          />
-          <CustomTextField
-            select
-            label={dictionary.filters.staff}
-            value={staffId}
-            onChange={event => {
-              setStaffId(event.target.value)
-              setPage(0)
-            }}
-            className='is-full'
-            slotProps={{
-              select: {
-                displayEmpty: true,
-                renderValue: selected =>
-                  staffOptions.find(staff => staff.id === selected)?.full_name || dictionary.filters.allStaff
-              }
-            }}
-          >
-            <MenuItem value=''>{dictionary.filters.allStaff}</MenuItem>
-            {staffOptions.map(staff => (
-              <MenuItem key={staff.id} value={staff.id}>
-                {staff.full_name}
-              </MenuItem>
-            ))}
-          </CustomTextField>
-        </TableFiltersPopover>
-        <Button
-          variant='tonal'
-          color='secondary'
-          startIcon={<i className='tabler-file-spreadsheet' />}
-          disabled={loading || rows.length === 0}
-          onClick={exportCsv}
-        >
-          {dictionary.actions.exportCsv}
-        </Button>
-        <Button
-          variant='contained'
-          startIcon={<i className='tabler-printer' />}
-          disabled={loading}
-          onClick={() => window.print()}
-        >
-          {dictionary.actions.print}
-        </Button>
-      </div>
+          <div className='flex is-full flex-wrap items-center gap-2 sm:is-auto sm:justify-end'>
+            <TableFiltersPopover
+              activeCount={Number(Boolean(staffId)) + Number(datePreset !== 'this_month')}
+              locale={locale}
+            >
+              <CustomTextField
+                select
+                label={dictionary.filters.dateRange}
+                value={datePreset}
+                onChange={event => changePreset(event.target.value)}
+                className='is-full'
+              >
+                <MenuItem value='this_month'>{dictionary.datePresets.thisMonth}</MenuItem>
+                <MenuItem value='last_quarter'>{dictionary.datePresets.lastQuarter}</MenuItem>
+                <MenuItem value='year_to_date'>{dictionary.datePresets.yearToDate}</MenuItem>
+                <MenuItem value='custom'>{dictionary.datePresets.custom}</MenuItem>
+              </CustomTextField>
+              <CustomTextField
+                type='date'
+                label={dictionary.filters.startDate}
+                value={startDate}
+                onChange={event => {
+                  setStartDate(event.target.value)
+                  setDatePreset('custom')
+                  setPage(0)
+                }}
+                className='is-full'
+              />
+              <CustomTextField
+                type='date'
+                label={dictionary.filters.endDate}
+                value={endDate}
+                onChange={event => {
+                  setEndDate(event.target.value)
+                  setDatePreset('custom')
+                  setPage(0)
+                }}
+                className='is-full'
+              />
+              <CustomTextField
+                select
+                label={dictionary.filters.staff}
+                value={staffId}
+                onChange={event => {
+                  setStaffId(event.target.value)
+                  setPage(0)
+                }}
+                className='is-full'
+                slotProps={{
+                  select: {
+                    displayEmpty: true,
+                    renderValue: selected =>
+                      staffOptions.find(staff => staff.id === selected)?.full_name || dictionary.filters.allStaff
+                  }
+                }}
+              >
+                <MenuItem value=''>{dictionary.filters.allStaff}</MenuItem>
+                {staffOptions.map(staff => (
+                  <MenuItem key={staff.id} value={staff.id}>
+                    {staff.full_name}
+                  </MenuItem>
+                ))}
+              </CustomTextField>
+            </TableFiltersPopover>
+            <Button
+              variant='tonal'
+              color='secondary'
+              startIcon={<i className='tabler-file-spreadsheet' />}
+              disabled={loading || rows.length === 0}
+              onClick={exportCsv}
+            >
+              {dictionary.actions.exportCsv}
+            </Button>
+            <Button
+              variant='contained'
+              startIcon={<i className='tabler-printer' />}
+              disabled={loading}
+              onClick={() => window.print()}
+            >
+              {dictionary.actions.print}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
-      <Card className='no-print no-scrollbar overflow-x-auto'>
+      <Card className='no-print print:hidden no-scrollbar overflow-x-auto'>
         <Tabs
           value={reportType}
           variant='scrollable'
@@ -741,19 +906,9 @@ const HrmReportsView = ({ locale, dictionary, setup, generatedAt }) => {
         </div>
       </div>
 
-      <ReportStatsCards items={stats} loading={loading} />
-      <ReportTrendChart
-        key={`${reportType}-${dataVersion}`}
-        title={dictionary.chart.title.replace('{report}', activeReport.label)}
-        trend={chart.type}
-        categories={chart.categories}
-        series={chart.series}
-        loading={loading}
-        valueFormatter={chart.formatter}
-        emptyLabel={dictionary.empty.description}
-      />
+      <ReportStatsCards items={stats} loading={loading} className='print:hidden' />
 
-      <Card className='report-table-card'>
+      <Card className='report-table-card print:hidden'>
         <CardContent className='flex flex-wrap items-center justify-between gap-2 border-be border-divider'>
           <div>
             <Typography variant='h5'>{activeReport.tableTitle}</Typography>
@@ -762,7 +917,21 @@ const HrmReportsView = ({ locale, dictionary, setup, generatedAt }) => {
             </Typography>
           </div>
         </CardContent>
-        <div className='no-scrollbar overflow-x-auto scroll-smooth'>{renderTable()}</div>
+        <ResponsiveDataTable
+          mobileRows={paginatedRows}
+          loading={loading}
+          getMobileRowId={row => row.id}
+          renderMobilePrimary={renderMobilePrimary}
+          renderMobileStatus={renderMobileStatus}
+          mobileMetadata={getMobileMetadata()}
+          emptyState={{
+            icon: dictionary.tabs[reportType].icon,
+            title: dictionary.empty.title,
+            description: dictionary.empty.description
+          }}
+        >
+          <div className='no-scrollbar overflow-x-auto scroll-smooth'>{renderTable()}</div>
+        </ResponsiveDataTable>
         <div className='no-print'>
           <DashboardTablePagination
             count={rows.length}
@@ -779,6 +948,32 @@ const HrmReportsView = ({ locale, dictionary, setup, generatedAt }) => {
           />
         </div>
       </Card>
+
+      <ReportTrendChart
+        key={`${reportType}-${dataVersion}`}
+        title={dictionary.chart.title.replace('{report}', activeReport.label)}
+        trend={chart.type}
+        categories={chart.categories}
+        series={chart.series}
+        loading={loading}
+        valueFormatter={chart.formatter}
+        emptyLabel={dictionary.empty.description}
+        className='print:hidden'
+      />
+      {!loading && (
+        <ActiveHrmReportPrint
+          reportType={reportType}
+          rows={rows}
+          stats={stats}
+          startDate={startDate}
+          endDate={endDate}
+          selectedStaff={selectedStaff}
+          setup={setup}
+          locale={locale}
+          dictionary={dictionary}
+          generatedAt={generatedAt}
+        />
+      )}
     </div>
   )
 }

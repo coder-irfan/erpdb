@@ -13,9 +13,11 @@ import CustomTextField from '@core/components/mui/TextField'
 import { deleteFinanceExpense, getFinanceExpenseFormOptions, getFinanceExpenses } from '@/actions/financeExpense'
 import ConfirmDeleteModal from '@/components/dialogs/ConfirmDeleteModal'
 import TableFiltersPopover from '@/components/table/TableFiltersPopover'
+import FinancePrintDialog from '@/views/finance/FinancePrintDialog'
 
 import FinanceExpenseDetailModal from './FinanceExpenseDetailModal'
 import FinanceExpenseFormDrawer from './FinanceExpenseFormDrawer'
+import FinanceExpensePrint from './FinanceExpensePrint'
 import FinanceExpenseStatsCards from './FinanceExpenseStatsCards'
 import FinanceExpenseTable from './FinanceExpenseTable'
 
@@ -35,7 +37,7 @@ const EMPTY_OPTIONS = {
   exchangeRate: '65.0000'
 }
 
-const FinanceExpenseView = ({ locale, dictionary, canWrite, canDelete }) => {
+const FinanceExpenseView = ({ locale, dictionary, canWrite, canDelete, setup }) => {
   const [searchInput, setSearchInput] = useState('')
   const [search, setSearch] = useState('')
   const [typeId, setTypeId] = useState('')
@@ -52,6 +54,7 @@ const FinanceExpenseView = ({ locale, dictionary, canWrite, canDelete }) => {
   const [detailRefresh, setDetailRefresh] = useState(0)
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [deleting, setDeleting] = useState(false)
+  const [printTarget, setPrintTarget] = useState(null)
 
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -182,6 +185,7 @@ const FinanceExpenseView = ({ locale, dictionary, canWrite, canDelete }) => {
           onPageChange={(_, value) => setPage(value)}
           onRowsPerPageChange={event => { setRowsPerPage(Number(event.target.value)); setPage(0) }}
           onView={expense => setDetailId(expense.id)}
+          onPrint={setPrintTarget}
           onEdit={openEdit}
           onDelete={setDeleteTarget}
           onAdd={openCreate}
@@ -211,6 +215,9 @@ const FinanceExpenseView = ({ locale, dictionary, canWrite, canDelete }) => {
           openEdit(expense)
         }}
       />
+      <FinancePrintDialog open={Boolean(printTarget)} title='PAYMENT / EXPENSE VOUCHER' onClose={() => setPrintTarget(null)}>
+        {printTarget && <FinanceExpensePrint expense={printTarget} setup={setup} locale={locale} />}
+      </FinancePrintDialog>
       <ConfirmDeleteModal
         open={Boolean(deleteTarget)}
         title={dictionary.delete.title}

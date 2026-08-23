@@ -13,6 +13,7 @@ import classnames from 'classnames'
 
 // Components Imports
 import OptionMenu from '@core/components/option-menu'
+import ResponsiveDataTable from '@/components/tables/ResponsiveDataTable'
 
 // Style Imports
 import tableStyles from '@core/styles/table.module.css'
@@ -81,7 +82,20 @@ const LastTransaction = ({ serverMode }) => {
         title='Last Transaction'
         action={<OptionMenu options={['Show all entries', 'Refresh', 'Download']} />}
       />
-      <div className='overflow-x-auto'>
+      <ResponsiveDataTable
+        mobileRows={data}
+        getMobileRowId={(_, index) => index}
+        renderMobilePrimary={row => (
+          <div><Typography color='text.primary'>{row.cardNumber}</Typography><Typography variant='body2' color='text.disabled'>{row.cardType}</Typography></div>
+        )}
+        renderMobileStatus={row => <Chip variant='tonal' size='small' label={statusObj[row.status].text} color={statusObj[row.status].color} />}
+        mobileMetadata={[
+          { id: 'date', label: 'Date', render: row => row.date },
+          { id: 'trend', label: 'Trend', render: row => row.trend }
+        ]}
+        emptyState={{ icon: 'tabler-receipt-off', title: 'No transactions' }}
+      >
+        <div className='overflow-x-auto'>
         <table className={tableStyles.table}>
           <thead className='uppercase'>
             <tr className='border-be'>
@@ -136,7 +150,8 @@ const LastTransaction = ({ serverMode }) => {
             ))}
           </tbody>
         </table>
-      </div>
+        </div>
+      </ResponsiveDataTable>
     </Card>
   )
 }

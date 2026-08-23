@@ -24,6 +24,7 @@ const toInputDate = value => (value ? new Date(value).toISOString().slice(0, 10)
 const getDefaultValues = (contract, statuses, baseCurrency) => ({
   staff_id: contract?.staff_id || '',
   contract_type_id: contract?.contract_type_id || '',
+  template_id: contract?.contract_type?.category === 'CONTRACT_POLICY' ? contract.contract_type_id : '',
   position_title: contract?.position_title || '',
   base_salary: contract?.base_salary || '',
   currency: contract?.currency || baseCurrency,
@@ -54,9 +55,9 @@ const StaffContractDrawer = ({ open, contract, options, locale, dictionary, onCl
     [contract?.staff, options.staff]
   )
 
-  const policyOptions = useMemo(
-    () => withCurrentOption(options.policies, contract?.contract_type),
-    [contract?.contract_type, options.policies]
+  const contractTypeOptions = useMemo(
+    () => withCurrentOption(options.contractTypes || [], contract?.contract_type),
+    [contract?.contract_type, options.contractTypes]
   )
 
   const statusOptions = useMemo(
@@ -183,13 +184,32 @@ const StaffContractDrawer = ({ open, contract, options, locale, dictionary, onCl
               helperText={errors.contract_type_id?.message}
             >
               <MenuItem value='' disabled>
-                {dictionary.placeholders.selectPolicy}
-              </MenuItem>
-              {policyOptions.map(policy => (
-                <MenuItem key={policy.id} value={policy.id}>
-                  {policy.label}
+              {dictionary.placeholders.selectContractType || dictionary.placeholders.selectPolicy}
+            </MenuItem>
+              {contractTypeOptions.map(type => (
+                <MenuItem key={type.id} value={type.id}>
+                  {type.label}
                 </MenuItem>
               ))}
+            </CustomTextField>
+          )}
+        />
+        <Controller
+          name='template_id'
+          control={control}
+          render={({ field }) => (
+            <CustomTextField
+              {...field}
+              select
+              fullWidth
+              required
+              label={dictionary.fields.template || dictionary.fields.contractType}
+              value={field.value || ''}
+              error={Boolean(errors.template_id)}
+              helperText={errors.template_id?.message}
+            >
+              <MenuItem value='' disabled>{dictionary.placeholders.selectPolicy}</MenuItem>
+              {options.policies.map(policy => <MenuItem key={policy.id} value={policy.id}>{policy.label}</MenuItem>)}
             </CustomTextField>
           )}
         />

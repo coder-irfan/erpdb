@@ -10,8 +10,8 @@ const ACCENTS = [
   'bg-infoLighter text-info'
 ]
 
-const ReportStatsCards = ({ items, loading }) => (
-  <div className='no-scrollbar flex w-full snap-x items-center gap-4 overflow-x-auto xl:grid xl:grid-cols-4 xl:overflow-visible'>
+const ReportStatsCards = ({ items, loading, className = '' }) => (
+  <div className={`no-scrollbar flex w-full snap-x items-center gap-4 overflow-x-auto xl:grid xl:grid-cols-4 xl:overflow-visible ${className}`}>
     {items.map((item, index) => {
       const accentClasses = ACCENTS[index % ACCENTS.length]
 

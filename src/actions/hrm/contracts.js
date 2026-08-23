@@ -7,9 +7,14 @@ import sanitizeHtml from 'sanitize-html'
 import { safeParse } from 'valibot'
 
 import { i18n } from '@/configs/i18n'
+import { CONTRACT_STATUS_VALUES } from '@/data/contracts'
+import { CONTRACT_TYPE_DOMAINS } from '@/data/contractTypes'
 import { authorizeAction } from '@/libs/actionAuthorization'
 import { getCompanySetupRecord } from '@/libs/companySetup'
+import { getContractStatusOptions } from '@/libs/contractStatuses'
+import { getContractTypeOptions } from '@/libs/contractTypes'
 import { prisma } from '@/libs/prisma'
+import { getBrandingSettings } from '@/libs/systemSettings'
 import { createStaffContractSchema } from '@/schemas/hrm/contracts'
 import { convertToBaseCurrency } from '@/utils/formatCurrency'
 import { getDictionary } from '@/utils/getDictionary'
@@ -100,7 +105,22 @@ const compileTemplate = ({ template, staff, values, setup }) => {
     source
   )
 
-  return sanitizeContractHtml(compiled)
+  const mustacheReplacements = {
+    name: replacements.STAFF_NAME,
+    amount: replacements.BASE_SALARY,
+    start_date: replacements.START_DATE,
+    end_date: values.end_date ? toDateOnly(toDate(values.end_date)) : 'Open-ended',
+    position: replacements.POSITION,
+    company_name: replacements.COMPANY_NAME,
+    tazkira_no: replacements.TAZKIRA_NO
+  }
+
+  const compiledMustache = Object.entries(mustacheReplacements).reduce(
+    (result, [key, value]) => result.replaceAll(`{{${key}}}`, escapeHtml(value)),
+    compiled
+  )
+
+  return sanitizeContractHtml(compiledMustache)
 }
 
 const contractSelect = {
@@ -125,16 +145,20 @@ const contractSelect = {
       id: true,
       first_name: true,
       last_name: true,
+      father_name: true,
       email: true,
       phone: true,
+      address: true,
       tazkira_no: true,
+      guarantor_name: true,
+      guarantor_phone: true,
       position: true,
       salary: true,
       salary_currency: true,
       salary_exchange_rate: true
     }
   },
-  contract_type: { select: { id: true, label: true, value: true, is_active: true } },
+  contract_type: { select: { id: true, label: true, value: true, category: true, is_active: true } },
   status: { select: { id: true, label: true, value: true, color_code: true, is_active: true } }
 }
 
@@ -180,6 +204,7 @@ const validateContract = (payload, translations) =>
   safeParse(createStaffContractSchema(translations.validation), {
     staff_id: payload?.staff_id,
     contract_type_id: payload?.contract_type_id,
+    template_id: payload?.template_id,
     position_title: payload?.position_title,
     base_salary: payload?.base_salary,
     currency: payload?.currency,
@@ -196,7 +221,7 @@ const validateDateRange = values => {
 }
 
 const getValidatedRelations = async (values, currentContract = null) => {
-  const [staff, policy, status, setup] = await Promise.all([
+  const [staff, contractType, policy, status, setup] = await Promise.all([
     prisma.hrmstaff.findUnique({
       where: { id: values.staff_id },
       select: {
@@ -213,8 +238,18 @@ const getValidatedRelations = async (values, currentContract = null) => {
     prisma.option.findFirst({
       where: {
         id: values.contract_type_id,
-        category: 'CONTRACT_POLICY',
+        category: {
+          in: [CONTRACT_TYPE_DOMAINS.HRM, ...(currentContract?.contract_type_id === values.contract_type_id ? ['CONTRACT_POLICY'] : [])]
+        },
         ...(currentContract?.contract_type_id === values.contract_type_id ? {} : { is_active: true })
+      },
+      select: { id: true, category: true }
+    }),
+    prisma.option.findFirst({
+      where: {
+        id: values.template_id,
+        category: 'CONTRACT_POLICY',
+        is_active: true
       },
       select: { id: true, description: true }
     }),
@@ -224,12 +259,22 @@ const getValidatedRelations = async (values, currentContract = null) => {
         category: 'CONTRACT_STATUS',
         ...(currentContract?.status_id === values.status_id ? {} : { is_active: true })
       },
-      select: { id: true }
+      select: { id: true, value: true }
     }),
     getCompanySetupRecord()
   ])
 
-  return { staff, policy, status, setup }
+  return {
+    staff,
+    contractType,
+    policy,
+    status:
+      status &&
+      (CONTRACT_STATUS_VALUES.includes(status.value) || currentContract?.status_id === status.id)
+        ? status
+        : null,
+    setup
+  }
 }
 
 const generateContractNumber = async transaction => {
@@ -288,7 +333,14 @@ export const getStaffContracts = async (payload = {}) => {
   }
 
   try {
-    const [totalCount, contracts] = await prisma.$transaction([
+    const today = new Date()
+    const inThirtyDays = new Date(today)
+
+    today.setUTCHours(0, 0, 0, 0)
+    inThirtyDays.setUTCDate(inThirtyDays.getUTCDate() + 30)
+    inThirtyDays.setUTCHours(23, 59, 59, 999)
+
+    const [totalCount, contracts, activeCount, expiringSoonCount, draftCount, totalValue] = await prisma.$transaction([
       prisma.hrmstaffcontract.count({ where }),
       prisma.hrmstaffcontract.findMany({
         where,
@@ -296,12 +348,32 @@ export const getStaffContracts = async (payload = {}) => {
         orderBy: { created_at: 'desc' },
         skip: (page - 1) * limit,
         take: limit
-      })
+      }),
+      prisma.hrmstaffcontract.count({ where: { status: { is: { value: 'ACTIVE' } } } }),
+      prisma.hrmstaffcontract.count({
+        where: {
+          status: { is: { value: 'ACTIVE' } },
+          end_date: { gte: today, lte: inThirtyDays }
+        }
+      }),
+      prisma.hrmstaffcontract.count({ where: { status: { is: { value: 'DRAFT' } } } }),
+      prisma.hrmstaffcontract.aggregate({ _sum: { amount_base: true } })
     ])
 
     return {
       success: true,
-      data: { contracts: contracts.map(normalizeContract), totalCount, page, totalPages: Math.max(1, Math.ceil(totalCount / limit)) }
+      data: {
+        contracts: contracts.map(normalizeContract),
+        totalCount,
+        page,
+        totalPages: Math.max(1, Math.ceil(totalCount / limit)),
+        summary: {
+          active: activeCount,
+          expiringSoon: expiringSoonCount,
+          draft: draftCount,
+          totalValue: totalValue._sum.amount_base?.toFixed(2) || '0.00'
+        }
+      }
     }
   } catch {
     return { success: false, code: 'CONTRACTS_LOAD_FAILED', error: context.translations.messages.loadFailed }
@@ -314,23 +386,41 @@ export const getContractFormOptions = async (payload = {}) => {
   if (!context.authorized) return { success: false, code: context.code, error: context.error }
 
   try {
-    const [staff, policies, statuses, setup] = await Promise.all([
+    const [staff, contractTypes, policies, statuses, setup, clients, leads, invoices, commonOptions] = await Promise.all([
       prisma.hrmstaff.findMany({
         where: { status: { not: 'TERMINATED' } },
         select: { id: true, first_name: true, last_name: true, position: true, salary: true, salary_currency: true, salary_exchange_rate: true, tazkira_no: true },
         orderBy: [{ first_name: 'asc' }, { last_name: 'asc' }]
       }),
+      getContractTypeOptions(),
       prisma.option.findMany({
         where: { category: 'CONTRACT_POLICY', is_active: true },
-        select: { id: true, label: true, value: true },
+        select: { id: true, label: true, value: true, description: true },
         orderBy: { label: 'asc' }
       }),
-      prisma.option.findMany({
-        where: { category: 'CONTRACT_STATUS', is_active: true },
-        select: { id: true, label: true, value: true, color_code: true },
-        orderBy: { sort_order: 'asc' }
+      getContractStatusOptions(),
+      getCompanySetupRecord(),
+      prisma.crmclient.findMany({
+        where: { status: 'ACTIVE', email: { not: 'external-contracts@internal.invalid' } },
+        select: { id: true, company_name: true, primary_contact_name: true, email: true },
+        orderBy: { company_name: 'asc' },
+        take: 500
       }),
-      getCompanySetupRecord()
+      prisma.crmlead.findMany({
+        select: { id: true, title: true, company_name: true, contact_name: true, email: true },
+        orderBy: { created_at: 'desc' },
+        take: 500
+      }),
+      prisma.contractinvoice.findMany({
+        select: { id: true, invoice_number: true, client_id: true, amount: true, currency: true, issued_date: true },
+        orderBy: { created_at: 'desc' },
+        take: 500
+      }),
+      prisma.option.findMany({
+        where: { category: { in: ['CONTRACT_DURATION', 'CONTRACT_COUNTRY', 'CONTRACT_LEVEL'] }, is_active: true },
+        select: { id: true, category: true, label: true, value: true, description: true, is_default: true },
+        orderBy: [{ category: 'asc' }, { sort_order: 'asc' }, { label: 'asc' }]
+      })
     ])
 
     return {
@@ -342,9 +432,27 @@ export const getContractFormOptions = async (payload = {}) => {
           salary: item.salary.toFixed(2),
           salary_exchange_rate: item.salary_exchange_rate.toFixed(4)
         })),
+        contractTypes: contractTypes.filter(option => option.category === CONTRACT_TYPE_DOMAINS.HRM),
         policies,
         statuses,
-        setup
+        setup,
+        clients,
+        leads,
+        invoices: invoices.map(invoice => ({
+          ...invoice,
+          amount: invoice.amount.toFixed(2),
+          issued_date: invoice.issued_date.toISOString()
+        })),
+        templates: policies,
+        options: {
+          CONTRACT_TYPES: contractTypes,
+          CONTRACT_STATUS: statuses,
+          CONTRACT_DURATION: commonOptions.filter(option => option.category === 'CONTRACT_DURATION'),
+          CONTRACT_COUNTRY: commonOptions.filter(option => option.category === 'CONTRACT_COUNTRY'),
+          CONTRACT_LEVEL: commonOptions.filter(option => option.category === 'CONTRACT_LEVEL')
+        },
+        baseCurrency: setup.currency_code || 'AFN',
+        exchangeRate: setup.usd_afn_exchange_rate || '65.0000'
       }
     }
   } catch {
@@ -362,14 +470,21 @@ export const getStaffContractById = async (id, payload = {}) => {
   if (!contractId) return { success: false, code: 'CONTRACT_NOT_FOUND', error: context.translations.messages.notFound }
 
   try {
-    const [contract, setup] = await Promise.all([
+    const [contract, setup, branding] = await Promise.all([
       prisma.hrmstaffcontract.findUnique({ where: { id: contractId }, select: contractSelect }),
-      getCompanySetupRecord()
+      getCompanySetupRecord(),
+      getBrandingSettings()
     ])
 
     if (!contract) return { success: false, code: 'CONTRACT_NOT_FOUND', error: context.translations.messages.notFound }
 
-    return { success: true, data: { contract: normalizeContract(contract), setup } }
+    return {
+      success: true,
+      data: {
+        contract: normalizeContract(contract),
+        setup: { ...setup, company_logo: setup.company_logo || branding.lightLogoUrl || null }
+      }
+    }
   } catch {
     return { success: false, code: 'CONTRACT_LOAD_FAILED', error: context.translations.messages.loadFailed }
   }
@@ -394,7 +509,7 @@ export const createStaffContract = async (payload = {}) => {
     const relations = await getValidatedRelations(validation.output)
 
     if (!relations.staff) return { success: false, code: 'STAFF_NOT_FOUND', error: context.translations.messages.staffNotFound }
-    if (!relations.policy) return { success: false, code: 'POLICY_NOT_FOUND', error: context.translations.messages.policyNotFound }
+    if (!relations.contractType || !relations.policy) return { success: false, code: 'POLICY_NOT_FOUND', error: context.translations.messages.policyNotFound }
     if (!relations.status) return { success: false, code: 'STATUS_NOT_FOUND', error: context.translations.messages.statusNotFound }
 
     const contentHtml = compileTemplate({
@@ -484,7 +599,7 @@ export const updateStaffContract = async (id, payload = {}) => {
     const relations = await getValidatedRelations(validation.output, existing)
 
     if (!relations.staff) return { success: false, code: 'STAFF_NOT_FOUND', error: context.translations.messages.staffNotFound }
-    if (!relations.policy) return { success: false, code: 'POLICY_NOT_FOUND', error: context.translations.messages.policyNotFound }
+    if (!relations.contractType || !relations.policy) return { success: false, code: 'POLICY_NOT_FOUND', error: context.translations.messages.policyNotFound }
     if (!relations.status) return { success: false, code: 'STATUS_NOT_FOUND', error: context.translations.messages.statusNotFound }
 
     const contentHtml = compileTemplate({
@@ -554,7 +669,12 @@ export const updateStaffContractStatus = async (id, statusId, payload = {}) => {
 
   try {
     const status = await prisma.option.findFirst({
-      where: { id: normalizedStatusId, category: 'CONTRACT_STATUS', is_active: true },
+      where: {
+        id: normalizedStatusId,
+        category: 'CONTRACT_STATUS',
+        value: { in: CONTRACT_STATUS_VALUES },
+        is_active: true
+      },
       select: { id: true }
     })
 

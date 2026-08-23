@@ -112,8 +112,8 @@
     "contractModule": "قرارداد",
     "contractManagement": "د قرارداد اداره",
     "financeManagement": "مالي مدیریت",
-    "contractOptions": "د قرارداد انتخابونه",
-    "contractList": "قراردادونه",
+    "contractOptions": "پېرېدونکي / مراجعین",
+    "contractList": "د پېرېدونکو قراردادونه",
     "contractInvoices": "صورتحسابونه",
     "crmLeads": "احتمالي پېرېدونکي",
     "crmClients": "مراجعین",
@@ -138,7 +138,37 @@
     "crmLeadOptions": "د فرصت حالتونه او سرچینې",
     "setupSettings": "سیسټم او امستنې",
     "companySetup": "د شرکت امستنې",
-    "systemAuditLogs": "د سیسټم د تفتیش ثبتونه"
+    "systemAuditLogs": "د سیسټم د تفتیش ثبتونه",
+    "invoiceOptions": "Invoice Options",
+    "otherContracts": "Others",
+    "contractTypes": "Contract Types",
+    "contractTemplates": "Contract Templates",
+    "incomeCategories": "Income Categories",
+    "crmVisitorOptions": "Visitor Purposes"
+  },
+  "notifications": {
+    "title": "خبرتیاوې",
+    "newCount": "{count} نوې",
+    "markAllRead": "ټولې لوستل شوې وښایئ",
+    "clearAll": "ټولې پاکې کړئ",
+    "emptyTitle": "نوې خبرتیا نشته",
+    "emptyDescription": "ستاسو له رول سره اړوند وروستي فعالیتونه به دلته ښکاره شي.",
+    "viewAll": "ټولې خبرتیاوې وګورئ",
+    "performedBy": "د {name} لخوا ترسره شو",
+    "systemActor": "سیسټم",
+    "actions": "کړنې",
+    "rowsPerPage": "په هره پاڼه کې کتارونه:",
+    "of": "له",
+    "deleteAction": "ثبت ړنګول",
+    "deleteTitle": "د پلټنې ثبت ړنګول",
+    "deleteDescription": "دا د پلټنې ثبت ړنګ شي؟ دا کړنه بېرته نه راګرځي.",
+    "deleteSuccess": "د پلټنې ثبت په بریالیتوب ړنګ شو.",
+    "deleteFailed": "د پلټنې ثبت ړنګ نه شو.",
+    "loadFailed": "د پلټنې ثبتونه پورته نه شول.",
+    "cancel": "لغوه",
+    "auditTitle": "د سیسټم د پلټنې ثبتونه", "auditDescription": "د رول له مخې فلټر شوي سیسټمي او امنیتي فعالیتونه.", "search": "د پلټنې ثبتونه ولټوئ", "category": "ډله", "action": "عمل", "actor": "ترسره کوونکی", "time": "وخت", "module": "برخه", "noActivity": "ستاسو د رول لپاره د پلټنې فعالیت نشته.",
+    "entities": { "CONTRACT": "قرارداد", "HRM_CONTRACT": "د کارکوونکي قرارداد", "LEAVE": "د رخصتۍ غوښتنه", "INVOICE": "بل", "FINANCE_INCOME": "عاید", "FINANCE_EXPENSE": "لګښت", "FINANCE_LOAN": "پور", "FINANCE_SALARY": "معاش", "HRM_STAFF": "کارکوونکی", "CRM_CLIENT": "پېرودونکی", "CRM_LEAD": "مخکښ", "CRM_VISITOR": "لیدونکی", "PROJECT": "پروژه", "TASK": "دنده", "INVENTORY_ITEM": "زېرمه توکی", "OPTION": "غوراوی", "USER": "کارن", "ROLE": "رول", "SYSTEM": "سیسټمي فعالیت" },
+    "events": { "CREATED": "جوړ شو", "UPDATED": "تازه شو", "DELETED": "ړنګ شو", "STATUS_UPDATED": "حالت تازه شو", "PAID": "تادیه شو", "PAYMENT_RECORDED": "تادیه ثبت شوه", "REPAYMENT_RECORDED": "بېرته تادیه ثبت شوه", "CHECKED_IN": "ننوتل ثبت شول", "CHECKED_OUT": "وتل ثبت شول", "CONVERTED": "واړول شو", "MARKED_PAID": "تادیه شوی وښودل شو", "HOURS_LOGGED": "ساعتونه ثبت شول", "MEMBER_ASSIGNED": "غړی وټاکل شو", "MEMBER_REMOVED": "غړی لرې شو", "QUANTITY_ADJUSTED": "اندازه برابره شوه", "ACTIVITY_ADDED": "فعالیت زیات شو", "ACTIVITY_CREATED": "فعالیت جوړ شو" }
   },
   "auth": {
     "common": {
@@ -262,12 +292,15 @@
   },
   "setupBranding": {
     "tabs": {
+      "theme": "بڼه او رنګونه",
       "general": "عمومي معلومات",
       "localization": "ځایي کول او تګلاره",
       "branding": "نښه او شتمنۍ",
       "signatories": "قانوني لاسلیک کوونکي"
     },
     "sections": {
+      "themeTitle": "بڼه او رنګونه",
+      "themeDescription": "په ټول سیسټم کې کارېدونکي اصلي او ثانوي رنګونه تنظیم کړئ.",
       "generalTitle": "د شرکت معلومات",
       "generalDescription": "په سیسټم کې کارېدونکي قانوني هویت او اصلي اړیکې اداره کړئ.",
       "localizationTitle": "ځایي کول او عملیاتي تګلاره",
@@ -299,6 +332,12 @@
     "saveFailed": "د برانډ امستنې خوندي نه شوې. مهرباني وکړئ بیا هڅه وکړئ.",
     "invalidLogoPath": "د نښان او براوزر نښان سم پورته شوي فایلونه وټاکئ.",
     "fields": {
+      "primaryColor": "اصلي رنګ",
+      "secondaryColor": "ثانوي رنګ",
+      "primaryColorLight": "اصلي رنګ (روښانه حالت)",
+      "secondaryColorLight": "ثانوي رنګ (روښانه حالت)",
+      "primaryColorDark": "اصلي رنګ (تیاره حالت)",
+      "secondaryColorDark": "ثانوي رنګ (تیاره حالت)",
       "appName": "د پروګرام نوم",
       "companyName": "د شرکت قانوني نوم",
       "companyEmail": "د شرکت برېښنالیک",
@@ -313,9 +352,27 @@
       "workEnd": "د کار پای وخت"
     },
     "validation": {
+      "themeColorInvalid": "معتبر اصلي او ثانوي رنګونه دننه کړئ.",
       "companyNameRequired": "د شرکت قانوني نوم اړین دی.",
       "workEndAfterStart": "د کار پای وخت باید د پیل له وخت وروسته وي.",
       "exchangeRatePositive": "د ډالر/افغانۍ د تبادلې نرخ باید له صفر څخه لوړ وي."
+    },
+    "theme": {
+      "lightThemeTitle": "د روښانه پوسته رنګونه",
+      "lightThemeDescription": "د روښانه سطحو لپاره د نښې رنګونه.",
+      "darkThemeTitle": "د تیاره پوسته رنګونه",
+      "darkThemeDescription": "د تیاره سطحو لپاره روښانه شوي د نښې رنګونه.",
+      "hexColorFormats": "د #022483 په څېر ۳ یا ۶ عددي هګز رنګ ولیکئ.",
+      "invalidHexColor": "سم هګز رنګ ولیکئ.",
+      "primaryDescription": "د مینو، اصلي کړنو، لینکونو او فوکس حالتونو لپاره کارېږي.",
+      "secondaryDescription": "د مرستندویه کړنو، روښانتیا او بشپړوونکو رنګونو لپاره کارېږي.",
+      "colorCode": "د رنګ کوډ",
+      "colorFormats": "Hex، RGB او HSL رنګونه منل کېږي.",
+      "invalidColor": "معتبر Hex، RGB یا HSL رنګ دننه کړئ.",
+      "pickColor": "{color} وټاکئ",
+      "livePreview": "ژوندۍ مخکتنه",
+      "previewTitle": "د نښې ژوندۍ مخکتنه",
+      "previewDescription": "دا تدریجي رنګ اوسني اصلي او ثانوي رنګونه ښيي."
     },
     "upload": {
       "drop": "انځور دلته راکش او پرېږدئ، یا فایل وټاکئ.",
@@ -404,16 +461,42 @@
       "noProject": "پروژه نشته"
     },
     "hoursShort": "ساعت",
+    "print": {
+      "title": "د کارکوونکو د ټایم‌شېټ او حاضرۍ راپور",
+      "individualTitle": "د کارکوونکي انفرادي ټایم‌کارډ",
+      "employee": "کارکوونکی",
+      "period": "دوره / میاشت",
+      "reportReference": "د راپور نېټه",
+      "generatedOn": "د صادرېدو نېټه",
+      "dateRange": "د نېټې موده",
+      "reportType": "د راپور ډول",
+      "generalReport": "ټول کارکوونکي / عمومي راپور",
+      "totalLoggedHours": "ټولې ثبت شوې ساعته",
+      "totalRecords": "ټولې ثبتې",
+      "presentDays": "پر وخت / حاضرې ورځې",
+      "offLeaveDays": "رخصتي / غیرحاضرې ورځې",
+      "dailyLog": "د ورځنۍ حاضرۍ ثبت",
+      "day": "ورځ",
+      "tableTitle": "د ټایم‌شېټ لنډیز",
+      "timeInOut": "وخت (ننوتل / وتل)",
+      "remarks": "یادښتونه / څرګندونې",
+      "generalProject": "عمومي / نشته",
+      "noRecords": "د ټاکل شوو فلټرونو لپاره د حاضرۍ ریکارډ نشته.",
+      "approvals": "تأییدونه",
+      "preparedBy": "چمتو کوونکی (د بشري سرچینو مدیر)",
+      "approvedBy": "تأیید کوونکی (مدیریت / مجاز لاسلیک کوونکی)",
+      "employeeSignature": "د کارکوونکي لاسلیک",
+      "supervisorApproval": "د سرپرست / بشري سرچینو تأیید",
+      "signature": "لاسلیک",
+      "officialSeal": "رسمي مهر",
+      "date": "نېټه",
+      "confidentiality": "محرمانه او ځانګړی",
+      "page": "پاڼه",
+      "of": "له",
+      "taxId": "جواز / مالیاتي شمېره"
+    },
     "export": {
-      "columns": [
-        "د کارکوونکي نوم",
-        "دنده",
-        "حالت",
-        "ننوتل",
-        "وتل",
-        "ساعتونه",
-        "یادښتونه"
-      ]
+      "columns": ["د کارکوونکي نوم", "دنده", "حالت", "ننوتل", "وتل", "ساعتونه", "یادښتونه"]
     },
     "messages": {
       "created": "حاضري په بریالیتوب خوندي شوه.",
@@ -443,10 +526,17 @@
     }
   },
   "hrmContracts": {
+    "stats": {
+      "active": "فعال قراردادونه",
+      "expiringSoon": "ژر پای ته رسېږي",
+      "draft": "مسوده قراردادونه",
+      "totalValue": "ټول ارزښت"
+    },
     "fields": {
       "contractNumber": "د قرارداد شمېره",
       "staffMember": "کارکوونکی",
-      "contractType": "د قرارداد پالیسي",
+      "contractType": "د قرارداد ډول",
+      "template": "منل شوي شرایط / قالب",
       "position": "دنده",
       "baseSalary": "منل شوی معاش",
       "currency": "اسعار",
@@ -455,7 +545,9 @@
       "status": "حالت",
       "email": "برېښنالیک",
       "phone": "ټیلیفون",
-      "tazkiraNo": "د تذکرې شمېره"
+      "tazkiraNo": "د تذکرې شمېره",
+      "fatherName": "د پلار نوم",
+      "address": "پته"
     },
     "filters": {
       "search": "د قراردادونو لټون",
@@ -517,7 +609,8 @@
     },
     "placeholders": {
       "selectStaff": "کارکوونکی وټاکئ",
-      "selectPolicy": "د قرارداد پالیسي وټاکئ",
+      "selectPolicy": "د قرارداد قالب وټاکئ",
+      "selectContractType": "د قرارداد ډول وټاکئ",
       "selectStatus": "د قرارداد حالت وټاکئ"
     },
     "details": {
@@ -526,12 +619,30 @@
       "noContent": "د قرارداد د سند منځپانګه نشته."
     },
     "print": {
-      "title": "د استخدام قرارداد",
+      "title": "د کارکوونکي د استخدام قرارداد",
       "taxId": "جواز / مالیاتي شمېره",
       "employeeSignature": "د کارکوونکي لاسلیک",
       "employerSignature": "کار ورکوونکی / مجاز لاسلیک کوونکی",
       "signatoryStamp": "مجاز لاسلیک یا مهر",
-      "date": "نېټه"
+      "date": "نېټه",
+      "reference": "د مرجع شمېره",
+      "issuedDate": "د صادرېدو نېټه",
+      "page": "پاڼه",
+      "of": "له",
+      "signatures": "لاسلیکونه",
+      "officialSeal": "رسمي مهر",
+      "confidentiality": "محرمانه او ځانګړی",
+      "parties": "د تړون اړخونه",
+      "employer": "کار ورکوونکی",
+      "employee": "د کارکوونکي معلومات",
+      "companyName": "د شرکت نوم",
+      "authorizedRepresentative": "مجاز استازی",
+      "representativeTitle": "د استازي دنده",
+      "terms": "د قرارداد شرایط",
+      "baseCurrencyValue": "په بنسټیز اسعار کې ارزښت",
+      "exchangeRate": "د تبادلې نرخ",
+      "guarantor": "ضامن",
+      "legalClauses": "قانوني مادې او منل شوي شرایط"
     },
     "messages": {
       "created": "د کارکوونکي قرارداد په بریالیتوب جوړ شو.",
@@ -698,20 +809,7 @@
     }
   },
   "hrmPayroll": {
-    "months": [
-      "جنوري",
-      "فبروري",
-      "مارچ",
-      "اپرېل",
-      "می",
-      "جون",
-      "جولای",
-      "اګست",
-      "سپتمبر",
-      "اکتوبر",
-      "نومبر",
-      "دسمبر"
-    ],
+    "months": ["جنوري", "فبروري", "مارچ", "اپرېل", "می", "جون", "جولای", "اګست", "سپتمبر", "اکتوبر", "نومبر", "دسمبر"],
     "period": {
       "month": "میاشت",
       "year": "کال"
@@ -1377,6 +1475,8 @@
       }
     },
     "filters": {
+      "search": "راپورونه لټول",
+      "searchPlaceholder": "کارکوونکی یا د راپور ریکارډونه ولټوئ...",
       "dateRange": "د نېټې موده",
       "startDate": "د پیل نېټه",
       "endDate": "د پای نېټه",
@@ -1470,7 +1570,16 @@
       "description": "هیڅ د بشري سرچینو ریکارډ له ټاکل شویو فلټرونو او نېټې مودې سره برابر نه دی."
     },
     "print": {
-      "generated": "جوړ شوی"
+    "generated": "جوړ شوی",
+    "signatures": "تأییدونه",
+    "preparedBy": "چمتو کوونکی (بشري سرچینې)",
+    "approvedBy": "تأیید کوونکی",
+    "date": "نېټه",
+    "officialSeal": "رسمي مهر",
+    "confidentiality": "محرمانه او ځانګړی",
+    "page": "پاڼه",
+    "of": "له",
+    "taxId": "جواز / مالیاتي شمېره"
     },
     "messages": {
       "csvReady": "د CSV راپور په بریالیتوب ډاونلوډ شو.",
@@ -1485,76 +1594,211 @@
   },
   "financeReports": {
     "tabs": {
-      "income": { "label": "عاید", "tableTitle": "د عاید راکړې ورکړې", "icon": "tabler-trending-up" },
-      "expenses": { "label": "لګښتونه", "tableTitle": "د لګښتونو راکړې ورکړې", "icon": "tabler-trending-down" },
-      "salary": { "label": "معاش / تنخوا", "tableTitle": "د معاش او تنخوا ریکارډونه", "icon": "tabler-users-dollar" },
-      "inventory": { "label": "موجودي", "tableTitle": "د موجودۍ ارزونه", "icon": "tabler-packages" },
-      "loans": { "label": "پورونه", "tableTitle": "د پورونو ټولګه", "icon": "tabler-building-bank" }
+      "income": {
+        "label": "عاید",
+        "tableTitle": "د عاید راکړې ورکړې",
+        "icon": "tabler-trending-up"
+      },
+      "expenses": {
+        "label": "لګښتونه",
+        "tableTitle": "د لګښتونو راکړې ورکړې",
+        "icon": "tabler-trending-down"
+      },
+      "salary": {
+        "label": "معاش / تنخوا",
+        "tableTitle": "د معاش او تنخوا ریکارډونه",
+        "icon": "tabler-users-dollar"
+      },
+      "inventory": {
+        "label": "موجودي",
+        "tableTitle": "د موجودۍ ارزونه",
+        "icon": "tabler-packages"
+      },
+      "loans": {
+        "label": "پورونه",
+        "tableTitle": "د پورونو ټولګه",
+        "icon": "tabler-building-bank"
+      }
     },
     "filters": {
       "search": "راپور لټول",
       "searchPlaceholder": "په اوسني راپور کې لټون...",
-      "dateRange": "د نېټې موده", "startDate": "د پیل نېټه", "endDate": "د پای نېټه",
-      "currency": "د ښودلو اسعار", "exchangeRate": "د ډالر / افغانۍ نرخ"
+      "category": "کټګوري",
+      "allCategories": "ټولې کټګورۍ",
+      "clear": "فلټرونه پاکول",
+      "dateRange": "د نېټې موده",
+      "startDate": "د پیل نېټه",
+      "endDate": "د پای نېټه",
+      "currency": "د ښودلو اسعار",
+      "exchangeRate": "د ډالر / افغانۍ نرخ"
     },
     "datePresets": {
-      "thisMonth": "روانه میاشت", "lastMonth": "تېره میاشت", "thisQuarter": "روانه ربع",
-      "thisYear": "روان کال", "custom": "ځانګړې موده"
+      "thisMonth": "روانه میاشت",
+      "lastMonth": "تېره میاشت",
+      "thisQuarter": "روانه ربع",
+      "thisYear": "روان کال",
+      "custom": "ځانګړې موده"
     },
     "actions": {
-      "exportPdf": "PDF صادرول", "exportCsv": "CSV / Excel صادرول", "print": "راپور چاپول"
+      "exportPdf": "PDF صادرول",
+      "exportCsv": "CSV / Excel صادرول",
+      "print": "راپور چاپول"
     },
     "charts": {
       "titles": {
-        "income": { "trend": "د میاشتني عاید بهیر", "distribution": "د کټګورۍ له مخې د عاید وېش" },
-        "expenses": { "trend": "میاشتنی عملیاتي لګښت", "distribution": "د کټګورۍ له مخې لګښتونه" },
-        "salary": { "trend": "د میاشتني معاش جوړښت" },
-        "inventory": { "trend": "د موجودۍ ارزښت له مخې غوره توکي", "distribution": "د کټګورۍ له مخې د موجودۍ وېش" },
-        "loans": { "distribution": "ورکړل شوي، بېرته ورکړل شوي او پاتې پورونه" }
+        "income": {
+          "trend": "د میاشتني عاید بهیر",
+          "distribution": "د کټګورۍ له مخې د عاید وېش"
+        },
+        "expenses": {
+          "trend": "میاشتنی عملیاتي لګښت",
+          "distribution": "د کټګورۍ له مخې لګښتونه"
+        },
+        "salary": {
+          "trend": "د میاشتني معاش جوړښت"
+        },
+        "inventory": {
+          "trend": "د موجودۍ ارزښت له مخې غوره توکي",
+          "distribution": "د کټګورۍ له مخې د موجودۍ وېش"
+        },
+        "loans": {
+          "distribution": "ورکړل شوي، بېرته ورکړل شوي او پاتې پورونه"
+        }
       },
       "series": {
-        "income": "عاید", "expenses": "لګښتونه", "baseSalary": "اساسي معاش",
-        "bonuses": "بونسونه", "deductions": "کسرونه", "stockValue": "د موجودۍ ارزښت"
+        "income": "عاید",
+        "expenses": "لګښتونه",
+        "baseSalary": "اساسي معاش",
+        "bonuses": "بونسونه",
+        "deductions": "کسرونه",
+        "stockValue": "د موجودۍ ارزښت"
       },
-      "labels": { "issued": "ورکړل شوي", "repaid": "بېرته ورکړل شوي", "remaining": "پاتې" },
+      "labels": {
+        "issued": "ورکړل شوي",
+        "repaid": "بېرته ورکړل شوي",
+        "remaining": "پاتې"
+      },
       "total": "ټول",
       "empty": "د ټاکل شوې مودې لپاره د چارټ معلومات نشته."
     },
     "kpis": {
-      "grossIncome": "ټول ناخالص عاید", "totalTransactions": "ټولې راکړې ورکړې",
-      "averageTransaction": "د راکړې ورکړې منځنی ارزښت", "operationalExpense": "ټول عملیاتي لګښت",
-      "topExpenseCategory": "د لګښت لوړه کټګوري", "approvedPending": "ثبت شوي / پاتې",
-      "payrollDisbursed": "ټول ورکړل شوي معاشونه", "totalDeductions": "ټولې کسرونه",
-      "activeStaffPaid": "معاش اخیستونکي فعال کارکوونکي", "stockValuation": "د موجودۍ ټول ارزښت",
-      "skuCount": "د توکو ټول شمېر", "lowStockCount": "د کمې موجودۍ / بیا فرمایش خبرتیا",
-      "activeLoanBalance": "د فعال پور ټول پاتې شونی", "totalRepaid": "تر اوسه ټول بېرته ورکړل شوي",
+      "grossIncome": "ټول ناخالص عاید",
+      "totalTransactions": "ټولې راکړې ورکړې",
+      "averageTransaction": "د راکړې ورکړې منځنی ارزښت",
+      "operationalExpense": "ټول عملیاتي لګښت",
+      "topExpenseCategory": "د لګښت لوړه کټګوري",
+      "approvedPending": "ثبت شوي / پاتې",
+      "payrollDisbursed": "ټول ورکړل شوي معاشونه",
+      "totalDeductions": "ټولې کسرونه",
+      "activeStaffPaid": "معاش اخیستونکي فعال کارکوونکي",
+      "stockValuation": "د موجودۍ ټول ارزښت",
+      "skuCount": "د توکو ټول شمېر",
+      "lowStockCount": "د کمې موجودۍ / بیا فرمایش خبرتیا",
+      "activeLoanBalance": "د فعال پور ټول پاتې شونی",
+      "totalRepaid": "تر اوسه ټول بېرته ورکړل شوي",
       "monthlyRecovery": "د میاشتني وصول اټکل"
     },
     "table": {
-      "date": "نېټه", "reference": "د حوالې شمېره", "sourceCategory": "سرچینه / کټګوري",
-      "amountLocal": "اندازه (محلي)", "baseAmountUsd": "اساسي اندازه (ډالر)", "paymentMethod": "د ورکړې طریقه",
-      "status": "حالت", "expenseTitle": "د لګښت سرلیک", "category": "کټګوري", "vendorPayee": "پلورونکی / اخیستونکی",
-      "amount": "اندازه", "staffName": "د کارکوونکي نوم", "designation": "دنده", "month": "میاشت",
-      "baseSalary": "اساسي معاش", "bonuses": "بونسونه", "deductions": "کسرونه", "netPaid": "خالصه ورکړه",
-      "paymentStatus": "د ورکړې حالت", "sku": "د توکي کوډ", "itemName": "د توکي نوم", "inStockQty": "موجود شمېر",
-      "unitCost": "د واحد بیه", "totalAssetValue": "د شتمنۍ ټول ارزښت", "reorderStatus": "د بیا فرمایش حالت",
-      "loanNumber": "د پور شمېره", "borrower": "پور اخیستونکی", "loanType": "ډول", "totalLoan": "ټول پور",
-      "repaid": "بېرته ورکړل شوي", "remainingBalance": "پاتې شونی", "issueDate": "د ورکړې نېټه"
+      "date": "نېټه",
+      "reference": "د حوالې شمېره",
+      "sourceCategory": "سرچینه / کټګوري",
+      "amountLocal": "اندازه (محلي)",
+      "baseAmountUsd": "اساسي اندازه (ډالر)",
+      "paymentMethod": "د ورکړې طریقه",
+      "status": "حالت",
+      "expenseTitle": "د لګښت سرلیک",
+      "category": "کټګوري",
+      "vendorPayee": "پلورونکی / اخیستونکی",
+      "amount": "اندازه",
+      "staffName": "د کارکوونکي نوم",
+      "designation": "دنده",
+      "month": "میاشت",
+      "baseSalary": "اساسي معاش",
+      "bonuses": "بونسونه",
+      "deductions": "کسرونه",
+      "netPaid": "خالصه ورکړه",
+      "paymentStatus": "د ورکړې حالت",
+      "sku": "د توکي کوډ",
+      "itemName": "د توکي نوم",
+      "inStockQty": "موجود شمېر",
+      "unitCost": "د واحد بیه",
+      "totalAssetValue": "د شتمنۍ ټول ارزښت",
+      "reorderStatus": "د بیا فرمایش حالت",
+      "loanNumber": "د پور شمېره",
+      "borrower": "پور اخیستونکی",
+      "loanType": "ډول",
+      "totalLoan": "ټول پور",
+      "repaid": "بېرته ورکړل شوي",
+      "remainingBalance": "پاتې شونی",
+      "issueDate": "د ورکړې نېټه"
     },
     "status": {
-      "PAID": "ورکړل شوی", "APPROVED": "تایید شوی", "ACTIVE": "فعال", "PARTIAL": "برخه ییز",
-      "PENDING": "پاتې", "DRAFT": "مسوده", "OVERDUE": "وخت تېر", "RECORDED": "ثبت شوی",
-      "IN_STOCK": "موجود", "LOW_STOCK": "کمه موجودي", "OUT_OF_STOCK": "نه موجود",
-      "CANCELLED": "لغوه شوی", "CLOSED": "تړل شوی", "REPAID": "تصفیه شوی"
+      "PAID": "ورکړل شوی",
+      "APPROVED": "تایید شوی",
+      "ACTIVE": "فعال",
+      "PARTIAL": "برخه ییز",
+      "PENDING": "پاتې",
+      "DRAFT": "مسوده",
+      "OVERDUE": "وخت تېر",
+      "RECORDED": "ثبت شوی",
+      "IN_STOCK": "موجود",
+      "LOW_STOCK": "کمه موجودي",
+      "OUT_OF_STOCK": "نه موجود",
+      "CANCELLED": "لغوه شوی",
+      "CLOSED": "تړل شوی",
+      "REPAID": "تصفیه شوی"
     },
-    "loanTypes": { "STAFF": "کارکوونکی", "BANK": "بانک", "EXTERNAL": "بهرنی" },
-    "common": { "records": "{count} د راپور ریکارډونه", "notAvailable": "شتون نه لري" },
-    "pagination": { "rowsPerPage": "په هر مخ کې کتارونه:", "of": "له" },
-    "empty": { "title": "د راپور معلومات ونه موندل شول", "description": "هېڅ مالي ریکارډ له ټاکلو فلټرونو او نېټې مودې سره سمون نه خوري." },
-    "print": { "generated": "جوړ شوی" },
-    "messages": { "loadFailed": "مالي راپور پورته نه شو." }
+    "loanTypes": {
+      "STAFF": "کارکوونکی",
+      "BANK": "بانک",
+      "EXTERNAL": "بهرنی"
+    },
+    "common": {
+      "records": "{count} د راپور ریکارډونه",
+      "notAvailable": "شتون نه لري"
+    },
+    "pagination": {
+      "rowsPerPage": "په هر مخ کې کتارونه:",
+      "of": "له"
+    },
+    "empty": {
+      "title": "د راپور معلومات ونه موندل شول",
+      "description": "هېڅ مالي ریکارډ له ټاکلو فلټرونو او نېټې مودې سره سمون نه خوري."
+    },
+    "print": {
+      "generated": "جوړ شوی"
+    },
+    "messages": {
+      "loadFailed": "مالي راپور پورته نه شو."
+    }
   },
   "optionsManagement": {
+    "visitorPurposes": {
+      "title": "Visitor Purposes",
+      "description": "Maintain the approved purposes available when logging CRM visitors.",
+      "add": "Add Visitor Purpose",
+      "addTitle": "Create Visitor Purpose",
+      "editTitle": "Edit Visitor Purpose",
+      "searchPlaceholder": "Search visitor purposes or descriptions",
+      "emptyTitle": "No Visitor Purposes Found",
+      "emptyDescription": "Add the first approved purpose for visitor check-ins.",
+      "deleteTitle": "Delete Visitor Purpose",
+      "deleteDescription": "Delete this visitor purpose? Existing visitor records keep their saved purpose.",
+      "fields": { "name": "Title / Name", "description": "Description" }
+    },
+    "incomeCategories": {
+      "title": "Income Categories",
+      "description": "Maintain the active categories available for finance income records.",
+      "add": "Add Income Category",
+      "addTitle": "Create Income Category",
+      "editTitle": "Edit Income Category",
+      "searchPlaceholder": "Search income categories or descriptions",
+      "emptyTitle": "No Income Categories Found",
+      "emptyDescription": "Add the first category used to classify income records.",
+      "deleteTitle": "Delete Income Category",
+      "deleteDescription": "Delete this income category? Categories linked to income records cannot be deleted.",
+      "fields": { "name": "Title / Name", "description": "Description" }
+    },
     "common": {
       "search": "لټون",
       "status": "حالت",
@@ -2111,6 +2355,7 @@
       "saving": "ساتل کېږي…",
       "edit": "سمون",
       "view": "کتل",
+      "printDocument": "سند چاپول",
       "delete": "ړنګول",
       "cancel": "لغوه",
       "runAudit": "د پای نېټه وګورئ",
@@ -2217,13 +2462,17 @@
     }
   },
   "contractOptions": {
+    "hrmTypes": { "title": "HRM / Staff Types", "description": "Employment contract types used for staff agreements." },
+    "customerTypes": { "title": "Customers / Clients", "description": "Contract types used for customer and client agreements." },
+    "financeTypes": { "title": "Invoices / Finance", "description": "Agreement types used for payment and settlement arrangements." },
+    "otherTypes": { "title": "Others", "description": "Vendor, lease, and miscellaneous third-party contract types." },
     "types": {
       "title": "د قرارداد ډولونه",
       "description": "هغه خدمتونه چې په قرارداد کې پلورل کېږي."
     },
     "durations": {
-      "title": "د قرارداد مودې",
-      "description": "د پای نېټې د محاسبې معیاري مودې."
+      "title": "د نوي کولو شرایط",
+      "description": "د پای نېټې او نوي کولو دورو د محاسبې معیاري شرایط."
     },
     "levels": {
       "title": "د خدمت کچې",
@@ -2244,6 +2493,10 @@
     "paymentMethods": {
       "title": "د ورکړې لارې",
       "description": "د بل د ورکړې منل شوې لارې."
+    },
+    "clauses": {
+      "title": "حقوقي مادې",
+      "description": "د قرارداد چمتو کولو لپاره بیا کارېدونکې حقوقي مادې."
     },
     "durationHint": "انګلیسي شمېره او واحد وکاروئ؛ لکه 1 Year، 18 Months یا 90 Days.",
     "deleteDescription": "انتخاب {name} ړنګ شي؟ کارېدونکی انتخاب نه ړنګېږي.",
@@ -2407,56 +2660,452 @@
     }
   },
   "inventoryManagement": {
-    "metrics": { "totalValue": "د زېرمې ټول ارزښت", "totalItems": "ټول توکي", "lowStock": "د کمې زېرمې خبرتیاوې", "outOfStock": "له زېرمې وتلي", "usdHint": "ډالرو ته بدل شوی", "itemsHint": "جلا زېرمه شوي توکي", "lowStockHint": "د بیا فرمایش له کچې سره برابر یا کم", "outOfStockHint": "هغه توکي چې زېرمه نه لري" },
-    "filters": { "search": "په زېرمه کې لټون", "searchPlaceholder": "د توکي نوم یا SKU کوډ...", "searchCategories": "کټګورۍ لټول", "searchCategoriesPlaceholder": "د کټګورۍ نوم یا کوډ...", "category": "کټګوري", "status": "حالت", "stock": "د زېرمې حالت", "allCategories": "ټولې کټګورۍ", "allStatuses": "ټول حالتونه", "allStock": "د زېرمې ټولې کچې", "clear": "فلټرونه پاکول" },
-    "stockStatus": { "IN_STOCK": "په زېرمه کې", "LOW_STOCK": "کمه زېرمه", "OUT_OF_STOCK": "له زېرمې وتلی" },
-    "table": { "sku": "SKU", "item": "د توکي نوم", "category": "کټګوري", "quantity": "په زېرمه کې شمېر", "unitPrice": "د واحد بیه", "totalValue": "ټول ارزښت", "reorderLevel": "د بیا فرمایش کچه", "status": "حالت", "actions": "کړنې" },
-    "actions": { "add": "زېرمه کې توکی زیاتول", "create": "توکی جوړول", "edit": "توکی سمول", "save": "بدلونونه ساتل", "saving": "ساتل کېږي...", "adjust": "شمېر برابرول", "delete": "ړنګول", "cancel": "لغوه" },
-    "fields": { "name": "د توکي نوم", "sku": "SKU کوډ", "category": "کټګوري", "quantity": "په زېرمه کې شمېر", "unitPrice": "د واحد بیه", "currency": "اسعار", "exchangeRate": "د ډالر / افغانۍ د تبادلې نرخ", "reorderLevel": "د بیا فرمایش کچه", "status": "حالت", "baseAmount": "د واحد ډالري ارزښت", "baseTotal": "ټول ډالري ارزښت", "currentStock": "اوسنۍ زېرمه" },
-    "placeholders": { "autoSku": "د اتومات جوړولو لپاره تش پرېږدئ" },
-    "form": { "addTitle": "زېرمه کې توکی زیاتول", "editTitle": "د زېرمې توکی سمول", "description": "د توکي پېژندنه، بیه، د زېرمې حدونه او تړل شوی اسعار وساتئ.", "statusNotice": "د کمې او ختمې زېرمې حالتونه د شمېر او بیا فرمایش کچې له مخې اتومات ټاکل کېږي." },
-    "adjust": { "title": "د زېرمې شمېر برابرول", "description": "د {item} لپاره د زېرمې حرکت ثبت کړئ.", "stockIn": "زېرمې ته داخل", "stockOut": "له زېرمې خارج", "quantity": "د حرکت شمېر" },
-    "categoryActions": { "add": "کټګوري زیاتول", "edit": "کټګوري سمول", "activate": "فعالول", "deactivate": "غیرفعالول", "delete": "کټګوري ړنګول" },
-    "categoryStatus": { "active": "فعاله", "inactive": "غیرفعاله" },
-    "categoryForm": { "addTitle": "د زېرمې کټګوري زیاتول", "editTitle": "د زېرمې کټګوري سمول", "name": "د کټګورۍ نوم", "description": "تشریح" },
-    "categoryEmpty": { "title": "د زېرمې کټګوري ونه موندل شوه", "description": "کټګوري زیاته کړئ یا لټون بدل کړئ." },
-    "categoryDelete": { "title": "د زېرمې کټګوري ړنګول", "description": "دا کټګوري ړنګه شي؟ په توکو کې کارېدونکې کټګوري نه شي ړنګېدای." },
-    "categoryMessages": { "created": "د زېرمې کټګوري جوړه شوه.", "updated": "د زېرمې کټګوري تازه شوه.", "statusUpdated": "د کټګورۍ حالت تازه شو.", "deleted": "د زېرمې کټګوري ړنګه شوه.", "duplicate": "په دې نوم کټګوري مخکې شته.", "inUse": "دا کټګوري له توکو سره تړلې ده او نه شي ړنګېدای." },
-    "common": { "rowsPerPage": "په هر مخ کې کتارونه:", "of": "له" },
-    "empty": { "title": "د زېرمې کوم توکی ونه موندل شو", "description": "یو توکی زیات کړئ یا لټون او فلټرونه بدل کړئ." },
-    "delete": { "title": "د زېرمې توکی ړنګول", "description": "دا توکی ړنګ شي؟ دا کړنه بېرته نه راګرځي." },
-    "messages": { "created": "د زېرمې توکی په بریالیتوب جوړ شو.", "updated": "د زېرمې توکی په بریالیتوب تازه شو.", "adjusted": "د زېرمې شمېر په بریالیتوب برابر شو.", "deleted": "د زېرمې توکی په بریالیتوب ړنګ شو.", "loadFailed": "د زېرمې ریکارډونه پورته نه شول.", "operationFailed": "د زېرمې کړنه بشپړه نه شوه.", "duplicateSku": "په دې SKU کوډ توکی مخکې شته.", "notFound": "د زېرمې توکی ونه موندل شو.", "insufficientStock": "د وتلو شمېر له شته زېرمې ډېر دی.", "invalidOptionType": "غوښتل شوی د انتخاب ډول نه ملاتړ کېږي.", "unauthenticated": "ننوتل اړین دي.", "forbidden": "تاسو د دې کړنې اجازه نه لرئ." },
-    "validation": { "required": "دا ډګر اړین دی.", "nameTooLong": "د توکي نوم باید له ۱۵۰ تورو زیات نه وي.", "skuInvalid": "د SKU لپاره ۲-۵۰ انګلیسي توري، شمېرې، کرښه یا لاندې کرښه وکاروئ.", "quantityInvalid": "سمه نامنفي بشپړه شمېره ولیکئ.", "priceInvalid": "له صفر لوړه د واحد بیه ولیکئ.", "currencyInvalid": "AFN یا USD وټاکئ.", "rateInvalid": "له صفر لوړ د تبادلې نرخ ولیکئ.", "adjustmentInvalid": "له صفر لوړه بشپړه شمېره ولیکئ.", "invalidRelation": "سمه کټګوري او حالت وټاکئ.", "statusMissing": "د زېرمې اړین حالتونه نه دي تنظیم شوي.", "categoryNameInvalid": "۲-۱۰۰ انګلیسي توري، شمېرې، تشې یا ساده نښې وکاروئ.", "descriptionTooLong": "تشریح باید له ۱۰۰۰ تورو زیاته نه وي." }
+    "metrics": {
+      "totalValue": "د زېرمې ټول ارزښت",
+      "totalItems": "ټول توکي",
+      "lowStock": "د کمې زېرمې خبرتیاوې",
+      "outOfStock": "له زېرمې وتلي",
+      "usdHint": "ډالرو ته بدل شوی",
+      "itemsHint": "جلا زېرمه شوي توکي",
+      "lowStockHint": "د بیا فرمایش له کچې سره برابر یا کم",
+      "outOfStockHint": "هغه توکي چې زېرمه نه لري"
+    },
+    "filters": {
+      "search": "په زېرمه کې لټون",
+      "searchPlaceholder": "د توکي نوم یا SKU کوډ...",
+      "searchCategories": "کټګورۍ لټول",
+      "searchCategoriesPlaceholder": "د کټګورۍ نوم یا کوډ...",
+      "category": "کټګوري",
+      "status": "حالت",
+      "stock": "د زېرمې حالت",
+      "allCategories": "ټولې کټګورۍ",
+      "allStatuses": "ټول حالتونه",
+      "allStock": "د زېرمې ټولې کچې",
+      "clear": "فلټرونه پاکول"
+    },
+    "stockStatus": {
+      "IN_STOCK": "په زېرمه کې",
+      "LOW_STOCK": "کمه زېرمه",
+      "OUT_OF_STOCK": "له زېرمې وتلی"
+    },
+    "table": {
+      "sku": "SKU",
+      "item": "د توکي نوم",
+      "category": "کټګوري",
+      "quantity": "په زېرمه کې شمېر",
+    "unitPrice": "د واحد بیه",
+    "totalValue": "ټول ارزښت",
+    "reorderLevel": "د بیا فرمایش کچه",
+    "status": "حالت",
+    "createdAt": "د جوړېدو نېټه",
+    "actions": "کړنې"
+    },
+    "actions": {
+      "add": "زېرمه کې توکی زیاتول",
+      "create": "توکی جوړول",
+      "edit": "توکی سمول",
+      "save": "بدلونونه ساتل",
+      "saving": "ساتل کېږي...",
+      "adjust": "شمېر برابرول",
+      "delete": "ړنګول",
+      "cancel": "لغوه"
+    },
+    "fields": {
+      "name": "د توکي نوم",
+      "sku": "SKU کوډ",
+      "category": "کټګوري",
+      "quantity": "په زېرمه کې شمېر",
+      "unitPrice": "د واحد بیه",
+      "currency": "اسعار",
+      "exchangeRate": "د ډالر / افغانۍ د تبادلې نرخ",
+      "reorderLevel": "د بیا فرمایش کچه",
+      "status": "حالت",
+      "baseAmount": "د واحد ډالري ارزښت",
+      "baseTotal": "ټول ډالري ارزښت",
+      "currentStock": "اوسنۍ زېرمه"
+    },
+    "placeholders": {
+      "autoSku": "د اتومات جوړولو لپاره تش پرېږدئ"
+    },
+    "form": {
+      "addTitle": "زېرمه کې توکی زیاتول",
+      "editTitle": "د زېرمې توکی سمول",
+      "description": "د توکي پېژندنه، بیه، د زېرمې حدونه او تړل شوی اسعار وساتئ.",
+      "statusNotice": "د کمې او ختمې زېرمې حالتونه د شمېر او بیا فرمایش کچې له مخې اتومات ټاکل کېږي."
+    },
+    "adjust": {
+      "title": "د زېرمې شمېر برابرول",
+      "description": "د {item} لپاره د زېرمې حرکت ثبت کړئ.",
+      "stockIn": "زېرمې ته داخل",
+      "stockOut": "له زېرمې خارج",
+      "quantity": "د حرکت شمېر"
+    },
+    "categoryActions": {
+      "add": "کټګوري زیاتول",
+      "edit": "کټګوري سمول",
+      "activate": "فعالول",
+      "deactivate": "غیرفعالول",
+      "delete": "کټګوري ړنګول"
+    },
+    "categoryStatus": {
+      "active": "فعاله",
+      "inactive": "غیرفعاله"
+    },
+    "categoryForm": {
+      "addTitle": "د زېرمې کټګوري زیاتول",
+      "editTitle": "د زېرمې کټګوري سمول",
+      "name": "د کټګورۍ نوم",
+      "description": "تشریح"
+    },
+    "categoryEmpty": {
+      "title": "د زېرمې کټګوري ونه موندل شوه",
+      "description": "کټګوري زیاته کړئ یا لټون بدل کړئ."
+    },
+    "categoryDelete": {
+      "title": "د زېرمې کټګوري ړنګول",
+      "description": "دا کټګوري ړنګه شي؟ په توکو کې کارېدونکې کټګوري نه شي ړنګېدای."
+    },
+    "categoryMessages": {
+      "created": "د زېرمې کټګوري جوړه شوه.",
+      "updated": "د زېرمې کټګوري تازه شوه.",
+      "statusUpdated": "د کټګورۍ حالت تازه شو.",
+      "deleted": "د زېرمې کټګوري ړنګه شوه.",
+      "duplicate": "په دې نوم کټګوري مخکې شته.",
+      "inUse": "دا کټګوري له توکو سره تړلې ده او نه شي ړنګېدای."
+    },
+    "common": {
+      "rowsPerPage": "په هر مخ کې کتارونه:",
+      "of": "له"
+    },
+    "empty": {
+      "title": "د زېرمې کوم توکی ونه موندل شو",
+      "description": "یو توکی زیات کړئ یا لټون او فلټرونه بدل کړئ."
+    },
+    "delete": {
+      "title": "د زېرمې توکی ړنګول",
+      "description": "دا توکی ړنګ شي؟ دا کړنه بېرته نه راګرځي."
+    },
+    "messages": {
+      "created": "د زېرمې توکی په بریالیتوب جوړ شو.",
+      "updated": "د زېرمې توکی په بریالیتوب تازه شو.",
+      "adjusted": "د زېرمې شمېر په بریالیتوب برابر شو.",
+      "deleted": "د زېرمې توکی په بریالیتوب ړنګ شو.",
+      "loadFailed": "د زېرمې ریکارډونه پورته نه شول.",
+      "operationFailed": "د زېرمې کړنه بشپړه نه شوه.",
+      "duplicateSku": "په دې SKU کوډ توکی مخکې شته.",
+      "notFound": "د زېرمې توکی ونه موندل شو.",
+      "insufficientStock": "د وتلو شمېر له شته زېرمې ډېر دی.",
+      "invalidOptionType": "غوښتل شوی د انتخاب ډول نه ملاتړ کېږي.",
+      "unauthenticated": "ننوتل اړین دي.",
+      "forbidden": "تاسو د دې کړنې اجازه نه لرئ."
+    },
+    "validation": {
+      "required": "دا ډګر اړین دی.",
+      "nameTooLong": "د توکي نوم باید له ۱۵۰ تورو زیات نه وي.",
+      "skuInvalid": "د SKU لپاره ۲-۵۰ انګلیسي توري، شمېرې، کرښه یا لاندې کرښه وکاروئ.",
+      "quantityInvalid": "سمه نامنفي بشپړه شمېره ولیکئ.",
+      "priceInvalid": "له صفر لوړه د واحد بیه ولیکئ.",
+      "currencyInvalid": "AFN یا USD وټاکئ.",
+      "rateInvalid": "له صفر لوړ د تبادلې نرخ ولیکئ.",
+      "adjustmentInvalid": "له صفر لوړه بشپړه شمېره ولیکئ.",
+      "invalidRelation": "سمه کټګوري او حالت وټاکئ.",
+      "statusMissing": "د زېرمې اړین حالتونه نه دي تنظیم شوي.",
+      "categoryNameInvalid": "۲-۱۰۰ انګلیسي توري، شمېرې، تشې یا ساده نښې وکاروئ.",
+      "descriptionTooLong": "تشریح باید له ۱۰۰۰ تورو زیاته نه وي."
+    }
   },
   "financeSalary": {
-    "metrics": { "total": "ټول میاشتنی معاش", "paid": "ورکړل شوي معاشونه", "pending": "پاتې معاشونه", "loans": "د پور ټول کسر", "baseCurrency": "په {currency} راپور", "paidHint": "د دې میاشتې اجرا شوي معاشونه", "pendingHint": "د ورکړې په تمه مسوده معاشونه", "loansHint": "د کارکوونکو د پور ټاکل شوې بېرته اخیستنه" },
-    "filters": { "search": "معاش لټول", "searchPlaceholder": "د کارکوونکي نوم یا برېښنالیک...", "month": "د معاش میاشت", "status": "حالت", "allStatuses": "ټول حالتونه", "clear": "فلټرونه پاکول" },
-    "table": { "staff": "کارکوونکی", "monthDays": "میاشت او ورځې", "baseSalary": "اساسي معاش", "earnedBonus": "ترلاسه شوی او امتیاز", "loanDeduction": "د پور کسر", "payable": "خالص ورکړه", "status": "حالت", "actions": "کړنې" },
-    "actions": { "generate": "د {month} لپاره معاش جوړول", "generating": "معاشونه جوړېږي...", "view": "د معاش پاڼه کتل", "edit": "د معاش سمون", "markPaid": "ورکړل شوی نښه کول", "delete": "ریکارډ ړنګول", "cancel": "لغوه", "save": "سمونونه ساتل", "saving": "ساتل کېږي...", "close": "تړل", "print": "د معاش پاڼه چاپول" },
-    "fields": { "workedDays": "کاري ورځې", "offDays": "رخصت ورځې", "bonus": "امتیاز / اضافي", "loanDeduction": "د پور کسر", "notes": "د حاضري لنډیز یادښت", "currency": "اسعار", "exchangeRate": "د ډالر / افغانۍ د تبادلې نرخ", "dailyRate": "ورځنی نرخ", "earnedSalary": "ترلاسه شوی معاش", "payableAmount": "خالص ورکړه", "baseAmount": "بنسټیز مبلغ", "paymentDate": "د ورکړې نېټه", "processor": "اجرا کوونکی" },
-    "form": { "title": "د معاش سمون", "description": "له ورکړې مخکې حاضري، امتیاز، کسر او تړل شوي ارزښتونه برابر کړئ.", "liveCalculation": "ژوندۍ محاسبه", "paidLocked": "ورکړل شوي معاشونه تړلي دي او نه شي بدلېدلی." },
-    "payslip": { "title": "رسمي معاش پاڼه", "employee": "د کارکوونکي معلومات", "designation": "دنده", "payrollMonth": "د معاش میاشت", "earnings": "عایدات", "deductions": "کسرونه", "baseSalary": "میاشتنی اساسي معاش", "earnedPay": "د کاري ورځو معاش", "bonus": "امتیاز / اضافي", "loan": "د کارکوونکي پور بېرته ورکړه", "offDays": "رخصت / بې معاش ورځې", "netPayable": "خالص ورکړه", "signature": "مجاز لاسلیک", "notProcessed": "نه دی اجرا شوی" },
-    "status": { "DRAFT": "مسوده", "PAID": "ورکړل شوی" },
-    "common": { "notAvailable": "-", "rowsPerPage": "په هر مخ کې کتارونه:", "of": "له", "days": "{worked} / {total} ورځې", "bonus": "امتیاز: {amount}", "noLoan": "کسر نشته" },
-    "empty": { "title": "د معاش ریکارډ ونه موندل شو", "description": "د دې میاشتې معاش جوړ کړئ یا فلټرونه بدل کړئ." },
-    "delete": { "title": "د معاش ریکارډ ړنګول", "description": "د {name} مسوده معاش ړنګ شي؟ دا کړنه بېرته نه راګرځي." },
-    "pay": { "title": "معاش ورکړل شوی نښه کول", "description": "د {name} ورکړه تایید کړئ. ټاکل شوی د پور کسر به په پور کې ثبت شي.", "confirm": "ورکړه تاییدول" },
-    "validation": { "required": "دا ډګر اړین دی.", "monthInvalid": "د معاش سمه میاشت وټاکئ.", "daysInvalid": "د ورځو سمه بشپړه شمېره ولیکئ.", "numberInvalid": "سم نامنفي مبلغ ولیکئ.", "notesTooLong": "یادښت باید له ۵۰۰۰ تورو زیات نه وي.", "currencyInvalid": "AFN یا USD وټاکئ.", "rateInvalid": "له صفر لوړ نرخ ولیکئ.", "daysExceedMonth": "کاري او رخصت ورځې د میاشتې له ورځو ډېرېدای نه شي.", "invalidStaff": "ټاکل شوی کارکوونکی سم نه دی." },
-    "messages": { "unauthenticated": "ننوتل اړین دي.", "forbidden": "تاسو د دې کړنې اجازه نه لرئ.", "loadFailed": "د معاش ریکارډونه پورته نه شول.", "optionsLoadFailed": "د معاش انتخابونه پورته نه شول.", "detailLoadFailed": "د معاش پاڼې معلومات پورته نه شول.", "notFound": "د معاش ریکارډ ونه موندل شو.", "duplicate": "د دې کارکوونکي او میاشتې معاش مخکې شته.", "noEligibleStaff": "د معاش لپاره فعال کارکوونکی نشته.", "generated": "{created} معاشونه جوړ او {skipped} شته ریکارډونه پرېښودل شول.", "updated": "د معاش سمونونه وساتل شول.", "created": "د معاش ریکارډ جوړ شو.", "paid": "معاش ورکړل او د پور بېرته ورکړه ثبت شوه.", "alreadyPaid": "دا معاش مخکې ورکړل شوی.", "paidLocked": "ورکړل شوی معاش نه بدلېږي او نه ړنګېږي.", "deleted": "د معاش مسوده ړنګه شوه.", "processorMissing": "ستاسو حساب له فعال کارکوونکي سره نه دی تړلی.", "operationFailed": "د معاش کړنه بشپړه نه شوه." }
+    "metrics": {
+      "total": "ټول میاشتنی معاش",
+      "paid": "ورکړل شوي معاشونه",
+      "pending": "پاتې معاشونه",
+      "loans": "د پور ټول کسر",
+      "baseCurrency": "په {currency} راپور",
+      "paidHint": "د دې میاشتې اجرا شوي معاشونه",
+      "pendingHint": "د ورکړې په تمه مسوده معاشونه",
+      "loansHint": "د کارکوونکو د پور ټاکل شوې بېرته اخیستنه"
+    },
+    "filters": {
+      "search": "معاش لټول",
+      "searchPlaceholder": "د کارکوونکي نوم یا برېښنالیک...",
+      "month": "د معاش میاشت",
+      "status": "حالت",
+      "allStatuses": "ټول حالتونه",
+      "clear": "فلټرونه پاکول"
+    },
+    "table": {
+      "staff": "کارکوونکی",
+      "monthDays": "میاشت او ورځې",
+      "baseSalary": "اساسي معاش",
+      "earnedBonus": "ترلاسه شوی او امتیاز",
+      "loanDeduction": "د پور کسر",
+      "payable": "خالص ورکړه",
+      "status": "حالت",
+      "actions": "کړنې"
+    },
+    "actions": {
+      "generate": "د {month} لپاره معاش جوړول",
+      "generating": "معاشونه جوړېږي...",
+      "view": "د معاش پاڼه کتل",
+      "edit": "د معاش سمون",
+      "markPaid": "ورکړل شوی نښه کول",
+      "delete": "ریکارډ ړنګول",
+      "cancel": "لغوه",
+      "save": "سمونونه ساتل",
+      "saving": "ساتل کېږي...",
+      "close": "تړل",
+      "print": "د معاش پاڼه چاپول"
+    },
+    "fields": {
+      "workedDays": "کاري ورځې",
+      "offDays": "رخصت ورځې",
+      "bonus": "امتیاز / اضافي",
+      "loanDeduction": "د پور کسر",
+      "notes": "د حاضري لنډیز یادښت",
+      "currency": "اسعار",
+      "exchangeRate": "د ډالر / افغانۍ د تبادلې نرخ",
+      "dailyRate": "ورځنی نرخ",
+      "earnedSalary": "ترلاسه شوی معاش",
+      "payableAmount": "خالص ورکړه",
+      "baseAmount": "بنسټیز مبلغ",
+      "paymentDate": "د ورکړې نېټه",
+      "processor": "اجرا کوونکی"
+    },
+    "form": {
+      "title": "د معاش سمون",
+      "description": "له ورکړې مخکې حاضري، امتیاز، کسر او تړل شوي ارزښتونه برابر کړئ.",
+      "liveCalculation": "ژوندۍ محاسبه",
+      "paidLocked": "ورکړل شوي معاشونه تړلي دي او نه شي بدلېدلی."
+    },
+    "payslip": {
+      "title": "رسمي معاش پاڼه",
+      "employee": "د کارکوونکي معلومات",
+      "designation": "دنده",
+      "payrollMonth": "د معاش میاشت",
+      "earnings": "عایدات",
+      "deductions": "کسرونه",
+      "baseSalary": "میاشتنی اساسي معاش",
+      "earnedPay": "د کاري ورځو معاش",
+      "bonus": "امتیاز / اضافي",
+      "loan": "د کارکوونکي پور بېرته ورکړه",
+      "offDays": "رخصت / بې معاش ورځې",
+      "netPayable": "خالص ورکړه",
+      "signature": "مجاز لاسلیک",
+      "notProcessed": "نه دی اجرا شوی",
+      "print": {
+        "title": "د معاش رسمي پاڼه",
+        "payPeriod": "د معاش دوره / میاشت",
+        "paymentDate": "د تادیې نېټه",
+        "pending": "په تمه",
+        "status": "حالت",
+        "employeeInformation": "د کارکوونکي معلومات",
+        "attendanceRate": "د حاضرۍ او نرخ لنډیز",
+        "staffMember": "کارکوونکی",
+        "position": "دنده / رول",
+        "employeeId": "د کارکوونکي پېژند",
+        "totalDays": "په میاشت کې ټولې ورځې",
+        "daysWorked": "کار کړې ورځې",
+        "offDays": "رخصتي / غیر حاضرې ورځې",
+        "dailyRate": "ورځنی نرخ",
+        "salaryBreakdown": "د معاش تفکیک",
+        "description": "تشریح / کټګوري",
+        "type": "ډول",
+        "amount": "مقدار",
+        "base": "اساسي",
+        "earning": "عاید",
+        "deduction": "کسر",
+        "baseSalary": "اساسي معاش",
+        "earnedSalary": "ترلاسه شوی معاش (تناسبی)",
+        "bonus": "امتیاز / د فعالیت مبلغ",
+        "loanDeduction": "د پور / مخکېنۍ پیسې کسر",
+        "totalNetPayable": "ټوله خالصه ورکړه",
+        "equivalent": "معادل",
+        "exchangeRate": "د تبادلې نرخ",
+        "approvals": "تأییدونه",
+        "employeeSignature": "د کارکوونکي لاسلیک",
+        "processedApprovedBy": "اجرا / تأیید کوونکی",
+        "officialSeal": "رسمي مهر",
+        "date": "نېټه",
+        "confidentiality": "محرمانه او ځانګړی",
+        "page": "پاڼه",
+        "of": "له",
+        "taxId": "جواز / مالیاتي شمېره"
+      }
+    },
+    "status": {
+      "DRAFT": "مسوده",
+      "PAID": "ورکړل شوی"
+    },
+    "common": {
+      "notAvailable": "-",
+      "rowsPerPage": "په هر مخ کې کتارونه:",
+      "of": "له",
+      "days": "{worked} / {total} ورځې",
+      "bonus": "امتیاز: {amount}",
+      "noLoan": "کسر نشته"
+    },
+    "empty": {
+      "title": "د معاش ریکارډ ونه موندل شو",
+      "description": "د دې میاشتې معاش جوړ کړئ یا فلټرونه بدل کړئ."
+    },
+    "delete": {
+      "title": "د معاش ریکارډ ړنګول",
+      "description": "د {name} مسوده معاش ړنګ شي؟ دا کړنه بېرته نه راګرځي."
+    },
+    "pay": {
+      "title": "معاش ورکړل شوی نښه کول",
+      "description": "د {name} ورکړه تایید کړئ. ټاکل شوی د پور کسر به په پور کې ثبت شي.",
+      "confirm": "ورکړه تاییدول"
+    },
+    "validation": {
+      "required": "دا ډګر اړین دی.",
+      "monthInvalid": "د معاش سمه میاشت وټاکئ.",
+      "daysInvalid": "د ورځو سمه بشپړه شمېره ولیکئ.",
+      "numberInvalid": "سم نامنفي مبلغ ولیکئ.",
+      "notesTooLong": "یادښت باید له ۵۰۰۰ تورو زیات نه وي.",
+      "currencyInvalid": "AFN یا USD وټاکئ.",
+      "rateInvalid": "له صفر لوړ نرخ ولیکئ.",
+      "daysExceedMonth": "کاري او رخصت ورځې د میاشتې له ورځو ډېرېدای نه شي.",
+      "invalidStaff": "ټاکل شوی کارکوونکی سم نه دی."
+    },
+    "messages": {
+      "unauthenticated": "ننوتل اړین دي.",
+      "forbidden": "تاسو د دې کړنې اجازه نه لرئ.",
+      "loadFailed": "د معاش ریکارډونه پورته نه شول.",
+      "optionsLoadFailed": "د معاش انتخابونه پورته نه شول.",
+      "detailLoadFailed": "د معاش پاڼې معلومات پورته نه شول.",
+      "notFound": "د معاش ریکارډ ونه موندل شو.",
+      "duplicate": "د دې کارکوونکي او میاشتې معاش مخکې شته.",
+      "noEligibleStaff": "د معاش لپاره فعال کارکوونکی نشته.",
+      "generated": "{created} معاشونه جوړ او {skipped} شته ریکارډونه پرېښودل شول.",
+      "updated": "د معاش سمونونه وساتل شول.",
+      "created": "د معاش ریکارډ جوړ شو.",
+      "paid": "معاش ورکړل او د پور بېرته ورکړه ثبت شوه.",
+      "alreadyPaid": "دا معاش مخکې ورکړل شوی.",
+      "paidLocked": "ورکړل شوی معاش نه بدلېږي او نه ړنګېږي.",
+      "deleted": "د معاش مسوده ړنګه شوه.",
+      "processorMissing": "ستاسو حساب له فعال کارکوونکي سره نه دی تړلی.",
+      "operationFailed": "د معاش کړنه بشپړه نه شوه."
+    }
   },
   "financeLoans": {
-    "metrics": { "active": "ټول فعال پورونه", "repaid": "ټول بېرته ورکړل شوی مبلغ", "recovery": "میاشتنۍ تمه شوې بېرته اخیستنه", "portfolio": "د پورونو ټول ارزښت", "usdHint": "ډالرو ته بدل شوی", "activeHint": "د فعال او منظور شوو پورونو پاتې", "repaidHint": "په ټولو پورونو کې بېرته اخیستل شوی", "recoveryHint": "تمه شوي میاشتني کسرونه", "portfolioHint": "د ورکړل شوو پورونو اصلي ارزښت" },
-    "filters": { "search": "پورونه لټول", "searchPlaceholder": "د پور شمېره، پور اخیستونکی یا کارکوونکی...", "status": "حالت", "type": "د پور ډول", "allStatuses": "ټول حالتونه", "allTypes": "د پور ټول ډولونه", "clear": "فلټرونه پاکول" },
-    "types": { "STAFF": "د کارکوونکي پور", "EXTERNAL": "بهرنۍ اداره", "BANK": "بانک / شرکت" },
-    "table": { "loan": "پور", "borrower": "پور اخیستونکی", "total": "ټول مبلغ", "monthly": "میاشتنی کسر", "repaid": "بېرته ورکړل شوی", "remaining": "پاتې مبلغ", "status": "حالت", "date": "د صدور نېټه", "actions": "کړنې" },
-    "actions": { "add": "پور جوړول", "create": "پور جوړول", "save": "بدلونونه ساتل", "saving": "ساتل کېږي...", "cancel": "لغوه", "close": "تړل", "view": "معلومات کتل", "repay": "بېرته ورکړه ثبتول", "print": "حساب چاپول", "delete": "پور ړنګول" },
-    "fields": { "loanType": "د پور ډول", "staff": "کارکوونکی", "entity": "د بهرنۍ ادارې نوم", "total": "ټول مبلغ", "currency": "اسعار", "exchangeRate": "د ډالر / افغانۍ د تبادلې نرخ", "monthly": "میاشتنی کسر", "issueDate": "د صدور نېټه", "reason": "دلیل / یادښت", "amountBase": "ډالري بنسټیز مبلغ", "loanNumber": "د پور شمېره", "approver": "منظوروونکی", "repaid": "بېرته ورکړل شوی مبلغ", "remaining": "پاتې مبلغ", "status": "حالت", "repayment": "د بېرته ورکړې مبلغ" },
-    "form": { "title": "پور جوړول", "description": "د کارکوونکي مخکې ورکړه یا بهرنۍ تمویل د تړل شوو اسعارو ارزښتونو سره ثبت کړئ.", "calculation": "مالي مخکتنه" },
-    "repayment": { "title": "د پور بېرته ورکړه ثبتول", "description": "{loan} ته بېرته ورکړه ثبت کړئ. مبلغ به له پاتې اندازې نه زیاتېږي.", "confirm": "بېرته ورکړه ثبتول" },
-    "detail": { "title": "د پور معلومات", "financial": "مالي وېش", "borrower": "پور اخیستونکی او منظوري", "statement": "د پور حساب" },
-    "common": { "notAvailable": "-", "rowsPerPage": "په هر مخ کې کتارونه:", "of": "له", "active": "فعال", "unassigned": "نه دی ټاکل شوی" },
-    "empty": { "title": "پور ونه موندل شو", "description": "پور جوړ کړئ یا لټون او فلټرونه بدل کړئ." },
-    "validation": { "required": "دا ډګر اړین دی.", "amountInvalid": "له صفر لوړ مبلغ ولیکئ.", "rateInvalid": "له صفر لوړ د تبادلې نرخ ولیکئ.", "dateInvalid": "د صدور سمه نېټه وټاکئ.", "entityRequired": "د بهرنۍ ادارې نوم ولیکئ.", "staffRequired": "کارکوونکی وټاکئ.", "monthlyTooHigh": "میاشتنی کسر له ټول مبلغ نه زیاتېدای نه شي.", "reasonTooLong": "دلیل باید له ۵۰۰۰ تورو زیات نه وي." },
-    "messages": { "unauthenticated": "ننوتل اړین دي.", "forbidden": "تاسو د دې کړنې اجازه نه لرئ.", "loadFailed": "پورونه پورته نه شول.", "detailLoadFailed": "د پور معلومات پورته نه شول.", "created": "پور په بریالیتوب جوړ شو.", "updated": "پور په بریالیتوب تازه شو.", "deleted": "پور په بریالیتوب ړنګ شو.", "repaid": "د پور بېرته ورکړه ثبت شوه.", "notFound": "پور ونه موندل شو.", "invalidRelation": "ټاکل شوی کارکوونکی یا حالت سم نه دی.", "repaymentBlocked": "دا پور پاتې مبلغ نه لري.", "deleteBlocked": "هغه پور چې بېرته ورکړه لري نه شي ړنګېدای.", "operationFailed": "د پور کړنه بشپړه نه شوه." }
+    "metrics": {
+      "active": "ټول فعال پورونه",
+      "repaid": "ټول بېرته ورکړل شوی مبلغ",
+      "recovery": "میاشتنۍ تمه شوې بېرته اخیستنه",
+      "portfolio": "د پورونو ټول ارزښت",
+      "usdHint": "ډالرو ته بدل شوی",
+      "activeHint": "د فعال او منظور شوو پورونو پاتې",
+      "repaidHint": "په ټولو پورونو کې بېرته اخیستل شوی",
+      "recoveryHint": "تمه شوي میاشتني کسرونه",
+      "portfolioHint": "د ورکړل شوو پورونو اصلي ارزښت"
+    },
+    "filters": {
+      "search": "پورونه لټول",
+      "searchPlaceholder": "د پور شمېره، پور اخیستونکی یا کارکوونکی...",
+      "status": "حالت",
+      "type": "د پور ډول",
+      "allStatuses": "ټول حالتونه",
+      "allTypes": "د پور ټول ډولونه",
+      "clear": "فلټرونه پاکول"
+    },
+    "types": {
+      "STAFF": "د کارکوونکي پور",
+      "EXTERNAL": "بهرنۍ اداره",
+      "BANK": "بانک / شرکت"
+    },
+    "table": {
+      "loan": "پور",
+      "borrower": "پور اخیستونکی",
+      "total": "ټول مبلغ",
+      "monthly": "میاشتنی کسر",
+      "repaid": "بېرته ورکړل شوی",
+      "remaining": "پاتې مبلغ",
+      "status": "حالت",
+      "date": "د صدور نېټه",
+      "actions": "کړنې"
+    },
+    "actions": {
+      "add": "پور جوړول",
+      "create": "پور جوړول",
+      "save": "بدلونونه ساتل",
+      "saving": "ساتل کېږي...",
+      "cancel": "لغوه",
+      "close": "تړل",
+      "view": "معلومات کتل",
+      "repay": "بېرته ورکړه ثبتول",
+      "print": "حساب چاپول",
+      "delete": "پور ړنګول"
+    },
+    "fields": {
+      "loanType": "د پور ډول",
+      "staff": "کارکوونکی",
+      "entity": "د بهرنۍ ادارې نوم",
+      "total": "ټول مبلغ",
+      "currency": "اسعار",
+      "exchangeRate": "د ډالر / افغانۍ د تبادلې نرخ",
+      "monthly": "میاشتنی کسر",
+      "issueDate": "د صدور نېټه",
+      "reason": "دلیل / یادښت",
+      "amountBase": "ډالري بنسټیز مبلغ",
+      "loanNumber": "د پور شمېره",
+      "approver": "منظوروونکی",
+      "repaid": "بېرته ورکړل شوی مبلغ",
+      "remaining": "پاتې مبلغ",
+      "status": "حالت",
+      "repayment": "د بېرته ورکړې مبلغ"
+    },
+    "form": {
+      "title": "پور جوړول",
+      "description": "د کارکوونکي مخکې ورکړه یا بهرنۍ تمویل د تړل شوو اسعارو ارزښتونو سره ثبت کړئ.",
+      "calculation": "مالي مخکتنه"
+    },
+    "repayment": {
+      "title": "د پور بېرته ورکړه ثبتول",
+      "description": "{loan} ته بېرته ورکړه ثبت کړئ. مبلغ به له پاتې اندازې نه زیاتېږي.",
+      "confirm": "بېرته ورکړه ثبتول"
+    },
+    "detail": {
+      "title": "د پور معلومات",
+      "financial": "مالي وېش",
+      "borrower": "پور اخیستونکی او منظوري",
+      "statement": "د پور حساب"
+    },
+    "common": {
+      "notAvailable": "-",
+      "rowsPerPage": "په هر مخ کې کتارونه:",
+      "of": "له",
+      "active": "فعال",
+      "unassigned": "نه دی ټاکل شوی"
+    },
+    "empty": {
+      "title": "پور ونه موندل شو",
+      "description": "پور جوړ کړئ یا لټون او فلټرونه بدل کړئ."
+    },
+    "validation": {
+      "required": "دا ډګر اړین دی.",
+      "amountInvalid": "له صفر لوړ مبلغ ولیکئ.",
+      "rateInvalid": "له صفر لوړ د تبادلې نرخ ولیکئ.",
+      "dateInvalid": "د صدور سمه نېټه وټاکئ.",
+      "entityRequired": "د بهرنۍ ادارې نوم ولیکئ.",
+      "staffRequired": "کارکوونکی وټاکئ.",
+      "monthlyTooHigh": "میاشتنی کسر له ټول مبلغ نه زیاتېدای نه شي.",
+      "reasonTooLong": "دلیل باید له ۵۰۰۰ تورو زیات نه وي."
+    },
+    "messages": {
+      "unauthenticated": "ننوتل اړین دي.",
+      "forbidden": "تاسو د دې کړنې اجازه نه لرئ.",
+      "loadFailed": "پورونه پورته نه شول.",
+      "detailLoadFailed": "د پور معلومات پورته نه شول.",
+      "created": "پور په بریالیتوب جوړ شو.",
+      "updated": "پور په بریالیتوب تازه شو.",
+      "deleted": "پور په بریالیتوب ړنګ شو.",
+      "repaid": "د پور بېرته ورکړه ثبت شوه.",
+      "notFound": "پور ونه موندل شو.",
+      "invalidRelation": "ټاکل شوی کارکوونکی یا حالت سم نه دی.",
+      "repaymentBlocked": "دا پور پاتې مبلغ نه لري.",
+      "deleteBlocked": "هغه پور چې بېرته ورکړه لري نه شي ړنګېدای.",
+      "operationFailed": "د پور کړنه بشپړه نه شوه."
+    }
   }
 }

@@ -8,7 +8,10 @@ const themeConfig = {
   settingsCookieName: 'vuexy-mui-next-demo-1',
   mode: 'system', // 'system', 'light', 'dark'
   skin: 'default', // 'default', 'bordered'
-  primaryColor: '#022483',
+  primaryColorLight: '#022483',
+  secondaryColorLight: '#F38022',
+  primaryColorDark: '#366AFC',
+  secondaryColorDark: '#FF9D42',
   semiDark: false, // true, false
   layout: 'horizontal',
   layoutPadding: 24, // Common padding for header, content, footer layout components (in px)

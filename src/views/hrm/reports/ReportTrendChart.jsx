@@ -10,7 +10,7 @@ import { useTheme } from '@mui/material/styles'
 
 const AppReactApexCharts = dynamic(() => import('@/libs/styles/AppReactApexCharts'))
 
-const ReportTrendChart = ({ title, trend, series, categories, loading, valueFormatter, emptyLabel }) => {
+const ReportTrendChart = ({ title, trend, series, categories, loading, valueFormatter, emptyLabel, className = '' }) => {
   const theme = useTheme()
   const safeCategories = Array.isArray(categories) ? categories : []
 
@@ -49,7 +49,7 @@ const ReportTrendChart = ({ title, trend, series, categories, loading, valueForm
   }
 
   return (
-    <Card className='report-chart-card'>
+    <Card className={`report-chart-card ${className}`}>
       <CardContent>
         <Typography variant='h6' className='mb-4'>
           {title}

@@ -47,6 +47,7 @@ const translations = {
       remove: 'Remove',
       link: 'Update Contract',
       unlink: 'Unlink Contract',
+      changeStatus: 'Change Status',
       close: 'Close'
     },
     form: {
@@ -144,6 +145,7 @@ const translations = {
       notFound: 'Project was not found.',
       created: 'Project created successfully.',
       updated: 'Project updated successfully.',
+      statusUpdated: 'Project status updated successfully.',
       deleted: 'Project deleted successfully.',
       memberAssigned: 'Team member assigned successfully.',
       memberRemoved: 'Team member removed successfully.',

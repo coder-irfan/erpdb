@@ -59,6 +59,11 @@ const horizontalMenuData = dictionary => [
         permission: 'contracts:read'
       },
       {
+        label: dictionary.navigation.otherContracts,
+        href: '/contracts/others',
+        permission: 'contracts:read'
+      },
+      {
         label: dictionary.navigation.contractInvoices,
         href: '/contracts/invoices',
         permission: 'contracts:read'
@@ -146,11 +151,6 @@ const horizontalMenuData = dictionary => [
             permission: 'options:read'
           },
           {
-            label: dictionary.navigation.hrContractPolicies,
-            href: '/options/hrm/policies',
-            permission: 'options:read'
-          },
-          {
             label: dictionary.navigation.leaveTypes,
             href: '/options/hrm/leave-types',
             permission: 'hrm_leave:read'
@@ -171,6 +171,11 @@ const horizontalMenuData = dictionary => [
             label: dictionary.navigation.crmLeadOptions,
             href: '/options/crm/leads',
             permission: 'options:read'
+          },
+          {
+            label: dictionary.navigation.crmVisitorOptions,
+            href: '/options/crm/visitors',
+            permission: 'options:read'
           }
         ]
       },
@@ -180,8 +185,23 @@ const horizontalMenuData = dictionary => [
         permission: 'options:read',
         children: [
           {
+            label: dictionary.navigation.contractTypes,
+            href: '/options/contract-management/contract-types',
+            permission: 'options:read'
+          },
+          {
+            label: dictionary.navigation.contractTemplates,
+            href: '/options/contract-management/contract-templates',
+            permission: 'options:read'
+          },
+          {
             label: dictionary.navigation.contractOptions,
-            href: '/options/contracts',
+            href: '/options/contract-management/contracts',
+            permission: 'options:read'
+          },
+          {
+            label: dictionary.navigation.invoiceOptions,
+            href: '/options/contract-management/invoices',
             permission: 'options:read'
           }
         ]
@@ -189,12 +209,17 @@ const horizontalMenuData = dictionary => [
       {
         label: dictionary.navigation.financeManagement,
         icon: 'tabler-cash-banknote',
-        permission: 'finance_inventory:read',
+        permission: 'options:read',
         children: [
           {
             label: dictionary.navigation.inventoryCategories,
             href: '/options/finance-management/inventory-categories',
             permission: 'finance_inventory:read'
+          },
+          {
+            label: dictionary.navigation.incomeCategories,
+            href: '/options/finance/income-categories',
+            permission: 'options:read'
           }
         ]
       }

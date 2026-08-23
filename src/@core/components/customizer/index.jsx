@@ -53,23 +53,23 @@ const getLocalePath = (pathName, locale) => {
 
 const DebouncedColorPicker = props => {
   // Props
-  const { settings, isColorFromPrimaryConfig, handleChange } = props
+  const { color, colorField, isColorFromPrimaryConfig, handleChange } = props
 
   // States
-  const [debouncedColor, setDebouncedColor] = useState(settings.primaryColor ?? primaryColorConfig[0].main)
+  const [debouncedColor, setDebouncedColor] = useState(color ?? primaryColorConfig[0].main)
 
   // Hooks
-  useDebounce(() => handleChange('primaryColor', debouncedColor), 200, [debouncedColor])
+  useDebounce(() => handleChange(colorField, debouncedColor), 200, [colorField, debouncedColor])
 
   return (
     <>
       <HexColorPicker
-        color={!isColorFromPrimaryConfig ? (settings.primaryColor ?? primaryColorConfig[0].main) : '#eee'}
+        color={!isColorFromPrimaryConfig ? (color ?? primaryColorConfig[0].main) : '#eee'}
         onChange={setDebouncedColor}
       />
       <HexColorInput
         className={styles.colorInput}
-        color={!isColorFromPrimaryConfig ? (settings.primaryColor ?? primaryColorConfig[0].main) : '#eee'}
+        color={!isColorFromPrimaryConfig ? (color ?? primaryColorConfig[0].main) : '#eee'}
         onChange={setDebouncedColor}
         prefixed
         placeholder='Type a color'
@@ -122,7 +122,9 @@ const Customizer = ({ breakpoint = 'lg', dir = 'ltr', disableDirection = false }
   const breakpointReached = useMedia(`(max-width: ${breakpointValue})`, false)
   const isMobileScreen = useMedia('(max-width: 600px)', false)
   const isBelowLgScreen = useMedia('(max-width: 1200px)', false)
-  const isColorFromPrimaryConfig = primaryColorConfig.find(item => item.main === settings.primaryColor)
+  const activePrimaryColorField = theme.palette.mode === 'dark' ? 'primaryColorDark' : 'primaryColorLight'
+  const activePrimaryColor = settings[activePrimaryColorField]
+  const isColorFromPrimaryConfig = primaryColorConfig.find(item => item.main === activePrimaryColor)
   const ScrollWrapper = isBelowLgScreen ? 'div' : PerfectScrollbar
 
   const handleToggle = () => {
@@ -187,9 +189,9 @@ const Customizer = ({ breakpoint = 'lg', dir = 'ltr', disableDirection = false }
                     <div
                       key={item.main}
                       className={classnames(styles.primaryColorWrapper, {
-                        [styles.active]: settings.primaryColor === item.main
+                        [styles.active]: activePrimaryColor === item.main
                       })}
-                      onClick={() => handleChange('primaryColor', item.main)}
+                      onClick={() => handleChange(activePrimaryColorField, item.main)}
                     >
                       <div className={styles.primaryColor} style={{ backgroundColor: item.main }} />
                     </div>
@@ -205,7 +207,7 @@ const Customizer = ({ breakpoint = 'lg', dir = 'ltr', disableDirection = false }
                       className={classnames(styles.primaryColor, 'flex items-center justify-center')}
                       style={{
                         backgroundColor: !isColorFromPrimaryConfig
-                          ? settings.primaryColor
+                          ? activePrimaryColor
                           : 'var(--mui-palette-action-selected)',
                         color: isColorFromPrimaryConfig
                           ? 'var(--mui-palette-text-primary)'
@@ -229,7 +231,9 @@ const Customizer = ({ breakpoint = 'lg', dir = 'ltr', disableDirection = false }
                           <ClickAwayListener onClickAway={handleMenuClose}>
                             <div>
                               <DebouncedColorPicker
-                                settings={settings}
+                                key={activePrimaryColorField}
+                                color={activePrimaryColor}
+                                colorField={activePrimaryColorField}
                                 isColorFromPrimaryConfig={isColorFromPrimaryConfig}
                                 handleChange={handleChange}
                               />
