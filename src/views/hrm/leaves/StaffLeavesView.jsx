@@ -221,7 +221,7 @@ const StaffLeavesView = ({ locale, dictionary }) => {
             onChange={event => setSearchInput(event.target.value)}
             label={dictionary.filters.search}
             placeholder={dictionary.filters.searchPlaceholder}
-            className='is-full sm:is-[300px]'
+            className='is-full sm:is-[320px]'
             slotProps={{ input: { startAdornment: <i className='tabler-search text-textSecondary' /> } }}
           />
           <div className='flex is-full flex-wrap items-center gap-3 sm:is-auto sm:justify-end'>

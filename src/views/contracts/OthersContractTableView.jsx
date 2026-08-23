@@ -38,9 +38,18 @@ const OthersContractTableView = ({
     <EntityActionsMenu
       actions={[
         { label: dictionary.actions.view, icon: 'tabler-eye', onClick: () => onView(contract) },
-        { label: dictionary.actions.printDocument || 'Print Document', icon: 'tabler-printer', onClick: () => onPrint(contract) },
+        {
+          label: dictionary.actions.printDocument || 'Print Document',
+          icon: 'tabler-printer',
+          onClick: () => onPrint(contract)
+        },
         canWrite && { label: dictionary.actions.edit, icon: 'tabler-edit', onClick: () => onEdit(contract) },
-        canDelete && { label: dictionary.actions.delete, icon: 'tabler-trash', color: 'error', onClick: () => onDelete(contract) }
+        canDelete && {
+          label: dictionary.actions.delete,
+          icon: 'tabler-trash',
+          color: 'error',
+          onClick: () => onDelete(contract)
+        }
       ]}
       statusOptions={canWrite ? data.statuses : []}
       currentStatus={contract.status_id}
@@ -60,8 +69,12 @@ const OthersContractTableView = ({
         onRowClick={onView}
         renderMobilePrimary={contract => (
           <div className='min-is-0'>
-            <Typography color='primary.main' className='truncate font-semibold'>{contract.contract_number}</Typography>
-            <Typography variant='body2' color='text.secondary' className='truncate'>{contract.title}</Typography>
+            <Typography color='primary.main' className='truncate font-semibold'>
+              {contract.contract_number}
+            </Typography>
+            <Typography variant='body2' color='text.secondary' className='truncate'>
+              {contract.title}
+            </Typography>
           </div>
         )}
         renderMobileStatus={contract => (
@@ -92,51 +105,73 @@ const OthersContractTableView = ({
         }}
       >
         <div className='no-scrollbar overflow-x-auto scroll-smooth'>
-      <table className={tableStyles.table}>
-        <thead>
-          <tr>
-            <th>Contract Number</th>
-            <th>Third Party / Title</th>
-            <th>Contract Type</th>
-            <th className='text-end'>Total Amount</th>
-            <th>Start Date</th>
-            <th>End Date</th>
-            <th>Status</th>
-            <th className='text-end'>{dictionary.table.actions}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {loading ? (
-            <TableSkeletonRows columns={8} />
-          ) : data.contracts.length === 0 ? (
-            <TableEmptyStateRow
-              colSpan={8}
-              icon='tabler-building-store'
-              title='No other contracts found'
-              description='Create a vendor, lease, or miscellaneous contract or adjust the filters.'
-              actionLabel={canWrite ? dictionary.actions.add : null}
-              onAction={canWrite ? onAdd : null}
-            />
-          ) : (
-            data.contracts.map(contract => (
-              <tr key={contract.id} onClick={() => onView(contract)}>
-                <td><Typography color='primary.main' className='font-semibold'>{contract.contract_number}</Typography></td>
-                <td><Typography color='text.primary' className='min-is-[180px] font-medium'>{contract.title}</Typography></td>
-                <td>{contract.contract_type.label}</td>
-                <td className='whitespace-nowrap text-end font-semibold'>{formatCurrency(contract.total_amount, locale, contract.currency)}</td>
-                <td className='whitespace-nowrap'>{toDateInputValue(contract.start_date)}</td>
-                <td className='whitespace-nowrap'>{toDateInputValue(contract.end_date)}</td>
-                <td>
-                  <Chip size='small' variant='tonal' color={STATUS_COLORS[contract.status.value] || 'default'} label={contract.status.label} />
-                </td>
-                <td className='text-end' onClick={event => event.stopPropagation()}>
-                  {renderActions(contract)}
-                </td>
+          <table className={tableStyles.table}>
+            <thead>
+              <tr>
+                <th>Contract Number</th>
+                <th>Third Party / Title</th>
+                <th>Contract Type</th>
+                <th className='text-end'>Total Amount</th>
+                <th>Start Date</th>
+                <th>End Date</th>
+                <th>Status</th>
+                <th className='text-end'>{dictionary.table.actions}</th>
               </tr>
-            ))
-          )}
-        </tbody>
-      </table>
+            </thead>
+            <tbody>
+              {loading ? (
+                <TableSkeletonRows columns={8} />
+              ) : data.contracts.length === 0 ? (
+                <TableEmptyStateRow
+                  colSpan={8}
+                  icon='tabler-building-store'
+                  title='No other contracts found'
+                  description='Create a vendor, lease, or miscellaneous contract or adjust the filters.'
+                  actionLabel={canWrite ? dictionary.actions.add : null}
+                  onAction={canWrite ? onAdd : null}
+                />
+              ) : (
+                data.contracts.map(contract => (
+                  <tr key={contract.id} onClick={() => onView(contract)}>
+                    <td>
+                      <div className='flex min-is-[210px] items-center gap-3'>
+                        <span className='flex size-9 shrink-0 items-center justify-center rounded bg-primaryLighter text-primary'>
+                          <i className='tabler-file-certificate' />
+                        </span>
+                        <div className='min-is-0'>
+                          <Typography color='primary.main' className='font-semibold'>
+                            {contract.contract_number}
+                          </Typography>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <Typography color='text.primary' className='min-is-[180px] font-medium'>
+                        {contract.title}
+                      </Typography>
+                    </td>
+                    <td>{contract.contract_type.label}</td>
+                    <td className='whitespace-nowrap text-end font-semibold'>
+                      {formatCurrency(contract.total_amount, locale, contract.currency)}
+                    </td>
+                    <td className='whitespace-nowrap'>{toDateInputValue(contract.start_date)}</td>
+                    <td className='whitespace-nowrap'>{toDateInputValue(contract.end_date)}</td>
+                    <td>
+                      <Chip
+                        size='small'
+                        variant='tonal'
+                        color={STATUS_COLORS[contract.status.value] || 'default'}
+                        label={contract.status.label}
+                      />
+                    </td>
+                    <td className='text-end' onClick={event => event.stopPropagation()}>
+                      {renderActions(contract)}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
       </ResponsiveDataTable>
       <DashboardTablePagination

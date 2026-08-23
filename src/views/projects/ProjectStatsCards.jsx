@@ -15,9 +15,9 @@ const ProjectStatsCards = ({ summary, locale, currency, dictionary }) => {
   ]
 
   return (
-    <div className='flex w-full snap-x items-stretch gap-4 overflow-x-auto pb-2 no-scrollbar'>
+     <div className='no-scrollbar flex w-full snap-x items-center gap-4 overflow-x-auto xl:grid xl:grid-cols-4 xl:overflow-visible'>
       {cards.map(card => (
-        <Card key={card.title} className='min-w-[220px] flex-1 snap-start'>
+        <Card key={card.title} className='min-w-[280px] snap-start xl:min-w-0'>
           <CardContent className='flex items-start justify-between gap-4'>
             <div className='min-is-0'>
               <Typography color='text.secondary' variant='body2'>{card.title}</Typography>

@@ -222,13 +222,13 @@ const TasksView = ({ locale, dictionary, canManage, canUpdate, canDelete }) => {
                 }
               }}
             >
-              <ToggleButton value='KANBAN'>
-                <i className='tabler-layout-kanban mie-2' />
-                {dictionary.views.kanban}
-              </ToggleButton>
               <ToggleButton value='TABLE'>
                 <i className='tabler-table mie-2' />
                 {dictionary.views.table}
+              </ToggleButton>
+              <ToggleButton value='KANBAN'>
+                <i className='tabler-layout-kanban mie-2' />
+                {dictionary.views.kanban}
               </ToggleButton>
             </ToggleButtonGroup>
 

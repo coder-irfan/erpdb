@@ -138,17 +138,20 @@ const CrmLeadsView = ({ locale, dictionary, currencyCode, canWrite, canDelete })
       <LeadStatsCards summary={data.summary} locale={locale} currencyCode={currencyCode} dictionary={dictionary} />
       <Card>
         <CardContent className='flex flex-wrap items-center justify-between gap-4 border-be border-divider'>
-          <CustomTextField
-            label={dictionary.filters.search}
-            placeholder={dictionary.filters.searchPlaceholder}
-            value={searchInput}
-            onChange={event => setSearchInput(event.target.value)}
-            className='is-full sm:is-[320px]'
-            slotProps={{ input: { startAdornment: <i className='tabler-search' /> } }}
-          />
+          <div className='flex is-full flex-wrap items-center gap-3 md:is-auto'>
+            <CustomTextField
+              label={dictionary.filters.search}
+              placeholder={dictionary.filters.searchPlaceholder}
+              value={searchInput}
+              onChange={event => setSearchInput(event.target.value)}
+              className='is-full sm:is-[320px]'
+              slotProps={{ input: { startAdornment: <i className='tabler-search' /> } }}
+            />
+          </div>
           <div className='flex is-full flex-wrap items-center gap-3 sm:is-auto sm:justify-end'>
             <ToggleButtonGroup
               exclusive
+              size='small'
               value={view}
               onChange={(_, value) => {
                 if (value) {

@@ -59,13 +59,13 @@ const horizontalMenuData = dictionary => [
         permission: 'contracts:read'
       },
       {
-        label: dictionary.navigation.otherContracts,
-        href: '/contracts/others',
+        label: dictionary.navigation.contractInvoices,
+        href: '/contracts/invoices',
         permission: 'contracts:read'
       },
       {
-        label: dictionary.navigation.contractInvoices,
-        href: '/contracts/invoices',
+        label: dictionary.navigation.otherContracts,
+        href: '/contracts/others',
         permission: 'contracts:read'
       }
     ]

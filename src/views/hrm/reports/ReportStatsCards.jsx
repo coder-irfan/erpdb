@@ -16,7 +16,7 @@ const ReportStatsCards = ({ items, loading, className = '' }) => (
       const accentClasses = ACCENTS[index % ACCENTS.length]
 
       return (
-        <Card key={item.label} className='report-summary-card min-w-[380px] snap-start xl:min-w-0'>
+        <Card key={item.label} className='report-summary-card min-w-[280px] snap-start xl:min-w-0'>
           <CardContent className='flex items-center justify-between gap-4'>
             <div className='min-w-0'>
               <Typography color='text.secondary' className='truncate'>

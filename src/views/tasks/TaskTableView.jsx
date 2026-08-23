@@ -87,7 +87,7 @@ const TaskTableView = ({
         mobileMetadata={[
           {
             id: 'assignees',
-            label: dictionary.table.assignees,
+            label: dictionary.table.assignees, 
             render: task => task.assignees.length
               ? task.assignees.map(assignee => assignee.staff.full_name).join(', ')
               : dictionary.common.unassigned

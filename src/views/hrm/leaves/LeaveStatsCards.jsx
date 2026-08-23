@@ -9,9 +9,9 @@ const cards = [
 ]
 
 const LeaveStatsCards = ({ summary, dictionary }) => (
-  <div className='no-scrollbar flex w-full snap-x items-center gap-4 overflow-x-auto lg:grid lg:grid-cols-3 lg:overflow-visible'>
+  <div className='no-scrollbar flex w-full snap-x items-center gap-4 overflow-x-auto xl:grid xl:grid-cols-3 xl:overflow-visible'>
     {cards.map(card => (
-      <Card key={card.key} className='min-w-[220px] snap-start lg:min-w-0'>
+      <Card key={card.key} className='min-w-[280px] snap-start xl:min-w-0'>
         <CardContent className='flex items-center justify-between gap-4'>
           <div>
             <Typography color='text.secondary' className='text-sm md:text-base font-semibold'>

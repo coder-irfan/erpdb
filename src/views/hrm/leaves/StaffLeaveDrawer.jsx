@@ -108,7 +108,7 @@ const StaffLeaveDrawer = ({ open, leave, options, currentStaffId, canManage, loc
             <CustomTextField {...field} select fullWidth required label={dictionary.fields.staff} value={field.value || ''} disabled={isSubmitting || !canManage} error={Boolean(errors.staff_id)} helperText={errors.staff_id?.message}>
               <MenuItem value='' disabled>{dictionary.placeholders.selectStaff}</MenuItem>
               {staffOptions.map(staff => <MenuItem key={staff.id} value={staff.id}>{staff.full_name} — {staff.position}</MenuItem>)}
-            </CustomTextField>
+            </CustomTextField> 
           )}
         />
         <Controller
