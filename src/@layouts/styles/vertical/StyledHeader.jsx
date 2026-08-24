@@ -76,8 +76,7 @@ const StyledHeader = styled.header`
         .${verticalLayoutClasses.navbar},
         &.${verticalLayoutClasses.headerFloating}
         .${verticalLayoutClasses.navbar} {
-        backdrop-filter: blur(6px);
-        background-color: rgb(var(--background-color-rgb) / 0.88);
+        background-color: var(--mui-palette-background-paper)
       }
 
       &.${verticalLayoutClasses.headerFloating} {

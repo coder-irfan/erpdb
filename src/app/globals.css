@@ -2,6 +2,7 @@
 @import 'tailwindcss/theme.css' layer(theme) important;
 @import 'tailwindcss/utilities.css' layer(utilities) important;
 @plugin 'tailwindcss-logical';
+@custom-variant dark (&:where([data-dark], [data-dark] *));
 
 @theme {
   --radius-none: 0px;

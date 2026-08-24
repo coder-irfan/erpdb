@@ -1,14 +1,5 @@
-// Component Imports
-import UnderMaintenance from '@views/pages/misc/UnderMaintenance'
+import MaintenancePage from '@/app/[lang]/maintenance/page'
 
-// Server Action Imports
-import { getServerMode } from '@core/utils/serverHelpers'
-
-const UnderMaintenancePage = async () => {
-  // Vars
-  const mode = await getServerMode()
-
-  return <UnderMaintenance mode={mode} />
-}
+const UnderMaintenancePage = () => <MaintenancePage />
 
 export default UnderMaintenancePage

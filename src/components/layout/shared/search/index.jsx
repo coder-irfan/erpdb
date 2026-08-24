@@ -206,11 +206,10 @@ const NavSearch = ({ dictionary }) => {
           <i className='tabler-search text-2xl' />
         </IconButton>
       ) : (
-        <div className='flex items-center gap-2 cursor-pointer' onClick={() => setOpen(true)}>
+        <div className='cursor-pointer' onClick={() => setOpen(true)}>
           <IconButton className='text-textPrimary' onClick={() => setOpen(true)}>
             <i className='tabler-search text-2xl' />
           </IconButton>
-          <div className='whitespace-nowrap select-none text-textDisabled'>Search ⌘K</div>
         </div>
       )}
       <CommandDialog open={open} onOpenChange={setOpen}>

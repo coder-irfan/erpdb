@@ -27,8 +27,8 @@ const NavbarContent = ({ dictionary }) => {
         <Link className='hidden lg:flex' href={getLocalizedUrl('/dashboard', locale)}><Logo /></Link>
       </div>
       <div className='flex items-center'>
-        <LayoutToggle />
         <NavSearch dictionary={dictionary} />
+        <LayoutToggle />
         <LanguageDropdown />
         <ModeDropdown />
         <NotificationsDropdown dictionary={dictionary.notifications} />

@@ -1,14 +1,5 @@
-// Component Imports
-import NotFound from '@views/NotFound'
+import NotFound from '@/app/[lang]/not-found'
 
-// Server Action Imports
-import { getServerMode } from '@core/utils/serverHelpers'
-
-const Error = async () => {
-  // Vars
-  const mode = await getServerMode()
-
-  return <NotFound mode={mode} />
-}
+const Error = () => <NotFound />
 
 export default Error
