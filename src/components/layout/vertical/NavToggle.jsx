@@ -1,5 +1,7 @@
 'use client'
 
+import IconButton from '@mui/material/IconButton'
+
 // Hook Imports
 import useVerticalNav from '@menu/hooks/useVerticalNav'
 
@@ -15,7 +17,11 @@ const NavToggle = () => {
     <>
       {/* <i className='tabler-menu-2 cursor-pointer' onClick={handleClick} /> */}
       {/* Comment following code and uncomment above code in order to toggle menu on desktop screens as well */}
-      {isBreakpointReached && <i className='tabler-menu-2 cursor-pointer' onClick={handleClick} />}
+      {isBreakpointReached && (
+        <IconButton color='inherit' aria-label='Open navigation menu' onClick={handleClick}>
+          <i className='tabler-menu-2' />
+        </IconButton>
+      )}
     </>
   )
 }

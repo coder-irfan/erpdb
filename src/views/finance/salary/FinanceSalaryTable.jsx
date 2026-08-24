@@ -1,11 +1,11 @@
 'use client'
 
-import Avatar from '@mui/material/Avatar'
 import Chip from '@mui/material/Chip'
 import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
 
 import DashboardTablePagination from '@/components/table/DashboardTablePagination'
+import UserAvatar from '@/components/common/UserAvatar'
 import EntityActionsMenu from '@/components/table/EntityActionsMenu'
 import TableEmptyStateRow from '@/components/table/TableEmptyStateRow'
 import TableSkeletonRows from '@/components/table/TableSkeletonRows'
@@ -77,7 +77,7 @@ const FinanceSalaryTable = ({
         onRowClick={onView}
         renderMobilePrimary={salary => (
           <div className='flex min-is-0 items-center gap-3'>
-            <Avatar variant='rounded' className='bg-primaryLighter text-primary w-7 h-7 lg:w-10 lg:h-10' />
+            <UserAvatar user={salary.staff} size={40} />
             <div className='min-is-0'>
               <Typography className='truncate font-medium'>{salary.staff.full_name}</Typography>
               <Typography variant='caption' color='text.secondary' className='block truncate'>
@@ -161,10 +161,7 @@ const FinanceSalaryTable = ({
                   <tr key={salary.id} onClick={() => onView(salary)}>
                     <td>
                       <div className='flex min-is-[210px] items-center gap-3'>
-                        <Avatar
-                          variant='rounded'
-                          className='bg-primaryLighter text-primary w-7 h-7 lg:w-10 lg:h-10'
-                        ></Avatar>
+                        <UserAvatar user={salary.staff} size={40} />
                         <div className='min-is-0'>
                           <Typography className='max-is-[190px] truncate font-medium'>
                             {salary.staff.full_name}

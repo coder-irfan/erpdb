@@ -11,7 +11,11 @@ import CardContent from '@mui/material/CardContent'
 import CardHeader from '@mui/material/CardHeader'
 import Chip from '@mui/material/Chip'
 import Divider from '@mui/material/Divider'
+import IconButton from '@mui/material/IconButton'
+import InputAdornment from '@mui/material/InputAdornment'
 import MenuItem from '@mui/material/MenuItem'
+import Tab from '@mui/material/Tab'
+import Tabs from '@mui/material/Tabs'
 import Typography from '@mui/material/Typography'
 import { valibotResolver } from '@hookform/resolvers/valibot'
 import { formatDistanceToNow } from 'date-fns'
@@ -24,6 +28,7 @@ import CustomTextField from '@core/components/mui/TextField'
 import { changeCurrentUserPassword, updateCurrentUserProfile } from '@/app/actions/profileActions'
 import FileUpload from '@/components/common/FileUpload'
 import LoadingButtonContent from '@/components/LoadingButtonContent'
+import UserAvatar from '@/components/common/UserAvatar'
 import { createChangePasswordSchema, createProfileAccountSchema } from '@/utils/validation/profileSchemas'
 
 const STATUS_COLORS = {
@@ -117,6 +122,9 @@ const ProfileView = ({ initialProfile, dictionary, uploadTranslations, locale })
   const pathname = usePathname()
   const { update: updateSession } = useSession()
   const [profile, setProfile] = useState(initialProfile)
+  const [activeTab, setActiveTab] = useState('account')
+  const [showNewPassword, setShowNewPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
   const {
     register: registerAccount,
@@ -205,264 +213,340 @@ const ProfileView = ({ initialProfile, dictionary, uploadTranslations, locale })
   const staff = profile.staff
 
   return (
-    <div className='flex flex-col md:gap-4 gap-2'>
-      <div className='grid grid-cols-1 gap-6 xl:grid-cols-3'>
-        <Card className='xl:col-span-2'>
-          <CardHeader title={dictionary.account.title} subheader={dictionary.account.description} />
-          <Divider />
-          <CardContent>
-            <form className='flex flex-col gap-6' onSubmit={handleAccountSubmit(submitAccount)} noValidate>
-              <div className='max-is-[360px]'>
-                <FileUpload
-                  value={image}
-                  onChange={value => setAccountValue('image', value, { shouldDirty: true, shouldValidate: true })}
-                  label={dictionary.account.avatar}
-                  accept={PROFILE_IMAGE_ACCEPT}
-                  maxSizeMB={4}
-                  previewHeight={180}
-                  uploadType='profile'
-                  translations={uploadTranslations}
-                />
-                {accountErrors.image && (
-                  <Typography variant='caption' color='error'>
-                    {accountErrors.image.message}
-                  </Typography>
-                )}
-              </div>
-              <div className='grid grid-cols-1 gap-5 md:grid-cols-2'>
+    <div className='flex flex-col gap-4'>
+      <Card>
+        <Tabs
+          value={activeTab}
+          variant='scrollable'
+          scrollButtons='auto'
+          onChange={(_, value) => setActiveTab(value)}
+          aria-label={dictionary.tabs.label}
+        >
+          <Tab
+            value='account'
+            icon={<i className='tabler-user-cog' />}
+            iconPosition='start'
+            label={dictionary.tabs.account}
+          />
+          <Tab
+            value='password'
+            icon={<i className='tabler-lock' />}
+            iconPosition='start'
+            label={dictionary.tabs.password}
+          />
+          <Tab
+            value='employment'
+            icon={<i className='tabler-briefcase' />}
+            iconPosition='start'
+            label={dictionary.tabs.employment}
+          />
+          <Tab
+            value='security'
+            icon={<i className='tabler-shield-check' />}
+            iconPosition='start'
+            label={dictionary.tabs.security}
+          />
+        </Tabs>
+      </Card>
+
+      {['account', 'password'].includes(activeTab) && (
+        <div className='grid grid-cols-1 gap-6 xl:grid-cols-3'>
+          <Card className={activeTab === 'account' ? 'xl:col-span-3' : 'hidden'}>
+            <CardHeader title={dictionary.account.title} subheader={dictionary.account.description} />
+            <Divider />
+            <CardContent>
+              <form className='flex flex-col gap-6' onSubmit={handleAccountSubmit(submitAccount)} noValidate>
+                <div className='flex flex-col gap-4 sm:flex-row sm:items-start'>
+                  <UserAvatar user={{ ...profile, image }} size={88} className='ring-4 ring-primary/10' />
+                  <div className='w-full max-is-[360px]'>
+                    <FileUpload
+                      value={image}
+                      onChange={value => setAccountValue('image', value, { shouldDirty: true, shouldValidate: true })}
+                      label={dictionary.account.avatar}
+                      accept={PROFILE_IMAGE_ACCEPT}
+                      maxSizeMB={4}
+                      previewHeight={180}
+                      uploadType='profile'
+                      translations={uploadTranslations}
+                    />
+                    {accountErrors.image && (
+                      <Typography variant='caption' color='error'>
+                        {accountErrors.image.message}
+                      </Typography>
+                    )}
+                  </div>
+                </div>
+                <div className='grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3'>
+                  <CustomTextField
+                    fullWidth
+                    label={dictionary.account.fullName}
+                    placeholder={dictionary.account.fullNamePlaceholder}
+                    error={Boolean(accountErrors.name)}
+                    helperText={accountErrors.name?.message}
+                    disabled={isAccountSubmitting}
+                    {...registerAccount('name')}
+                  />
+                  <CustomTextField
+                    fullWidth
+                    type='email'
+                    label={dictionary.account.email}
+                    error={Boolean(accountErrors.email)}
+                    helperText={
+                      accountErrors.email?.message ||
+                      (!profile.canEditEmail ? dictionary.account.emailReadOnly : undefined)
+                    }
+                    disabled={isAccountSubmitting}
+                    slotProps={{ input: { readOnly: !profile.canEditEmail } }}
+                    {...registerAccount('email')}
+                  />
+                  <CustomTextField
+                    fullWidth
+                    select
+                    label={dictionary.account.language}
+                    disabled={isAccountSubmitting}
+                    error={Boolean(accountErrors.locale)}
+                    helperText={accountErrors.locale?.message}
+                    defaultValue={initialProfile.locale || 'en'}
+                    {...registerAccount('locale')}
+                  >
+                    {['en', 'fa', 'ps'].map(language => (
+                      <MenuItem key={language} value={language}>
+                        {dictionary.languages[language]}
+                      </MenuItem>
+                    ))}
+                  </CustomTextField>
+                </div>
+                <div>
+                  <Button type='submit' variant='contained' disabled={isAccountSubmitting}>
+                    <LoadingButtonContent loading={isAccountSubmitting} loadingLabel={dictionary.account.saving}>
+                      {dictionary.account.save}
+                    </LoadingButtonContent>
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+
+          <Card className={activeTab === 'password' ? 'xl:col-span-2' : 'hidden'}>
+            <CardHeader title={dictionary.password.title} subheader={dictionary.password.description} />
+            <Divider />
+            <CardContent>
+              <form className='flex flex-col gap-5' onSubmit={handlePasswordSubmit(submitPassword)} noValidate>
                 <CustomTextField
                   fullWidth
-                  label={dictionary.account.fullName}
-                  placeholder={dictionary.account.fullNamePlaceholder}
-                  error={Boolean(accountErrors.name)}
-                  helperText={accountErrors.name?.message}
-                  disabled={isAccountSubmitting}
-                  {...registerAccount('name')}
+                  type='password'
+                  autoComplete='current-password'
+                  label={dictionary.password.current}
+                  placeholder={dictionary.password.currentPlaceholder}
+                  error={Boolean(passwordErrors.currentPassword)}
+                  helperText={passwordErrors.currentPassword?.message}
+                  disabled={isPasswordSubmitting}
+                  {...registerPassword('currentPassword')}
                 />
                 <CustomTextField
                   fullWidth
-                  type='email'
-                  label={dictionary.account.email}
-                  error={Boolean(accountErrors.email)}
-                  helperText={
-                    accountErrors.email?.message ||
-                    (!profile.canEditEmail ? dictionary.account.emailReadOnly : undefined)
-                  }
-                  disabled={isAccountSubmitting}
-                  slotProps={{ input: { readOnly: !profile.canEditEmail } }}
-                  {...registerAccount('email')}
+                  type={showNewPassword ? 'text' : 'password'}
+                  autoComplete='new-password'
+                  label={dictionary.password.new}
+                  placeholder={dictionary.password.newPlaceholder}
+                  error={Boolean(passwordErrors.newPassword)}
+                  helperText={passwordErrors.newPassword?.message}
+                  disabled={isPasswordSubmitting}
+                  slotProps={{
+                    input: {
+                      endAdornment: (
+                        <InputAdornment position='end'>
+                          <IconButton
+                            edge='end'
+                            onClick={() => setShowNewPassword(value => !value)}
+                            aria-label={showNewPassword ? dictionary.password.hide : dictionary.password.show}
+                          >
+                            <i className={showNewPassword ? 'tabler-eye-off' : 'tabler-eye'} />
+                          </IconButton>
+                        </InputAdornment>
+                      )
+                    }
+                  }}
+                  {...registerPassword('newPassword')}
                 />
                 <CustomTextField
                   fullWidth
-                  select
-                  label={dictionary.account.language}
-                  disabled={isAccountSubmitting}
-                  error={Boolean(accountErrors.locale)}
-                  helperText={accountErrors.locale?.message}
-                  defaultValue={initialProfile.locale || 'en'}
-                  {...registerAccount('locale')}
-                >
-                  {['en', 'fa', 'ps'].map(language => (
-                    <MenuItem key={language} value={language}>
-                      {dictionary.languages[language]}
-                    </MenuItem>
-                  ))}
-                </CustomTextField>
-              </div>
-              <div>
-                <Button type='submit' variant='contained' disabled={isAccountSubmitting}>
-                  <LoadingButtonContent loading={isAccountSubmitting} loadingLabel={dictionary.account.saving}>
-                    {dictionary.account.save}
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  autoComplete='new-password'
+                  label={dictionary.password.confirm}
+                  placeholder={dictionary.password.confirmPlaceholder}
+                  error={Boolean(passwordErrors.confirmPassword)}
+                  helperText={passwordErrors.confirmPassword?.message}
+                  disabled={isPasswordSubmitting}
+                  slotProps={{
+                    input: {
+                      endAdornment: (
+                        <InputAdornment position='end'>
+                          <IconButton
+                            edge='end'
+                            onClick={() => setShowConfirmPassword(value => !value)}
+                            aria-label={showConfirmPassword ? dictionary.password.hide : dictionary.password.show}
+                          >
+                            <i className={showConfirmPassword ? 'tabler-eye-off' : 'tabler-eye'} />
+                          </IconButton>
+                        </InputAdornment>
+                      )
+                    }
+                  }}
+                  {...registerPassword('confirmPassword')}
+                />
+                <Button type='submit' variant='contained' disabled={isPasswordSubmitting}>
+                  <LoadingButtonContent loading={isPasswordSubmitting} loadingLabel={dictionary.password.submitting}>
+                    {dictionary.password.submit}
                   </LoadingButtonContent>
                 </Button>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
-        <Card>
-          <CardHeader title={dictionary.password.title} subheader={dictionary.password.description} />
-          <Divider />
-          <CardContent>
-            <form className='flex flex-col gap-5' onSubmit={handlePasswordSubmit(submitPassword)} noValidate>
-              <CustomTextField
-                fullWidth
-                type='password'
-                autoComplete='current-password'
-                label={dictionary.password.current}
-                placeholder={dictionary.password.currentPlaceholder}
-                error={Boolean(passwordErrors.currentPassword)}
-                helperText={passwordErrors.currentPassword?.message}
-                disabled={isPasswordSubmitting}
-                {...registerPassword('currentPassword')}
-              />
-              <CustomTextField
-                fullWidth
-                type='password'
-                autoComplete='new-password'
-                label={dictionary.password.new}
-                placeholder={dictionary.password.newPlaceholder}
-                error={Boolean(passwordErrors.newPassword)}
-                helperText={passwordErrors.newPassword?.message}
-                disabled={isPasswordSubmitting}
-                {...registerPassword('newPassword')}
-              />
-              <CustomTextField
-                fullWidth
-                type='password'
-                autoComplete='new-password'
-                label={dictionary.password.confirm}
-                placeholder={dictionary.password.confirmPlaceholder}
-                error={Boolean(passwordErrors.confirmPassword)}
-                helperText={passwordErrors.confirmPassword?.message}
-                disabled={isPasswordSubmitting}
-                {...registerPassword('confirmPassword')}
-              />
-              <Button type='submit' variant='contained' disabled={isPasswordSubmitting}>
-                <LoadingButtonContent loading={isPasswordSubmitting} loadingLabel={dictionary.password.submitting}>
-                  {dictionary.password.submit}
-                </LoadingButtonContent>
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-      </div>
+      {['employment', 'security'].includes(activeTab) && (
+        <div className='grid grid-cols-1 gap-6 xl:grid-cols-2'>
+          <Card className={activeTab === 'employment' ? 'xl:col-span-2' : 'hidden'}>
+            <CardHeader
+              title={dictionary.employment.title}
+              subheader={staff ? dictionary.employment.description : dictionary.employment.adminDescription}
+            />
+            <Divider />
+            <CardContent>
+              {staff ? (
+                <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
+                  <DetailItem
+                    icon='tabler-briefcase'
+                    label={dictionary.employment.position}
+                    value={displayValue(staff.position)}
+                  />
+                  <DetailItem
+                    icon='tabler-phone'
+                    label={dictionary.employment.phone}
+                    value={displayValue(staff.phone)}
+                  />
+                  <DetailItem
+                    icon='tabler-map-pin'
+                    label={dictionary.employment.address}
+                    value={displayValue(staff.address)}
+                  />
+                  <DetailItem
+                    icon='tabler-id'
+                    label={dictionary.employment.tazkiraNumber}
+                    value={displayValue(staff.tazkiraNumber)}
+                  />
+                  <DetailItem
+                    icon='tabler-calendar'
+                    label={dictionary.employment.joinDate}
+                    value={formatDate(staff.joinDate, locale, dictionary.notAvailable)}
+                  />
+                  <DetailItem
+                    icon='tabler-user'
+                    label={dictionary.employment.fatherName}
+                    value={displayValue(staff.fatherName)}
+                  />
+                  <DetailItem
+                    icon='tabler-school'
+                    label={dictionary.employment.educations}
+                    value={displayValue(staff.educations)}
+                  />
+                  <DetailItem
+                    icon='tabler-file-time'
+                    label={dictionary.employment.contractPeriod}
+                    value={displayValue(staff.contractPeriod)}
+                  />
+                  <DetailItem
+                    icon='tabler-user-check'
+                    label={dictionary.employment.staffStatus}
+                    value={dictionary.status[staff.status] || staff.status}
+                  />
+                </div>
+              ) : (
+                <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
+                  <DetailItem
+                    icon='tabler-shield-check'
+                    label={dictionary.employment.accountStatus}
+                    value={dictionary.status[profile.status] || profile.status}
+                  />
+                  <DetailItem
+                    icon='tabler-calendar-plus'
+                    label={dictionary.employment.accountCreated}
+                    value={formatDate(profile.createdAt, locale, dictionary.notAvailable)}
+                  />
+                  <div className='rounded-lg border border-divider p-4 sm:col-span-2'>
+                    <Typography variant='caption' color='text.secondary'>
+                      {dictionary.employment.systemRoles}
+                    </Typography>
+                    <div className='mt-2 flex flex-wrap gap-2'>
+                      {profile.roles.map(role => (
+                        <Chip key={role.id} size='small' variant='tonal' color='primary' label={role.displayName} />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
-      <div className='grid grid-cols-1 gap-6 xl:grid-cols-2'>
-        <Card>
-          <CardHeader
-            title={dictionary.employment.title}
-            subheader={staff ? dictionary.employment.description : dictionary.employment.adminDescription}
-          />
-          <Divider />
-          <CardContent>
-            {staff ? (
-              <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
-                <DetailItem
-                  icon='tabler-briefcase'
-                  label={dictionary.employment.position}
-                  value={displayValue(staff.position)}
-                />
-                <DetailItem icon='tabler-phone' label={dictionary.employment.phone} value={displayValue(staff.phone)} />
-                <DetailItem
-                  icon='tabler-map-pin'
-                  label={dictionary.employment.address}
-                  value={displayValue(staff.address)}
-                />
-                <DetailItem
-                  icon='tabler-id'
-                  label={dictionary.employment.tazkiraNumber}
-                  value={displayValue(staff.tazkiraNumber)}
-                />
-                <DetailItem
-                  icon='tabler-calendar'
-                  label={dictionary.employment.joinDate}
-                  value={formatDate(staff.joinDate, locale, dictionary.notAvailable)}
-                />
-                <DetailItem
-                  icon='tabler-user'
-                  label={dictionary.employment.fatherName}
-                  value={displayValue(staff.fatherName)}
-                />
-                <DetailItem
-                  icon='tabler-school'
-                  label={dictionary.employment.educations}
-                  value={displayValue(staff.educations)}
-                />
-                <DetailItem
-                  icon='tabler-file-time'
-                  label={dictionary.employment.contractPeriod}
-                  value={displayValue(staff.contractPeriod)}
-                />
-                <DetailItem
-                  icon='tabler-user-check'
-                  label={dictionary.employment.staffStatus}
-                  value={dictionary.status[staff.status] || staff.status}
-                />
-              </div>
-            ) : (
-              <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
-                <DetailItem
-                  icon='tabler-shield-check'
-                  label={dictionary.employment.accountStatus}
-                  value={dictionary.status[profile.status] || profile.status}
-                />
-                <DetailItem
-                  icon='tabler-calendar-plus'
-                  label={dictionary.employment.accountCreated}
-                  value={formatDate(profile.createdAt, locale, dictionary.notAvailable)}
-                />
-                <div className='rounded-lg border border-divider p-4 sm:col-span-2'>
+          <Card className={activeTab === 'security' ? 'xl:col-span-2' : 'hidden'}>
+            <CardHeader title={dictionary.security.title} />
+            <Divider />
+            <CardContent className='flex flex-col gap-6'>
+              <div className='grid grid-cols-1 gap-4 sm:grid-cols-3'>
+                <div>
                   <Typography variant='caption' color='text.secondary'>
-                    {dictionary.employment.systemRoles}
+                    {dictionary.security.assignedRoles}
                   </Typography>
-                  <div className='mt-2 flex flex-wrap gap-2'>
+                  <div className='mt-2 flex flex-wrap gap-1'>
                     {profile.roles.map(role => (
                       <Chip key={role.id} size='small' variant='tonal' color='primary' label={role.displayName} />
                     ))}
                   </div>
                 </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader title={dictionary.security.title} />
-          <Divider />
-          <CardContent className='flex flex-col gap-6'>
-            <div className='grid grid-cols-1 gap-4 sm:grid-cols-3'>
-              <div>
-                <Typography variant='caption' color='text.secondary'>
-                  {dictionary.security.assignedRoles}
-                </Typography>
-                <div className='mt-2 flex flex-wrap gap-1'>
-                  {profile.roles.map(role => (
-                    <Chip key={role.id} size='small' variant='tonal' color='primary' label={role.displayName} />
-                  ))}
+                <div>
+                  <Typography variant='caption' color='text.secondary'>
+                    {dictionary.security.lastLogin}
+                  </Typography>
+                  <Typography color='text.primary'>
+                    {formatDate(profile.lastLoginAt, locale, dictionary.security.never)}
+                  </Typography>
+                </div>
+                <div>
+                  <Typography variant='caption' color='text.secondary'>
+                    {dictionary.security.createdBy}
+                  </Typography>
+                  <Typography color='text.primary'>{profile.createdBy?.name || dictionary.security.system}</Typography>
                 </div>
               </div>
+              <Divider />
               <div>
-                <Typography variant='caption' color='text.secondary'>
-                  {dictionary.security.lastLogin}
+                <Typography variant='h6' className='mb-3'>
+                  {dictionary.security.recentActivity}
                 </Typography>
-                <Typography color='text.primary'>
-                  {formatDate(profile.lastLoginAt, locale, dictionary.security.never)}
-                </Typography>
-              </div>
-              <div>
-                <Typography variant='caption' color='text.secondary'>
-                  {dictionary.security.createdBy}
-                </Typography>
-                <Typography color='text.primary'>{profile.createdBy?.name || dictionary.security.system}</Typography>
-              </div>
-            </div>
-            <Divider />
-            <div>
-              <Typography variant='h6' className='mb-3'>
-                {dictionary.security.recentActivity}
-              </Typography>
-              {profile.recentActivity.length === 0 ? (
-                <Alert severity='info'>{dictionary.security.noActivity}</Alert>
-              ) : (
-                <div className='flex flex-col gap-3'>
-                  {profile.recentActivity.map(activity => (
-                    <div key={activity.id} className='flex items-center gap-3 rounded-lg bg-actionHover p-3'>
-                      <i className='tabler-activity text-xl text-primary' />
-                      <div className='min-is-0 grow'>
-                        <Typography color='text.primary'>{getActivityDescription(activity, dictionary)}</Typography>
-                        <Typography variant='caption' color='text.secondary'>
-                          {formatRelativeDate(activity.createdAt, locale, dictionary.notAvailable)}
-                        </Typography>
+                {profile.recentActivity.length === 0 ? (
+                  <Alert severity='info'>{dictionary.security.noActivity}</Alert>
+                ) : (
+                  <div className='flex flex-col gap-3'>
+                    {profile.recentActivity.map(activity => (
+                      <div key={activity.id} className='flex items-center gap-3 rounded-lg bg-actionHover p-3'>
+                        <i className='tabler-activity text-xl text-primary' />
+                        <div className='min-is-0 grow'>
+                          <Typography color='text.primary'>{getActivityDescription(activity, dictionary)}</Typography>
+                          <Typography variant='caption' color='text.secondary'>
+                            {formatRelativeDate(activity.createdAt, locale, dictionary.notAvailable)}
+                          </Typography>
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   )
 }

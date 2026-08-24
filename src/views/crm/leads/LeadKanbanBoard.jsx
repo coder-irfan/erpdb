@@ -1,12 +1,12 @@
 'use client'
 
-import Avatar from '@mui/material/Avatar'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import Chip from '@mui/material/Chip'
 import MenuItem from '@mui/material/MenuItem'
 import Typography from '@mui/material/Typography'
 
+import UserAvatar from '@/components/common/UserAvatar'
 import CustomTextField from '@core/components/mui/TextField'
 import { formatCurrency } from '@/utils/formatCurrency'
 
@@ -101,9 +101,7 @@ const LeadKanbanBoard = ({
                             <div className='flex items-center gap-2'>
                               {lead.assigned_to ? (
                                 <>
-                                  <Avatar className='size-7 bg-primaryLighter text-primary'>
-                                    {lead.assigned_to.full_name.slice(0, 1)}
-                                  </Avatar>
+                                  <UserAvatar user={lead.assigned_to} size={28} />
                                   <Typography variant='body2'>{lead.assigned_to.full_name}</Typography>
                                 </>
                               ) : (

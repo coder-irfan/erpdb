@@ -100,15 +100,12 @@ const LanguageDropdown = () => {
         open={open}
         transition
         disablePortal
-        placement='bottom-start'
+        placement='bottom-end'
         anchorEl={anchorRef.current}
         className='min-is-[160px] !mbs-3 z-[1]'
       >
         {({ TransitionProps, placement }) => (
-          <Fade
-            {...TransitionProps}
-            style={{ transformOrigin: placement === 'bottom-start' ? 'left top' : 'right top' }}
-          >
+          <Fade {...TransitionProps} style={{ transformOrigin: placement === 'bottom-end' ? 'left top' : 'right top' }}>
             <Paper className={settings.skin === 'bordered' ? 'border shadow-none' : 'shadow-lg'}>
               <ClickAwayListener onClickAway={handleClose}>
                 <MenuList onKeyDown={handleClose}>

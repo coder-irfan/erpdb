@@ -4,6 +4,7 @@ import Chip from '@mui/material/Chip'
 import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
 
+import UserAvatar from '@/components/common/UserAvatar'
 import DashboardTablePagination from '@/components/table/DashboardTablePagination'
 import EntityActionsMenu from '@/components/table/EntityActionsMenu'
 import TableEmptyStateRow from '@/components/table/TableEmptyStateRow'
@@ -95,7 +96,16 @@ const ContractTableView = ({
         )}
         renderMobileActions={renderActions}
         mobileMetadata={[
-          { id: 'client', label: dictionary.table.client, render: contract => contract.client.company_name },
+          {
+            id: 'client',
+            label: dictionary.table.client,
+            render: contract => (
+              <div className='flex items-center gap-2'>
+                <UserAvatar user={{ name: contract.client.company_name }} size={32} />
+                <span className='truncate'>{contract.client.company_name}</span>
+              </div>
+            )
+          },
           { id: 'type', label: dictionary.filters.serviceType, render: contract => contract.contract_type.label },
           {
             id: 'duration',
@@ -176,9 +186,12 @@ const ContractTableView = ({
                     </div>
                   </td>
                   <td>
-                    <Typography variant='body2' className='min-is-[150px] whitespace-nowrap font-medium'>
-                      {contract.client.company_name}
-                    </Typography>
+                    <div className='flex min-is-[170px] items-center gap-2'>
+                      <UserAvatar user={{ name: contract.client.company_name }} size={32} />
+                      <Typography variant='body2' className='whitespace-nowrap font-medium'>
+                        {contract.client.company_name}
+                      </Typography>
+                    </div>
                   </td>
                   <td>
                     <div className='min-is-[170px]'>

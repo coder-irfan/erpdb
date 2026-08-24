@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react'
 
 import Alert from '@mui/material/Alert'
-import Avatar from '@mui/material/Avatar'
 import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
@@ -16,11 +15,11 @@ import IconButton from '@mui/material/IconButton'
 import Typography from '@mui/material/Typography'
 
 import { getFinanceIncomeDetail } from '@/actions/financeIncome'
+import UserAvatar from '@/components/common/UserAvatar'
 import { toDateInputValue } from '@/utils/contractDuration'
 import { formatCurrency } from '@/utils/formatCurrency'
 
 const STATUS_COLORS = { PAID: 'success', PARTIAL: 'warning', PENDING: 'error' }
-const initials = name => name?.split(' ').map(part => part[0]).join('').slice(0, 2).toUpperCase() || '?'
 
 const InfoItem = ({ label, value, accent = '' }) => (
   <div className='min-is-0'>
@@ -151,7 +150,7 @@ const FinanceIncomeDetailModal = ({ open, incomeId, locale, baseCurrency, dictio
                 <Typography variant='h6' className='mb-4'>{dictionary.detail.processing}</Typography>
                 <div className='grid grid-cols-1 gap-4 md:grid-cols-[220px_1fr]'>
                   <div className='flex items-center gap-3'>
-                    <Avatar>{initials(income.received_by?.full_name)}</Avatar>
+                    <UserAvatar user={income.received_by || { name: dictionary.common.unassigned }} size={48} />
                     <div className='min-is-0'>
                       <Typography variant='caption' color='text.secondary'>{dictionary.detail.receiver}</Typography>
                       <Typography className='truncate font-medium'>{income.received_by?.full_name || dictionary.common.unassigned}</Typography>

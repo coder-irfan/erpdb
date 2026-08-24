@@ -11,13 +11,15 @@ import { useParams } from 'next/navigation'
 import { styled, useColorScheme, useTheme } from '@mui/material/styles'
 
 // Component Imports
-import VerticalNav, { NavHeader, NavCollapseIcons } from '@menu/vertical-menu'
+import VerticalNav, { NavCollapseIcons } from '@menu/vertical-menu'
 import VerticalMenu from './VerticalMenu'
 import Logo from '@components/layout/shared/Logo'
 
 // Hook Imports
 import useVerticalNav from '@menu/hooks/useVerticalNav'
 import { useSettings } from '@core/hooks/useSettings'
+import { useLayoutPreference } from '@/contexts/layoutPreferenceContext'
+import { useBranding } from '@/contexts/BrandingProvider'
 
 // Util Imports
 import { getLocalizedUrl } from '@/utils/i18n'
@@ -43,11 +45,12 @@ const StyledBoxForShadow = styled('div')(({ theme }) => ({
 
 const Navigation = props => {
   // Props
-  const { dictionary, mode } = props
+  const { dictionary, mode, defaultCollapsed = false } = props
 
   // Hooks
   const verticalNavOptions = useVerticalNav()
-  const { updateSettings, settings } = useSettings()
+  const { settings } = useSettings()
+  const { isCollapsed: savedCollapsed, setIsCollapsed } = useLayoutPreference()
   const { lang: locale } = useParams()
   const { mode: muiMode, systemMode: muiSystemMode } = useColorScheme()
   const theme = useTheme()
@@ -56,7 +59,8 @@ const Navigation = props => {
   const shadowRef = useRef(null)
 
   // Vars
-  const { isCollapsed, isHovered, collapseVerticalNav, isBreakpointReached } = verticalNavOptions
+  const { isCollapsed, collapseVerticalNav, isBreakpointReached } = verticalNavOptions
+  const { faviconUrl } = useBranding()
   const isSemiDark = settings.semiDark
   const currentMode = muiMode === 'system' ? muiSystemMode : muiMode || mode
   const isDark = currentMode === 'dark'
@@ -77,20 +81,17 @@ const Navigation = props => {
   }
 
   useEffect(() => {
-    if (settings.layout === 'collapsed') {
-      collapseVerticalNav(true)
-    } else {
-      collapseVerticalNav(false)
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [settings.layout])
+    collapseVerticalNav(savedCollapsed)
+  }, [collapseVerticalNav, savedCollapsed])
 
   return (
     // eslint-disable-next-line lines-around-comment
     // Sidebar Vertical Menu
     <VerticalNav
       customStyles={navigationCustomStyles(verticalNavOptions, theme)}
-      collapsedWidth={71}
+      width={236}
+      collapsedWidth={60}
+      defaultCollapsed={defaultCollapsed}
       backgroundColor='var(--mui-palette-background-paper)'
       // eslint-disable-next-line lines-around-comment
       // The following condition adds the data-dark attribute to the VerticalNav component
@@ -100,20 +101,31 @@ const Navigation = props => {
           'data-dark': ''
         })}
     >
-      {/* Nav Header including Logo & nav toggle icons  */}
-      <NavHeader>
-        <Link href={getLocalizedUrl('/', locale)}>
-          <Logo />
+      <div
+        className={`flex h-16 shrink-0 items-center border-b border-divider ${
+          isCollapsed ? 'justify-center px-2' : 'justify-between px-5'
+        }`}
+      >
+        <Link href={getLocalizedUrl('/dashboard', locale)} aria-label='Dashboard'>
+          {isCollapsed ? (
+            <img
+              src={faviconUrl || '/favicon.ico'}
+              alt='Company icon'
+              className='size-8 rounded-lg bg-backgroundPaper p-1 object-contain shadow-sm'
+            />
+          ) : (
+            <Logo />
+          )}
         </Link>
-        {!(isCollapsed && !isHovered) && (
+        {!isCollapsed && (
           <NavCollapseIcons
             lockedIcon={<i className='tabler-circle-dot text-xl' />}
             unlockedIcon={<i className='tabler-circle text-xl' />}
             closeIcon={<i className='tabler-x text-xl' />}
-            onClick={() => updateSettings({ layout: !isCollapsed ? 'collapsed' : 'vertical' })}
+            onClick={() => setIsCollapsed(!isCollapsed)}
           />
         )}
-      </NavHeader>
+      </div>
       <StyledBoxForShadow ref={shadowRef} />
       <VerticalMenu dictionary={dictionary} scrollMenu={scrollMenu} />
     </VerticalNav>

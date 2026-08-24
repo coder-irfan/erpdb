@@ -19,11 +19,10 @@ import Tab from '@mui/material/Tab'
 import Tabs from '@mui/material/Tabs'
 import Typography from '@mui/material/Typography'
 
-import CustomAvatar from '@core/components/mui/Avatar'
 import { getStaffById } from '@/actions/hrm/staff'
+import UserAvatar from '@/components/common/UserAvatar'
 import TableEmptyStateRow from '@/components/table/TableEmptyStateRow'
 import { formatCurrency } from '@/utils/formatCurrency'
-import { getInitials } from '@/utils/getInitials'
 
 import StaffAttendanceHistory from './StaffAttendanceHistory'
 
@@ -112,9 +111,7 @@ const StaffDetailModal = ({ open, staffId, locale, dictionary, onClose }) => {
         ) : staff ? (
           <div className='flex flex-col md:gap-4 gap-2'>
             <div className='flex flex-col items-start gap-4 sm:flex-row sm:items-center'>
-              <CustomAvatar src={staff.user?.image || undefined} skin='light' color='primary' size={72}>
-                {!staff.user?.image && getInitials(staff.full_name)}
-              </CustomAvatar>
+              <UserAvatar user={{ ...staff, image: staff.user?.image }} size={72} />
               <div className='flex-1'>
                 <Typography variant='h4'>{staff.full_name}</Typography>
                 <Typography color='text.secondary'>{staff.position}</Typography>

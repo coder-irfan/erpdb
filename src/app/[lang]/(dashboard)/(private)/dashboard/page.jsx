@@ -1,58 +1,18 @@
-// MUI Imports
-import Grid from '@mui/material/Grid'
+import DashboardHome from '@/views/dashboard/DashboardHome'
+import { getDashboardData } from '@/actions/dashboard'
+import { i18n } from '@/configs/i18n'
+import { getDashboardDictionary } from '@/data/dictionaries/dashboard'
 
-// Components Imports
-import WebsiteAnalyticsSlider from '@views/dashboards/analytics/WebsiteAnalyticsSlider'
-import LineAreaDailySalesChart from '@views/dashboards/analytics/LineAreaDailySalesChart'
-import SalesOverview from '@views/dashboards/analytics/SalesOverview'
-import EarningReports from '@views/dashboards/analytics/EarningReports'
-import SupportTracker from '@views/dashboards/analytics/SupportTracker'
-import SalesByCountries from '@views/dashboards/analytics/SalesByCountries'
-import TotalEarning from '@views/dashboards/analytics/TotalEarning'
-import MonthlyCampaignState from '@views/dashboards/analytics/MonthlyCampaignState'
-import SourceVisits from '@views/dashboards/analytics/SourceVisits'
-import ProjectsTable from '@views/dashboards/analytics/ProjectsTable'
+export const dynamic = 'force-dynamic'
 
-// Data Imports
-import { getProfileData } from '@/app/server/actions'
+const DashboardPage = async ({ params }) => {
+  const routeParams = await params
+  const locale = i18n.locales.includes(routeParams.lang) ? routeParams.lang : i18n.defaultLocale
+  const result = await getDashboardData({ locale, months: 12 })
 
-const Dashboard = async () => {
-  const data = await getProfileData()
+  if (!result.success) throw new Error(result.error)
 
-  return (
-    <Grid container spacing={6}>
-      <Grid size={{ xs: 12, lg: 6 }}>
-        <WebsiteAnalyticsSlider />
-      </Grid>
-      <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
-        <LineAreaDailySalesChart />
-      </Grid>
-      <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
-        <SalesOverview />
-      </Grid>
-      <Grid size={{ xs: 12, md: 6 }}>
-        <EarningReports />
-      </Grid>
-      <Grid size={{ xs: 12, md: 6 }}>
-        <SupportTracker />
-      </Grid>
-      <Grid size={{ xs: 12, md: 6, lg: 4 }}>
-        <SalesByCountries />
-      </Grid>
-      <Grid size={{ xs: 12, md: 6, lg: 4 }}>
-        <TotalEarning />
-      </Grid>
-      <Grid size={{ xs: 12, md: 6, lg: 4 }}>
-        <MonthlyCampaignState />
-      </Grid>
-      <Grid size={{ xs: 12, md: 6, lg: 4 }}>
-        <SourceVisits />
-      </Grid>
-      <Grid size={{ xs: 12, lg: 8 }}>
-        <ProjectsTable projectTable={data?.users.profile.projectTable} />
-      </Grid>
-    </Grid>
-  )
+  return <DashboardHome initialData={result.data} dictionary={getDashboardDictionary(locale)} />
 }
 
-export default Dashboard
+export default DashboardPage

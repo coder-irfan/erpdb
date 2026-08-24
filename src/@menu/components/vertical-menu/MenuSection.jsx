@@ -99,9 +99,7 @@ const MenuSection = (props, ref) => {
                 className={menuClasses.menuSectionLabel}
                 rootStyles={getMenuSectionStyles('label')}
                 textTruncate={textTruncate}
-              >
-                {label}
-              </StyledMenuSectionLabel>
+              ></StyledMenuSectionLabel>
             )
           )}
           {suffix && (

@@ -155,7 +155,8 @@ const contractSelect = {
       position: true,
       salary: true,
       salary_currency: true,
-      salary_exchange_rate: true
+      salary_exchange_rate: true,
+      user: { select: { image: true } }
     }
   },
   contract_type: { select: { id: true, label: true, value: true, category: true, is_active: true } },

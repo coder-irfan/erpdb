@@ -2205,6 +2205,13 @@
   "profile": {
     "menuLabel": "Profile / Account Settings",
     "logout": "Logout",
+    "tabs": {
+      "label": "Profile settings sections",
+      "account": "Account & Security",
+      "password": "Password & Auth",
+      "employment": "Personal & Employment Details",
+      "security": "Role & Security Summary"
+    },
     "account": {
       "title": "Account & Security",
       "description": "Update your profile details and preferred system language.",
@@ -2226,6 +2233,8 @@
       "newPlaceholder": "Enter new password",
       "confirm": "Confirm New Password",
       "confirmPlaceholder": "Confirm new password",
+      "show": "Show password",
+      "hide": "Hide password",
       "submit": "Change Password",
       "submitting": "Updating..."
     },
@@ -3063,6 +3072,7 @@
       "view": "View Details",
       "repay": "Record Repayment",
       "print": "Print Statement",
+      "printVoucher": "Print Voucher",
       "delete": "Delete Loan"
     },
     "fields": {

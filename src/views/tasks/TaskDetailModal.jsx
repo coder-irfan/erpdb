@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react'
 
 import Alert from '@mui/material/Alert'
-import Avatar from '@mui/material/Avatar'
 import AvatarGroup from '@mui/material/AvatarGroup'
 import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
@@ -19,9 +18,10 @@ import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
 
 import { getTaskDetail } from '@/actions/tasks'
+import UserAvatar from '@/components/common/UserAvatar'
 import { toDateInputValue } from '@/utils/contractDuration'
 
-import { optionChipProps, staffInitials } from './taskUi'
+import { optionChipProps } from './taskUi'
 
 const Item = ({ label, value }) => (
   <div>
@@ -153,7 +153,7 @@ const TaskDetailModal = ({
                       <AvatarGroup max={8} className='mb-4 justify-end'>
                         {task.assignees.map(assignee => (
                           <Tooltip key={assignee.id} title={`${assignee.staff.full_name} · ${assignee.staff.position}`}>
-                            <Avatar>{staffInitials(assignee.staff.full_name)}</Avatar>
+                            <UserAvatar user={assignee.staff} size={40} />
                           </Tooltip>
                         ))}
                       </AvatarGroup>

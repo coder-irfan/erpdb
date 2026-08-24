@@ -8,7 +8,11 @@ import themeConfig from '@configs/themeConfig'
 import { commonLayoutClasses } from '@layouts/utils/layoutClasses'
 
 const StyledMain = styled.main`
-  padding: ${themeConfig.layoutPadding}px;
+  padding: 16px;
+
+  @media (min-width: 600px) {
+    padding: ${themeConfig.layoutPadding}px;
+  }
   ${({ isContentCompact }) =>
     isContentCompact &&
     `

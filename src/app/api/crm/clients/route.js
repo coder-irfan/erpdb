@@ -46,7 +46,15 @@ export async function GET(request) {
       prisma.crmclient.findMany({
         where,
         include: {
-          account_manager: { select: { id: true, first_name: true, last_name: true, position: true } },
+          account_manager: {
+            select: {
+              id: true,
+              first_name: true,
+              last_name: true,
+              position: true,
+              user: { select: { image: true } }
+            }
+          },
           lead: { select: { id: true, title: true, source: { select: { id: true, label: true, value: true } } } },
           invoices: { select: { amount_base: true, status: { select: { value: true } } } },
           _count: { select: { projects: true, contracts: true, invoices: true, activities: true } }

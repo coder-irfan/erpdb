@@ -15,7 +15,14 @@ export const LOAN_DELETE_PERMISSIONS = ['finance:delete', 'finance_loan:delete']
 export const ACTIVE_LOAN_VALUES = ['ACTIVE', 'APPROVED']
 
 export const optionSelect = { id: true, label: true, value: true, color_code: true, is_default: true, is_active: true }
-export const staffSelect = { id: true, first_name: true, last_name: true, email: true, position: true }
+export const staffSelect = {
+  id: true,
+  first_name: true,
+  last_name: true,
+  email: true,
+  position: true,
+  user: { select: { image: true } }
+}
 
 export const loanSelect = {
   id: true,

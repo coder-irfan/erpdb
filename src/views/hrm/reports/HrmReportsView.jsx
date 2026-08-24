@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
-import Avatar from '@mui/material/Avatar'
 import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
@@ -14,6 +13,7 @@ import Typography from '@mui/material/Typography'
 import { toast } from 'sonner'
 
 import CustomTextField from '@core/components/mui/TextField'
+import UserAvatar from '@/components/common/UserAvatar'
 import DashboardTablePagination from '@/components/table/DashboardTablePagination'
 import TableEmptyStateRow from '@/components/table/TableEmptyStateRow'
 import TableSkeletonRows from '@/components/table/TableSkeletonRows'
@@ -415,7 +415,7 @@ const HrmReportsView = ({ locale, dictionary, setup, generatedAt }) => {
 
   const staffCell = row => (
     <div className='flex min-is-[210px] items-center gap-3'>
-      <Avatar variant='rounded' className='bg-primaryLighter text-primary w-7 h-7 lg:w-10 lg:h-10'></Avatar>
+      <UserAvatar user={{ name: row.staff_name }} size={40} />
       <div className='flex min-is-0 flex-col'>
         <Typography className='font-medium' color='text.primary'>
           {row.staff_name}
@@ -443,7 +443,7 @@ const HrmReportsView = ({ locale, dictionary, setup, generatedAt }) => {
 
     return (
       <div className='flex min-is-0 items-center gap-3'>
-        <Avatar variant='rounded' className='bg-primaryLighter text-primary w-7 h-7 lg:w-10 lg:h-10' />
+        <UserAvatar user={{ name: row.staff_name }} size={40} />
         <div className='min-is-0'>
           <Typography className='truncate font-medium' color='text.primary'>
             {row.staff_name}

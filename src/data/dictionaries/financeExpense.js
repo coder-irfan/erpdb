@@ -34,6 +34,7 @@ const translations = {
       add: 'Log Expense',
       view: 'View Details',
       edit: 'Edit Expense',
+      printVoucher: 'Print Voucher',
       delete: 'Delete Record',
       cancel: 'Cancel',
       create: 'Create Expense',
@@ -141,7 +142,7 @@ const translations = {
   }
 }
 
-translations.fa = translations.en
-translations.ps = translations.en
+translations.fa = { ...translations.en, actions: { ...translations.en.actions, printVoucher: 'چاپ سند پرداخت' } }
+translations.ps = { ...translations.en, actions: { ...translations.en.actions, printVoucher: 'د تادیې سند چاپول' } }
 
 export const getFinanceExpenseDictionary = locale => translations[locale] || translations.en

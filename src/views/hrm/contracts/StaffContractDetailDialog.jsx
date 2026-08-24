@@ -9,6 +9,7 @@ import DialogTitle from '@mui/material/DialogTitle'
 import Divider from '@mui/material/Divider'
 import Typography from '@mui/material/Typography'
 
+import UserAvatar from '@/components/common/UserAvatar'
 import { formatCurrency } from '@/utils/formatCurrency'
 
 const localeMap = { en: 'en-US', fa: 'fa-AF', ps: 'ps-AF' }
@@ -44,15 +45,16 @@ const StaffContractDetailDialog = ({ contract, open, locale, dictionary, onClose
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth='lg'>
       <DialogTitle component='div' className='flex flex-wrap items-center justify-between gap-3'>
-        <div>
-          <Typography variant='h5'>{dictionary.details.title}</Typography>
-          <div className='mt-1 flex items-center gap-2 text-primary'>
-            <span className='flex size-8 items-center justify-center rounded-full bg-primaryLighter'>
+        <div className='flex items-center gap-3'>
+          <UserAvatar user={contract.staff} size={48} />
+          <div>
+            <Typography variant='h5'>{contract.staff.full_name}</Typography>
+            <div className='mt-1 flex items-center gap-2 text-primary'>
               <i className='tabler-file-certificate' />
-            </span>
-            <Typography color='primary.main' className='font-semibold'>
-              {contract.contract_number}
-            </Typography>
+              <Typography color='primary.main' className='font-semibold'>
+                {contract.contract_number}
+              </Typography>
+            </div>
           </div>
         </div>
         <Chip

@@ -11,7 +11,7 @@ import { useObjectCookie } from '@core/hooks/useObjectCookie'
 export const SettingsContext = createContext(null)
 
 const lockedLayoutSettings = {
-  layout: 'horizontal',
+  layout: 'vertical',
   navbarContentWidth: 'wide',
   contentWidth: 'wide',
   footerContentWidth: 'wide'

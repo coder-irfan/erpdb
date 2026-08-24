@@ -57,6 +57,7 @@ const VerticalMenu = ({ dictionary, scrollMenu }) => {
           })}
     >
       <Menu
+        popoutWhenCollapsed
         popoutMenuOffset={{ mainAxis: 23 }}
         menuItemStyles={menuItemStyles(verticalNavOptions, theme)}
         renderExpandIcon={({ open }) => <RenderExpandIcon open={open} transitionDuration={transitionDuration} />}

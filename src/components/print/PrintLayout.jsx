@@ -1,3 +1,5 @@
+import PrintLogo from './PrintLogo'
+
 const DEFAULT_LABELS = {
   reference: 'Reference Number',
   issuedDate: 'Issued Date',
@@ -30,7 +32,6 @@ const PrintLayout = ({
 }) => {
   const text = { ...DEFAULT_LABELS, ...labels }
   const companyName = setup?.company_name || setup?.app_name || 'Company'
-  const logoSrc = setup?.company_logo || setup?.print_logo || null
 
   return (
     <article
@@ -38,14 +39,11 @@ const PrintLayout = ({
         landscape ? 'max-w-[297mm]' : 'max-w-[210mm]'
       }`}
     >
-      <div className='flex min-h-[200mm] print:min-h-0 flex-col px-6 py-7 sm:px-[18mm] sm:py-[15mm]'>
+      <div className='h-1 w-full bg-primary' aria-hidden='true' />
+      <div className='flex flex-col px-6 py-6 sm:px-[18mm] sm:py-[12mm]'>
         <header className='print-letterhead flex items-start justify-between gap-6 border-b border-gray-200 pb-4'>
           <div className='flex min-h-10 min-w-28 items-center'>
-            {logoSrc ? (
-              <img src={logoSrc} alt={companyName} className='max-h-10 w-auto max-w-40 object-contain object-left' />
-            ) : (
-              <span className='text-lg font-bold tracking-wide text-gray-800'>{companyName}</span>
-            )}
+            <PrintLogo setup={setup} companyName={companyName} />
           </div>
           <address className='max-w-[105mm] not-italic text-end text-[11px] leading-tight text-gray-500'>
             <div className='mb-1 text-sm font-bold text-gray-800'>{companyName}</div>
@@ -59,7 +57,7 @@ const PrintLayout = ({
           </address>
         </header>
 
-        <section className='print-document-meta py-6 text-center'>
+        <section className='print-document-meta py-4 text-center'>
           <h1 className='m-0 text-xl font-bold uppercase tracking-wider text-gray-800'>{title}</h1>
           <div className='mt-3 flex flex-wrap justify-center gap-2 text-xs text-gray-600'>
             <span className='rounded bg-gray-100 px-3 py-1'>
@@ -78,9 +76,9 @@ const PrintLayout = ({
           </div>
         </section>
 
-        <main className='enterprise-print-content grow'>{children}</main>
+        <main className='enterprise-print-content'>{children}</main>
 
-        <footer className='print-signatures enterprise-print-footer mt-auto pt-8'>
+        <footer className='print-signatures enterprise-print-footer mt-6 pt-4'>
           <h2 className='enterprise-section-title'>{text.signatures}</h2>
           <div className='grid grid-cols-2 gap-8'>
             <section className='enterprise-signature-card'>
@@ -114,7 +112,7 @@ const PrintLayout = ({
               </div>
             </section>
           </div>
-          <div className='mt-8 flex items-end justify-between gap-6 border-t border-gray-300 pt-3 text-[10px] text-gray-500'>
+          <div className='mt-6 flex items-end justify-between gap-6 border-t border-gray-300 pt-3 text-[10px] text-gray-500'>
             <span>
               {text.confidentiality} — {companyName}
             </span>

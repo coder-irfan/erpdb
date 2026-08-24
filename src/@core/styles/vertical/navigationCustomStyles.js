@@ -3,7 +3,7 @@ import { menuClasses, verticalNavClasses } from '@menu/utils/menuClasses'
 
 const navigationCustomStyles = (verticalNavOptions, theme) => {
   // Vars
-  const { collapsedWidth, isCollapsed, isHovered, transitionDuration } = verticalNavOptions
+  const { isCollapsed, isHovered, transitionDuration } = verticalNavOptions
   const collapsedHovered = isCollapsed && isHovered
   const collapsedNotHovered = isCollapsed && !isHovered
 
@@ -14,10 +14,7 @@ const navigationCustomStyles = (verticalNavOptions, theme) => {
       paddingBlock: theme.spacing(5),
       paddingInline: theme.spacing(5.5, 4),
       ...(collapsedNotHovered && {
-        paddingInline: theme.spacing((collapsedWidth - 35) / 8),
-        '& a': {
-          transform: `translateX(-${22 - (collapsedWidth - 29) / 2}px)`
-        }
+        display: 'none'
       }),
       '& a': {
         transition: `transform ${transitionDuration}ms ease`
@@ -40,7 +37,7 @@ const navigationCustomStyles = (verticalNavOptions, theme) => {
     },
     [`& .${menuClasses.root}`]: {
       paddingBlock: theme.spacing(1),
-      paddingInline: theme.spacing(3)
+      paddingInline: collapsedNotHovered ? theme.spacing(1) : theme.spacing(3)
     },
     [`& .${verticalNavClasses.backdrop}`]: {
       backgroundColor: 'var(--backdrop-color)'

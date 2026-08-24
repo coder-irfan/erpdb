@@ -11,8 +11,8 @@
 }
 
 .enterprise-signature-card {
-  min-height: 9rem;
-  border: 1px solid #e5e7eb;
+  min-height: 7.5rem;
+  border: 1px solid #d1d5db;
   border-radius: 0.375rem;
   padding: 0.875rem;
   background: #fff;
@@ -135,6 +135,11 @@
   .enterprise-signature-card {
     break-inside: avoid;
     page-break-inside: avoid;
+  }
+
+  .enterprise-print-footer {
+    margin-top: 1rem !important;
+    padding-top: 0.5rem !important;
   }
 
   .enterprise-print-content h1,

@@ -1,11 +1,11 @@
 'use client'
 
-import Avatar from '@mui/material/Avatar'
 import Chip from '@mui/material/Chip'
 import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
 
 import DashboardTablePagination from '@/components/table/DashboardTablePagination'
+import UserAvatar from '@/components/common/UserAvatar'
 import EntityActionsMenu from '@/components/table/EntityActionsMenu'
 import TableEmptyStateRow from '@/components/table/TableEmptyStateRow'
 import TableSkeletonRows from '@/components/table/TableSkeletonRows'
@@ -78,7 +78,7 @@ const ClientTableView = ({
         onRowClick={onView}
         renderMobilePrimary={client => (
           <div className='flex min-is-0 items-center gap-3'>
-            <Avatar variant='rounded' className='bg-primaryLighter text-primary w-7 h-7 lg:w-10 lg:h-10' />
+            <UserAvatar user={{ name: client.company_name }} size={40} />
             <div className='min-is-0'>
               <Typography className='truncate font-semibold' color='text.primary'>
                 {client.company_name}
@@ -157,10 +157,7 @@ const ClientTableView = ({
                   >
                     <td>
                       <div className='flex min-is-[220px] items-center gap-3'>
-                        <Avatar
-                          variant='rounded'
-                          className='bg-primaryLighter text-primary w-7 h-7 lg:w-10 lg:h-10'
-                        ></Avatar>
+                        <UserAvatar user={{ name: client.company_name }} size={40} />
                         <div className='min-is-0'>
                           <Typography className='font-semibold' color='text.primary'>
                             {client.company_name}

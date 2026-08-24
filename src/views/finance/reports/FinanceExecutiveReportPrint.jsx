@@ -16,7 +16,7 @@ const FinanceExecutiveReportPrint = ({ tab, data, setup, locale, startDate, endD
 
   return (
     <PrintLayout title={config.title} documentNumber={`${startDate} — ${endDate}`} date={endDate} setup={setup} metadata={[{ label: 'Report Period', value: `${startDate} — ${endDate}` }, { label: 'Currency', value: currency }]} recipientLabel='Prepared By / Chief Accountant' authorizedName={setup?.signatory_name} authorizedTitle='Chief Financial Officer' labels={{ authorizedRepresentative: 'Approved By / Chief Financial Officer', recipientSignature: 'Prepared By / Chief Accountant' }}>
-      <div className='space-y-6 text-xs'>
+      <div className='flex flex-col gap-5 pb-2 text-xs'>
         <section className='grid grid-cols-3 gap-3'>
           {config.metrics.map(([label, key]) => <div key={key} className='rounded border border-gray-300 bg-gray-50 p-3'><p className='text-[10px] font-semibold uppercase text-gray-500'>{label}</p><p className='mt-1 text-sm font-bold text-gray-800'>{value(label, data.summary?.[key])}</p></div>)}
         </section>

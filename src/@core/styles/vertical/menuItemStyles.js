@@ -10,6 +10,10 @@ const menuItemStyles = (verticalNavOptions, theme) => {
 
   return {
     root: ({ level }) => ({
+      ...(collapsedNotHovered &&
+        level === 0 && {
+          inlineSize: '100%'
+        }),
       ...(!isPopoutWhenCollapsed || popoutExpanded || (popoutCollapsed && level === 0)
         ? {
             marginBlockStart: theme.spacing(1.5)
@@ -57,6 +61,15 @@ const menuItemStyles = (verticalNavOptions, theme) => {
       paddingBlock: '8px',
       paddingInline: '12px',
       borderRadius: 'var(--border-radius)',
+      ...(collapsedNotHovered &&
+        level === 0 && {
+          inlineSize: '40px',
+          minInlineSize: '40px',
+          blockSize: '40px',
+          paddingInline: 0,
+          justifyContent: 'center',
+          marginInline: 'auto'
+        }),
       ...(!(isCollapsed && !isHovered) && {
         '&:has(.MuiChip-root)': {
           paddingBlock: theme.spacing(1.75)
@@ -115,7 +128,7 @@ const menuItemStyles = (verticalNavOptions, theme) => {
       ...((!isPopoutWhenCollapsed || popoutExpanded || (popoutCollapsed && level === 0)) && {
         transition: `opacity ${transitionDuration}ms ease-in-out`,
         ...(collapsedNotHovered && {
-          opacity: 0
+          display: 'none !important'
         })
       })
     }),

@@ -3,6 +3,7 @@
 import Chip from '@mui/material/Chip'
 import Typography from '@mui/material/Typography'
 
+import UserAvatar from '@/components/common/UserAvatar'
 import DashboardTablePagination from '@/components/table/DashboardTablePagination'
 import EntityActionsMenu from '@/components/table/EntityActionsMenu'
 import TableEmptyStateRow from '@/components/table/TableEmptyStateRow'
@@ -84,7 +85,16 @@ const InvoiceTableView = ({ data, loading, statusUpdating, page, rowsPerPage, lo
           {
             id: 'client',
             label: dictionary.table.client,
-            render: invoice => invoice.client.company_name || invoice.client.primary_contact_name
+            render: invoice => {
+              const clientName = invoice.client.company_name || invoice.client.primary_contact_name
+
+              return (
+                <div className='flex items-center gap-2'>
+                  <UserAvatar user={{ name: clientName }} size={32} />
+                  <span className='truncate'>{clientName}</span>
+                </div>
+              )
+            }
           },
           { id: 'issued', label: dictionary.fields.issueDate, render: invoice => toDateInputValue(invoice.issued_date) },
           { id: 'due', label: dictionary.fields.dueDate, render: invoice => toDateInputValue(invoice.due_date) },
@@ -135,7 +145,7 @@ const InvoiceTableView = ({ data, loading, statusUpdating, page, rowsPerPage, lo
                     </div>
                   </div>
                 </td>
-                <td><Typography variant='body2' className='min-is-[155px] whitespace-nowrap font-medium'>{invoice.client.company_name || invoice.client.primary_contact_name}</Typography></td>
+                <td><div className='flex min-is-[170px] items-center gap-2'><UserAvatar user={{ name: invoice.client.company_name || invoice.client.primary_contact_name }} size={32} /><Typography variant='body2' className='whitespace-nowrap font-medium'>{invoice.client.company_name || invoice.client.primary_contact_name}</Typography></div></td>
                 <td>
                   <div className='min-is-[155px]'>
                     <Typography variant='body2' className='whitespace-nowrap'>{toDateInputValue(invoice.issued_date)}</Typography>

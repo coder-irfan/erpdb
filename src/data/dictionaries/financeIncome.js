@@ -38,6 +38,7 @@ const translations = {
       add: 'Add Income',
       view: 'View Details',
       edit: 'Edit Income',
+      printReceipt: 'Print Receipt',
       markPaid: 'Mark Fully Paid',
       delete: 'Delete Record',
       cancel: 'Cancel',
@@ -141,7 +142,7 @@ const translations = {
   }
 }
 
-translations.fa = translations.en
-translations.ps = translations.en
+translations.fa = { ...translations.en, actions: { ...translations.en.actions, printReceipt: 'چاپ رسید' } }
+translations.ps = { ...translations.en, actions: { ...translations.en.actions, printReceipt: 'رسید چاپول' } }
 
 export const getFinanceIncomeDictionary = locale => translations[locale] || translations.en

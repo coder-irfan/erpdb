@@ -1,12 +1,12 @@
 'use client'
 
-import Avatar from '@mui/material/Avatar'
 import AvatarGroup from '@mui/material/AvatarGroup'
 import Chip from '@mui/material/Chip'
 import LinearProgress from '@mui/material/LinearProgress'
 import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
 
+import UserAvatar from '@/components/common/UserAvatar'
 import DashboardTablePagination from '@/components/table/DashboardTablePagination'
 import EntityActionsMenu from '@/components/table/EntityActionsMenu'
 import TableEmptyStateRow from '@/components/table/TableEmptyStateRow'
@@ -19,7 +19,6 @@ import tableStyles from '@core/styles/table.module.css'
 
 const CHIP_COLORS = { ACTIVE: 'success', IN_PROGRESS: 'primary', PLANNING: 'info', ON_HOLD: 'warning', COMPLETED: 'success', CANCELLED: 'secondary', LOW: 'success', MEDIUM: 'info', HIGH: 'warning', URGENT: 'error' }
 const PALETTE_COLORS = new Set(['primary', 'secondary', 'success', 'error', 'info', 'warning'])
-const initials = name => name?.split(' ').map(part => part[0]).join('').slice(0, 2).toUpperCase() || '?'
 
 const chipProps = option => {
   const configuredColor = option.color_code?.toLowerCase()
@@ -117,7 +116,7 @@ const ProjectTableView = ({ data, loading, statusUpdating, page, rowsPerPage, lo
             <tr key={project.id} onClick={() => onView(project)}>
               <td><div className='flex min-is-[210px] items-center gap-3'><span className='flex size-9 shrink-0 items-center justify-center rounded bg-primaryLighter text-primary'><i className='tabler-briefcase' /></span><div className='min-is-0'><Chip size='small' variant='tonal' color='primary' label={project.project_code} /><Tooltip title={project.title}><Typography variant='caption' color='text.secondary' className='mt-1 block max-is-[210px] truncate'>{project.title}</Typography></Tooltip></div></div></td>
               <td><Typography variant='body2' className='min-is-[150px] whitespace-nowrap font-medium'>{project.client.company_name}</Typography></td>
-              <td><div className='flex min-is-[185px] items-center gap-3'><Tooltip title={project.project_manager?.full_name || dictionary.common.unassigned}><Avatar className='size-9 text-sm'>{initials(project.project_manager?.full_name)}</Avatar></Tooltip><div><Typography variant='body2' className='max-is-[125px] truncate'>{project.project_manager?.full_name || dictionary.common.unassigned}</Typography>{project.members.length ? <AvatarGroup max={4} className='justify-end [&_.MuiAvatar-root]:size-6 [&_.MuiAvatar-root]:text-[10px]'>{project.members.map(member => <Tooltip key={member.id} title={`${member.staff.full_name}${member.role ? ` · ${member.role}` : ''}`}><Avatar>{initials(member.staff.full_name)}</Avatar></Tooltip>)}</AvatarGroup> : <Typography variant='caption' color='text.secondary'>{dictionary.common.noTeam}</Typography>}</div></div></td>
+              <td><div className='flex min-is-[185px] items-center gap-3'><Tooltip title={project.project_manager?.full_name || dictionary.common.unassigned}><UserAvatar user={project.project_manager || { name: dictionary.common.unassigned }} size={36} /></Tooltip><div><Typography variant='body2' className='max-is-[125px] truncate'>{project.project_manager?.full_name || dictionary.common.unassigned}</Typography>{project.members.length ? <AvatarGroup max={4} className='justify-end'>{project.members.map(member => <Tooltip key={member.id} title={`${member.staff.full_name}${member.role ? ` · ${member.role}` : ''}`}><UserAvatar user={member.staff} size={24} /></Tooltip>)}</AvatarGroup> : <Typography variant='caption' color='text.secondary'>{dictionary.common.noTeam}</Typography>}</div></div></td>
               <td><div className='min-is-[185px]'><Typography variant='body2' className='whitespace-nowrap'>{toDateInputValue(project.start_date)} {' → '} {toDateInputValue(project.end_date)}</Typography>{project.is_overdue ? <Chip size='small' variant='tonal' color='error' label={dictionary.common.overdue} className='mt-1' /> : project.actual_end_date ? <Chip size='small' variant='tonal' color='success' label={dictionary.common.completed} className='mt-1' /> : null}</div></td>
               <td><div className='min-is-[145px]'><div className='mb-1 flex justify-between gap-3'><Typography variant='caption'>{project.actual_hours || 0} / {project.estimated_hours || 0}h</Typography><Typography variant='caption' color='text.secondary'>{project.progress}%</Typography></div><LinearProgress variant='determinate' value={project.progress} color={project.progress > 100 ? 'error' : 'primary'} className='bs-1.5 rounded' /></div></td>
               <td className='text-end'><Tooltip title={`${dictionary.detail.baseAmount}: ${formatCurrency(project.amount_base, locale, data.baseCurrency)}`}><div className='min-is-[135px]'><Typography variant='body2' className='whitespace-nowrap font-semibold'>{formatCurrency(project.budget, locale, project.currency)}</Typography><Chip size='small' variant='outlined' label={project.currency} className='mt-1' /></div></Tooltip></td>

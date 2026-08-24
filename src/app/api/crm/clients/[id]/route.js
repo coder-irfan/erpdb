@@ -32,7 +32,17 @@ export async function GET(request, context) {
     const client = await prisma.crmclient.findUnique({
       where: { id },
       include: {
-        account_manager: { select: { id: true, first_name: true, last_name: true, position: true, email: true, phone: true } },
+        account_manager: {
+          select: {
+            id: true,
+            first_name: true,
+            last_name: true,
+            position: true,
+            email: true,
+            phone: true,
+            user: { select: { image: true } }
+          }
+        },
         lead: { include: { source: { select: optionSelect }, activities: { include: { staff: { select: { id: true, first_name: true, last_name: true, position: true } } } } } },
         projects: { select: { id: true, project_code: true, title: true, budget: true, currency: true, exchange_rate: true, amount_base: true, start_date: true, end_date: true, status: { select: optionSelect } }, orderBy: { created_at: 'desc' } },
         contracts: { select: { id: true, contract_number: true, title: true, total_amount: true, currency: true, exchange_rate: true, amount_base: true, start_date: true, end_date: true, status: { select: optionSelect } }, orderBy: { created_at: 'desc' } },

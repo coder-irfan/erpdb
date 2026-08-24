@@ -3,9 +3,6 @@
 // Third-party Imports
 import classnames from 'classnames'
 
-// Config Imports
-import themeConfig from '@configs/themeConfig'
-
 // Hook Imports
 import { useSettings } from '@core/hooks/useSettings'
 
@@ -30,7 +27,6 @@ const LayoutContent = ({ children }) => {
         [`${horizontalLayoutClasses.contentCompact} is-full`]: contentCompact,
         [horizontalLayoutClasses.contentWide]: contentWide
       })}
-      style={{ padding: themeConfig.layoutPadding }}
     >
       {children}
     </StyledMain>

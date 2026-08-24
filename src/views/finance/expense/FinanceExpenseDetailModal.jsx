@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react'
 
 import Alert from '@mui/material/Alert'
-import Avatar from '@mui/material/Avatar'
 import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
@@ -15,10 +14,10 @@ import IconButton from '@mui/material/IconButton'
 import Typography from '@mui/material/Typography'
 
 import { getFinanceExpenseDetail } from '@/actions/financeExpense'
+import UserAvatar from '@/components/common/UserAvatar'
 import { toDateInputValue } from '@/utils/contractDuration'
 import { formatCurrency } from '@/utils/formatCurrency'
 
-const initials = name => name?.split(' ').map(part => part[0]).join('').slice(0, 2).toUpperCase() || '?'
 const isImageReceipt = url => /\.(?:avif|bmp|gif|jpe?g|png|svg|webp)$/i.test(url || '')
 
 const InfoItem = ({ label, value, accent = '' }) => (
@@ -106,7 +105,7 @@ const FinanceExpenseDetailModal = ({ open, expenseId, locale, baseCurrency, dict
                 </Card>
                 <Card variant='outlined'>
                   <CardContent className='flex items-center gap-3'>
-                    <Avatar>{initials(expense.spent_by?.full_name)}</Avatar>
+                    <UserAvatar user={expense.spent_by || { name: dictionary.common.unassigned }} size={48} />
                     <div className='min-is-0'>
                       <Typography variant='caption' color='text.secondary'>{dictionary.detail.staff}</Typography>
                       <Typography className='truncate font-medium'>{expense.spent_by?.full_name || dictionary.common.unassigned}</Typography>

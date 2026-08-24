@@ -16,7 +16,15 @@ export const getCurrentStaffId = async userId => {
 export const leadInclude = {
   source: { select: { id: true, label: true, value: true, color_code: true } },
   status: { select: { id: true, label: true, value: true, color_code: true } },
-  assigned_to: { select: { id: true, first_name: true, last_name: true, position: true } },
+  assigned_to: {
+    select: {
+      id: true,
+      first_name: true,
+      last_name: true,
+      position: true,
+      user: { select: { image: true } }
+    }
+  },
   converted_client: { select: { id: true } },
   activities: {
     select: {

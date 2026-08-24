@@ -261,7 +261,7 @@ const FinanceIncomeView = ({ locale, dictionary, canWrite, canDelete, setup }) =
           openEdit(income)
         }}
       />
-      <FinancePrintDialog open={Boolean(printTarget)} title='OFFICIAL PAYMENT RECEIPT' onClose={() => setPrintTarget(null)}>
+      <FinancePrintDialog open={Boolean(printTarget)} title='OFFICIAL PAYMENT RECEIPT' printLabel={dictionary.actions.printReceipt} closeLabel={dictionary.actions.close} onClose={() => setPrintTarget(null)}>
         {printTarget && <FinanceIncomePrint income={printTarget} setup={setup} locale={locale} />}
       </FinancePrintDialog>
       <ConfirmDeleteModal

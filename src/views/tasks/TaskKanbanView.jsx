@@ -1,6 +1,5 @@
 'use client'
 
-import Avatar from '@mui/material/Avatar'
 import AvatarGroup from '@mui/material/AvatarGroup'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
@@ -9,10 +8,11 @@ import LinearProgress from '@mui/material/LinearProgress'
 import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
 
+import UserAvatar from '@/components/common/UserAvatar'
 import EntityActionsMenu from '@/components/table/EntityActionsMenu'
 import { toDateInputValue } from '@/utils/contractDuration'
 
-import { optionChipProps, staffInitials } from './taskUi'
+import { optionChipProps } from './taskUi'
 
 const TaskKanbanView = ({
   data,
@@ -128,7 +128,7 @@ const TaskKanbanView = ({
                         <AvatarGroup max={5} className='[&_.MuiAvatar-root]:size-7 [&_.MuiAvatar-root]:text-[10px]'>
                           {task.assignees.map(assignee => (
                             <Tooltip key={assignee.id} title={assignee.staff.full_name}>
-                              <Avatar>{staffInitials(assignee.staff.full_name)}</Avatar>
+                              <UserAvatar user={assignee.staff} size={28} />
                             </Tooltip>
                           ))}
                         </AvatarGroup>

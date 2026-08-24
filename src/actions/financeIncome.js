@@ -41,7 +41,8 @@ const staffSelect = {
   first_name: true,
   last_name: true,
   email: true,
-  position: true
+  position: true,
+  user: { select: { image: true } }
 }
 
 const clientSelect = {
@@ -119,7 +120,7 @@ const normalizeLocale = locale => (i18n.locales.includes(locale) ? locale : i18n
 const normalizeId = value => (typeof value === 'string' ? value.trim() : '')
 const iso = value => value?.toISOString() || null
 const numberString = (value, scale = 2) => (value == null ? null : toFiniteNumber(value).toFixed(scale))
-const withFullName = staff => staff ? { ...staff, full_name: `${staff.first_name} ${staff.last_name}`.trim() } : null
+const withFullName = staff => (staff ? { ...staff, full_name: `${staff.first_name} ${staff.last_name}`.trim() } : null)
 
 const normalizeIncome = income => ({
   ...income,
@@ -161,7 +162,10 @@ const getContext = async (payload, permissions) => {
     return {
       authorized: false,
       code: authorization.code,
-      error: authorization.code === 'UNAUTHENTICATED' ? translations.messages.unauthenticated : translations.messages.forbidden,
+      error:
+        authorization.code === 'UNAUTHENTICATED'
+          ? translations.messages.unauthenticated
+          : translations.messages.forbidden,
       translations
     }
   }
@@ -231,8 +235,15 @@ const prepareIncomeData = async (values, translations, currentId = null) => {
 
   const [client, project, contract, invoice, receiver, incomeType, setup] = await Promise.all([
     ids.client ? prisma.crmclient.findUnique({ where: { id: ids.client }, select: { id: true } }) : null,
-    ids.project ? prisma.project.findUnique({ where: { id: ids.project }, select: { id: true, client_id: true, contract_id: true } }) : null,
-    ids.contract ? prisma.contract.findUnique({ where: { id: ids.contract }, select: { id: true, client_id: true } }) : null,
+    ids.project
+      ? prisma.project.findUnique({
+          where: { id: ids.project },
+          select: { id: true, client_id: true, contract_id: true }
+        })
+      : null,
+    ids.contract
+      ? prisma.contract.findUnique({ where: { id: ids.contract }, select: { id: true, client_id: true } })
+      : null,
     ids.invoice
       ? prisma.contractinvoice.findUnique({
           where: { id: ids.invoice },
@@ -462,7 +473,11 @@ export const getFinanceIncomeFormOptions = async (payload = {}) => {
       }
     }
   } catch {
-    return { success: false, code: 'INCOME_OPTIONS_LOAD_FAILED', error: context.translations.messages.optionsLoadFailed }
+    return {
+      success: false,
+      code: 'INCOME_OPTIONS_LOAD_FAILED',
+      error: context.translations.messages.optionsLoadFailed
+    }
   }
 }
 
@@ -524,7 +539,10 @@ export const createFinanceIncome = async (payload = {}) => {
     return {
       success: false,
       code: error?.code === 'P2002' ? 'INVOICE_IN_USE' : 'INCOME_CREATE_FAILED',
-      error: error?.code === 'P2002' ? context.translations.messages.invoiceInUse : context.translations.messages.operationFailed
+      error:
+        error?.code === 'P2002'
+          ? context.translations.messages.invoiceInUse
+          : context.translations.messages.operationFailed
     }
   }
 }
@@ -538,11 +556,18 @@ export const updateFinanceIncome = async (id, payload = {}) => {
   const validation = safeParse(createFinanceIncomeSchema(context.translations.validation), validationPayload(payload))
 
   if (!incomeId || !validation.success) {
-    return { success: false, code: 'VALIDATION_ERROR', error: validation.issues?.[0]?.message || context.translations.messages.notFound }
+    return {
+      success: false,
+      code: 'VALIDATION_ERROR',
+      error: validation.issues?.[0]?.message || context.translations.messages.notFound
+    }
   }
 
   try {
-    const current = await prisma.financeincome.findUnique({ where: { id: incomeId }, select: { id: true, status: true } })
+    const current = await prisma.financeincome.findUnique({
+      where: { id: incomeId },
+      select: { id: true, status: true }
+    })
 
     if (!current) return { success: false, code: 'NOT_FOUND', error: context.translations.messages.notFound }
 
@@ -569,7 +594,10 @@ export const updateFinanceIncome = async (id, payload = {}) => {
     return {
       success: false,
       code: error?.code === 'P2002' ? 'INVOICE_IN_USE' : 'INCOME_UPDATE_FAILED',
-      error: error?.code === 'P2002' ? context.translations.messages.invoiceInUse : context.translations.messages.operationFailed
+      error:
+        error?.code === 'P2002'
+          ? context.translations.messages.invoiceInUse
+          : context.translations.messages.operationFailed
     }
   }
 }

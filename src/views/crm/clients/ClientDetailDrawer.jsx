@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useState } from 'react'
 
-import Avatar from '@mui/material/Avatar'
 import Button from '@mui/material/Button'
 import Chip from '@mui/material/Chip'
 import CircularProgress from '@mui/material/CircularProgress'
@@ -14,6 +13,7 @@ import Tabs from '@mui/material/Tabs'
 import Typography from '@mui/material/Typography'
 import { toast } from 'sonner'
 
+import UserAvatar from '@/components/common/UserAvatar'
 import ResponsiveDataTable from '@/components/tables/ResponsiveDataTable'
 import { formatCurrency, toFiniteNumber } from '@/utils/formatCurrency'
 
@@ -106,7 +106,7 @@ const ClientProfileModal = ({
       <div className='flex items-start justify-between gap-4 border-be border-divider p-5'>
         {client ? (
           <div className='flex min-w-0 items-center gap-3'>
-            <Avatar className='size-14 bg-primaryLighter text-primary'>{client.company_name.slice(0, 1)}</Avatar>
+            <UserAvatar user={{ name: client.company_name }} size={56} />
             <div>
               <div className='flex flex-wrap items-center gap-2'>
                 <Typography variant='h5'>{client.company_name}</Typography>
@@ -180,10 +180,7 @@ const ClientProfileModal = ({
                     </Typography>
                     {client.account_manager ? (
                       <div className='flex min-is-[220px] items-center gap-3'>
-                        <Avatar
-                          variant='rounded'
-                          className='bg-primaryLighter text-primary w-7 h-7 lg:w-10 lg:h-10'
-                        ></Avatar>
+                        <UserAvatar user={client.account_manager} size={40} />
                         <div>
                           <Typography className='font-medium'>{client.account_manager.full_name}</Typography>
                           <Typography variant='body2' color='text.secondary'>

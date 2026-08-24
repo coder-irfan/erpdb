@@ -1,12 +1,12 @@
 'use client'
 
-import Avatar from '@mui/material/Avatar'
 import AvatarGroup from '@mui/material/AvatarGroup'
 import Chip from '@mui/material/Chip'
 import LinearProgress from '@mui/material/LinearProgress'
 import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
 
+import UserAvatar from '@/components/common/UserAvatar'
 import DashboardTablePagination from '@/components/table/DashboardTablePagination'
 import EntityActionsMenu from '@/components/table/EntityActionsMenu'
 import TableEmptyStateRow from '@/components/table/TableEmptyStateRow'
@@ -14,7 +14,7 @@ import TableSkeletonRows from '@/components/table/TableSkeletonRows'
 import ResponsiveDataTable from '@/components/tables/ResponsiveDataTable'
 import { toDateInputValue } from '@/utils/contractDuration'
 
-import { optionChipProps, staffInitials } from './taskUi'
+import { optionChipProps } from './taskUi'
 
 import tableStyles from '@core/styles/table.module.css'
 
@@ -166,7 +166,7 @@ const TaskTableView = ({
                       >
                         {task.assignees.map(assignee => (
                           <Tooltip key={assignee.id} title={`${assignee.staff.full_name} · ${assignee.staff.position}`}>
-                            <Avatar>{staffInitials(assignee.staff.full_name)}</Avatar>
+                            <UserAvatar user={assignee.staff} size={32} />
                           </Tooltip>
                         ))}
                       </AvatarGroup>

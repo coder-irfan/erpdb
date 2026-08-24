@@ -63,7 +63,16 @@ const getContext = async (payload, permissions) => {
 }
 
 const optionSelect = { id: true, label: true, value: true, color_code: true, is_default: true, is_active: true }
-const staffSelect = { id: true, first_name: true, last_name: true, email: true, phone: true, position: true }
+
+const staffSelect = {
+  id: true,
+  first_name: true,
+  last_name: true,
+  email: true,
+  phone: true,
+  position: true,
+  user: { select: { image: true } }
+}
 
 const projectSelect = {
   id: true,

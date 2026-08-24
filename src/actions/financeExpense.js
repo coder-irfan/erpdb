@@ -52,7 +52,8 @@ const staffSelect = {
   first_name: true,
   last_name: true,
   email: true,
-  position: true
+  position: true,
+  user: { select: { image: true } }
 }
 
 const expenseSelect = {

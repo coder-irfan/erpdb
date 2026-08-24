@@ -63,7 +63,12 @@ const TABLES = {
       <>
         <td className='whitespace-nowrap'>{row.date}</td>
         <td>
-          <PrimarySecondary primary={row.reference} secondary={row.name} />
+          <div className='flex min-is-[180px] items-center gap-3'>
+            <span className='flex size-9 shrink-0 items-center justify-center rounded bg-primaryLighter text-primary'>
+              <i className='tabler-receipt-tax' />
+            </span>
+            <PrimarySecondary primary={row.reference} secondary={row.name} />
+          </div>
         </td>
         <td>
           <PrimarySecondary primary={row.source} secondary={row.source_detail} />
@@ -89,11 +94,16 @@ const TABLES = {
       <>
         <td className='whitespace-nowrap'>{row.date}</td>
         <td>
-          <Tooltip title={row.title}>
-            <Typography className='max-is-[260px] truncate font-medium' color='text.primary'>
-              {row.title}
-            </Typography>
-          </Tooltip>
+          <div className='flex min-is-[150px] items-center gap-3'>
+            <span className='flex size-9 shrink-0 items-center justify-center rounded bg-errorLighter text-error'>
+              <i className='tabler-receipt-tax' />
+            </span>
+            <Tooltip title={row.title}>
+              <Typography className='max-is-[260px] truncate font-medium' color='text.primary'>
+                {row.title}
+              </Typography>
+            </Tooltip>
+          </div>
         </td>
         <td>{row.category || dictionary.common.notAvailable}</td>
         <td>{row.payee || dictionary.common.notAvailable}</td>
@@ -205,8 +215,16 @@ const FinanceReportTable = ({ tab, rows, loading, dictionary, locale, displayCur
     if (tab === 'expenses') {
       return [
         { id: 'date', label: dictionary.table.date, render: row => row.date },
-        { id: 'category', label: dictionary.table.category, render: row => row.category || dictionary.common.notAvailable },
-        { id: 'payee', label: dictionary.table.vendorPayee, render: row => row.payee || dictionary.common.notAvailable },
+        {
+          id: 'category',
+          label: dictionary.table.category,
+          render: row => row.category || dictionary.common.notAvailable
+        },
+        {
+          id: 'payee',
+          label: dictionary.table.vendorPayee,
+          render: row => row.payee || dictionary.common.notAvailable
+        },
         {
           id: 'amount',
           label: dictionary.table.amount,

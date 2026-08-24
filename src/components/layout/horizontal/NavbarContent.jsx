@@ -11,6 +11,7 @@ import ModeDropdown from '@components/layout/shared/ModeDropdown'
 import NotificationsDropdown from '@components/layout/shared/NotificationsDropdown'
 import NavSearch from '@components/layout/shared/search'
 import UserDropdown from '@components/layout/shared/UserDropdown'
+import { LayoutToggle } from '@components/layout/shared/LayoutControls'
 import { horizontalLayoutClasses } from '@layouts/utils/layoutClasses'
 import { getLocalizedUrl } from '@/utils/i18n'
 
@@ -26,6 +27,7 @@ const NavbarContent = ({ dictionary }) => {
         <Link className='hidden lg:flex' href={getLocalizedUrl('/dashboard', locale)}><Logo /></Link>
       </div>
       <div className='flex items-center'>
+        <LayoutToggle />
         <NavSearch dictionary={dictionary} />
         <LanguageDropdown />
         <ModeDropdown />

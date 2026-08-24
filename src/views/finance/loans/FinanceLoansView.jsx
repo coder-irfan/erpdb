@@ -189,7 +189,7 @@ const FinanceLoansView = ({ locale, dictionary, canWrite, setup }) => {
           setAutoPrint(false)
         }}
       />
-      <FinancePrintDialog open={Boolean(printTarget)} title='LOAN DISBURSEMENT & REPAYMENT VOUCHER' onClose={() => setPrintTarget(null)}>
+      <FinancePrintDialog open={Boolean(printTarget)} title='LOAN DISBURSEMENT & REPAYMENT VOUCHER' printLabel={dictionary.actions.printVoucher} closeLabel={dictionary.actions.close} onClose={() => setPrintTarget(null)}>
         {printTarget && <FinanceLoanPrint loan={printTarget} setup={setup} locale={locale} />}
       </FinancePrintDialog>
     </div>

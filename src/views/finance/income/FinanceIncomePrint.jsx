@@ -20,7 +20,7 @@ const FinanceIncomePrint = ({ income, setup, locale }) => {
       authorizedTitle='Received By / Cashier'
       labels={{ authorizedRepresentative: 'Received By Signature & Cashier Stamp', recipientSignature: 'Payer Signature / Stamp' }}
     >
-      <div className='space-y-6 text-xs'>
+      <div className='flex flex-col gap-5 pb-2 text-xs'>
         <section>
           <h2 className='enterprise-section-title'>Payer & Collection Details</h2>
           <div className='grid grid-cols-2 gap-4'>

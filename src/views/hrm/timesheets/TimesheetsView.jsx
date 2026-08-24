@@ -13,9 +13,8 @@ import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
 import { toast } from 'sonner'
 
-import { Avatar } from '@mui/material'
-
 import CustomTextField from '@core/components/mui/TextField'
+import UserAvatar from '@/components/common/UserAvatar'
 import ConfirmDeleteModal from '@/components/dialogs/ConfirmDeleteModal'
 import DashboardTablePagination from '@/components/table/DashboardTablePagination'
 import EntityActionsMenu from '@/components/table/EntityActionsMenu'
@@ -330,7 +329,7 @@ const TimesheetsView = ({ initialDate, canWrite, canDelete, defaultWorkHours, pr
           getMobileRowId={record => record.id}
           renderMobilePrimary={record => (
             <div className='flex min-is-0 items-center gap-3'>
-              <Avatar variant='rounded' className='bg-primaryLighter text-primary w-7 h-7 lg:w-10 lg:h-10' />
+              <UserAvatar user={record.staff} size={40} />
               <div className='min-is-0'>
                 <Typography color='text.primary' className='truncate font-medium'>
                   {record.staff.full_name}
@@ -401,10 +400,7 @@ const TimesheetsView = ({ initialDate, canWrite, canDelete, defaultWorkHours, pr
                     <tr key={record.id}>
                       <td>
                         <div className='flex min-is-[250px] items-center gap-3'>
-                          <Avatar
-                            variant='rounded'
-                            className='bg-primaryLighter text-primary w-7 h-7 lg:w-10 lg:h-10'
-                          ></Avatar>
+                          <UserAvatar user={record.staff} size={40} />
                           <div className='flex min-is-0 flex-col'>
                             <Typography color='text.primary' className='font-medium'>
                               {record.staff.full_name}

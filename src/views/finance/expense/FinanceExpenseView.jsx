@@ -90,8 +90,12 @@ const FinanceExpenseView = ({ locale, dictionary, canWrite, canDelete, setup }) 
     else toast.error(result.error || dictionary.messages.optionsLoadFailed)
   }, [dictionary.messages.optionsLoadFailed, locale])
 
-  useEffect(() => { loadData() }, [loadData])
-  useEffect(() => { loadOptions() }, [loadOptions])
+  useEffect(() => {
+    loadData()
+  }, [loadData])
+  useEffect(() => {
+    loadOptions()
+  }, [loadOptions])
 
   const refresh = async () => {
     await Promise.all([loadData(), loadOptions()])
@@ -135,7 +139,12 @@ const FinanceExpenseView = ({ locale, dictionary, canWrite, canDelete, setup }) 
 
   return (
     <div className='flex flex-col gap-4'>
-      <FinanceExpenseStatsCards summary={data.summary} locale={locale} currency={data.baseCurrency} dictionary={dictionary} />
+      <FinanceExpenseStatsCards
+        summary={data.summary}
+        locale={locale}
+        currency={data.baseCurrency}
+        dictionary={dictionary}
+      />
       <Card>
         <CardContent className='flex flex-wrap items-center justify-between gap-4 border-be border-divider'>
           <CustomTextField
@@ -148,29 +157,68 @@ const FinanceExpenseView = ({ locale, dictionary, canWrite, canDelete, setup }) 
           />
           <div className='flex is-full flex-wrap items-center gap-3 sm:is-auto sm:justify-end'>
             <TableFiltersPopover activeCount={activeFilters} locale={locale}>
-              <CustomTextField select label={dictionary.filters.type} value={typeId} onChange={event => { setTypeId(event.target.value); setPage(0) }} className='is-full'>
+              <CustomTextField
+                select
+                label={dictionary.filters.type}
+                value={typeId}
+                onChange={event => {
+                  setTypeId(event.target.value)
+                  setPage(0)
+                }}
+                className='is-full'
+              >
                 <MenuItem value=''>{dictionary.filters.allTypes}</MenuItem>
-                {options.expenseTypes.map(type => <MenuItem key={type.id} value={type.id}>{type.label}</MenuItem>)}
+                {options.expenseTypes.map(type => (
+                  <MenuItem key={type.id} value={type.id}>
+                    {type.label}
+                  </MenuItem>
+                ))}
               </CustomTextField>
               <Autocomplete
                 options={options.projects}
                 value={options.projects.find(project => project.id === projectId) || null}
-                onChange={(_, value) => { setProjectId(value?.id || ''); setPage(0) }}
+                onChange={(_, value) => {
+                  setProjectId(value?.id || '')
+                  setPage(0)
+                }}
                 getOptionLabel={option => `${option.project_code} · ${option.title}`}
                 isOptionEqualToValue={(option, value) => option.id === value.id}
-                renderInput={params => <CustomTextField {...params} label={dictionary.filters.project} placeholder={dictionary.filters.allProjects} />}
+                renderInput={params => (
+                  <CustomTextField
+                    {...params}
+                    label={dictionary.filters.project}
+                    placeholder={dictionary.filters.allProjects}
+                  />
+                )}
               />
               <Autocomplete
                 options={options.staff}
                 value={options.staff.find(staff => staff.id === staffId) || null}
-                onChange={(_, value) => { setStaffId(value?.id || ''); setPage(0) }}
+                onChange={(_, value) => {
+                  setStaffId(value?.id || '')
+                  setPage(0)
+                }}
                 getOptionLabel={option => option.full_name}
                 isOptionEqualToValue={(option, value) => option.id === value.id}
-                renderInput={params => <CustomTextField {...params} label={dictionary.filters.staff} placeholder={dictionary.filters.allStaff} />}
+                renderInput={params => (
+                  <CustomTextField
+                    {...params}
+                    label={dictionary.filters.staff}
+                    placeholder={dictionary.filters.allStaff}
+                  />
+                )}
               />
-              {activeFilters > 0 && <Button variant='tonal' color='secondary' onClick={resetFilters}>{dictionary.filters.clear}</Button>}
+              {activeFilters > 0 && (
+                <Button variant='tonal' color='secondary' onClick={resetFilters}>
+                  {dictionary.filters.clear}
+                </Button>
+              )}
             </TableFiltersPopover>
-            {canWrite && <Button variant='contained' startIcon={<i className='tabler-plus' />} onClick={openCreate}>{dictionary.actions.add}</Button>}
+            {canWrite && (
+              <Button variant='contained' startIcon={<i className='tabler-plus' />} onClick={openCreate}>
+                {dictionary.actions.add}
+              </Button>
+            )}
           </div>
         </CardContent>
         <FinanceExpenseTable
@@ -183,7 +231,10 @@ const FinanceExpenseView = ({ locale, dictionary, canWrite, canDelete, setup }) 
           canWrite={canWrite}
           canDelete={canDelete}
           onPageChange={(_, value) => setPage(value)}
-          onRowsPerPageChange={event => { setRowsPerPage(Number(event.target.value)); setPage(0) }}
+          onRowsPerPageChange={event => {
+            setRowsPerPage(Number(event.target.value))
+            setPage(0)
+          }}
           onView={expense => setDetailId(expense.id)}
           onPrint={setPrintTarget}
           onEdit={openEdit}
@@ -215,7 +266,13 @@ const FinanceExpenseView = ({ locale, dictionary, canWrite, canDelete, setup }) 
           openEdit(expense)
         }}
       />
-      <FinancePrintDialog open={Boolean(printTarget)} title='PAYMENT / EXPENSE VOUCHER' onClose={() => setPrintTarget(null)}>
+      <FinancePrintDialog
+        open={Boolean(printTarget)}
+        title='PAYMENT / EXPENSE VOUCHER'
+        printLabel={dictionary.actions.printVoucher}
+        closeLabel={dictionary.actions.close}
+        onClose={() => setPrintTarget(null)}
+      >
         {printTarget && <FinanceExpensePrint expense={printTarget} setup={setup} locale={locale} />}
       </FinancePrintDialog>
       <ConfirmDeleteModal

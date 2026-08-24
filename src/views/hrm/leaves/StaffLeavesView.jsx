@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useState } from 'react'
 
-import Avatar from '@mui/material/Avatar'
 import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
@@ -13,6 +12,7 @@ import Typography from '@mui/material/Typography'
 import { toast } from 'sonner'
 
 import CustomTextField from '@core/components/mui/TextField'
+import UserAvatar from '@/components/common/UserAvatar'
 import ConfirmDeleteModal from '@/components/dialogs/ConfirmDeleteModal'
 import DashboardTablePagination from '@/components/table/DashboardTablePagination'
 import EntityActionsMenu from '@/components/table/EntityActionsMenu'
@@ -323,7 +323,7 @@ const StaffLeavesView = ({ locale, dictionary }) => {
           getMobileRowId={leave => leave.id}
           renderMobilePrimary={leave => (
             <div className='flex min-is-0 items-center gap-3'>
-              <Avatar variant='rounded' className='bg-primaryLighter text-primary w-7 h-7 lg:w-10 lg:h-10' />
+              <UserAvatar user={leave.staff} size={40} />
               <div className='min-is-0'>
                 <Typography color='text.primary' className='truncate font-medium'>
                   {leave.staff.full_name}
@@ -400,10 +400,7 @@ const StaffLeavesView = ({ locale, dictionary }) => {
                     <tr key={leave.id}>
                       <td>
                         <div className='flex min-is-[220px] items-center gap-3'>
-                          <Avatar
-                            variant='rounded'
-                            className='bg-primaryLighter text-primary w-7 h-7 lg:w-10 lg:h-10'
-                          ></Avatar>
+                          <UserAvatar user={leave.staff} size={40} />
                           <div>
                             <Typography color='text.primary' className='font-medium'>
                               {leave.staff.full_name}

@@ -18,6 +18,7 @@ import Tabs from '@mui/material/Tabs'
 import Typography from '@mui/material/Typography'
 
 import { getContractDetail } from '@/actions/contracts'
+import UserAvatar from '@/components/common/UserAvatar'
 import { toDateInputValue } from '@/utils/contractDuration'
 import { formatCurrency } from '@/utils/formatCurrency'
 
@@ -64,12 +65,15 @@ const ContractDetailModal = ({ open, contractId, locale, baseCurrency, dictionar
   return (
     <Dialog open={open} onClose={loading ? undefined : onClose} fullWidth maxWidth='md'>
       <DialogTitle className='flex items-start justify-between gap-4'>
-        <div className='min-is-0'>
+        <div className='flex min-is-0 items-center gap-3'>
+          {contract && <UserAvatar user={{ name: contract.client.company_name }} size={48} />}
+          <div className='min-is-0'>
           <div className='flex flex-wrap items-center gap-2'>
             <Typography variant='h5' className='truncate'>{contract?.title || dictionary.detail.title}</Typography>
             {contract && <Chip size='small' variant='tonal' color={STATUS_COLORS[contract.status.value] || 'default'} label={contract.status.label} />}
           </div>
           <Typography color='text.secondary'>{contract ? `${contract.contract_number} · ${contract.client.company_name}` : dictionary.common.loading}</Typography>
+          </div>
         </div>
         <div className='flex items-center gap-1'>
           {canWrite && contract && <Button size='small' variant='tonal' startIcon={<i className='tabler-edit' />} onClick={() => onEdit(contract)}>{dictionary.actions.edit}</Button>}

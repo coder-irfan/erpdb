@@ -1,20 +1,38 @@
+// React Imports
+import { forwardRef } from 'react'
+
 // Next Imports
 import { useParams } from 'next/navigation'
+
+// MUI Imports
+import Tooltip from '@mui/material/Tooltip'
+import { useTheme } from '@mui/material/styles'
 
 // Component Imports
 import { SubMenu as HorizontalSubMenu, MenuItem as HorizontalMenuItem } from '@menu/horizontal-menu'
 import { SubMenu as VerticalSubMenu, MenuItem as VerticalMenuItem, MenuSection } from '@menu/vertical-menu'
 import CustomChip from '@core/components/mui/Chip'
+import useVerticalNav from '@menu/hooks/useVerticalNav'
 
 // Util Imports
 import { getLocalizedUrl } from '@/utils/i18n'
+
+const MiniSidebarTooltipItem = forwardRef(({ menuItemProps, children, ...tooltipProps }, ref) => (
+  <VerticalMenuItem ref={ref} {...menuItemProps} tooltipProps={tooltipProps}>
+    {children}
+  </VerticalMenuItem>
+))
+
+MiniSidebarTooltipItem.displayName = 'MiniSidebarTooltipItem'
 
 // Generate a menu from the menu data array
 export const GenerateVerticalMenu = ({ menuData }) => {
   // Hooks
   const { lang: locale } = useParams()
+  const theme = useTheme()
+  const { isCollapsed, isHovered } = useVerticalNav()
 
-  const renderMenuItems = data => {
+  const renderMenuItems = (data, level = 0) => {
     // Use the map method to iterate through the array of menu data
     return data.map((item, index) => {
       const menuSectionItem = item
@@ -28,7 +46,7 @@ export const GenerateVerticalMenu = ({ menuData }) => {
         // If it is, return a MenuSection component and call generateMenu with the current menuSectionItem's children
         return (
           <MenuSection key={index} {...rest}>
-            {children && renderMenuItems(children)}
+            {children && renderMenuItems(children, level + 1)}
           </MenuSection>
         )
       }
@@ -49,7 +67,7 @@ export const GenerateVerticalMenu = ({ menuData }) => {
             {...rest}
             {...(Icon && { icon: Icon })}
           >
-            {children && renderMenuItems(children)}
+          {children && renderMenuItems(children, level + 1)}
           </VerticalSubMenu>
         )
       }
@@ -66,15 +84,20 @@ export const GenerateVerticalMenu = ({ menuData }) => {
       const menuItemPrefix = prefix && prefix.label ? <CustomChip size='small' round='true' {...prefix} /> : prefix
       const menuItemSuffix = suffix && suffix.label ? <CustomChip size='small' round='true' {...suffix} /> : suffix
 
-      return (
-        <VerticalMenuItem
-          key={index}
-          prefix={menuItemPrefix}
-          suffix={menuItemSuffix}
-          {...rest}
-          href={href}
-          {...(Icon && { icon: Icon })}
-        >
+      const menuItemProps = {
+        prefix: menuItemPrefix,
+        suffix: menuItemSuffix,
+        ...rest,
+        href,
+        ...(Icon && { icon: Icon })
+      }
+
+      return isCollapsed && !isHovered && level === 0 ? (
+        <Tooltip key={index} title={label} placement={theme.direction === 'rtl' ? 'left' : 'right'} arrow>
+          <MiniSidebarTooltipItem menuItemProps={menuItemProps}>{label}</MiniSidebarTooltipItem>
+        </Tooltip>
+      ) : (
+        <VerticalMenuItem key={index} {...menuItemProps}>
           {label}
         </VerticalMenuItem>
       )

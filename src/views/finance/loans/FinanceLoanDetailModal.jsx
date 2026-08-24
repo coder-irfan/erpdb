@@ -2,7 +2,6 @@
 
 import { useEffect } from 'react'
 
-import Avatar from '@mui/material/Avatar'
 import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
@@ -13,16 +12,9 @@ import DialogTitle from '@mui/material/DialogTitle'
 import IconButton from '@mui/material/IconButton'
 import Typography from '@mui/material/Typography'
 
+import UserAvatar from '@/components/common/UserAvatar'
 import { toDateInputValue } from '@/utils/contractDuration'
 import { formatCurrency } from '@/utils/formatCurrency'
-
-const initials = name =>
-  name
-    ?.split(' ')
-    .map(part => part[0])
-    .join('')
-    .slice(0, 2)
-    .toUpperCase() || '?'
 
 const Item = ({ label, value, className = '' }) => (
   <div>
@@ -110,7 +102,7 @@ const FinanceLoanDetailModal = ({ open, loan, locale, dictionary, autoPrint, onC
               </Typography>
               <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
                 <div className='flex items-center gap-3'>
-                  <Avatar>{initials(borrower)}</Avatar>
+                  <UserAvatar user={loan.staff || { name: borrower }} size={48} />
                   <div>
                     <Typography className='font-semibold'>{borrower}</Typography>
                     <Typography variant='body2' color='text.secondary'>

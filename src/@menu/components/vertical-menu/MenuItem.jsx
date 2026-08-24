@@ -42,8 +42,11 @@ const MenuItem = (props, ref) => {
     component,
     onActiveChange,
     rootStyles,
+    tooltipProps,
     ...rest
   } = props
+
+  const { className: tooltipClassName, ...rootTooltipProps } = tooltipProps || {}
 
   // States
   const [active, setActive] = useState(false)
@@ -107,7 +110,8 @@ const MenuItem = (props, ref) => {
         menuClasses.menuItemRoot,
         { [menuClasses.disabled]: disabled },
         { [menuClasses.active]: active },
-        className
+        className,
+        tooltipClassName
       )}
       level={level}
       isCollapsed={isCollapsed}
@@ -116,6 +120,7 @@ const MenuItem = (props, ref) => {
       buttonStyles={getMenuItemStyles('button')}
       menuItemStyles={getMenuItemStyles('root')}
       rootStyles={rootStyles}
+      {...rootTooltipProps}
     >
       <MenuButton
         className={classnames(menuClasses.button, { [menuClasses.active]: active })}

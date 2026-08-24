@@ -12,9 +12,8 @@ import Typography from '@mui/material/Typography'
 import { createColumnHelper, getCoreRowModel, useReactTable } from '@tanstack/react-table'
 import { toast } from 'sonner'
 
-import { Avatar } from '@mui/material'
-
 import CustomTextField from '@core/components/mui/TextField'
+import UserAvatar from '@/components/common/UserAvatar'
 import DashboardTablePagination from '@/components/table/DashboardTablePagination'
 import EntityActionsMenu from '@/components/table/EntityActionsMenu'
 import TableFiltersPopover from '@/components/table/TableFiltersPopover'
@@ -193,7 +192,7 @@ const StaffListTable = ({
 
           return (
             <div className='flex min-is-0 items-center gap-3'>
-              <Avatar variant='rounded' className='bg-primaryLighter text-primary w-7 h-7 lg:w-10 lg:h-10'></Avatar>
+              <UserAvatar user={{ ...employee, image: employee.user?.image }} size={40} />
               <div className='flex min-is-0 flex-col'>
                 <Typography color='text.primary' className='truncate font-medium'>
                   {employee.full_name}

@@ -13,7 +13,7 @@ const themeConfig = {
   primaryColorDark: '#366AFC',
   secondaryColorDark: '#FF9D42',
   semiDark: false, // true, false
-  layout: 'horizontal',
+  layout: 'vertical',
   layoutPadding: 24, // Common padding for header, content, footer layout components (in px)
   compactContentWidth: 1440, // in px
   navbar: {

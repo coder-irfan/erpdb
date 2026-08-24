@@ -1,14 +1,14 @@
+import { cookies } from 'next/headers'
+
 // MUI Imports
 import Button from '@mui/material/Button'
 
 // Layout Imports
 import LayoutWrapper from '@layouts/LayoutWrapper'
-import HorizontalLayout from '@layouts/HorizontalLayout'
 
 // Component Imports
 import Providers from '@components/Providers'
-import Header from '@components/layout/horizontal/Header'
-import HorizontalFooter from '@components/layout/horizontal/Footer'
+import DashboardLayout from '@components/layout/DashboardLayout'
 import ScrollToTop from '@core/components/scroll-to-top'
 import Breadcrumbs from '@/components/Breadcrumbs'
 
@@ -30,14 +30,22 @@ const Layout = async props => {
   const direction = i18n.langDirection[lang]
   const dictionary = await getDictionary(lang)
   const systemMode = await getSystemMode()
+  const cookieStore = await cookies()
+  const savedLayout = cookieStore.get('dashboard-layout')?.value
+  const initialLayout = savedLayout === 'topbar' ? 'topbar' : 'sidebar'
+  const initialCollapsed = cookieStore.get('dashboard-sidebar-collapsed')?.value === 'true'
 
   return (
     <Providers direction={direction}>
       <LayoutWrapper systemMode={systemMode}>
-        <HorizontalLayout header={<Header dictionary={dictionary} />} footer={<HorizontalFooter />}>
+        <DashboardLayout
+          dictionary={dictionary}
+          initialLayout={initialLayout}
+          initialCollapsed={initialCollapsed}
+        >
           <Breadcrumbs />
           {children}
-        </HorizontalLayout>
+        </DashboardLayout>
       </LayoutWrapper>
       <ScrollToTop className='mui-fixed'>
         <Button variant='contained' className='is-10 bs-10 rounded-full p-0 min-is-0 flex items-center justify-center'>

@@ -78,14 +78,30 @@ const contractSelect = {
   created_at: true,
   updated_at: true,
   client: {
-    select: { id: true, company_name: true, primary_contact_name: true, email: true, phone: true, address: true, tax_id: true }
+    select: {
+      id: true,
+      company_name: true,
+      primary_contact_name: true,
+      email: true,
+      phone: true,
+      address: true,
+      tax_id: true
+    }
   },
   status: { select: { id: true, label: true, value: true, color_code: true, is_active: true } },
   contract_type: { select: { id: true, label: true, value: true, is_active: true } },
   country: { select: { id: true, label: true, value: true } },
   level: { select: { id: true, label: true, value: true } },
   account_manager: {
-    select: { id: true, first_name: true, last_name: true, email: true, phone: true, position: true }
+    select: {
+      id: true,
+      first_name: true,
+      last_name: true,
+      email: true,
+      phone: true,
+      position: true,
+      user: { select: { image: true } }
+    }
   },
   _count: { select: { projects: true, invoices: true, notifications: true } }
 }
@@ -255,7 +271,10 @@ const prepareContractData = async (values, translations, currentContract = null)
     return { success: false, error: translations.validation.invalidOption }
   }
 
-  const endDate = isOther ? toUtcDateOnly(values.end_date) : calculateContractEndDate(values.start_date, relations.duration)
+  const endDate = isOther
+    ? toUtcDateOnly(values.end_date)
+    : calculateContractEndDate(values.start_date, relations.duration)
+
   const amount = toFiniteNumber(values.total_amount)
   const exchangeRate = toFiniteNumber(values.exchange_rate)
 
@@ -322,7 +341,10 @@ export const getContracts = async (payload = {}) => {
   const requestedPage = Number.parseInt(payload.page, 10)
   const requestedLimit = Number.parseInt(payload.limit, 10)
   const page = Number.isFinite(requestedPage) && requestedPage > 0 ? requestedPage : 1
-  const limit = Number.isFinite(requestedLimit) && requestedLimit > 0 ? Math.min(requestedLimit, MAX_PAGE_SIZE) : DEFAULT_PAGE_SIZE
+
+  const limit =
+    Number.isFinite(requestedLimit) && requestedLimit > 0 ? Math.min(requestedLimit, MAX_PAGE_SIZE) : DEFAULT_PAGE_SIZE
+
   const search = typeof payload.search === 'string' ? payload.search.trim() : ''
   const statusFilter = typeof payload.statusFilter === 'string' ? payload.statusFilter : 'ALL'
   const scope = payload.scope === 'OTHERS' ? 'OTHERS' : 'ALL'
@@ -339,8 +361,7 @@ export const getContracts = async (payload = {}) => {
 
   const statusWhere = getTabWhere(statusFilter)
 
-  const scopeWhere =
-    scope === 'OTHERS' ? { contract_type: { is: { category: CONTRACT_TYPE_DOMAINS.OTHERS } } } : {}
+  const scopeWhere = scope === 'OTHERS' ? { contract_type: { is: { category: CONTRACT_TYPE_DOMAINS.OTHERS } } } : {}
 
   const where = {
     AND: [
@@ -370,23 +391,24 @@ export const getContracts = async (payload = {}) => {
   try {
     const statuses = await getContractStatusOptions()
 
-    const [totalCount, contracts, active, expiring, monthly, drafts, scopeTotalCount, totalValue, setup] = await prisma.$transaction([
-      prisma.contract.count({ where }),
-      prisma.contract.findMany({
-        where,
-        select: contractSelect,
-        orderBy: [{ end_date: 'asc' }, { created_at: 'desc' }],
-        skip: (page - 1) * limit,
-        take: limit
-      }),
-      prisma.contract.aggregate({ where: activeWhere, _count: { _all: true }, _sum: { amount_base: true } }),
-      prisma.contract.aggregate({ where: expiringWhere, _count: { _all: true }, _sum: { amount_base: true } }),
-      prisma.contract.aggregate({ where: activeWhere, _sum: { amount_base: true } }),
-      prisma.contract.count({ where: draftWhere }),
-      prisma.contract.count({ where: scopeWhere }),
-      prisma.contract.aggregate({ where: scopeWhere, _sum: { amount_base: true } }),
-      prisma.setup.findUnique({ where: { scope: 'GLOBAL' }, select: { currency_code: true } })
-    ])
+    const [totalCount, contracts, active, expiring, monthly, drafts, scopeTotalCount, totalValue, setup] =
+      await prisma.$transaction([
+        prisma.contract.count({ where }),
+        prisma.contract.findMany({
+          where,
+          select: contractSelect,
+          orderBy: [{ end_date: 'asc' }, { created_at: 'desc' }],
+          skip: (page - 1) * limit,
+          take: limit
+        }),
+        prisma.contract.aggregate({ where: activeWhere, _count: { _all: true }, _sum: { amount_base: true } }),
+        prisma.contract.aggregate({ where: expiringWhere, _count: { _all: true }, _sum: { amount_base: true } }),
+        prisma.contract.aggregate({ where: activeWhere, _sum: { amount_base: true } }),
+        prisma.contract.count({ where: draftWhere }),
+        prisma.contract.count({ where: scopeWhere }),
+        prisma.contract.aggregate({ where: scopeWhere, _sum: { amount_base: true } }),
+        prisma.setup.findUnique({ where: { scope: 'GLOBAL' }, select: { currency_code: true } })
+      ])
 
     const durationMap = await getDurationMap(contracts)
 
@@ -449,7 +471,15 @@ export const getContractFormOptions = async (payload = {}) => {
           category: { in: ['CONTRACT_TYPE', 'CONTRACT_DURATION', 'CONTRACT_COUNTRY', 'CONTRACT_LEVEL'] },
           is_active: true
         },
-        select: { id: true, category: true, label: true, value: true, description: true, is_default: true, color_code: true },
+        select: {
+          id: true,
+          category: true,
+          label: true,
+          value: true,
+          description: true,
+          is_default: true,
+          color_code: true
+        },
         orderBy: [{ category: 'asc' }, { sort_order: 'asc' }, { label: 'asc' }]
       }),
       getContractTypeOptions(),
@@ -474,17 +504,16 @@ export const getContractFormOptions = async (payload = {}) => {
         })),
         staff: staff.map(person => ({ ...person, full_name: `${person.first_name} ${person.last_name}`.trim() })),
         options: Object.fromEntries(
-          ['CONTRACT_TYPE', 'CONTRACT_DURATION', 'CONTRACT_COUNTRY', 'CONTRACT_LEVEL'].map(category => [
-            category,
-            options.filter(option => option.category === category)
-          ]).concat([
-            ['CONTRACT_STATUS', statuses],
-            ['CONTRACT_TYPES', contractTypes],
-            ...Object.entries(CONTRACT_TYPE_DOMAINS).map(([domain, category]) => [
-              `CONTRACT_TYPE_${domain}`,
-              contractTypes.filter(option => option.category === category)
+          ['CONTRACT_TYPE', 'CONTRACT_DURATION', 'CONTRACT_COUNTRY', 'CONTRACT_LEVEL']
+            .map(category => [category, options.filter(option => option.category === category)])
+            .concat([
+              ['CONTRACT_STATUS', statuses],
+              ['CONTRACT_TYPES', contractTypes],
+              ...Object.entries(CONTRACT_TYPE_DOMAINS).map(([domain, category]) => [
+                `CONTRACT_TYPE_${domain}`,
+                contractTypes.filter(option => option.category === category)
+              ])
             ])
-          ])
         ),
         templates,
         baseCurrency: setup.currency_code || 'AFN',
@@ -578,7 +607,8 @@ export const createContract = async (payload = {}) => {
 
     return { success: true, data: { id: contract.id }, message: context.translations.messages.created }
   } catch (error) {
-    if (error?.code === 'P2002') return { success: false, code: 'DUPLICATE', error: context.translations.messages.duplicate }
+    if (error?.code === 'P2002')
+      return { success: false, code: 'DUPLICATE', error: context.translations.messages.duplicate }
 
     return { success: false, code: 'CREATE_FAILED', error: context.translations.messages.operationFailed }
   }
@@ -592,7 +622,11 @@ export const updateContract = async (id, payload = {}) => {
   const validation = safeParse(createContractSchema(context.translations.validation), validationPayload(payload))
 
   if (!contractId || !validation.success) {
-    return { success: false, code: 'VALIDATION_ERROR', error: validation.issues?.[0]?.message || context.translations.messages.notFound }
+    return {
+      success: false,
+      code: 'VALIDATION_ERROR',
+      error: validation.issues?.[0]?.message || context.translations.messages.notFound
+    }
   }
 
   try {
@@ -656,7 +690,8 @@ export const updateContractStatus = async (id, statusId, payload = {}) => {
     ])
 
     if (!contract) return { success: false, code: 'NOT_FOUND', error: context.translations.messages.notFound }
-    if (!status) return { success: false, code: 'VALIDATION_ERROR', error: context.translations.validation.invalidOption }
+    if (!status)
+      return { success: false, code: 'VALIDATION_ERROR', error: context.translations.validation.invalidOption }
 
     await prisma.$transaction(async transaction => {
       await transaction.contract.update({

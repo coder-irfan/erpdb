@@ -1,11 +1,11 @@
 'use client'
 
-import Avatar from '@mui/material/Avatar'
 import Chip from '@mui/material/Chip'
 import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
 
 import DashboardTablePagination from '@/components/table/DashboardTablePagination'
+import UserAvatar from '@/components/common/UserAvatar'
 import EntityActionsMenu from '@/components/table/EntityActionsMenu'
 import TableEmptyStateRow from '@/components/table/TableEmptyStateRow'
 import TableSkeletonRows from '@/components/table/TableSkeletonRows'
@@ -81,7 +81,7 @@ const LeadTableView = ({
         getMobileRowId={lead => lead.id}
         renderMobilePrimary={lead => (
           <div className='flex min-is-0 items-center gap-3'>
-            <Avatar variant='rounded' className='bg-primaryLighter text-primary w-7 h-7 lg:w-10 lg:h-10' />
+            <UserAvatar user={{ name: lead.title }} size={40} />
             <div className='min-is-0'>
               <Typography className='truncate font-medium' color='text.primary'>
                 {lead.title}
@@ -167,10 +167,7 @@ const LeadTableView = ({
                     <tr key={lead.id}>
                       <td>
                         <div className='flex min-is-[220px] items-center gap-3'>
-                          <Avatar
-                            variant='rounded'
-                            className='bg-primaryLighter text-primary w-7 h-7 lg:w-10 lg:h-10'
-                          ></Avatar>
+                          <UserAvatar user={{ name: lead.title }} size={40} />
                           <div>
                             <Typography className='font-medium' color='text.primary'>
                               {lead.title}

@@ -6,15 +6,15 @@ import DialogContent from '@mui/material/DialogContent'
 import DialogTitle from '@mui/material/DialogTitle'
 import IconButton from '@mui/material/IconButton'
 
-const FinancePrintDialog = ({ open, title, children, onClose }) => (
+const FinancePrintDialog = ({ open, title, printLabel, closeLabel, children, onClose }) => (
   <Dialog open={open} onClose={onClose} fullWidth maxWidth='md'>
     <DialogTitle className='no-print flex items-center justify-between gap-3'>
       <span>{title}</span>
       <div className='flex gap-2'>
         <Button variant='contained' startIcon={<i className='tabler-printer' />} onClick={() => window.print()}>
-          Print Document
+          {printLabel}
         </Button>
-        <IconButton onClick={onClose} aria-label='Close print preview'>
+        <IconButton onClick={onClose} aria-label={closeLabel}>
           <i className='tabler-x' />
         </IconButton>
       </div>

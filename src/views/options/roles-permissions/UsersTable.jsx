@@ -13,11 +13,10 @@ import DialogTitle from '@mui/material/DialogTitle'
 import MenuItem from '@mui/material/MenuItem'
 import Typography from '@mui/material/Typography'
 
-import { Avatar } from '@mui/material'
-
 import CustomTextField from '@core/components/mui/TextField'
 import ConfirmDeleteModal from '@/components/dialogs/ConfirmDeleteModal'
 import LoadingButtonContent from '@/components/LoadingButtonContent'
+import UserAvatar from '@/components/common/UserAvatar'
 import DashboardTablePagination from '@/components/table/DashboardTablePagination'
 import EntityActionsMenu from '@/components/table/EntityActionsMenu'
 import TableEmptyStateRow from '@/components/table/TableEmptyStateRow'
@@ -209,7 +208,7 @@ const UsersTable = ({
           getMobileRowId={user => user.id}
           renderMobilePrimary={user => (
             <div className='flex min-is-0 items-center gap-3'>
-              <Avatar variant='rounded' className='bg-primaryLighter text-primary w-7 h-7 lg:w-10 lg:h-10' />
+              <UserAvatar user={user} size={40} />
               <div className='min-is-0'>
                 <Typography color='text.primary' className='truncate font-medium'>
                   {user.name || translations.table.notAssigned}
@@ -282,10 +281,7 @@ const UsersTable = ({
                     <tr key={user.id}>
                       <td>
                         <div className='flex min-is-[250px] items-center gap-3'>
-                          <Avatar
-                            variant='rounded'
-                            className='bg-primaryLighter text-primary w-7 h-7 lg:w-10 lg:h-10'
-                          ></Avatar>
+                          <UserAvatar user={user} size={40} />
                           <div className='flex flex-col'>
                             <Typography color='text.primary' className='font-medium'>
                               {user.name || translations.table.notAssigned}

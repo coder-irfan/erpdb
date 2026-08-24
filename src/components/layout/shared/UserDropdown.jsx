@@ -9,7 +9,6 @@ import { useParams, useRouter } from 'next/navigation'
 // MUI Imports
 import { styled } from '@mui/material/styles'
 import Badge from '@mui/material/Badge'
-import Avatar from '@mui/material/Avatar'
 import Popper from '@mui/material/Popper'
 import Fade from '@mui/material/Fade'
 import Paper from '@mui/material/Paper'
@@ -28,6 +27,7 @@ import { useSettings } from '@core/hooks/useSettings'
 
 // Util Imports
 import { getLocalizedUrl } from '@/utils/i18n'
+import UserAvatar from '@/components/common/UserAvatar'
 
 // Styled component for badge content
 const BadgeContentSpan = styled('span')({
@@ -89,12 +89,11 @@ const UserDropdown = ({ dictionary }) => {
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
         className='mis-2'
       >
-        <Avatar
-          ref={anchorRef}
-          alt={session?.user?.name || ''}
-          src={session?.user?.image || ''}
+        <UserAvatar
+          user={session?.user}
+          size={38}
           onClick={handleDropdownOpen}
-          className='cursor-pointer bs-[38px] is-[38px]'
+          className='cursor-pointer'
         />
       </Badge>
       <Popper
@@ -116,7 +115,7 @@ const UserDropdown = ({ dictionary }) => {
               <ClickAwayListener onClickAway={e => handleDropdownClose(e)}>
                 <MenuList>
                   <div className='flex items-center plb-2 pli-6 gap-2' tabIndex={-1}>
-                    <Avatar alt={session?.user?.name || ''} src={session?.user?.image || ''} />
+                    <UserAvatar user={session?.user} size={40} />
                     <div className='flex items-start flex-col'>
                       <Typography className='font-medium' color='text.primary'>
                         {session?.user?.name || ''}

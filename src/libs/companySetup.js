@@ -1,6 +1,7 @@
 import 'server-only'
 
 import { prisma } from '@/libs/prisma'
+import { getBrandingSettings } from '@/libs/systemSettings'
 
 export const DEFAULT_COMPANY_SETUP = {
   id: null,
@@ -37,7 +38,16 @@ export const normalizeCompanySetup = setup =>
     : DEFAULT_COMPANY_SETUP
 
 export const getCompanySetupRecord = async () => {
-  const setup = await prisma.setup.findUnique({ where: { scope: 'GLOBAL' } })
+  const [setup, branding] = await Promise.all([
+    prisma.setup.findUnique({ where: { scope: 'GLOBAL' } }),
+    getBrandingSettings()
+  ])
 
-  return normalizeCompanySetup(setup)
+  const company = normalizeCompanySetup(setup)
+
+  return {
+    ...company,
+    ...branding,
+    company_logo: company.company_logo || branding.lightLogoUrl || null
+  }
 }
