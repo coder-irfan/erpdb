@@ -7,7 +7,9 @@ import Typography from '@mui/material/Typography'
 import TableEmptyStateRow from '@/components/table/TableEmptyStateRow'
 import TableSkeletonRows from '@/components/table/TableSkeletonRows'
 import ResponsiveDataTable from '@/components/tables/ResponsiveDataTable'
+import UserAvatar from '@/components/common/UserAvatar'
 import { formatCurrency } from '@/utils/formatCurrency'
+import { formatPaymentMethod } from '@/utils/ledgerDisplay'
 
 import tableStyles from '@core/styles/table.module.css'
 
@@ -55,6 +57,14 @@ const PrimarySecondary = ({ primary, secondary }) => (
 )
 
 const currencyCell = (amount, currency, locale) => formatCurrency(amount, locale, currency)
+const paymentMethodCell = (value, fallback) => formatPaymentMethod(value) || fallback
+
+const StaffCell = ({ staff, primary, secondary, fallback }) => (
+  <div className='flex min-is-[160px] items-center gap-3'>
+    <UserAvatar user={staff || { name: primary || fallback }} size={32} />
+    <PrimarySecondary primary={primary || fallback} secondary={secondary} />
+  </div>
+)
 
 const TABLES = {
   income: {
@@ -76,9 +86,9 @@ const TABLES = {
         <td className='whitespace-nowrap font-medium'>{currencyCell(row.amount_local, row.currency, locale)}</td>
         <td className='whitespace-nowrap'>{currencyCell(row.amount_usd, 'USD', locale)}</td>
         <td>
-          <Tooltip title={row.payment_method || dictionary.common.notAvailable}>
+          <Tooltip title={paymentMethodCell(row.payment_method, dictionary.common.notAvailable)}>
             <Typography className='max-is-[180px] truncate' variant='body2'>
-              {row.payment_method || dictionary.common.notAvailable}
+              {paymentMethodCell(row.payment_method, dictionary.common.notAvailable)}
             </Typography>
           </Tooltip>
         </td>
@@ -106,9 +116,9 @@ const TABLES = {
           </div>
         </td>
         <td>{row.category || dictionary.common.notAvailable}</td>
-        <td>{row.payee || dictionary.common.notAvailable}</td>
+        <td><StaffCell staff={row.staff} primary={row.payee} fallback={dictionary.common.notAvailable} /></td>
         <td className='whitespace-nowrap font-medium'>{currencyCell(row.amount_display, displayCurrency, locale)}</td>
-        <td>{row.payment_method || dictionary.common.notAvailable}</td>
+        <td>{paymentMethodCell(row.payment_method, dictionary.common.notAvailable)}</td>
         <td>
           <StatusBadge value={row.status} dictionary={dictionary} />
         </td>
@@ -119,7 +129,7 @@ const TABLES = {
     headers: ['staffName', 'designation', 'month', 'baseSalary', 'bonuses', 'deductions', 'netPaid', 'paymentStatus'],
     render: (row, { dictionary, displayCurrency, locale }) => (
       <>
-        <td className='font-medium'>{row.staff_name || dictionary.common.notAvailable}</td>
+        <td><StaffCell staff={row.staff} primary={row.staff_name} secondary={row.staff?.email} fallback={dictionary.common.notAvailable} /></td>
         <td>{row.designation || dictionary.common.notAvailable}</td>
         <td className='whitespace-nowrap'>{row.month}</td>
         <td className='whitespace-nowrap'>{currencyCell(row.base_salary, displayCurrency, locale)}</td>
@@ -157,7 +167,7 @@ const TABLES = {
         <>
           <td className='whitespace-nowrap font-medium'>{row.loan_number}</td>
           <td>
-            <PrimarySecondary primary={row.borrower || dictionary.common.notAvailable} secondary={localizedStatus} />
+            <StaffCell staff={row.staff} primary={row.borrower} secondary={localizedStatus} fallback={dictionary.common.notAvailable} />
           </td>
           <td>
             <Chip size='small' variant='outlined' label={dictionary.loanTypes?.[row.type] || row.type} />
@@ -207,7 +217,7 @@ const FinanceReportTable = ({ tab, rows, loading, dictionary, locale, displayCur
         {
           id: 'payment',
           label: dictionary.table.paymentMethod,
-          render: row => row.payment_method || dictionary.common.notAvailable
+          render: row => paymentMethodCell(row.payment_method, dictionary.common.notAvailable)
         }
       ]
     }
@@ -233,7 +243,7 @@ const FinanceReportTable = ({ tab, rows, loading, dictionary, locale, displayCur
         {
           id: 'payment',
           label: dictionary.table.paymentMethod,
-          render: row => row.payment_method || dictionary.common.notAvailable
+          render: row => paymentMethodCell(row.payment_method, dictionary.common.notAvailable)
         }
       ]
     }

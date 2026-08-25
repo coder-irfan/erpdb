@@ -15,6 +15,7 @@ import Typography from '@mui/material/Typography'
 import UserAvatar from '@/components/common/UserAvatar'
 import { toDateInputValue } from '@/utils/contractDuration'
 import { formatCurrency } from '@/utils/formatCurrency'
+import { formatLedgerText, formatPaymentMethod } from '@/utils/ledgerDisplay'
 
 const Item = ({ label, value, className = '' }) => (
   <div>
@@ -130,6 +131,23 @@ const FinanceLoanDetailModal = ({ open, loan, locale, dictionary, autoPrint, onC
                   {dictionary.fields.reason}
                 </Typography>
                 <Typography className='whitespace-pre-wrap'>{loan.reason}</Typography>
+              </CardContent>
+            </Card>
+          )}
+          {loan.repayments?.length > 0 && (
+            <Card variant='outlined'>
+              <CardContent>
+                <Typography variant='h6' className='mb-4'>Repayment Ledger</Typography>
+                <div className='flex flex-col gap-3'>
+                  {loan.repayments.map(repayment => (
+                    <div key={repayment.id} className='grid grid-cols-1 gap-2 border-be border-divider pb-3 last:border-0 last:pb-0 sm:grid-cols-4'>
+                      <Item label='Date' value={toDateInputValue(repayment.repayment_date)} />
+                      <Item label='Amount' value={formatCurrency(repayment.amount, locale, repayment.currency)} />
+                      <Item label='Payment Method' value={formatPaymentMethod(repayment.payment_method) || formatLedgerText(repayment.source)} />
+                      <Item label='Notes' value={formatLedgerText(repayment.notes) || dictionary.common.notAvailable} />
+                    </div>
+                  ))}
+                </div>
               </CardContent>
             </Card>
           )}

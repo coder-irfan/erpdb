@@ -10,6 +10,7 @@ import { prisma } from '@/libs/prisma'
 import { nextSequentialNumber } from '@/libs/sequentialNumbers'
 import { toUtcDateOnly } from '@/utils/contractDuration'
 import { convertToBaseCurrency, toFiniteNumber } from '@/utils/formatCurrency'
+import { formatLedgerText } from '@/utils/ledgerDisplay'
 
 export const LOAN_READ_PERMISSIONS = ['finance:read', 'finance_loan:read']
 export const LOAN_WRITE_PERMISSIONS = ['finance:write', 'finance_loan:write']
@@ -109,7 +110,8 @@ export const normalizeLoan = loan => ({
     amount_base: numberString(repayment.amount_base),
     exchange_rate: numberString(repayment.exchange_rate, 4),
     repayment_date: iso(repayment.repayment_date),
-    created_at: iso(repayment.created_at)
+    created_at: iso(repayment.created_at),
+    notes: formatLedgerText(repayment.notes)
   }))
 })
 

@@ -15,6 +15,19 @@ const money = value => Number(toFiniteNumber(value).toFixed(2))
 const dateKey = utcDateKey
 const staffName = staff => (staff ? `${staff.first_name} ${staff.last_name}`.trim() : '')
 
+const reportStaff = staff =>
+  staff
+    ? {
+        id: staff.id,
+        first_name: staff.first_name,
+        last_name: staff.last_name,
+        full_name: staffName(staff),
+        email: staff.email || '',
+        position: staff.position || '',
+        image: staff.user?.image || null
+      }
+    : null
+
 const parseDate = (value, endOfDay = false) => parseUtcDate(value, { endOfDay })
 
 const monthsBetween = (start, end) => {
@@ -133,7 +146,16 @@ const getExpenseReport = async ({ start, end, displayCurrency, reportRate }) => 
       expense_type: { select: { label: true, value: true } },
       payment_method: { select: { label: true, value: true } },
       project: { select: { project_code: true, title: true } },
-      spent_by: { select: { first_name: true, last_name: true } }
+      spent_by: {
+        select: {
+          id: true,
+          first_name: true,
+          last_name: true,
+          email: true,
+          position: true,
+          user: { select: { image: true } }
+        }
+      }
     },
     orderBy: { expense_date: 'desc' }
   })
@@ -156,6 +178,7 @@ const getExpenseReport = async ({ start, end, displayCurrency, reportRate }) => 
       title: record.details,
       category,
       payee: staffName(record.spent_by) || record.project?.title || '',
+      staff: reportStaff(record.spent_by),
       amount_local: money(record.sub_total),
       amount_display: converted.display,
       currency: record.currency,
@@ -197,7 +220,16 @@ const getSalaryReport = async ({ start, end, displayCurrency, reportRate }) => {
       currency: true,
       exchange_rate: true,
       status: true,
-      staff: { select: { id: true, first_name: true, last_name: true, position: true } }
+      staff: {
+        select: {
+          id: true,
+          first_name: true,
+          last_name: true,
+          email: true,
+          position: true,
+          user: { select: { image: true } }
+        }
+      }
     },
     orderBy: [{ timesheet_month: 'desc' }, { staff: { first_name: 'asc' } }]
   })
@@ -229,6 +261,7 @@ const getSalaryReport = async ({ start, end, displayCurrency, reportRate }) => {
       id: record.id,
       staff_name: staffName(record.staff),
       designation: record.staff?.position || '',
+      staff: reportStaff(record.staff),
       month: record.timesheet_month,
       currency: record.currency,
       base_salary: base.display,
@@ -344,7 +377,16 @@ const getLoansReport = async ({ start, end, displayCurrency, reportRate }) => {
       currency: true,
       exchange_rate: true,
       issue_date: true,
-      staff: { select: { first_name: true, last_name: true } },
+      staff: {
+        select: {
+          id: true,
+          first_name: true,
+          last_name: true,
+          email: true,
+          position: true,
+          user: { select: { image: true } }
+        }
+      },
       status: { select: { label: true, value: true } }
     },
     orderBy: { issue_date: 'desc' }
@@ -374,6 +416,7 @@ const getLoansReport = async ({ start, end, displayCurrency, reportRate }) => {
       id: record.id,
       loan_number: record.loan_number,
       borrower: staffName(record.staff) || record.entity_name || '',
+      staff: reportStaff(record.staff),
       type: record.loan_type,
       total: total.display,
       repaid: repaid.display,

@@ -8,6 +8,7 @@ import { getCompanySetupRecord } from '@/libs/companySetup'
 import { prisma } from '@/libs/prisma'
 import { nextSequentialNumber } from '@/libs/sequentialNumbers'
 import { convertToBaseCurrency, toFiniteNumber } from '@/utils/formatCurrency'
+import { formatLedgerText } from '@/utils/ledgerDisplay'
 
 export const INVENTORY_READ_PERMISSIONS = ['finance:read', 'finance_inventory:read']
 export const INVENTORY_WRITE_PERMISSIONS = ['finance:write', 'finance_inventory:write']
@@ -89,6 +90,7 @@ export const normalizeInventoryItem = item => ({
 
 export const normalizeInventoryMovement = movement => ({
   ...movement,
+  notes: formatLedgerText(movement.notes),
   occurred_at: iso(movement.occurred_at),
   created_at: iso(movement.created_at)
 })

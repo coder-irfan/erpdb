@@ -18,6 +18,7 @@ import { getFinanceIncomeDetail } from '@/actions/financeIncome'
 import UserAvatar from '@/components/common/UserAvatar'
 import { toDateInputValue } from '@/utils/contractDuration'
 import { formatCurrency } from '@/utils/formatCurrency'
+import { formatLedgerText } from '@/utils/ledgerDisplay'
 
 const STATUS_COLORS = { PAID: 'success', PARTIAL: 'warning', PENDING: 'error' }
 
@@ -159,7 +160,7 @@ const FinanceIncomeDetailModal = ({ open, incomeId, locale, baseCurrency, dictio
                   </div>
                   <div>
                     <Typography variant='caption' color='text.secondary'>{dictionary.detail.paymentDetails}</Typography>
-                    <Typography className='whitespace-pre-wrap'>{income.pay_details || dictionary.common.notAvailable}</Typography>
+                    <Typography className='whitespace-pre-wrap'>{formatLedgerText(income.pay_details) || dictionary.common.notAvailable}</Typography>
                   </div>
                 </div>
                 <div className='mt-4 grid grid-cols-2 gap-4'>

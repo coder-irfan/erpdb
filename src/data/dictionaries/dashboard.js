@@ -1,6 +1,6 @@
 const translations = {
   en: {
-    title: 'Enterprise overview',
+    title: 'Dashboard overview',
     subtitle: 'Welcome back, {name}. Here is the latest operational picture.',
     period: { label: 'Reporting period', six: 'Last 6 months', twelve: 'Last 12 months' },
     kpis: {
