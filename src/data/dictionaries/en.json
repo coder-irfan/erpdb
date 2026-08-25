@@ -166,9 +166,55 @@
     "deleteFailed": "Audit log entry could not be deleted.",
     "loadFailed": "Audit logs could not be loaded.",
     "cancel": "Cancel",
-    "auditTitle": "System Audit Logs", "auditDescription": "Role-filtered system activity and security events.", "search": "Search audit logs", "category": "Category", "action": "Action", "actor": "Actor", "time": "Time", "module": "Module", "noActivity": "No audit activity is available for your role.",
-    "entities": { "CONTRACT": "Contract", "HRM_CONTRACT": "Staff contract", "LEAVE": "Leave request", "INVOICE": "Invoice", "FINANCE_INCOME": "Income", "FINANCE_EXPENSE": "Expense", "FINANCE_LOAN": "Loan", "FINANCE_SALARY": "Salary", "HRM_STAFF": "Staff member", "CRM_CLIENT": "Client", "CRM_LEAD": "Lead", "CRM_VISITOR": "Visitor", "PROJECT": "Project", "TASK": "Task", "INVENTORY_ITEM": "Inventory item", "OPTION": "Option", "USER": "User", "ROLE": "Role", "SYSTEM": "System activity" },
-    "events": { "CREATED": "created", "UPDATED": "updated", "DELETED": "deleted", "STATUS_UPDATED": "status updated", "PAID": "paid", "PAYMENT_RECORDED": "payment recorded", "REPAYMENT_RECORDED": "repayment recorded", "CHECKED_IN": "checked in", "CHECKED_OUT": "checked out", "CONVERTED": "converted", "MARKED_PAID": "marked paid", "HOURS_LOGGED": "hours logged", "MEMBER_ASSIGNED": "member assigned", "MEMBER_REMOVED": "member removed", "QUANTITY_ADJUSTED": "quantity adjusted", "ACTIVITY_ADDED": "activity added", "ACTIVITY_CREATED": "activity created" }
+    "auditTitle": "System Audit Logs",
+    "auditDescription": "Role-filtered system activity and security events.",
+    "search": "Search audit logs",
+    "category": "Category",
+    "action": "Action",
+    "actor": "Actor",
+    "time": "Time",
+    "module": "Module",
+    "noActivity": "No audit activity is available for your role.",
+    "entities": {
+      "CONTRACT": "Contract",
+      "HRM_CONTRACT": "Staff contract",
+      "LEAVE": "Leave request",
+      "INVOICE": "Invoice",
+      "FINANCE_INCOME": "Income",
+      "FINANCE_EXPENSE": "Expense",
+      "FINANCE_LOAN": "Loan",
+      "FINANCE_SALARY": "Salary",
+      "HRM_STAFF": "Staff member",
+      "CRM_CLIENT": "Client",
+      "CRM_LEAD": "Lead",
+      "CRM_VISITOR": "Visitor",
+      "PROJECT": "Project",
+      "TASK": "Task",
+      "INVENTORY_ITEM": "Inventory item",
+      "OPTION": "Option",
+      "USER": "User",
+      "ROLE": "Role",
+      "SYSTEM": "System activity"
+    },
+    "events": {
+      "CREATED": "created",
+      "UPDATED": "updated",
+      "DELETED": "deleted",
+      "STATUS_UPDATED": "status updated",
+      "PAID": "paid",
+      "PAYMENT_RECORDED": "payment recorded",
+      "REPAYMENT_RECORDED": "repayment recorded",
+      "CHECKED_IN": "checked in",
+      "CHECKED_OUT": "checked out",
+      "CONVERTED": "converted",
+      "MARKED_PAID": "marked paid",
+      "HOURS_LOGGED": "hours logged",
+      "MEMBER_ASSIGNED": "member assigned",
+      "MEMBER_REMOVED": "member removed",
+      "QUANTITY_ADJUSTED": "quantity adjusted",
+      "ACTIVITY_ADDED": "activity added",
+      "ACTIVITY_CREATED": "activity created"
+    }
   },
   "auth": {
     "common": {
@@ -1047,7 +1093,9 @@
       "leaveTypeNotFound": "Select an active leave type.",
       "statusNotFound": "Leave statuses are not configured. Run the database seed.",
       "notFound": "The selected leave request could not be found.",
-      "invalidRelations": "One or more selected leave values are invalid."
+      "invalidRelations": "One or more selected leave values are invalid.",
+      "overlappingLeave": "This staff member already has a pending or approved leave request for part of this date range.",
+      "selfApprovalBlocked": "Managers cannot approve their own leave requests."
     },
     "validation": {
       "required": "This field is required.",
@@ -1194,7 +1242,7 @@
       "totalToday": "Visitors Today",
       "activeGuests": "Active Guests in Building",
       "completedToday": "Completed Visits Today",
-      "convertedCount": "Visitor-to-Lead Conversions"
+      "convertedCount": "Visitor-Lead Conversions"
     },
     "filters": {
       "search": "Search",
@@ -1591,16 +1639,16 @@
       "description": "No HRM records match the selected report filters and date range."
     },
     "print": {
-    "generated": "Generated",
-    "signatures": "Approvals",
-    "preparedBy": "Prepared By (HR)",
-    "approvedBy": "Approved By",
-    "date": "Date",
-    "officialSeal": "Official Seal",
-    "confidentiality": "Confidential & Proprietary",
-    "page": "Page",
-    "of": "of",
-    "taxId": "License / TIN"
+      "generated": "Generated",
+      "signatures": "Approvals",
+      "preparedBy": "Prepared By (HR)",
+      "approvedBy": "Approved By",
+      "date": "Date",
+      "officialSeal": "Official Seal",
+      "confidentiality": "Confidential & Proprietary",
+      "page": "Page",
+      "of": "of",
+      "taxId": "License / TIN"
     },
     "messages": {
       "csvReady": "CSV report downloaded successfully.",
@@ -2499,10 +2547,22 @@
     }
   },
   "contractOptions": {
-    "hrmTypes": { "title": "HRM / Staff Types", "description": "Employment contract types used for staff agreements." },
-    "customerTypes": { "title": "Customers / Clients", "description": "Contract types used for customer and client agreements." },
-    "financeTypes": { "title": "Invoices / Finance", "description": "Agreement types used for payment and settlement arrangements." },
-    "otherTypes": { "title": "Others", "description": "Vendor, lease, and miscellaneous third-party contract types." },
+    "hrmTypes": {
+      "title": "HRM / Staff Types",
+      "description": "Employment contract types used for staff agreements."
+    },
+    "customerTypes": {
+      "title": "Customers / Clients",
+      "description": "Contract types used for customer and client agreements."
+    },
+    "financeTypes": {
+      "title": "Invoices / Finance",
+      "description": "Agreement types used for payment and settlement arrangements."
+    },
+    "otherTypes": {
+      "title": "Others",
+      "description": "Vendor, lease, and miscellaneous third-party contract types."
+    },
     "types": {
       "title": "Contract Types",
       "description": "Services that can be sold under a contract."
@@ -2832,6 +2892,7 @@
       "duplicateSku": "An inventory item with this SKU already exists.",
       "notFound": "Inventory item was not found.",
       "insufficientStock": "Stock out quantity exceeds the available inventory.",
+      "deleteBlocked": "Inventory items with stock movement history cannot be deleted.",
       "invalidOptionType": "The requested option type is not supported.",
       "unauthenticated": "Authentication is required.",
       "forbidden": "You do not have permission for this action."
@@ -2841,6 +2902,7 @@
       "nameTooLong": "Item name must not exceed 150 characters.",
       "skuInvalid": "Use 2-50 letters, numbers, hyphens, or underscores for the SKU.",
       "quantityInvalid": "Enter a valid non-negative whole number.",
+      "stockLocked": "Stock quantity cannot be edited directly. Record an inventory movement instead.",
       "priceInvalid": "Enter a unit price greater than zero.",
       "currencyInvalid": "Select AFN or USD.",
       "rateInvalid": "Enter an exchange rate greater than zero.",
@@ -3141,9 +3203,39 @@
       "repaid": "Loan repayment recorded successfully.",
       "notFound": "Loan was not found.",
       "invalidRelation": "The selected staff member or status is invalid.",
+      "repaymentLocked": "Loan terms and currency cannot be changed after approval or repayment activity.",
+      "statusInvalid": "Select a valid loan status transition.",
       "repaymentBlocked": "This loan has no outstanding balance.",
       "deleteBlocked": "Loans with recorded repayments cannot be deleted.",
       "operationFailed": "The loan operation could not be completed."
+    }
+  },
+  "systemPages": {
+    "actions": {
+      "backToHome": "Back to Home",
+      "goBack": "Go Back",
+      "tryAgain": "Try Again",
+      "switchAccount": "Switch Account"
+    },
+    "notFound": {
+      "title": "404 - Page Not Found",
+      "description": "The page you are looking for doesn't exist or has been moved."
+    },
+    "error": {
+      "title": "Something Went Wrong",
+      "description": "An unexpected system error occurred. Our team has been notified.",
+      "technicalDetails": "Technical details",
+      "noTechnicalDetails": "No technical details are available."
+    },
+    "accessDenied": {
+      "title": "Access Denied",
+      "description": "You do not have permission to view this section or resource. Please contact your system administrator."
+    },
+    "maintenance": {
+      "title": "System Under Maintenance",
+      "description": "We are performing scheduled updates to improve our enterprise system. We'll be back online shortly.",
+      "status": "Maintenance in progress",
+      "expectedCompletion": "Expected completion: shortly"
     }
   }
 }

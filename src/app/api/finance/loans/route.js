@@ -5,7 +5,6 @@ import { getFinanceLoanDictionary } from '@/data/dictionaries/financeLoan'
 import { authorizeAction } from '@/libs/actionAuthorization'
 import {
   ACTIVE_LOAN_VALUES,
-  ensureLoanStatuses,
   getLoanSetup,
   LOAN_READ_PERMISSIONS,
   LOAN_WRITE_PERMISSIONS,
@@ -18,6 +17,7 @@ import {
   staffSelect
 } from '@/libs/financeLoans'
 import { prisma } from '@/libs/prisma'
+import { withSequentialNumberRetry } from '@/libs/sequentialNumbers'
 import { createFinanceLoanSchema } from '@/schemas/financeLoan'
 import { convertToBaseCurrency, toFiniteNumber } from '@/utils/formatCurrency'
 
@@ -51,8 +51,6 @@ export async function GET(request) {
   }
 
   try {
-    await ensureLoanStatuses()
-
     const [loans, totalCount, summaryRows, statuses, staff, setup] = await Promise.all([
       prisma.financeloan.findMany({ where, select: loanSelect, orderBy: [{ issue_date: 'desc' }, { created_at: 'desc' }], skip: (page - 1) * limit, take: limit }),
       prisma.financeloan.count({ where }),
@@ -63,14 +61,15 @@ export async function GET(request) {
     ])
 
     const summary = summaryRows.reduce((totals, loan) => {
-      const toUsd = amount => convertToBaseCurrency(amount, loan.currency, loan.exchange_rate, 'USD')
+      const toBase = amount =>
+        convertToBaseCurrency(amount, loan.currency, loan.exchange_rate, setup.currency_code || 'AFN')
 
-      totals.portfolio += toFiniteNumber(loan.amount_base)
-      totals.repaid += toUsd(loan.repaid_amount)
+      totals.portfolio += toBase(loan.total_amount)
+      totals.repaid += toBase(loan.repaid_amount)
 
       if (ACTIVE_LOAN_VALUES.includes(loan.status.value)) {
-        totals.active += toUsd(loan.remaining_balance)
-        totals.recovery += toUsd(Math.min(toFiniteNumber(loan.monthly_deduction), toFiniteNumber(loan.remaining_balance)))
+        totals.active += toBase(loan.remaining_balance)
+        totals.recovery += toBase(Math.min(toFiniteNumber(loan.monthly_deduction), toFiniteNumber(loan.remaining_balance)))
       }
 
       return totals
@@ -93,40 +92,35 @@ export async function POST(request) {
   if (!authorization.authorized) return errorResponse(authorization.code === 'FORBIDDEN' ? dictionary.messages.forbidden : dictionary.messages.unauthenticated, authorization.code === 'FORBIDDEN' ? 403 : 401, authorization.code)
 
   try {
-    await ensureLoanStatuses()
     const setup = await getLoanSetup()
     const validation = safeParse(createFinanceLoanSchema(dictionary.validation), loanPayload(payload, setup))
 
     if (!validation.success) return errorResponse(validation.issues[0]?.message, 400, 'VALIDATION_ERROR')
 
-    const prepared = await prepareLoanData(validation.output, dictionary.validation)
+    const prepared = await prepareLoanData(validation.output, dictionary.validation, setup)
 
     if (!prepared.success) return errorResponse(prepared.error, 400, 'VALIDATION_ERROR')
 
-    const [status, approver] = await Promise.all([
-      prisma.option.findFirst({ where: { category: 'LOAN_STATUS', value: 'ACTIVE', is_active: true }, select: { id: true } }),
-      prisma.hrmstaff.findUnique({ where: { user_id: authorization.session.user.id }, select: { id: true } })
-    ])
+    const status = await prisma.option.findFirst({
+      where: { category: 'LOAN_STATUS', value: 'REQUESTED', is_active: true },
+      select: { id: true }
+    })
 
     if (!status) return errorResponse(dictionary.messages.invalidRelation, 409, 'STATUS_NOT_CONFIGURED')
 
-    let created
-
-    for (let attempt = 0; attempt < 3; attempt += 1) {
-      try {
-        created = await prisma.$transaction(async transaction => {
+    const created = await withSequentialNumberRetry(() =>
+      prisma.$transaction(async transaction => {
           const loanNumber = await nextLoanNumber(transaction)
-          const loan = await transaction.financeloan.create({ data: { ...prepared.data, loan_number: loanNumber, status_id: status.id, approved_by_id: approver?.id || null }, select: loanSelect })
 
-          await transaction.auditlog.create({ data: { user_id: authorization.session.user.id, action: 'FINANCE_LOAN_CREATED', module: 'FINANCE', details: { loanId: loan.id, loanNumber, approvedByStaffId: approver?.id || null, executedByUserId: authorization.session.user.id, executedByName: authorization.session.user.name || null, executedByEmail: authorization.session.user.email || null } } })
+          const loan = await transaction.financeloan.create({
+            data: { ...prepared.data, loan_number: loanNumber, status_id: status.id },
+            select: loanSelect
+          })
 
-          return loan
-        }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable })
-        break
-      } catch (error) {
-        if (error?.code !== 'P2002' || attempt === 2) throw error
-      }
-    }
+          await transaction.auditlog.create({ data: { user_id: authorization.session.user.id, action: 'FINANCE_LOAN_REQUESTED', module: 'FINANCE', details: { loanId: loan.id, loanNumber, executedByUserId: authorization.session.user.id, executedByName: authorization.session.user.name || null, executedByEmail: authorization.session.user.email || null } } })
+
+        return loan
+      }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable }))
 
     return Response.json({ success: true, data: normalizeLoan(created), message: dictionary.messages.created }, { status: 201 })
   } catch {

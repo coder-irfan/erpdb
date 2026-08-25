@@ -4,6 +4,7 @@ import { prisma } from '@/libs/prisma'
 import { getDictionary } from '@/utils/getDictionary'
 import { convertToBaseCurrency, toFiniteNumber } from '@/utils/formatCurrency'
 import { hasAnyPermission } from '@/utils/rbac'
+import { parseUtcDate, utcDateKey, utcMonthKey } from '@/utils/utcDate'
 
 const REPORT_TYPES = ['payroll', 'attendance', 'leaves', 'contracts']
 const REPORT_PERMISSIONS = ['hrm_reports:read', 'hrm:read']
@@ -16,17 +17,11 @@ const localeFrom = value => (SUPPORTED_LOCALES.includes(value) ? value : 'en')
 const responseError = (error, status, code, details) =>
   Response.json({ success: false, error, code, ...(details && { details }) }, { status })
 
-const toDateKey = date => date.toISOString().slice(0, 10)
-const toMonthKey = date => date.toISOString().slice(0, 7)
+const toDateKey = utcDateKey
+const toMonthKey = utcMonthKey
 const money = value => toFiniteNumber(value).toFixed(2)
 
-const parseDate = (value, endOfDay = false) => {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value || '')) return null
-
-  const date = new Date(`${value}T${endOfDay ? '23:59:59.999' : '00:00:00.000'}Z`)
-
-  return Number.isNaN(date.getTime()) || toDateKey(date) !== value ? null : date
-}
+const parseDate = (value, endOfDay = false) => parseUtcDate(value, { endOfDay })
 
 const buildMonths = (start, end) => {
   const months = []

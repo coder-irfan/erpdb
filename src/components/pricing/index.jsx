@@ -52,8 +52,8 @@ const Pricing = ({ data }) => {
 
           <div
             className={classnames('flex absolute max-sm:hidden block-start-[-39px] translate-x-[35%]', {
-              'right-full': theme.direction === 'rtl',
-              'left-1/2': theme.direction !== 'rtl'
+              'end-full': theme.direction === 'rtl',
+              'start-1/2': theme.direction !== 'rtl'
             })}
           >
             <DirectionalIcon

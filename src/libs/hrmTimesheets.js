@@ -3,6 +3,7 @@ import 'server-only'
 import { Prisma } from '@prisma/client'
 
 import { prisma } from '@/libs/prisma'
+import { combineUtcDateTime, getDateKeyInTimeZone, toUtcDateOnly, utcDateKey } from '@/utils/utcDate'
 
 export const ATTENDANCE_READ_PERMISSIONS = ['hrm:read', 'hrm_timesheet:read']
 export const ATTENDANCE_WRITE_PERMISSIONS = ['hrm:write', 'hrm_timesheet:write']
@@ -11,6 +12,7 @@ export const ATTENDANCE_DELETE_PERMISSIONS = ['hrm:delete', 'hrm_timesheet:delet
 const attendanceSelect = {
   id: true,
   staff_id: true,
+  leave_id: true,
   status: true,
   date: true,
   check_in_time: true,
@@ -23,24 +25,20 @@ const attendanceSelect = {
   project: { select: { id: true, title: true } }
 }
 
-export const getKabulToday = () =>
-  new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'Asia/Kabul',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit'
-  }).format(new Date())
-
-export const parseDate = value => new Date(`${value}T00:00:00.000Z`)
-export const dateToString = value => value.toISOString().slice(0, 10)
+export const getKabulToday = () => getDateKeyInTimeZone('Asia/Kabul')
+export const parseDate = toUtcDateOnly
+export const dateToString = utcDateKey
 export const timeToString = value => value?.toISOString().slice(11, 16) ?? null
-export const combineDateTime = (date, time) => (time ? new Date(`${date}T${time}:00.000Z`) : null)
+export const combineDateTime = (date, time) => (time ? combineUtcDateTime(date, time) : null)
 
 export const calculateHours = (date, checkIn, checkOut) => {
   if (!checkIn || !checkOut) return null
 
   const start = combineDateTime(date, checkIn)
   const end = combineDateTime(date, checkOut)
+
+  if (!start || !end) return Number.NaN
+
   const difference = end.getTime() - start.getTime()
 
   if (difference < 0) return Number.NaN
@@ -52,7 +50,8 @@ const leaveRequestPattern = /^Approved leave request (.+)$/i
 
 export const normalizeAttendance = (record, leaveLabels = new Map()) => {
   const leaveMatch = record.notes?.match(leaveRequestPattern)
-  const leaveLabel = leaveMatch ? leaveLabels.get(leaveMatch[1]) : null
+  const leaveId = record.leave_id || leaveMatch?.[1] || null
+  const leaveLabel = leaveId ? leaveLabels.get(leaveId) : null
 
   return {
   ...record,
@@ -63,7 +62,7 @@ export const normalizeAttendance = (record, leaveLabels = new Map()) => {
   created_at: record.created_at.toISOString(),
   updated_at: record.updated_at.toISOString(),
   notes: leaveMatch ? `Approved Leave Request${leaveLabel ? ` (${leaveLabel})` : ''}` : record.notes,
-  leave_request_id: leaveMatch?.[1] || null,
+  leave_request_id: leaveId,
   staff: {
     ...record.staff,
     full_name: `${record.staff.first_name} ${record.staff.last_name}`.trim()
@@ -88,6 +87,9 @@ export const normalizeAttendanceInput = (values, date) => {
 export const getAttendanceDashboard = async ({ date, month, year, staffId, status, search, page = 1, limit = 10 }) => {
   const selectedDate = date || getKabulToday()
   const dayStart = parseDate(selectedDate)
+
+  if (!dayStart) throw new TypeError('Invalid attendance date')
+
   const useMonthRange = Number.isInteger(month) && Number.isInteger(year)
   const rangeStart = useMonthRange ? new Date(Date.UTC(year, month - 1, 1)) : dayStart
   const rangeEnd = useMonthRange ? new Date(Date.UTC(year, month, 1)) : new Date(dayStart.getTime() + 86_400_000)
@@ -130,7 +132,7 @@ export const getAttendanceDashboard = async ({ date, month, year, staffId, statu
   ])
 
   const markedIds = new Set(dailyRecords.map(record => record.staff_id))
-  const leaveIds = records.map(record => record.notes?.match(leaveRequestPattern)?.[1]).filter(Boolean)
+  const leaveIds = records.map(record => record.leave_id || record.notes?.match(leaveRequestPattern)?.[1]).filter(Boolean)
 
   const approvedLeaves = leaveIds.length
     ? await prisma.hrmstaffleave.findMany({

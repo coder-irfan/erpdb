@@ -129,7 +129,7 @@ export const getAuditLogsPage = async ({ page = 1, limit = 10, search = '' } = {
         totalCount,
         page: normalizedPage,
         totalPages: Math.max(1, Math.ceil(totalCount / normalizedLimit)),
-        canDelete: hasPermission(authorization.session, 'audit:read')
+        canDelete: false
       }
     }
   } catch {
@@ -138,19 +138,13 @@ export const getAuditLogsPage = async ({ page = 1, limit = 10, search = '' } = {
 }
 
 export const deleteAuditLog = async id => {
-  const authorization = await authorizeAction(['audit:read'])
+  const authorization = await authorizeAction([])
 
   if (!authorization.authorized) return { success: false, error: authorization.error }
 
-  const logId = typeof id === 'string' ? id.trim() : ''
-
-  if (!logId) return { success: false, error: 'Audit log entry was not found.' }
-
-  try {
-    await prisma.auditlog.delete({ where: { id: logId } })
-
-    return { success: true }
-  } catch {
-    return { success: false, error: 'Audit log entry could not be deleted.' }
+  return {
+    success: false,
+    code: 'AUDIT_LOG_IMMUTABLE',
+    error: 'Audit log records are immutable and cannot be deleted.'
   }
 }

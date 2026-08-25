@@ -166,9 +166,55 @@
     "deleteFailed": "ثبت تفتیش حذف نشد.",
     "loadFailed": "ثبت‌های تفتیش بارگیری نشد.",
     "cancel": "لغو",
-    "auditTitle": "ثبت‌های تفتیش سیستم", "auditDescription": "فعالیت‌های سیستم و رویدادهای امنیتی فیلترشده براساس نقش.", "search": "جستجوی ثبت‌های تفتیش", "category": "دسته", "action": "عمل", "actor": "اجراکننده", "time": "زمان", "module": "ماژول", "noActivity": "فعالیت تفتیشی برای نقش شما موجود نیست.",
-    "entities": { "CONTRACT": "قرارداد", "HRM_CONTRACT": "قرارداد کارمند", "LEAVE": "درخواست رخصتی", "INVOICE": "فاکتور", "FINANCE_INCOME": "درآمد", "FINANCE_EXPENSE": "مصرف", "FINANCE_LOAN": "قرض", "FINANCE_SALARY": "معاش", "HRM_STAFF": "کارمند", "CRM_CLIENT": "مشتری", "CRM_LEAD": "سرنخ", "CRM_VISITOR": "مراجع", "PROJECT": "پروژه", "TASK": "وظیفه", "INVENTORY_ITEM": "جنس موجودی", "OPTION": "گزینه", "USER": "کاربر", "ROLE": "نقش", "SYSTEM": "فعالیت سیستم" },
-    "events": { "CREATED": "ایجاد شد", "UPDATED": "به‌روزرسانی شد", "DELETED": "حذف شد", "STATUS_UPDATED": "وضعیت به‌روزرسانی شد", "PAID": "پرداخت شد", "PAYMENT_RECORDED": "پرداخت ثبت شد", "REPAYMENT_RECORDED": "بازپرداخت ثبت شد", "CHECKED_IN": "ورود ثبت شد", "CHECKED_OUT": "خروج ثبت شد", "CONVERTED": "تبدیل شد", "MARKED_PAID": "پرداخت‌شده علامت خورد", "HOURS_LOGGED": "ساعات ثبت شد", "MEMBER_ASSIGNED": "عضو تعیین شد", "MEMBER_REMOVED": "عضو حذف شد", "QUANTITY_ADJUSTED": "مقدار تنظیم شد", "ACTIVITY_ADDED": "فعالیت افزوده شد", "ACTIVITY_CREATED": "فعالیت ایجاد شد" }
+    "auditTitle": "ثبت‌های تفتیش سیستم",
+    "auditDescription": "فعالیت‌های سیستم و رویدادهای امنیتی فیلترشده براساس نقش.",
+    "search": "جستجوی ثبت‌های تفتیش",
+    "category": "دسته",
+    "action": "عمل",
+    "actor": "اجراکننده",
+    "time": "زمان",
+    "module": "ماژول",
+    "noActivity": "فعالیت تفتیشی برای نقش شما موجود نیست.",
+    "entities": {
+      "CONTRACT": "قرارداد",
+      "HRM_CONTRACT": "قرارداد کارمند",
+      "LEAVE": "درخواست رخصتی",
+      "INVOICE": "فاکتور",
+      "FINANCE_INCOME": "درآمد",
+      "FINANCE_EXPENSE": "مصرف",
+      "FINANCE_LOAN": "قرض",
+      "FINANCE_SALARY": "معاش",
+      "HRM_STAFF": "کارمند",
+      "CRM_CLIENT": "مشتری",
+      "CRM_LEAD": "سرنخ",
+      "CRM_VISITOR": "مراجع",
+      "PROJECT": "پروژه",
+      "TASK": "وظیفه",
+      "INVENTORY_ITEM": "جنس موجودی",
+      "OPTION": "گزینه",
+      "USER": "کاربر",
+      "ROLE": "نقش",
+      "SYSTEM": "فعالیت سیستم"
+    },
+    "events": {
+      "CREATED": "ایجاد شد",
+      "UPDATED": "به‌روزرسانی شد",
+      "DELETED": "حذف شد",
+      "STATUS_UPDATED": "وضعیت به‌روزرسانی شد",
+      "PAID": "پرداخت شد",
+      "PAYMENT_RECORDED": "پرداخت ثبت شد",
+      "REPAYMENT_RECORDED": "بازپرداخت ثبت شد",
+      "CHECKED_IN": "ورود ثبت شد",
+      "CHECKED_OUT": "خروج ثبت شد",
+      "CONVERTED": "تبدیل شد",
+      "MARKED_PAID": "پرداخت‌شده علامت خورد",
+      "HOURS_LOGGED": "ساعات ثبت شد",
+      "MEMBER_ASSIGNED": "عضو تعیین شد",
+      "MEMBER_REMOVED": "عضو حذف شد",
+      "QUANTITY_ADJUSTED": "مقدار تنظیم شد",
+      "ACTIVITY_ADDED": "فعالیت افزوده شد",
+      "ACTIVITY_CREATED": "فعالیت ایجاد شد"
+    }
   },
   "auth": {
     "common": {
@@ -496,7 +542,15 @@
       "taxId": "جواز / شماره مالیاتی"
     },
     "export": {
-      "columns": ["نام کارمند", "سمت", "وضعیت", "ورود", "خروج", "ساعات", "یادداشت"]
+      "columns": [
+        "نام کارمند",
+        "سمت",
+        "وضعیت",
+        "ورود",
+        "خروج",
+        "ساعات",
+        "یادداشت"
+      ]
     },
     "messages": {
       "created": "حاضری با موفقیت ذخیره شد.",
@@ -809,7 +863,20 @@
     }
   },
   "hrmPayroll": {
-    "months": ["جنوری", "فبروری", "مارچ", "اپریل", "می", "جون", "جولای", "اگست", "سپتمبر", "اکتوبر", "نومبر", "دسمبر"],
+    "months": [
+      "جنوری",
+      "فبروری",
+      "مارچ",
+      "اپریل",
+      "می",
+      "جون",
+      "جولای",
+      "اگست",
+      "سپتمبر",
+      "اکتوبر",
+      "نومبر",
+      "دسمبر"
+    ],
     "period": {
       "month": "ماه",
       "year": "سال"
@@ -1026,7 +1093,9 @@
       "leaveTypeNotFound": "یک نوع رخصتی فعال انتخاب کنید.",
       "statusNotFound": "وضعیت‌های رخصتی تنظیم نشده‌اند؛ Seed دیتابیس را اجرا کنید.",
       "notFound": "درخواست انتخاب‌شده یافت نشد.",
-      "invalidRelations": "یک یا چند مقدار انتخاب‌شده نامعتبر است."
+      "invalidRelations": "یک یا چند مقدار انتخاب‌شده نامعتبر است.",
+      "overlappingLeave": "این کارمند برای بخشی از این بازه زمانی درخواست رخصتی در انتظار یا تأییدشده دارد.",
+      "selfApprovalBlocked": "مدیران نمی‌توانند درخواست رخصتی خود را تأیید کنند."
     },
     "validation": {
       "required": "این فیلد الزامی است.",
@@ -1570,16 +1639,16 @@
       "description": "هیچ سابقه منابع بشری با فیلترها و محدوده تاریخ انتخاب‌شده مطابقت ندارد."
     },
     "print": {
-    "generated": "تولیدشده",
-    "signatures": "تأییدها",
-    "preparedBy": "تهیه‌شده توسط (منابع بشری)",
-    "approvedBy": "تأیید توسط",
-    "date": "تاریخ",
-    "officialSeal": "مهر رسمی",
-    "confidentiality": "محرمانه و اختصاصی",
-    "page": "صفحه",
-    "of": "از",
-    "taxId": "جواز / شماره مالیاتی"
+      "generated": "تولیدشده",
+      "signatures": "تأییدها",
+      "preparedBy": "تهیه‌شده توسط (منابع بشری)",
+      "approvedBy": "تأیید توسط",
+      "date": "تاریخ",
+      "officialSeal": "مهر رسمی",
+      "confidentiality": "محرمانه و اختصاصی",
+      "page": "صفحه",
+      "of": "از",
+      "taxId": "جواز / شماره مالیاتی"
     },
     "messages": {
       "csvReady": "گزارش CSV با موفقیت دانلود شد.",
@@ -1784,7 +1853,10 @@
       "emptyDescription": "Add the first approved purpose for visitor check-ins.",
       "deleteTitle": "Delete Visitor Purpose",
       "deleteDescription": "Delete this visitor purpose? Existing visitor records keep their saved purpose.",
-      "fields": { "name": "Title / Name", "description": "Description" }
+      "fields": {
+        "name": "Title / Name",
+        "description": "Description"
+      }
     },
     "incomeCategories": {
       "title": "Income Categories",
@@ -1797,7 +1869,10 @@
       "emptyDescription": "Add the first category used to classify income records.",
       "deleteTitle": "Delete Income Category",
       "deleteDescription": "Delete this income category? Categories linked to income records cannot be deleted.",
-      "fields": { "name": "Title / Name", "description": "Description" }
+      "fields": {
+        "name": "Title / Name",
+        "description": "Description"
+      }
     },
     "common": {
       "search": "جستجو",
@@ -1945,6 +2020,7 @@
     }
   },
   "rolesPermissions": {
+    "rolesTitle": "نقش‌های سیستم",
     "rolesDescription": "کاربران اختصاص‌یافته و مجوزهای هر نقش را بررسی و مدیریت کنید.",
     "usersTitle": "کاربران و دعوت‌ها",
     "usersDescription": "کاربران را دعوت کنید، نقش بدهید و دسترسی به ERP را کنترل کنید.",
@@ -2471,10 +2547,22 @@
     }
   },
   "contractOptions": {
-    "hrmTypes": { "title": "HRM / Staff Types", "description": "Employment contract types used for staff agreements." },
-    "customerTypes": { "title": "Customers / Clients", "description": "Contract types used for customer and client agreements." },
-    "financeTypes": { "title": "Invoices / Finance", "description": "Agreement types used for payment and settlement arrangements." },
-    "otherTypes": { "title": "Others", "description": "Vendor, lease, and miscellaneous third-party contract types." },
+    "hrmTypes": {
+      "title": "HRM / Staff Types",
+      "description": "Employment contract types used for staff agreements."
+    },
+    "customerTypes": {
+      "title": "Customers / Clients",
+      "description": "Contract types used for customer and client agreements."
+    },
+    "financeTypes": {
+      "title": "Invoices / Finance",
+      "description": "Agreement types used for payment and settlement arrangements."
+    },
+    "otherTypes": {
+      "title": "Others",
+      "description": "Vendor, lease, and miscellaneous third-party contract types."
+    },
     "types": {
       "title": "انواع قرارداد",
       "description": "خدمات قابل فروش در قرارداد."
@@ -2702,12 +2790,12 @@
       "item": "نام قلم",
       "category": "دسته‌بندی",
       "quantity": "تعداد موجود",
-    "unitPrice": "قیمت واحد",
-    "totalValue": "ارزش مجموعی",
-    "reorderLevel": "حد سفارش مجدد",
-    "status": "وضعیت",
-    "createdAt": "تاریخ ایجاد",
-    "actions": "عملیات"
+      "unitPrice": "قیمت واحد",
+      "totalValue": "ارزش مجموعی",
+      "reorderLevel": "حد سفارش مجدد",
+      "status": "وضعیت",
+      "createdAt": "تاریخ ایجاد",
+      "actions": "عملیات"
     },
     "actions": {
       "add": "افزودن قلم موجودی",
@@ -3116,6 +3204,34 @@
       "repaymentBlocked": "این قرضه مانده ندارد.",
       "deleteBlocked": "قرضه دارای بازپرداخت قابل حذف نیست.",
       "operationFailed": "عملیات قرضه تکمیل نشد."
+    }
+  },
+  "systemPages": {
+    "actions": {
+      "backToHome": "بازگشت به خانه",
+      "goBack": "بازگشت",
+      "tryAgain": "تلاش دوباره",
+      "switchAccount": "تغییر حساب"
+    },
+    "notFound": {
+      "title": "۴۰۴ - صفحه یافت نشد",
+      "description": "صفحه‌ای که به دنبال آن هستید وجود ندارد یا منتقل شده است."
+    },
+    "error": {
+      "title": "مشکلی پیش آمد",
+      "description": "یک خطای غیرمنتظره در سیستم رخ داد. تیم ما اطلاع داده شده است.",
+      "technicalDetails": "جزئیات فنی",
+      "noTechnicalDetails": "جزئیات فنی در دسترس نیست."
+    },
+    "accessDenied": {
+      "title": "دسترسی رد شد",
+      "description": "شما اجازه مشاهده این بخش یا منبع را ندارید. لطفاً با مدیر سیستم خود تماس بگیرید."
+    },
+    "maintenance": {
+      "title": "سیستم در حال نگهداری است",
+      "description": "برای بهبود سیستم سازمانی، به‌روزرسانی‌های برنامه‌ریزی‌شده انجام می‌دهیم. به‌زودی دوباره آنلاین خواهیم بود.",
+      "status": "نگهداری در حال انجام است",
+      "expectedCompletion": "زمان تکمیل مورد انتظار: به‌زودی"
     }
   }
 }

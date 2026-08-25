@@ -166,9 +166,55 @@
     "deleteFailed": "د پلټنې ثبت ړنګ نه شو.",
     "loadFailed": "د پلټنې ثبتونه پورته نه شول.",
     "cancel": "لغوه",
-    "auditTitle": "د سیسټم د پلټنې ثبتونه", "auditDescription": "د رول له مخې فلټر شوي سیسټمي او امنیتي فعالیتونه.", "search": "د پلټنې ثبتونه ولټوئ", "category": "ډله", "action": "عمل", "actor": "ترسره کوونکی", "time": "وخت", "module": "برخه", "noActivity": "ستاسو د رول لپاره د پلټنې فعالیت نشته.",
-    "entities": { "CONTRACT": "قرارداد", "HRM_CONTRACT": "د کارکوونکي قرارداد", "LEAVE": "د رخصتۍ غوښتنه", "INVOICE": "بل", "FINANCE_INCOME": "عاید", "FINANCE_EXPENSE": "لګښت", "FINANCE_LOAN": "پور", "FINANCE_SALARY": "معاش", "HRM_STAFF": "کارکوونکی", "CRM_CLIENT": "پېرودونکی", "CRM_LEAD": "مخکښ", "CRM_VISITOR": "لیدونکی", "PROJECT": "پروژه", "TASK": "دنده", "INVENTORY_ITEM": "زېرمه توکی", "OPTION": "غوراوی", "USER": "کارن", "ROLE": "رول", "SYSTEM": "سیسټمي فعالیت" },
-    "events": { "CREATED": "جوړ شو", "UPDATED": "تازه شو", "DELETED": "ړنګ شو", "STATUS_UPDATED": "حالت تازه شو", "PAID": "تادیه شو", "PAYMENT_RECORDED": "تادیه ثبت شوه", "REPAYMENT_RECORDED": "بېرته تادیه ثبت شوه", "CHECKED_IN": "ننوتل ثبت شول", "CHECKED_OUT": "وتل ثبت شول", "CONVERTED": "واړول شو", "MARKED_PAID": "تادیه شوی وښودل شو", "HOURS_LOGGED": "ساعتونه ثبت شول", "MEMBER_ASSIGNED": "غړی وټاکل شو", "MEMBER_REMOVED": "غړی لرې شو", "QUANTITY_ADJUSTED": "اندازه برابره شوه", "ACTIVITY_ADDED": "فعالیت زیات شو", "ACTIVITY_CREATED": "فعالیت جوړ شو" }
+    "auditTitle": "د سیسټم د پلټنې ثبتونه",
+    "auditDescription": "د رول له مخې فلټر شوي سیسټمي او امنیتي فعالیتونه.",
+    "search": "د پلټنې ثبتونه ولټوئ",
+    "category": "ډله",
+    "action": "عمل",
+    "actor": "ترسره کوونکی",
+    "time": "وخت",
+    "module": "برخه",
+    "noActivity": "ستاسو د رول لپاره د پلټنې فعالیت نشته.",
+    "entities": {
+      "CONTRACT": "قرارداد",
+      "HRM_CONTRACT": "د کارکوونکي قرارداد",
+      "LEAVE": "د رخصتۍ غوښتنه",
+      "INVOICE": "بل",
+      "FINANCE_INCOME": "عاید",
+      "FINANCE_EXPENSE": "لګښت",
+      "FINANCE_LOAN": "پور",
+      "FINANCE_SALARY": "معاش",
+      "HRM_STAFF": "کارکوونکی",
+      "CRM_CLIENT": "پېرودونکی",
+      "CRM_LEAD": "مخکښ",
+      "CRM_VISITOR": "لیدونکی",
+      "PROJECT": "پروژه",
+      "TASK": "دنده",
+      "INVENTORY_ITEM": "زېرمه توکی",
+      "OPTION": "غوراوی",
+      "USER": "کارن",
+      "ROLE": "رول",
+      "SYSTEM": "سیسټمي فعالیت"
+    },
+    "events": {
+      "CREATED": "جوړ شو",
+      "UPDATED": "تازه شو",
+      "DELETED": "ړنګ شو",
+      "STATUS_UPDATED": "حالت تازه شو",
+      "PAID": "تادیه شو",
+      "PAYMENT_RECORDED": "تادیه ثبت شوه",
+      "REPAYMENT_RECORDED": "بېرته تادیه ثبت شوه",
+      "CHECKED_IN": "ننوتل ثبت شول",
+      "CHECKED_OUT": "وتل ثبت شول",
+      "CONVERTED": "واړول شو",
+      "MARKED_PAID": "تادیه شوی وښودل شو",
+      "HOURS_LOGGED": "ساعتونه ثبت شول",
+      "MEMBER_ASSIGNED": "غړی وټاکل شو",
+      "MEMBER_REMOVED": "غړی لرې شو",
+      "QUANTITY_ADJUSTED": "اندازه برابره شوه",
+      "ACTIVITY_ADDED": "فعالیت زیات شو",
+      "ACTIVITY_CREATED": "فعالیت جوړ شو"
+    }
   },
   "auth": {
     "common": {
@@ -496,7 +542,15 @@
       "taxId": "جواز / مالیاتي شمېره"
     },
     "export": {
-      "columns": ["د کارکوونکي نوم", "دنده", "حالت", "ننوتل", "وتل", "ساعتونه", "یادښتونه"]
+      "columns": [
+        "د کارکوونکي نوم",
+        "دنده",
+        "حالت",
+        "ننوتل",
+        "وتل",
+        "ساعتونه",
+        "یادښتونه"
+      ]
     },
     "messages": {
       "created": "حاضري په بریالیتوب خوندي شوه.",
@@ -809,7 +863,20 @@
     }
   },
   "hrmPayroll": {
-    "months": ["جنوري", "فبروري", "مارچ", "اپرېل", "می", "جون", "جولای", "اګست", "سپتمبر", "اکتوبر", "نومبر", "دسمبر"],
+    "months": [
+      "جنوري",
+      "فبروري",
+      "مارچ",
+      "اپرېل",
+      "می",
+      "جون",
+      "جولای",
+      "اګست",
+      "سپتمبر",
+      "اکتوبر",
+      "نومبر",
+      "دسمبر"
+    ],
     "period": {
       "month": "میاشت",
       "year": "کال"
@@ -1026,7 +1093,9 @@
       "leaveTypeNotFound": "د رخصتۍ فعال ډول وټاکئ.",
       "statusNotFound": "د رخصتۍ حالتونه نه دي تنظیم شوي؛ د ډیټابیس Seed وچلوئ.",
       "notFound": "ټاکل شوې غوښتنه ونه موندل شوه.",
-      "invalidRelations": "یو یا ډېر ټاکل شوي ارزښتونه ناسم دي."
+      "invalidRelations": "یو یا ډېر ټاکل شوي ارزښتونه ناسم دي.",
+      "overlappingLeave": "دغه کارکوونکی د دې نېټې د یوې برخې لپاره بله پاتې یا منظوره رخصتي لري.",
+      "selfApprovalBlocked": "مدیران نشي کولی خپله رخصتي منظوره کړي."
     },
     "validation": {
       "required": "دا ځای اړین دی.",
@@ -1570,16 +1639,16 @@
       "description": "هیڅ د بشري سرچینو ریکارډ له ټاکل شویو فلټرونو او نېټې مودې سره برابر نه دی."
     },
     "print": {
-    "generated": "جوړ شوی",
-    "signatures": "تأییدونه",
-    "preparedBy": "چمتو کوونکی (بشري سرچینې)",
-    "approvedBy": "تأیید کوونکی",
-    "date": "نېټه",
-    "officialSeal": "رسمي مهر",
-    "confidentiality": "محرمانه او ځانګړی",
-    "page": "پاڼه",
-    "of": "له",
-    "taxId": "جواز / مالیاتي شمېره"
+      "generated": "جوړ شوی",
+      "signatures": "تأییدونه",
+      "preparedBy": "چمتو کوونکی (بشري سرچینې)",
+      "approvedBy": "تأیید کوونکی",
+      "date": "نېټه",
+      "officialSeal": "رسمي مهر",
+      "confidentiality": "محرمانه او ځانګړی",
+      "page": "پاڼه",
+      "of": "له",
+      "taxId": "جواز / مالیاتي شمېره"
     },
     "messages": {
       "csvReady": "د CSV راپور په بریالیتوب ډاونلوډ شو.",
@@ -1784,7 +1853,10 @@
       "emptyDescription": "Add the first approved purpose for visitor check-ins.",
       "deleteTitle": "Delete Visitor Purpose",
       "deleteDescription": "Delete this visitor purpose? Existing visitor records keep their saved purpose.",
-      "fields": { "name": "Title / Name", "description": "Description" }
+      "fields": {
+        "name": "Title / Name",
+        "description": "Description"
+      }
     },
     "incomeCategories": {
       "title": "Income Categories",
@@ -1797,7 +1869,10 @@
       "emptyDescription": "Add the first category used to classify income records.",
       "deleteTitle": "Delete Income Category",
       "deleteDescription": "Delete this income category? Categories linked to income records cannot be deleted.",
-      "fields": { "name": "Title / Name", "description": "Description" }
+      "fields": {
+        "name": "Title / Name",
+        "description": "Description"
+      }
     },
     "common": {
       "search": "لټون",
@@ -1945,6 +2020,7 @@
     }
   },
   "rolesPermissions": {
+    "rolesTitle": "د سیسټم رولونه",
     "rolesDescription": "ټاکل شوي کاروونکي وګورئ او د هر رول اجازې اداره کړئ.",
     "usersTitle": "کاروونکي او بلنې",
     "usersDescription": "کاروونکي راوبلئ، رولونه ورکړئ او ERP ته لاسرسی کنټرول کړئ.",
@@ -2471,10 +2547,22 @@
     }
   },
   "contractOptions": {
-    "hrmTypes": { "title": "HRM / Staff Types", "description": "Employment contract types used for staff agreements." },
-    "customerTypes": { "title": "Customers / Clients", "description": "Contract types used for customer and client agreements." },
-    "financeTypes": { "title": "Invoices / Finance", "description": "Agreement types used for payment and settlement arrangements." },
-    "otherTypes": { "title": "Others", "description": "Vendor, lease, and miscellaneous third-party contract types." },
+    "hrmTypes": {
+      "title": "HRM / Staff Types",
+      "description": "Employment contract types used for staff agreements."
+    },
+    "customerTypes": {
+      "title": "Customers / Clients",
+      "description": "Contract types used for customer and client agreements."
+    },
+    "financeTypes": {
+      "title": "Invoices / Finance",
+      "description": "Agreement types used for payment and settlement arrangements."
+    },
+    "otherTypes": {
+      "title": "Others",
+      "description": "Vendor, lease, and miscellaneous third-party contract types."
+    },
     "types": {
       "title": "د قرارداد ډولونه",
       "description": "هغه خدمتونه چې په قرارداد کې پلورل کېږي."
@@ -2702,12 +2790,12 @@
       "item": "د توکي نوم",
       "category": "کټګوري",
       "quantity": "په زېرمه کې شمېر",
-    "unitPrice": "د واحد بیه",
-    "totalValue": "ټول ارزښت",
-    "reorderLevel": "د بیا فرمایش کچه",
-    "status": "حالت",
-    "createdAt": "د جوړېدو نېټه",
-    "actions": "کړنې"
+      "unitPrice": "د واحد بیه",
+      "totalValue": "ټول ارزښت",
+      "reorderLevel": "د بیا فرمایش کچه",
+      "status": "حالت",
+      "createdAt": "د جوړېدو نېټه",
+      "actions": "کړنې"
     },
     "actions": {
       "add": "زېرمه کې توکی زیاتول",
@@ -3116,6 +3204,34 @@
       "repaymentBlocked": "دا پور پاتې مبلغ نه لري.",
       "deleteBlocked": "هغه پور چې بېرته ورکړه لري نه شي ړنګېدای.",
       "operationFailed": "د پور کړنه بشپړه نه شوه."
+    }
+  },
+  "systemPages": {
+    "actions": {
+      "backToHome": "کور ته بېرته",
+      "goBack": "بېرته لاړ شئ",
+      "tryAgain": "بیا هڅه وکړئ",
+      "switchAccount": "حساب بدل کړئ"
+    },
+    "notFound": {
+      "title": "۴۰۴ - پاڼه ونه موندل شوه",
+      "description": "هغه پاڼه چې تاسو یې لټوئ شتون نه لري یا لېږدول شوې ده."
+    },
+    "error": {
+      "title": "یوه ستونزه پېښه شوه",
+      "description": "د سیستم یوه ناڅاپي تېروتنه رامنځته شوه. زموږ ټیم خبر شوی دی.",
+      "technicalDetails": "تخنیکي جزیات",
+      "noTechnicalDetails": "هیڅ تخنیکي جزیات نشته."
+    },
+    "accessDenied": {
+      "title": "لاسرسی رد شو",
+      "description": "تاسو د دې برخې یا سرچینې د لیدلو اجازه نه لرئ. مهرباني وکړئ د سیستم له مدیر سره اړیکه ونیسئ."
+    },
+    "maintenance": {
+      "title": "سیستم تر ساتنې لاندې دی",
+      "description": "موږ د خپل سازماني سیستم د ښه کولو لپاره ټاکلي تازه‌کاري ترسره کوو. ډېر ژر به بېرته آنلاین شو.",
+      "status": "ساتنه روانه ده",
+      "expectedCompletion": "د بشپړېدو اټکلی وخت: ډېر ژر"
     }
   }
 }

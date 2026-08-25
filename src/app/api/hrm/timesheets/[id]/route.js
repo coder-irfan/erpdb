@@ -49,9 +49,10 @@ export async function PUT(request, context) {
   if (!validation.success) return responseError(validation.issues[0]?.message, 400, 'VALIDATION_ERROR')
 
   try {
-    const existing = await prisma.hrmstafftimesheet.findUnique({ where: { id }, select: { id: true, date: true } })
+    const existing = await prisma.hrmstafftimesheet.findUnique({ where: { id }, select: { id: true, date: true, leave_id: true } })
 
     if (!existing) return responseError(dictionary.messages.notFound, 404, 'TIMESHEET_NOT_FOUND')
+    if (existing.leave_id) return responseError(dictionary.messages.forbidden, 409, 'APPROVED_LEAVE_LOCKED')
 
     const date = dateToString(existing.date)
     const hours = calculateHours(date, validation.output.check_in_time, validation.output.check_out_time)
@@ -101,6 +102,11 @@ export async function DELETE(request, context) {
   }
 
   try {
+    const existing = await prisma.hrmstafftimesheet.findUnique({ where: { id }, select: { id: true, leave_id: true } })
+
+    if (!existing) return responseError(dictionary.messages.notFound, 404, 'TIMESHEET_NOT_FOUND')
+    if (existing.leave_id) return responseError(dictionary.messages.forbidden, 409, 'APPROVED_LEAVE_LOCKED')
+
     await prisma.$transaction(async transaction => {
       const deleted = await transaction.hrmstafftimesheet.delete({ where: { id }, select: { staff_id: true, date: true } })
 

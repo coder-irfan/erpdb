@@ -43,7 +43,7 @@ const FinanceSalaryAdjustmentDrawer = ({ open, salary, baseCurrency, locale, dic
     const totalDays = salary?.total_month_days || 1
     const baseSalary = toFiniteNumber(salary?.base_salary)
     const dailyRate = baseSalary / totalDays
-    const earned = dailyRate * Math.max(0, Number.parseInt(workedDays, 10) || 0)
+    const earned = dailyRate * Math.max(0, toFiniteNumber(workedDays))
     const payable = Math.max(0, earned + toFiniteNumber(bonus) - toFiniteNumber(deduction))
 
     return { dailyRate, earned, payable, base: convertToBaseCurrency(payable, currency, rate, baseCurrency) }
@@ -70,8 +70,8 @@ const FinanceSalaryAdjustmentDrawer = ({ open, salary, baseCurrency, locale, dic
       <form className='flex flex-1 flex-col gap-5 overflow-y-auto p-5' onSubmit={handleSubmit(submit)} noValidate>
         <Typography color='text.secondary'>{dictionary.form.description}</Typography>
         <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
-          {field('worked_days', dictionary.fields.workedDays, { type: 'number', inputProps: { min: 0, max: salary?.total_month_days, step: 1 } })}
-          {field('off_days', dictionary.fields.offDays, { type: 'number', inputProps: { min: 0, max: salary?.total_month_days, step: 1 } })}
+          {field('worked_days', dictionary.fields.workedDays, { type: 'number', inputProps: { min: 0, max: salary?.total_month_days, step: 0.5 } })}
+          {field('off_days', dictionary.fields.offDays, { type: 'number', inputProps: { min: 0, max: salary?.total_month_days, step: 0.5 } })}
           {field('bonus_amount', dictionary.fields.bonus, { type: 'number', inputProps: { min: 0, step: '0.01' } })}
           {field('loan_deduction', dictionary.fields.loanDeduction, { type: 'number', inputProps: { min: 0, step: '0.01' } })}
           <Controller name='currency' control={control} render={({ field: controllerField }) => <CustomTextField {...controllerField} select label={dictionary.fields.currency} error={Boolean(errors.currency)} helperText={errors.currency?.message}><MenuItem value='AFN'>AFN</MenuItem><MenuItem value='USD'>USD</MenuItem></CustomTextField>} />

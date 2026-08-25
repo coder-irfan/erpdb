@@ -9,6 +9,7 @@ import { authOptions } from '@/libs/auth'
 import { DEFAULT_COMPANY_SETUP, getCompanySetupRecord } from '@/libs/companySetup'
 import { prisma } from '@/libs/prisma'
 import { createCompanySetupSchema } from '@/schemas/setup'
+import { convertToBaseCurrency, toFiniteNumber } from '@/utils/formatCurrency'
 import { hasAnyPermission } from '@/utils/rbac'
 
 const SETUP_PERMISSIONS = ['setup:manage', 'settings:manage']
@@ -29,22 +30,73 @@ const getAuthorizedSession = async () => {
 const nullableText = value => value?.trim() || null
 
 const rebaseStoredAmounts = async (transaction, baseCurrency) => {
-  const statements = [
-    Prisma.sql`UPDATE HrmStaff SET amount_base = CASE WHEN salary_currency = ${baseCurrency} THEN salary WHEN salary_currency = 'USD' THEN salary * salary_exchange_rate ELSE salary / salary_exchange_rate END`,
-    Prisma.sql`UPDATE HrmStaffContract SET amount_base = CASE WHEN currency = ${baseCurrency} THEN base_salary WHEN currency = 'USD' THEN base_salary * exchange_rate ELSE base_salary / exchange_rate END`,
-    Prisma.sql`UPDATE HrmPayroll SET amount_base = CASE WHEN currency = ${baseCurrency} THEN net_salary WHEN currency = 'USD' THEN net_salary * exchange_rate ELSE net_salary / exchange_rate END`,
-    Prisma.sql`UPDATE CrmLead SET amount_base = CASE WHEN currency = ${baseCurrency} THEN COALESCE(estimated_value, 0) WHEN currency = 'USD' THEN COALESCE(estimated_value, 0) * exchange_rate ELSE COALESCE(estimated_value, 0) / exchange_rate END`,
-    Prisma.sql`UPDATE Project SET amount_base = CASE WHEN currency = ${baseCurrency} THEN budget WHEN currency = 'USD' THEN budget * exchange_rate ELSE budget / exchange_rate END`,
-    Prisma.sql`UPDATE Contract SET amount_base = CASE WHEN currency = ${baseCurrency} THEN total_amount WHEN currency = 'USD' THEN total_amount * exchange_rate ELSE total_amount / exchange_rate END`,
-    Prisma.sql`UPDATE ContractInvoice SET amount_base = CASE WHEN currency = ${baseCurrency} THEN amount WHEN currency = 'USD' THEN amount * exchange_rate ELSE amount / exchange_rate END`,
-    Prisma.sql`UPDATE FinanceIncome SET amount_base = CASE WHEN currency = ${baseCurrency} THEN total_amount WHEN currency = 'USD' THEN total_amount * exchange_rate ELSE total_amount / exchange_rate END`,
-    Prisma.sql`UPDATE FinanceExpense SET amount_base = CASE WHEN currency = ${baseCurrency} THEN sub_total WHEN currency = 'USD' THEN sub_total * exchange_rate ELSE sub_total / exchange_rate END`,
-    Prisma.sql`UPDATE FinanceSalary SET amount_base = CASE WHEN currency = ${baseCurrency} THEN payable_amount WHEN currency = 'USD' THEN payable_amount * exchange_rate ELSE payable_amount / exchange_rate END`,
-    Prisma.sql`UPDATE FinanceLoan SET amount_base = CASE WHEN currency = ${baseCurrency} THEN total_amount WHEN currency = 'USD' THEN total_amount * exchange_rate ELSE total_amount / exchange_rate END`,
-    Prisma.sql`UPDATE Inventory SET amount_base = CASE WHEN currency = ${baseCurrency} THEN unit_price WHEN currency = 'USD' THEN unit_price * exchange_rate ELSE unit_price / exchange_rate END`
+  const models = [
+    ['hrmstaff', 'salary', 'salary_currency', 'salary_exchange_rate'],
+    ['hrmstaffcontract', 'base_salary', 'currency', 'exchange_rate'],
+    ['crmlead', 'estimated_value', 'currency', 'exchange_rate'],
+    ['project', 'budget', 'currency', 'exchange_rate'],
+    ['contract', 'total_amount', 'currency', 'exchange_rate'],
+    ['contractinvoice', 'amount', 'currency', 'exchange_rate'],
+    ['financeincome', 'total_amount', 'currency', 'exchange_rate'],
+    ['financeexpense', 'sub_total', 'currency', 'exchange_rate'],
+    ['financesalary', 'payable_amount', 'currency', 'exchange_rate'],
+    ['financeloan', 'total_amount', 'currency', 'exchange_rate'],
+    ['loanrepayment', 'amount', 'currency', 'exchange_rate'],
+    ['inventory', 'unit_price', 'currency', 'exchange_rate']
   ]
 
-  for (const statement of statements) await transaction.$executeRaw(statement)
+  for (const [model, amountField, currencyField, rateField] of models) {
+    const rows = await transaction[model].findMany({
+      select: { id: true, [amountField]: true, [currencyField]: true, [rateField]: true }
+    })
+
+    for (const row of rows) {
+      await transaction[model].update({
+        where: { id: row.id },
+        data: {
+          amount_base: new Prisma.Decimal(
+            convertToBaseCurrency(row[amountField] || 0, row[currencyField], row[rateField], baseCurrency)
+          )
+        }
+      })
+    }
+  }
+}
+
+const refreshCurrentCompensationRates = async (transaction, baseCurrency, exchangeRate) => {
+  const [staff, activeContracts] = await Promise.all([
+    transaction.hrmstaff.findMany({
+      select: { id: true, salary: true, salary_currency: true }
+    }),
+    transaction.hrmstaffcontract.findMany({
+      where: { status: { is: { value: 'ACTIVE' } } },
+      select: { id: true, base_salary: true, currency: true }
+    })
+  ])
+
+  for (const member of staff) {
+    await transaction.hrmstaff.update({
+      where: { id: member.id },
+      data: {
+        salary_exchange_rate: new Prisma.Decimal(exchangeRate),
+        amount_base: new Prisma.Decimal(
+          convertToBaseCurrency(member.salary, member.salary_currency, exchangeRate, baseCurrency)
+        )
+      }
+    })
+  }
+
+  for (const contract of activeContracts) {
+    await transaction.hrmstaffcontract.update({
+      where: { id: contract.id },
+      data: {
+        exchange_rate: new Prisma.Decimal(exchangeRate),
+        amount_base: new Prisma.Decimal(
+          convertToBaseCurrency(contract.base_salary, contract.currency, exchangeRate, baseCurrency)
+        )
+      }
+    })
+  }
 }
 
 const normalizeLocalPath = (value, pattern) => {
@@ -110,6 +162,7 @@ export async function PUT(request) {
     ),
     default_work_start: payload?.default_work_start || DEFAULT_COMPANY_SETUP.default_work_start,
     default_work_end: payload?.default_work_end || DEFAULT_COMPANY_SETUP.default_work_end,
+    weekend_days: payload?.weekend_days || DEFAULT_COMPANY_SETUP.weekend_days,
     lightLogoUrl: payload?.lightLogoUrl || '',
     darkLogoUrl: payload?.darkLogoUrl || '',
     faviconUrl: payload?.faviconUrl || '',
@@ -138,10 +191,12 @@ export async function PUT(request) {
     return jsonError('The USD/AFN exchange rate must be greater than zero.', 400, 'INVALID_EXCHANGE_RATE')
   }
 
+  const weekendDays = [...new Set(validation.output.weekend_days.split(','))].sort().join(',')
+
   try {
     const currentSetup = await prisma.setup.findUnique({
       where: { scope: 'GLOBAL' },
-      select: { currency_code: true }
+      select: { currency_code: true, usd_afn_exchange_rate: true }
     })
 
     await prisma.$transaction(async transaction => {
@@ -162,7 +217,8 @@ export async function PUT(request) {
           currency_symbol: validation.output.currency_code === 'USD' ? '$' : '؋',
           usd_afn_exchange_rate: validation.output.usd_afn_exchange_rate,
           default_work_start: validation.output.default_work_start,
-          default_work_end: validation.output.default_work_end
+          default_work_end: validation.output.default_work_end,
+          weekend_days: weekendDays
         },
         create: {
           app_name: validation.output.app_name,
@@ -179,7 +235,8 @@ export async function PUT(request) {
           currency_symbol: validation.output.currency_code === 'USD' ? '$' : '؋',
           usd_afn_exchange_rate: validation.output.usd_afn_exchange_rate,
           default_work_start: validation.output.default_work_start,
-          default_work_end: validation.output.default_work_end
+          default_work_end: validation.output.default_work_end,
+          weekend_days: weekendDays
         }
       })
 
@@ -189,8 +246,27 @@ export async function PUT(request) {
         create: { id: SYSTEM_SETTING_ID, lightLogoUrl, darkLogoUrl, faviconUrl }
       })
 
-      if ((currentSetup?.currency_code || DEFAULT_COMPANY_SETUP.currency_code) !== validation.output.currency_code) {
+      const previousBaseCurrency = currentSetup?.currency_code || DEFAULT_COMPANY_SETUP.currency_code
+
+      const previousExchangeRate = toFiniteNumber(
+        currentSetup?.usd_afn_exchange_rate || DEFAULT_COMPANY_SETUP.usd_afn_exchange_rate
+      )
+
+      const nextExchangeRate = toFiniteNumber(validation.output.usd_afn_exchange_rate)
+
+      if (previousBaseCurrency !== validation.output.currency_code) {
         await rebaseStoredAmounts(transaction, validation.output.currency_code)
+      }
+
+      if (
+        previousBaseCurrency !== validation.output.currency_code ||
+        Math.abs(previousExchangeRate - nextExchangeRate) > 0.00005
+      ) {
+        await refreshCurrentCompensationRates(
+          transaction,
+          validation.output.currency_code,
+          nextExchangeRate
+        )
       }
 
       await transaction.auditlog.create({
@@ -201,7 +277,10 @@ export async function PUT(request) {
           details: {
             companyName: validation.output.company_name,
             baseCurrency: validation.output.currency_code,
-            usdAfnExchangeRate: validation.output.usd_afn_exchange_rate
+            previousBaseCurrency,
+            previousUsdAfnExchangeRate: previousExchangeRate,
+            usdAfnExchangeRate: nextExchangeRate,
+            weekendDays
           }
         }
       })

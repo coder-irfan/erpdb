@@ -25,7 +25,7 @@ const InvoicePaymentDialog = ({ open, invoice, paymentMethods, locale, dictionar
 
   useEffect(() => {
     if (!open || !invoice) return
-    reset({ payment_date: toDateInputValue(new Date()), amount: String(invoice.amount), payment_method_id: paymentMethods.find(method => method.is_default)?.id || paymentMethods[0]?.id || '', notes: '' })
+    reset({ payment_date: toDateInputValue(new Date()), amount: String(invoice.remaining_balance || invoice.amount), payment_method_id: paymentMethods.find(method => method.is_default)?.id || paymentMethods[0]?.id || '', notes: '' })
   }, [invoice, open, paymentMethods, reset])
 
   const submit = async values => {
@@ -47,7 +47,7 @@ const InvoicePaymentDialog = ({ open, invoice, paymentMethods, locale, dictionar
           <div className='rounded border border-divider bg-actionHover p-4'>
             <Typography className='font-semibold'>{invoice?.invoice_number}</Typography>
             <Typography color='text.secondary'>{invoice?.client.company_name}</Typography>
-            <Typography variant='h6' className='mt-2 text-success'>{invoice ? formatCurrency(invoice.amount, locale, invoice.currency) : '—'}</Typography>
+            <Typography variant='h6' className='mt-2 text-success'>{invoice ? formatCurrency(invoice.remaining_balance || invoice.amount, locale, invoice.currency) : '—'}</Typography>
           </div>
           <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
             {field('payment_date', dictionary.payment.date, { type: 'date', slotProps: { inputLabel: { shrink: true } } })}

@@ -8,9 +8,11 @@ import {
   calculateLeaveDays,
   createLeaveAttendance,
   getCurrentStaff,
+  hasOverlappingLeave,
   leaveSelect,
   normalizeLeave,
-  parseLeaveDate
+  parseLeaveDate,
+  removeLeaveAttendance
 } from '@/libs/hrmLeaves'
 import { prisma } from '@/libs/prisma'
 import { createLeaveSchema } from '@/schemas/hrm/leaves'
@@ -65,15 +67,32 @@ export async function PUT(request, routeContext) {
   try {
     const [staff, leaveType] = await Promise.all([
       prisma.hrmstaff.findFirst({ where: { id: validation.output.staff_id, status: { not: 'TERMINATED' } }, select: { id: true } }),
-      prisma.option.findFirst({ where: { id: validation.output.leave_type_id, category: 'LEAVE_TYPE', is_active: true }, select: { id: true } })
+      prisma.option.findFirst({ where: { id: validation.output.leave_type_id, category: 'LEAVE_TYPE', is_active: true }, select: { id: true, is_paid_leave: true } })
     ])
 
     if (!staff) return responseError(dictionary.messages.staffNotFound, 404, 'STAFF_NOT_FOUND')
     if (!leaveType && existing.leave_type_id !== validation.output.leave_type_id) return responseError(dictionary.messages.leaveTypeNotFound, 404, 'LEAVE_TYPE_NOT_FOUND')
 
+    const startDate = parseLeaveDate(validation.output.start_date)
+    const endDate = parseLeaveDate(validation.output.end_date)
+
     const updated = await prisma.$transaction(async transaction => {
+      const overlap = await hasOverlappingLeave(transaction, {
+        staffId: validation.output.staff_id,
+        startDate,
+        endDate,
+        excludeId: id
+      })
+
+      if (overlap) {
+        const error = new Error('OVERLAPPING_LEAVE')
+
+        error.code = 'OVERLAPPING_LEAVE'
+        throw error
+      }
+
       if (existing.status.value === 'APPROVED') {
-        await transaction.hrmstafftimesheet.deleteMany({ where: { notes: `Approved leave request ${id}`, status: 'LEAVE' } })
+        await removeLeaveAttendance(transaction, id)
       }
 
       const leave = await transaction.hrmstaffleave.update({
@@ -81,9 +100,10 @@ export async function PUT(request, routeContext) {
         data: {
           staff_id: validation.output.staff_id,
           leave_type_id: validation.output.leave_type_id,
-          start_date: parseLeaveDate(validation.output.start_date),
-          end_date: parseLeaveDate(validation.output.end_date),
+          start_date: startDate,
+          end_date: endDate,
           total_days: new Prisma.Decimal(totalDays),
+          is_paid: leaveType?.is_paid_leave ?? existing.is_paid,
           reason: validation.output.reason || null
         },
         select: leaveSelect
@@ -94,10 +114,13 @@ export async function PUT(request, routeContext) {
       await transaction.auditlog.create({ data: { user_id: authorization.session.user.id, action: 'LEAVE_UPDATED', module: 'HRM', details: { leaveId: id, staffId: leave.staff_id, totalDays } } })
 
       return leave
-    })
+    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable })
 
     return Response.json({ success: true, data: normalizeLeave(updated), message: dictionary.messages.updated })
   } catch (error) {
+    if (error?.code === 'OVERLAPPING_LEAVE') {
+      return responseError(dictionary.messages.overlappingLeave, 409, 'OVERLAPPING_LEAVE')
+    }
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') return responseError(dictionary.messages.notFound, 404, 'LEAVE_NOT_FOUND')
 
     return responseError(dictionary.messages.operationFailed, 500, 'LEAVE_UPDATE_FAILED')
@@ -122,11 +145,11 @@ export async function DELETE(request, routeContext) {
   }
 
   try {
-    await prisma.$transaction([
-      prisma.hrmstafftimesheet.deleteMany({ where: { notes: `Approved leave request ${id}`, status: 'LEAVE' } }),
-      prisma.hrmstaffleave.delete({ where: { id } }),
-      prisma.auditlog.create({ data: { user_id: authorization.session.user.id, action: 'LEAVE_DELETED', module: 'HRM', details: { leaveId: id, staffId: existing.staff_id } } })
-    ])
+    await prisma.$transaction(async transaction => {
+      await removeLeaveAttendance(transaction, id)
+      await transaction.hrmstaffleave.delete({ where: { id } })
+      await transaction.auditlog.create({ data: { user_id: authorization.session.user.id, action: 'LEAVE_DELETED', module: 'HRM', details: { leaveId: id, staffId: existing.staff_id } } })
+    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable })
 
     return Response.json({ success: true, message: dictionary.messages.deleted })
   } catch {

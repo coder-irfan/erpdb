@@ -1,3 +1,5 @@
+import { timingSafeEqual } from 'node:crypto'
+
 import { NextResponse } from 'next/server'
 
 import { runContractExpirationAuditCore } from '@/libs/contractExpirationAudit'
@@ -9,12 +11,16 @@ const isAuthorized = request => {
 
   if (!configuredSecret) return false
 
-  const requestUrl = new URL(request.url)
-  const querySecret = requestUrl.searchParams.get('secret')
   const authorization = request.headers.get('authorization') || ''
   const headerSecret = request.headers.get('x-cron-secret')
+  const suppliedSecret = authorization.startsWith('Bearer ') ? authorization.slice(7) : headerSecret
 
-  return querySecret === configuredSecret || authorization === `Bearer ${configuredSecret}` || headerSecret === configuredSecret
+  if (!suppliedSecret) return false
+
+  const expected = Buffer.from(configuredSecret)
+  const received = Buffer.from(suppliedSecret)
+
+  return expected.length === received.length && timingSafeEqual(expected, received)
 }
 
 const runAudit = async request => {

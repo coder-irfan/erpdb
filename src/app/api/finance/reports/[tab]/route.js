@@ -1,7 +1,10 @@
 import { authorizeAction } from '@/libs/actionAuthorization'
 import { getCompanySetupRecord } from '@/libs/companySetup'
+import { ACTIVE_LOAN_STATUSES, isActiveStatus } from '@/libs/financialStatuses'
+import { ensureInventoryLedgerBaseline, getInventoryBalances } from '@/libs/inventory'
 import { prisma } from '@/libs/prisma'
-import { toFiniteNumber } from '@/utils/formatCurrency'
+import { convertToBaseCurrency, toFiniteNumber } from '@/utils/formatCurrency'
+import { parseUtcDate, utcDateKey } from '@/utils/utcDate'
 
 const REPORT_TABS = new Set(['income', 'expenses', 'salary', 'inventory', 'loans'])
 const REPORT_PERMISSIONS = ['finance_reports:read', 'finance:read']
@@ -9,16 +12,10 @@ const SUPPORTED_CURRENCIES = new Set(['AFN', 'USD'])
 
 const responseError = (error, status, code) => Response.json({ success: false, error, code }, { status })
 const money = value => Number(toFiniteNumber(value).toFixed(2))
-const dateKey = value => (value ? new Date(value).toISOString().slice(0, 10) : null)
+const dateKey = utcDateKey
 const staffName = staff => (staff ? `${staff.first_name} ${staff.last_name}`.trim() : '')
 
-const parseDate = (value, endOfDay = false) => {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value || '')) return null
-
-  const parsed = new Date(`${value}T${endOfDay ? '23:59:59.999' : '00:00:00.000'}Z`)
-
-  return Number.isNaN(parsed.getTime()) || dateKey(parsed) !== value ? null : parsed
-}
+const parseDate = (value, endOfDay = false) => parseUtcDate(value, { endOfDay })
 
 const monthsBetween = (start, end) => {
   const months = []
@@ -33,17 +30,11 @@ const monthsBetween = (start, end) => {
   return months
 }
 
-const transactionToUsd = (amount, currency, exchangeRate) => {
-  const numericAmount = toFiniteNumber(amount)
-  const rate = toFiniteNumber(exchangeRate)
-
-  if (String(currency).toUpperCase() === 'USD') return numericAmount
-
-  return rate > 0 ? numericAmount / rate : 0
-}
+const transactionToUsd = (amount, currency, exchangeRate) =>
+  convertToBaseCurrency(amount, currency, exchangeRate, 'USD')
 
 const usdToDisplay = (amountUsd, displayCurrency, reportRate) =>
-  displayCurrency === 'AFN' ? amountUsd * reportRate : amountUsd
+  convertToBaseCurrency(amountUsd, 'USD', reportRate, displayCurrency)
 
 const convertAmount = (amount, currency, lockedRate, displayCurrency, reportRate) => {
   const usd = transactionToUsd(amount, currency, lockedRate)
@@ -271,6 +262,8 @@ const getSalaryReport = async ({ start, end, displayCurrency, reportRate }) => {
 }
 
 const getInventoryReport = async ({ end, displayCurrency, reportRate }) => {
+  await ensureInventoryLedgerBaseline()
+
   const records = await prisma.inventory.findMany({
     where: { created_at: { lte: end } },
     select: {
@@ -288,12 +281,14 @@ const getInventoryReport = async ({ end, displayCurrency, reportRate }) => {
     orderBy: { name: 'asc' }
   })
 
+  const balances = await getInventoryBalances(prisma, records.map(record => record.id), end)
+
   let valuationUsd = 0
   let lowStockCount = 0
   const categoryQuantities = new Map()
 
   const rows = records.map(record => {
-    const quantity = Number(record.quantity_in_stock || 0)
+    const quantity = balances.get(record.id) || 0
     const unit = convertAmount(record.unit_price, record.currency, record.exchange_rate, displayCurrency, reportRate)
     const total = convertAmount(toFiniteNumber(record.unit_price) * quantity, record.currency, record.exchange_rate, displayCurrency, reportRate)
     const lowStock = quantity <= Number(record.reorder_level || 0)
@@ -311,7 +306,7 @@ const getInventoryReport = async ({ end, displayCurrency, reportRate }) => {
       unit_cost: unit.display,
       total_value: total.display,
       reorder_level: record.reorder_level,
-      reorder_status: quantity === 0 ? 'OUT_OF_STOCK' : lowStock ? 'LOW_STOCK' : optionName(record.status) || 'IN_STOCK'
+      reorder_status: quantity === 0 ? 'OUT_OF_STOCK' : lowStock ? 'LOW_STOCK' : 'IN_STOCK'
     }
   })
 
@@ -367,7 +362,7 @@ const getLoansReport = async ({ start, end, displayCurrency, reportRate }) => {
     const remaining = convertAmount(record.remaining_balance, record.currency, record.exchange_rate, displayCurrency, reportRate)
     const monthly = convertAmount(record.monthly_deduction, record.currency, record.exchange_rate, displayCurrency, reportRate)
     const status = optionName(record.status)
-    const isActive = ['ACTIVE', 'APPROVED'].includes(String(record.status?.value || status).toUpperCase())
+    const isActive = isActiveStatus(record.status?.value || status, ACTIVE_LOAN_STATUSES)
 
     if (isActive) activeUsd += remaining.usd
     issuedUsd += total.usd

@@ -1,18 +1,101 @@
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
-import Grid from '@mui/material/Grid'
 import Skeleton from '@mui/material/Skeleton'
 
+const shimmer = 'wave'
+
+const DashboardPanelSkeleton = ({ children, height = 382 }) => (
+  <Card className='border border-divider/70 shadow-sm'>
+    <div className='flex items-start justify-between gap-3 px-4 pb-2 pt-4 sm:px-5'>
+      <div>
+        <Skeleton animation={shimmer} variant='text' width={156} height={26} />
+        <Skeleton animation={shimmer} variant='text' width={214} height={18} />
+      </div>
+      <Skeleton animation={shimmer} variant='rounded' width={96} height={32} />
+    </div>
+    <CardContent className='pt-2'>{children || <Skeleton animation={shimmer} variant='rounded' height={height - 76} />}</CardContent>
+  </Card>
+)
+
+const KpiSkeleton = () => (
+  <Card className='h-[154px] border border-divider/70 shadow-sm'>
+    <CardContent className='flex h-full flex-col p-4'>
+      <div className='flex items-start justify-between gap-3'>
+        <div className='w-full max-w-[130px]'>
+          <Skeleton animation={shimmer} variant='text' width='72%' height={18} />
+          <Skeleton animation={shimmer} variant='text' width='96%' height={34} />
+        </div>
+        <Skeleton animation={shimmer} variant='rounded' width={36} height={36} className='rounded-xl' />
+      </div>
+      <div className='mt-auto flex items-end justify-between gap-3'>
+        <div className='w-24'>
+          <Skeleton animation={shimmer} variant='rounded' width={54} height={20} className='rounded-full' />
+          <Skeleton animation={shimmer} variant='text' width='100%' height={18} />
+        </div>
+        <Skeleton animation={shimmer} variant='rounded' width={104} height={56} />
+      </div>
+    </CardContent>
+  </Card>
+)
+
+const ListPanelSkeleton = () => (
+  <DashboardPanelSkeleton height={244}>
+    <div className='space-y-3'>
+      {Array.from({ length: 4 }, (_, index) => (
+        <div key={index} className='flex items-center gap-3 py-1'>
+          <Skeleton animation={shimmer} variant='rounded' width={32} height={32} className='rounded-lg' />
+          <div className='flex-1'>
+            <Skeleton animation={shimmer} variant='text' width={`${72 - index * 7}%`} height={19} />
+            <Skeleton animation={shimmer} variant='text' width={`${52 - index * 5}%`} height={16} />
+          </div>
+          <Skeleton animation={shimmer} variant='text' width={48} height={18} />
+        </div>
+      ))}
+    </div>
+  </DashboardPanelSkeleton>
+)
+
 const DashboardLoading = () => (
-  <div className='w-full space-y-4' aria-busy='true' aria-label='Loading dashboard'>
-    <div className='no-scrollbar overflow-x-auto'>
+  <div className='flex flex-col gap-5' aria-busy='true' aria-label='Loading dashboard'>
+    <header className='flex flex-wrap items-center justify-between gap-4'>
+      <div className='flex min-is-0 items-center gap-3'>
+        <Skeleton animation={shimmer} variant='circular' width={44} height={44} />
+        <div>
+          <Skeleton animation={shimmer} variant='text' width={178} height={31} />
+          <Skeleton animation={shimmer} variant='text' width={244} height={20} />
+        </div>
+      </div>
+      <Skeleton animation={shimmer} variant='rounded' width={92} height={32} className='rounded-lg' />
+    </header>
+
+    <div className='no-scrollbar overflow-x-auto pb-1'>
       <div className='grid min-is-max grid-cols-4 gap-4 lg:min-is-0'>
-        {Array.from({ length: 4 }, (_, index) => <Card key={index} className='h-[148px] is-[235px] border border-divider shadow-sm lg:is-auto'><CardContent className='p-4'><div className='flex items-center gap-2'><Skeleton variant='rounded' width={32} height={32} /><Skeleton variant='text' width={90} /></div><div className='mt-6 flex items-end justify-between gap-4'><div><Skeleton variant='text' width={100} height={34} /><Skeleton variant='rounded' width={58} height={20} /></div><Skeleton variant='rounded' width={100} height={58} /></div></CardContent></Card>)}
+        {Array.from({ length: 4 }, (_, index) => (
+          <div key={index} className='is-[260px] lg:is-auto'><KpiSkeleton /></div>
+        ))}
       </div>
     </div>
-    <Grid container spacing={4}>
-      {[8, 4].map(size => <Grid key={size} size={{ xs: 12, lg: size }}><Card className='border border-divider shadow-sm'><CardContent className='p-4'><Skeleton variant='text' width={180} height={30} /><Skeleton variant='rounded' height={250} className='mt-2' /></CardContent></Card></Grid>)}
-    </Grid>
+
+    <section className='grid grid-cols-1 gap-4 xl:grid-cols-2'>
+      <DashboardPanelSkeleton />
+      <DashboardPanelSkeleton />
+    </section>
+
+    <section className='grid grid-cols-1 gap-4 xl:grid-cols-2'>
+      <ListPanelSkeleton />
+      <ListPanelSkeleton />
+    </section>
+
+    <section>
+      <div className='mb-3'>
+        <Skeleton animation={shimmer} variant='text' width={148} height={28} />
+        <Skeleton animation={shimmer} variant='text' width={248} height={20} />
+      </div>
+      <div className='grid grid-cols-1 gap-4 xl:grid-cols-2'>
+        <ListPanelSkeleton />
+        <ListPanelSkeleton />
+      </div>
+    </section>
   </div>
 )
 

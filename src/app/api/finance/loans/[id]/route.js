@@ -1,8 +1,9 @@
+import { Prisma } from '@prisma/client'
 import { safeParse } from 'valibot'
 
 import { getFinanceLoanDictionary } from '@/data/dictionaries/financeLoan'
 import { authorizeAction } from '@/libs/actionAuthorization'
-import { ensureLoanStatuses, getLoanSetup, LOAN_DELETE_PERMISSIONS, LOAN_READ_PERMISSIONS, LOAN_WRITE_PERMISSIONS, loanPayload, loanSelect, normalizeLoan, prepareLoanData } from '@/libs/financeLoans'
+import { applyLoanStatusTransition, getLoanSetup, LoanLedgerError, LOAN_DELETE_PERMISSIONS, LOAN_READ_PERMISSIONS, LOAN_STATUS_VALUES, LOAN_WRITE_PERMISSIONS, loanPayload, loanSelect, normalizeLoan, prepareLoanData } from '@/libs/financeLoans'
 import { prisma } from '@/libs/prisma'
 import { createFinanceLoanSchema } from '@/schemas/financeLoan'
 import { toFiniteNumber } from '@/utils/formatCurrency'
@@ -36,16 +37,36 @@ export async function PUT(request, routeContext) {
   if (!authorization.authorized) return errorResponse(authorization.code === 'FORBIDDEN' ? dictionary.messages.forbidden : dictionary.messages.unauthenticated, authorization.code === 'FORBIDDEN' ? 403 : 401, authorization.code)
 
   try {
-    await ensureLoanStatuses()
-    const [current, setup] = await Promise.all([prisma.financeloan.findUnique({ where: { id }, select: { id: true, repaid_amount: true } }), getLoanSetup()])
+    const [current, setup] = await Promise.all([
+      prisma.financeloan.findUnique({
+        where: { id },
+        select: {
+          id: true,
+          total_amount: true,
+          repaid_amount: true,
+          currency: true,
+          exchange_rate: true,
+          status: { select: { value: true } }
+        }
+      }),
+      getLoanSetup()
+    ])
 
     if (!current) return errorResponse(dictionary.messages.notFound, 404, 'LOAN_NOT_FOUND')
+
+    if (current.status.value !== 'REQUESTED') {
+      return errorResponse(
+        dictionary.messages.repaymentLocked || dictionary.messages.deleteBlocked,
+        409,
+        'LOAN_TERMS_LOCKED'
+      )
+    }
 
     const validation = safeParse(createFinanceLoanSchema(dictionary.validation), loanPayload(payload, setup))
 
     if (!validation.success) return errorResponse(validation.issues[0]?.message, 400, 'VALIDATION_ERROR')
 
-    const prepared = await prepareLoanData(validation.output, dictionary.validation, current)
+    const prepared = await prepareLoanData(validation.output, dictionary.validation, setup, current)
 
     if (!prepared.success) return errorResponse(prepared.error, 400, 'VALIDATION_ERROR')
 
@@ -63,6 +84,65 @@ export async function PUT(request, routeContext) {
   }
 }
 
+export async function PATCH(request, routeContext) {
+  const { id } = await routeContext.params
+  let payload
+
+  try { payload = await request.json() } catch { return errorResponse('Invalid request body.', 400, 'INVALID_REQUEST') }
+
+  const dictionary = getFinanceLoanDictionary(localeFrom(payload?.locale))
+  const authorization = await authorizeAction(LOAN_WRITE_PERMISSIONS)
+
+  if (!authorization.authorized) return errorResponse(authorization.code === 'FORBIDDEN' ? dictionary.messages.forbidden : dictionary.messages.unauthenticated, authorization.code === 'FORBIDDEN' ? 403 : 401, authorization.code)
+
+  const nextStatus = String(payload?.status || '').toUpperCase()
+
+  if (!LOAN_STATUS_VALUES.includes(nextStatus)) {
+    return errorResponse(dictionary.validation.statusInvalid || dictionary.messages.invalidRelation, 400, 'INVALID_LOAN_STATUS')
+  }
+
+  try {
+    const approver = await prisma.hrmstaff.findUnique({
+      where: { user_id: authorization.session.user.id },
+      select: { id: true }
+    })
+
+    const loan = await prisma.$transaction(async transaction => {
+      const before = await transaction.financeloan.findUnique({
+        where: { id },
+        select: { status: { select: { value: true } } }
+      })
+
+      const updated = await applyLoanStatusTransition(transaction, {
+        loanId: id,
+        nextStatusValue: nextStatus,
+        approvedById: approver?.id || null
+      })
+
+      await transaction.auditlog.create({
+        data: {
+          user_id: authorization.session.user.id,
+          action: 'FINANCE_LOAN_STATUS_UPDATED',
+          module: 'FINANCE',
+          details: { loanId: id, fromStatus: before?.status.value || null, toStatus: nextStatus }
+        }
+      })
+
+      return updated
+    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable })
+
+    return Response.json({ success: true, data: normalizeLoan(loan), message: dictionary.messages.updated })
+  } catch (error) {
+    if (error instanceof LoanLedgerError) {
+      const status = error.code === 'LOAN_NOT_FOUND' ? 404 : 409
+
+      return errorResponse(error.message, status, error.code)
+    }
+
+    return errorResponse(dictionary.messages.operationFailed, 500, 'LOAN_STATUS_UPDATE_FAILED')
+  }
+}
+
 export async function DELETE(request, routeContext) {
   const { id } = await routeContext.params
   const dictionary = getFinanceLoanDictionary(localeFrom(request.nextUrl.searchParams.get('locale')))
@@ -70,10 +150,13 @@ export async function DELETE(request, routeContext) {
 
   if (!authorization.authorized) return errorResponse(authorization.code === 'FORBIDDEN' ? dictionary.messages.forbidden : dictionary.messages.unauthenticated, authorization.code === 'FORBIDDEN' ? 403 : 401, authorization.code)
 
-  const loan = await prisma.financeloan.findUnique({ where: { id }, select: { id: true, loan_number: true, repaid_amount: true } })
+  const loan = await prisma.financeloan.findUnique({
+    where: { id },
+    select: { id: true, loan_number: true, repaid_amount: true, _count: { select: { repayments: true } } }
+  })
 
   if (!loan) return errorResponse(dictionary.messages.notFound, 404, 'LOAN_NOT_FOUND')
-  if (toFiniteNumber(loan.repaid_amount) > 0) return errorResponse(dictionary.messages.deleteBlocked, 409, 'LOAN_HAS_REPAYMENTS')
+  if (toFiniteNumber(loan.repaid_amount) > 0 || loan._count.repayments > 0) return errorResponse(dictionary.messages.deleteBlocked, 409, 'LOAN_HAS_REPAYMENTS')
 
   await prisma.$transaction([
     prisma.financeloan.delete({ where: { id } }),

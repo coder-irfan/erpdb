@@ -4,6 +4,8 @@ import { safeParse } from 'valibot'
 import { getInventoryDictionary } from '@/data/dictionaries/inventory'
 import { authorizeAction } from '@/libs/actionAuthorization'
 import {
+  ensureInventoryLedgerBaseline,
+  getInventoryBalances,
   getInventoryOptions,
   getStockState,
   INVENTORY_READ_PERMISSIONS,
@@ -12,9 +14,11 @@ import {
   inventorySelect,
   nextInventorySku,
   normalizeInventoryItem,
-  prepareInventoryData
+  prepareInventoryData,
+  recordInventoryMovement
 } from '@/libs/inventory'
 import { prisma } from '@/libs/prisma'
+import { withSequentialNumberRetry } from '@/libs/sequentialNumbers'
 import { inventoryItemSchema } from '@/schemas/inventory'
 import { toFiniteNumber } from '@/utils/formatCurrency'
 
@@ -43,17 +47,21 @@ export async function GET(request) {
   }
 
   try {
+    await ensureInventoryLedgerBaseline()
     const options = await getInventoryOptions()
 
     const [filteredRows, allRows] = await Promise.all([
       prisma.inventory.findMany({ where, select: inventorySelect, orderBy: [{ updated_at: 'desc' }, { name: 'asc' }] }),
-      prisma.inventory.findMany({ select: { quantity_in_stock: true, reorder_level: true, amount_base: true } })
+      prisma.inventory.findMany({ select: { id: true, quantity_in_stock: true, reorder_level: true, amount_base: true } })
     ])
 
-    const matchingRows = stockState ? filteredRows.filter(item => getStockState(item) === stockState) : filteredRows
+    const balances = await getInventoryBalances(prisma, allRows.map(item => item.id))
+    const withBalances = filteredRows.map(item => ({ ...item, quantity_in_stock: balances.get(item.id) || 0 }))
+    const allRowsWithBalances = allRows.map(item => ({ ...item, quantity_in_stock: balances.get(item.id) || 0 }))
+    const matchingRows = stockState ? withBalances.filter(item => getStockState(item) === stockState) : withBalances
     const pagedRows = matchingRows.slice((page - 1) * limit, page * limit)
 
-    const summary = allRows.reduce((totals, item) => {
+    const summary = allRowsWithBalances.reduce((totals, item) => {
       const state = getStockState(item)
 
       totals.totalItems += 1
@@ -105,23 +113,29 @@ export async function POST(request) {
 
     if (!prepared.success) return errorResponse(prepared.error, 400, 'VALIDATION_ERROR')
 
-    let created
-
-    for (let attempt = 0; attempt < 3; attempt += 1) {
-      try {
-        created = await prisma.$transaction(async transaction => {
+    const created = await withSequentialNumberRetry(() =>
+      prisma.$transaction(async transaction => {
           const skuCode = prepared.data.sku_code || await nextInventorySku(transaction)
           const item = await transaction.inventory.create({ data: { ...prepared.data, sku_code: skuCode }, select: inventorySelect })
 
-          await transaction.auditlog.create({ data: { user_id: authorization.session.user.id, action: 'INVENTORY_ITEM_CREATED', module: 'INVENTORY', details: { inventoryId: item.id, skuCode, quantity: item.quantity_in_stock } } })
+          const stocked = prepared.openingQuantity > 0
+            ? await recordInventoryMovement(transaction, {
+                inventoryId: item.id,
+                movementType: 'OPENING_BALANCE',
+                direction: 'IN',
+                quantity: prepared.openingQuantity,
+                occurredAt: item.created_at,
+                referenceId: `opening-${item.id}`,
+                notes: 'Opening inventory balance.',
+                createdByUserId: authorization.session.user.id
+              })
+            : { item }
 
-          return item
-        }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable })
-        break
-      } catch (error) {
-        if (error?.code !== 'P2002' || prepared.data.sku_code || attempt === 2) throw error
-      }
-    }
+          await transaction.auditlog.create({ data: { user_id: authorization.session.user.id, action: 'INVENTORY_ITEM_CREATED', module: 'INVENTORY', details: { inventoryId: item.id, skuCode, openingQuantity: prepared.openingQuantity } } })
+
+        return stocked.item
+      }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable }),
+    { attempts: prepared.data.sku_code ? 1 : 8 })
 
     return Response.json({ success: true, data: normalizeInventoryItem(created), message: dictionary.messages.created }, { status: 201 })
   } catch (error) {

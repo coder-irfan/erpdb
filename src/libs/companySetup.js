@@ -18,19 +18,17 @@ export const DEFAULT_COMPANY_SETUP = {
   currency_code: 'AFN',
   usd_afn_exchange_rate: '65.0000',
   currency_symbol: '؋',
-  timezone: 'Asia/Kabul',
   date_format: 'YYYY-MM-DD',
   fiscal_year_start: '01-01',
   default_work_start: '08:30',
   default_work_end: '17:30',
-  default_tax_rate: '0.00'
+  weekend_days: '5'
 }
 
 export const normalizeCompanySetup = setup =>
   setup
     ? {
         ...setup,
-        default_tax_rate: setup.default_tax_rate.toFixed(2),
         usd_afn_exchange_rate: setup.usd_afn_exchange_rate.toFixed(4),
         created_at: setup.created_at.toISOString(),
         updated_at: setup.updated_at.toISOString()

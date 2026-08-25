@@ -14,6 +14,7 @@ import { getContractStatusOptions } from '@/libs/contractStatuses'
 import { getCompanySetupRecord } from '@/libs/companySetup'
 import { getContractTypeOptions } from '@/libs/contractTypes'
 import { prisma } from '@/libs/prisma'
+import { nextSequentialNumber, withSequentialNumberRetry } from '@/libs/sequentialNumbers'
 import { createContractSchema } from '@/schemas/contracts'
 import { calculateContractEndDate, getRemainingDays, toUtcDateOnly } from '@/utils/contractDuration'
 import { convertToBaseCurrency, toFiniteNumber } from '@/utils/formatCurrency'
@@ -66,7 +67,6 @@ const contractSelect = {
   currency: true,
   exchange_rate: true,
   amount_base: true,
-  amount_usd: true,
   level_id: true,
   signed_date: true,
   start_date: true,
@@ -112,7 +112,12 @@ const normalizeContract = (contract, durationOptions = new Map()) => ({
   exchange_rate: contract.exchange_rate.toFixed(4),
   amount_base: contract.amount_base.toFixed(2),
   percentage: contract.percentage?.toFixed(2) ?? null,
-  amount_usd: contract.amount_usd?.toFixed(2) ?? null,
+  amount_usd: convertToBaseCurrency(
+    contract.total_amount,
+    contract.currency,
+    contract.exchange_rate,
+    'USD'
+  ).toFixed(2),
   signed_date: contract.signed_date?.toISOString() ?? null,
   start_date: contract.start_date.toISOString(),
   end_date: contract.end_date.toISOString(),
@@ -162,21 +167,6 @@ const getTabWhere = tab => {
   }
 
   return {}
-}
-
-const generateContractNumber = async transaction => {
-  const year = new Date().getUTCFullYear()
-  const prefix = `CON-${year}-`
-
-  const latest = await transaction.contract.findFirst({
-    where: { contract_number: { startsWith: prefix } },
-    select: { contract_number: true },
-    orderBy: { contract_number: 'desc' }
-  })
-
-  const sequence = Number.parseInt(latest?.contract_number.slice(prefix.length), 10)
-
-  return `${prefix}${String(Number.isFinite(sequence) ? sequence + 1 : 1).padStart(4, '0')}`
 }
 
 const validateRelations = async (values, currentContract = null) => {
@@ -300,10 +290,6 @@ const prepareContractData = async (values, translations, currentContract = null)
       currency: values.currency,
       exchange_rate: new Prisma.Decimal(exchangeRate),
       amount_base: new Prisma.Decimal(amountBase),
-      amount_usd:
-        values.currency === 'USD'
-          ? new Prisma.Decimal(amount)
-          : new Prisma.Decimal(convertToBaseCurrency(amount, 'AFN', exchangeRate, 'USD')),
       start_date: toUtcDateOnly(values.start_date),
       end_date: endDate,
       auto_renew: values.auto_renew,
@@ -587,8 +573,12 @@ export const createContract = async (payload = {}) => {
   if (!prepared.success) return { success: false, code: 'VALIDATION_ERROR', error: prepared.error }
 
   try {
-    const contract = await prisma.$transaction(async transaction => {
-      const contractNumber = await generateContractNumber(transaction)
+    const contract = await withSequentialNumberRetry(() => prisma.$transaction(async transaction => {
+      const contractNumber = await nextSequentialNumber(transaction, 'contract', {
+        prefix: `CON-${new Date().getUTCFullYear()}-`,
+        digits: 4
+      })
+
       const created = await transaction.contract.create({ data: { ...prepared.data, contract_number: contractNumber } })
 
       await transaction.auditlog.create({
@@ -601,7 +591,7 @@ export const createContract = async (payload = {}) => {
       })
 
       return created
-    })
+    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable }))
 
     revalidateContracts()
 

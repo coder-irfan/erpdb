@@ -44,12 +44,12 @@ const COLORS = {
 }
 
 const TONE_CLASSES = {
-  primary: 'bg-primaryLight text-primary',
-  success: 'bg-successLight text-success',
-  warning: 'bg-warningLight text-warning',
-  error: 'bg-errorLight text-error',
-  info: 'bg-infoLight text-info',
-  secondary: 'bg-secondaryLight text-secondary'
+  primary: 'bg-primaryLighter text-primary',
+  success: 'bg-successLighter text-success',
+  warning: 'bg-secondaryLighter text-warning',
+  error: 'bg-errorLighter text-error',
+  info: 'bg-infoLighter text-info',
+  secondary: 'bg-secondaryLighter text-secondary'
 }
 
 const resolveColor = color => {

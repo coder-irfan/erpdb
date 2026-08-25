@@ -6,7 +6,8 @@ const defaultMessages = {
   valueTooLong: 'This value is too long.',
   invalidImagePath: 'Select a valid locally uploaded image.',
   invalidTime: 'Enter a valid time in HH:mm format.',
-  invalidExchangeRate: 'Enter a valid USD/AFN exchange rate.'
+  invalidExchangeRate: 'Enter a valid USD/AFN exchange rate.',
+  invalidWeekendDays: 'Enter comma-separated weekday numbers from 0 (Sunday) to 6 (Saturday).'
 }
 
 const TIME_PATTERN = /^(?:[01]\d|2[0-3]):[0-5]\d$/
@@ -51,6 +52,11 @@ export const createCompanySetupSchema = customMessages => {
     ),
     default_work_start: requiredTime(messages),
     default_work_end: requiredTime(messages),
+    weekend_days: pipe(
+      string(messages.invalidWeekendDays),
+      trim(),
+      regex(/^[0-6](?:,[0-6])*$/, messages.invalidWeekendDays)
+    ),
     lightLogoUrl: optionalText(messages, 2000),
     darkLogoUrl: optionalText(messages, 2000),
     faviconUrl: optionalText(messages, 2000),

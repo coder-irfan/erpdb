@@ -15,21 +15,11 @@ import { toUtcDateOnly } from '@/utils/contractDuration'
 import { convertToBaseCurrency, toFiniteNumber } from '@/utils/formatCurrency'
 
 const READ_PERMISSIONS = ['finance:read', 'finance_expense:read']
-const WRITE_PERMISSIONS = ['finance:write']
-const DELETE_PERMISSIONS = ['finance:delete']
+const WRITE_PERMISSIONS = ['finance:write', 'finance_expense:write']
+const DELETE_PERMISSIONS = ['finance:delete', 'finance_expense:delete']
 const DEFAULT_PAGE_SIZE = 10
 const MAX_PAGE_SIZE = 100
 const RECEIPT_PATH_PATTERN = /^\/uploads\/images\/[a-zA-Z0-9._-]+$/
-
-const DEFAULT_EXPENSE_TYPES = [
-  ['Office Supplies', 'OFFICE_SUPPLIES', 'info', 1, true],
-  ['Project Cost', 'PROJECT_COST', 'primary', 2, false],
-  ['Travel & Transport', 'TRAVEL', 'warning', 3, false],
-  ['Utilities', 'UTILITIES', 'secondary', 4, false],
-  ['Rent', 'RENT', 'error', 5, false],
-  ['Marketing', 'MARKETING', 'success', 6, false],
-  ['Other Expense', 'OTHER_EXPENSE', 'secondary', 7, false]
-]
 
 const optionSelect = {
   id: true,
@@ -69,7 +59,6 @@ const expenseSelect = {
   unit_price: true,
   sub_total: true,
   exchange_rate: true,
-  total_usd: true,
   created_at: true,
   updated_at: true,
   amount_base: true,
@@ -91,7 +80,7 @@ const normalizeExpense = expense => ({
   unit_price: numberString(expense.unit_price),
   sub_total: numberString(expense.sub_total),
   exchange_rate: numberString(expense.exchange_rate, 4),
-  total_usd: numberString(expense.total_usd),
+  total_usd: numberString(convertToBaseCurrency(expense.sub_total, expense.currency, expense.exchange_rate, 'USD')),
   amount_base: numberString(expense.amount_base),
   expense_date: iso(expense.expense_date),
   created_at: iso(expense.created_at),
@@ -119,26 +108,6 @@ const getContext = async (payload, permissions) => {
 const revalidateExpensePages = () => {
   revalidatePath('/[lang]/finance/expenses', 'page')
   revalidatePath('/[lang]/projects', 'page')
-}
-
-const ensureExpenseTypes = async () => {
-  await prisma.$transaction(
-    DEFAULT_EXPENSE_TYPES.map(([label, value, colorCode, sortOrder, isDefault]) =>
-      prisma.option.upsert({
-        where: { category_value: { category: 'EXPENSE_TYPE', value } },
-        update: {},
-        create: {
-          category: 'EXPENSE_TYPE',
-          label,
-          value,
-          color_code: colorCode,
-          sort_order: sortOrder,
-          is_default: isDefault,
-          is_active: true
-        }
-      })
-    )
-  )
 }
 
 const validationPayload = payload => ({
@@ -202,7 +171,6 @@ const prepareExpenseData = async (values, translations) => {
   const subTotal = quantity * unitPrice
   const baseCurrency = setup.currency_code || 'AFN'
   const amountBase = convertToBaseCurrency(subTotal, values.currency, exchangeRate, baseCurrency)
-  const totalUsd = values.currency === 'USD' ? subTotal : subTotal / exchangeRate
 
   return {
     success: true,
@@ -218,7 +186,6 @@ const prepareExpenseData = async (values, translations) => {
       unit_price: new Prisma.Decimal(unitPrice),
       sub_total: new Prisma.Decimal(subTotal),
       exchange_rate: new Prisma.Decimal(exchangeRate),
-      total_usd: new Prisma.Decimal(totalUsd),
       amount_base: new Prisma.Decimal(amountBase),
       currency: values.currency
     }
@@ -259,8 +226,6 @@ export const getFinanceExpenses = async (payload = {}) => {
   const nextMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1))
 
   try {
-    await ensureExpenseTypes()
-
     const [setup, totalCount, expenses, total, project, overhead, month] = await Promise.all([
       getCompanySetupRecord(),
       prisma.financeexpense.count({ where }),
@@ -306,8 +271,6 @@ export const getFinanceExpenseFormOptions = async (payload = {}) => {
   if (!context.authorized) return { success: false, code: context.code, error: context.error }
 
   try {
-    await ensureExpenseTypes()
-
     const [expenseTypes, paymentMethods, projects, staff, setup] = await Promise.all([
       prisma.option.findMany({
         where: { category: 'EXPENSE_TYPE', is_active: true },
@@ -374,7 +337,6 @@ export const createFinanceExpense = async (payload = {}) => {
   if (!validation.success) return { success: false, code: 'VALIDATION_ERROR', error: validation.issues[0]?.message }
 
   try {
-    await ensureExpenseTypes()
     const prepared = await prepareExpenseData(validation.output, context.translations)
 
     if (!prepared.success) return { success: false, code: 'VALIDATION_ERROR', error: prepared.error }

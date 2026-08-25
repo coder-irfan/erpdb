@@ -46,7 +46,9 @@ export async function GET(request) {
   const page = Math.max(1, Number.parseInt(params.get('page') || '1', 10) || 1)
   const limit = Math.min(MAX_PAGE_SIZE, Math.max(1, Number.parseInt(params.get('limit') || '10', 10) || 10))
 
-  if (!DATE_PATTERN.test(date)) return responseError(dictionary.validation.dateInvalid, 400, 'INVALID_DATE')
+  if (!DATE_PATTERN.test(date) || !parseDate(date)) {
+    return responseError(dictionary.validation.dateInvalid, 400, 'INVALID_DATE')
+  }
 
   try {
     const data = await getAttendanceDashboard({ date, month, year, staffId, status, search, page, limit })
@@ -80,7 +82,9 @@ export async function POST(request) {
 
   const date = payload?.date || getKabulToday()
 
-  if (!DATE_PATTERN.test(date)) return responseError(dictionary.validation.dateInvalid, 400, 'INVALID_DATE')
+  if (!DATE_PATTERN.test(date) || !parseDate(date)) {
+    return responseError(dictionary.validation.dateInvalid, 400, 'INVALID_DATE')
+  }
 
   if (payload?.bulkRemainingAbsent === true) {
     try {

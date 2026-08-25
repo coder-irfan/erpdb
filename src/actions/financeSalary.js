@@ -9,6 +9,8 @@ import { i18n } from '@/configs/i18n'
 import { getFinanceSalaryDictionary } from '@/data/dictionaries/financeSalary'
 import { authorizeAction } from '@/libs/actionAuthorization'
 import { getCompanySetupRecord } from '@/libs/companySetup'
+import { ACTIVE_LOAN_STATUSES } from '@/libs/financialStatuses'
+import { applyLoanRepayment } from '@/libs/financeLoans'
 import { prisma } from '@/libs/prisma'
 import { getBrandingSettings } from '@/libs/systemSettings'
 import {
@@ -23,7 +25,7 @@ const WRITE_PERMISSIONS = ['finance:write', 'finance_salary:write']
 const DELETE_PERMISSIONS = ['finance:delete', 'finance_salary:delete']
 const DEFAULT_PAGE_SIZE = 10
 const MAX_PAGE_SIZE = 100
-const ACTIVE_LOAN_VALUES = ['ACTIVE', 'APPROVED']
+const ACTIVE_LOAN_VALUES = ACTIVE_LOAN_STATUSES
 
 const staffSelect = {
   id: true,
@@ -31,6 +33,8 @@ const staffSelect = {
   last_name: true,
   email: true,
   position: true,
+  join_date: true,
+  termination_date: true,
   salary: true,
   salary_currency: true,
   salary_exchange_rate: true
@@ -52,7 +56,6 @@ const salarySelect = {
   loan_deduction: true,
   payable_amount: true,
   exchange_rate: true,
-  payable_usd: true,
   loan_status: true,
   payment_date: true,
   processed_by_id: true,
@@ -69,6 +72,7 @@ const normalizeId = value => (typeof value === 'string' ? value.trim() : '')
 const iso = value => value?.toISOString() || null
 const moneyString = (value, scale = 2) => (value == null ? null : toFiniteNumber(value).toFixed(scale))
 const fullName = staff => `${staff?.first_name || ''} ${staff?.last_name || ''}`.trim()
+
 const withStaffName = staff =>
   staff
     ? {
@@ -81,6 +85,8 @@ const withStaffName = staff =>
 
 const normalizeSalary = salary => ({
   ...salary,
+  worked_days: moneyString(salary.worked_days, 1),
+  off_days: moneyString(salary.off_days, 1),
   base_salary: moneyString(salary.base_salary),
   base_daily_rate: moneyString(salary.base_daily_rate),
   earned_salary: moneyString(salary.earned_salary),
@@ -88,7 +94,7 @@ const normalizeSalary = salary => ({
   loan_deduction: moneyString(salary.loan_deduction),
   payable_amount: moneyString(salary.payable_amount),
   exchange_rate: moneyString(salary.exchange_rate, 4),
-  payable_usd: moneyString(salary.payable_usd),
+  payable_usd: moneyString(convertToBaseCurrency(salary.payable_amount, salary.currency, salary.exchange_rate, 'USD')),
   amount_base: moneyString(salary.amount_base),
   payment_date: iso(salary.payment_date),
   created_at: iso(salary.created_at),
@@ -134,6 +140,36 @@ const getMonthRange = monthValue => {
   }
 }
 
+const dateKey = date => date.toISOString().slice(0, 10)
+
+const getWorkingDates = (range, weekendDays, holidays) => {
+  const weekends = new Set(
+    String(weekendDays || '5')
+      .split(',')
+      .map(value => Number.parseInt(value.trim(), 10))
+      .filter(value => Number.isInteger(value) && value >= 0 && value <= 6)
+  )
+
+  const holidayDates = new Set(holidays.map(holiday => dateKey(holiday.date)))
+  const dates = []
+
+  for (let cursor = new Date(range.start); cursor < range.end; cursor = new Date(cursor.getTime() + 86_400_000)) {
+    if (!weekends.has(cursor.getUTCDay()) && !holidayDates.has(dateKey(cursor))) dates.push(new Date(cursor))
+  }
+
+  return dates
+}
+
+const addLeaveDates = (target, leave, range) => {
+  const start = leave.start_date > range.start ? leave.start_date : range.start
+  const monthEnd = new Date(range.end.getTime() - 86_400_000)
+  const end = leave.end_date < monthEnd ? leave.end_date : monthEnd
+
+  for (let cursor = new Date(start); cursor <= end; cursor = new Date(cursor.getTime() + 86_400_000)) {
+    target.add(dateKey(cursor))
+  }
+}
+
 const fromBaseCurrency = (amount, currency, exchangeRate, baseCurrency) => {
   const numeric = toFiniteNumber(amount)
   const rate = toFiniteNumber(exchangeRate)
@@ -165,39 +201,8 @@ const calculateSalary = ({
   const earnedSalary = dailyRate * workedDays
   const payableAmount = Math.max(0, earnedSalary + bonusAmount - loanDeduction)
   const amountBase = convertToBaseCurrency(payableAmount, currency, exchangeRate, baseCurrency)
-  const payableUsd = currency === 'USD' ? payableAmount : exchangeRate > 0 ? payableAmount / exchangeRate : 0
 
-  return { dailyRate, earnedSalary, payableAmount, amountBase, payableUsd }
-}
-
-const ensureLoanStatuses = async () => {
-  await prisma.$transaction([
-    prisma.option.upsert({
-      where: { category_value: { category: 'LOAN_STATUS', value: 'ACTIVE' } },
-      update: {},
-      create: {
-        category: 'LOAN_STATUS',
-        label: 'Active',
-        value: 'ACTIVE',
-        color_code: 'warning',
-        sort_order: 1,
-        is_default: true,
-        is_active: true
-      }
-    }),
-    prisma.option.upsert({
-      where: { category_value: { category: 'LOAN_STATUS', value: 'REPAID' } },
-      update: {},
-      create: {
-        category: 'LOAN_STATUS',
-        label: 'Repaid',
-        value: 'REPAID',
-        color_code: 'success',
-        sort_order: 2,
-        is_active: true
-      }
-    })
-  ])
+  return { dailyRate, earnedSalary, payableAmount, amountBase }
 }
 
 const getActiveLoans = (client, staffIds) =>
@@ -232,8 +237,8 @@ const adjustmentPayload = payload => ({
 })
 
 const getPreparedAdjustment = async (salary, values, translations) => {
-  const workedDays = Number.parseInt(values.worked_days, 10)
-  const offDays = Number.parseInt(values.off_days, 10)
+  const workedDays = toFiniteNumber(values.worked_days)
+  const offDays = toFiniteNumber(values.off_days)
   const bonusAmount = toFiniteNumber(values.bonus_amount)
   const loanDeduction = toFiniteNumber(values.loan_deduction)
   const exchangeRate = toFiniteNumber(values.exchange_rate)
@@ -246,6 +251,7 @@ const getPreparedAdjustment = async (salary, values, translations) => {
   const baseCurrency = setup.currency_code || 'AFN'
   const sourceCurrency = salary.currency || values.currency
   const sourceRate = toFiniteNumber(salary.exchange_rate) || exchangeRate
+
   const baseSalary = convertCurrency(
     salary.base_salary,
     sourceCurrency,
@@ -254,6 +260,7 @@ const getPreparedAdjustment = async (salary, values, translations) => {
     exchangeRate,
     baseCurrency
   )
+
   const calculation = calculateSalary({
     baseSalary,
     totalDays: salary.total_month_days,
@@ -268,8 +275,8 @@ const getPreparedAdjustment = async (salary, values, translations) => {
   return {
     success: true,
     data: {
-      worked_days: workedDays,
-      off_days: offDays,
+      worked_days: new Prisma.Decimal(workedDays),
+      off_days: new Prisma.Decimal(offDays),
       base_salary: new Prisma.Decimal(baseSalary),
       base_daily_rate: new Prisma.Decimal(calculation.dailyRate),
       earned_salary: new Prisma.Decimal(calculation.earnedSalary),
@@ -277,7 +284,6 @@ const getPreparedAdjustment = async (salary, values, translations) => {
       loan_deduction: new Prisma.Decimal(loanDeduction),
       payable_amount: new Prisma.Decimal(calculation.payableAmount),
       exchange_rate: new Prisma.Decimal(exchangeRate),
-      payable_usd: new Prisma.Decimal(calculation.payableUsd),
       amount_base: new Prisma.Decimal(calculation.amountBase),
       currency: values.currency,
       timesheet_summary: values.timesheet_summary || null,
@@ -457,11 +463,15 @@ export const generateMonthlyPayroll = async (month, payload = {}) => {
   const range = getMonthRange(validation.output.month)
 
   try {
-    await ensureLoanStatuses()
-
-    const [staffMembers, existing, timesheets, setup] = await Promise.all([
+    const [staffMembers, existing, timesheets, approvedPaidLeaves, holidays, setup] = await Promise.all([
       prisma.hrmstaff.findMany({
-        where: { status: 'ACTIVE' },
+        where: {
+          join_date: { lt: range.end },
+          OR: [
+            { status: 'ACTIVE' },
+            { termination_date: { gte: range.start } }
+          ]
+        },
         select: staffSelect,
         orderBy: [{ first_name: 'asc' }, { last_name: 'asc' }]
       }),
@@ -471,7 +481,20 @@ export const generateMonthlyPayroll = async (month, payload = {}) => {
       }),
       prisma.hrmstafftimesheet.findMany({
         where: { date: { gte: range.start, lt: range.end } },
-        select: { staff_id: true, status: true, hours_worked: true }
+        select: { staff_id: true, date: true, status: true, hours_worked: true }
+      }),
+      prisma.hrmstaffleave.findMany({
+        where: {
+          is_paid: true,
+          start_date: { lt: range.end },
+          end_date: { gte: range.start },
+          status: { is: { category: 'LEAVE_STATUS', value: 'APPROVED' } }
+        },
+        select: { staff_id: true, start_date: true, end_date: true, total_days: true }
+      }),
+      prisma.companyholiday.findMany({
+        where: { is_active: true, date: { gte: range.start, lt: range.end } },
+        select: { date: true }
       }),
       getCompanySetupRecord()
     ])
@@ -489,17 +512,36 @@ export const generateMonthlyPayroll = async (month, payload = {}) => {
         )
       : []
 
+    const workingDates = getWorkingDates(range, setup.weekend_days, holidays)
+
+    if (workingDates.length === 0) {
+      return { success: false, code: 'EMPTY_WORKING_CALENDAR', error: context.translations.messages.operationFailed }
+    }
+
+    const workingDateKeys = new Set(workingDates.map(dateKey))
     const attendance = new Map()
 
     timesheets.forEach(row => {
-      const current = attendance.get(row.staff_id) || { workedDays: 0, hours: 0, absentDays: 0, leaveDays: 0 }
+      const current = attendance.get(row.staff_id) || {
+        presentDates: new Set(),
+        hours: 0,
+        absentDays: 0,
+        leaveDays: 0
+      }
+
       const normalizedStatus = row.status?.toUpperCase()
 
-      if (normalizedStatus === 'PRESENT') current.workedDays += 1
+      if (normalizedStatus === 'PRESENT') current.presentDates.add(dateKey(row.date))
       if (normalizedStatus === 'ABSENT') current.absentDays += 1
       if (normalizedStatus === 'LEAVE') current.leaveDays += 1
       current.hours += toFiniteNumber(row.hours_worked)
       attendance.set(row.staff_id, current)
+    })
+
+    const paidLeavesByStaff = new Map()
+
+    approvedPaidLeaves.forEach(leave => {
+      paidLeavesByStaff.set(leave.staff_id, [...(paidLeavesByStaff.get(leave.staff_id) || []), leave])
     })
 
     const loansByStaff = new Map()
@@ -516,8 +558,62 @@ export const generateMonthlyPayroll = async (month, payload = {}) => {
         const exchangeRate =
           toFiniteNumber(staff.salary_exchange_rate) || toFiniteNumber(setup.usd_afn_exchange_rate) || 65
 
-        const staffAttendance = attendance.get(staff.id) || { workedDays: 0, hours: 0, absentDays: 0, leaveDays: 0 }
-        const maximumGross = (salaryAmount / range.totalDays) * staffAttendance.workedDays
+        const staffAttendance = attendance.get(staff.id) || {
+          presentDates: new Set(),
+          hours: 0,
+          absentDays: 0,
+          leaveDays: 0
+        }
+
+        const joinKey = dateKey(staff.join_date)
+        const terminationKey = staff.termination_date ? dateKey(staff.termination_date) : null
+
+        const eligibleWorkingDates = workingDates.filter(date => {
+          const key = dateKey(date)
+
+          return key >= joinKey && (!terminationKey || key <= terminationKey)
+        })
+
+        const presentPayableDates = new Set(
+          [...staffAttendance.presentDates].filter(
+            key => workingDateKeys.has(key) && key >= joinKey && (!terminationKey || key <= terminationKey)
+          )
+        )
+
+        let paidLeaveDays = 0
+
+        for (const leave of paidLeavesByStaff.get(staff.id) || []) {
+          const leaveDates = new Set()
+
+          addLeaveDates(leaveDates, leave, range)
+
+          const availableLeaveDates = [...leaveDates].filter(
+            key =>
+              workingDateKeys.has(key) &&
+              key >= joinKey &&
+              (!terminationKey || key <= terminationKey) &&
+              !presentPayableDates.has(key)
+          )
+
+          const fullRangeDays = Math.floor((leave.end_date.getTime() - leave.start_date.getTime()) / 86_400_000) + 1
+          const clippedStart = leave.start_date > range.start ? leave.start_date : range.start
+          const monthEnd = new Date(range.end.getTime() - 86_400_000)
+          const clippedEnd = leave.end_date < monthEnd ? leave.end_date : monthEnd
+
+          const clippedDays = Math.max(
+            0,
+            Math.floor((clippedEnd.getTime() - clippedStart.getTime()) / 86_400_000) + 1
+          )
+
+          const monthLeaveCredit = toFiniteNumber(leave.total_days) * (clippedDays / fullRangeDays)
+
+          paidLeaveDays += Math.min(availableLeaveDates.length, monthLeaveCredit)
+        }
+
+        paidLeaveDays = Math.round(paidLeaveDays * 2) / 2
+
+        const payableDays = Math.min(eligibleWorkingDates.length, presentPayableDates.size + paidLeaveDays)
+        const maximumGross = workingDates.length > 0 ? (salaryAmount / workingDates.length) * payableDays : 0
 
         const scheduledLoanDeduction = (loansByStaff.get(staff.id) || []).reduce((total, loan) => {
           const loanAmount = Math.min(toFiniteNumber(loan.monthly_deduction), toFiniteNumber(loan.remaining_balance))
@@ -539,23 +635,24 @@ export const generateMonthlyPayroll = async (month, payload = {}) => {
         
         const calculation = calculateSalary({
           baseSalary: salaryAmount,
-          totalDays: range.totalDays,
-          workedDays: staffAttendance.workedDays,
+          totalDays: workingDates.length,
+          workedDays: payableDays,
           bonusAmount: 0,
           loanDeduction,
           currency,
           exchangeRate,
           baseCurrency: setup.currency_code || 'AFN'
         })
-        const notes = `Attendance: ${staffAttendance.workedDays} present, ${staffAttendance.absentDays} absent, ${staffAttendance.leaveDays} leave; ${staffAttendance.hours.toFixed(2)} hours logged.`
+
+        const notes = `Payable calendar: ${workingDates.length} working days; employee eligible for ${eligibleWorkingDates.length}; ${payableDays} payable (${staffAttendance.presentDates.size} present records, ${paidLeaveDays} approved paid leave days), ${staffAttendance.absentDays} absent; ${staffAttendance.hours.toFixed(2)} hours logged.`
 
         await transaction.financesalary.create({
           data: {
             staff_id: staff.id,
             timesheet_month: validation.output.month,
-            total_month_days: range.totalDays,
-            worked_days: staffAttendance.workedDays,
-            off_days: Math.max(0, range.totalDays - staffAttendance.workedDays),
+            total_month_days: workingDates.length,
+            worked_days: new Prisma.Decimal(payableDays),
+            off_days: new Prisma.Decimal(Math.max(0, eligibleWorkingDates.length - payableDays)),
             base_salary: new Prisma.Decimal(salaryAmount),
             base_daily_rate: new Prisma.Decimal(calculation.dailyRate),
             earned_salary: new Prisma.Decimal(calculation.earnedSalary),
@@ -563,7 +660,6 @@ export const generateMonthlyPayroll = async (month, payload = {}) => {
             loan_deduction: new Prisma.Decimal(loanDeduction),
             payable_amount: new Prisma.Decimal(calculation.payableAmount),
             exchange_rate: new Prisma.Decimal(exchangeRate),
-            payable_usd: new Prisma.Decimal(calculation.payableUsd),
             loan_status: loanDeduction > 0 ? 'PENDING' : 'NOT_APPLICABLE',
             amount_base: new Prisma.Decimal(calculation.amountBase),
             currency,
@@ -617,17 +713,32 @@ export const createFinanceSalary = async (payload = {}) => {
   if (!validation.success) return { success: false, code: 'VALIDATION_ERROR', error: validation.issues[0]?.message }
 
   try {
-    const staff = await prisma.hrmstaff.findUnique({ where: { id: validation.output.staff_id }, select: staffSelect })
+    const range = getMonthRange(validation.output.timesheet_month)
+
+    const [staff, setup, holidays] = await Promise.all([
+      prisma.hrmstaff.findUnique({ where: { id: validation.output.staff_id }, select: staffSelect }),
+      getCompanySetupRecord(),
+      prisma.companyholiday.findMany({
+        where: { is_active: true, date: { gte: range.start, lt: range.end } },
+        select: { date: true }
+      })
+    ])
 
     if (!staff) return { success: false, code: 'INVALID_STAFF', error: context.translations.validation.invalidStaff }
 
-    const totalDays = getMonthRange(validation.output.timesheet_month).totalDays
+    const totalDays = getWorkingDates(range, setup.weekend_days, holidays).length
+
+    if (totalDays === 0) {
+      return { success: false, code: 'EMPTY_WORKING_CALENDAR', error: context.translations.messages.operationFailed }
+    }
+
     const salaryShell = {
       base_salary: staff.salary,
       total_month_days: totalDays,
       currency: validation.output.currency,
       exchange_rate: validation.output.exchange_rate
     }
+
     const prepared = await getPreparedAdjustment(salaryShell, validation.output, context.translations)
 
     if (!prepared.success) return { success: false, code: 'VALIDATION_ERROR', error: prepared.error }
@@ -729,14 +840,8 @@ export const markSalaryPaid = async (salaryId, payload = {}) => {
   const id = normalizeId(salaryId)
 
   try {
-    await ensureLoanStatuses()
-
-    const [processor, repaidStatus, setup] = await Promise.all([
+    const [processor, setup] = await Promise.all([
       prisma.hrmstaff.findUnique({ where: { user_id: context.session.user.id }, select: { id: true } }),
-      prisma.option.findUnique({
-        where: { category_value: { category: 'LOAN_STATUS', value: 'REPAID' } },
-        select: { id: true }
-      }),
       getCompanySetupRecord()
     ])
 
@@ -760,34 +865,78 @@ export const markSalaryPaid = async (salaryId, payload = {}) => {
           if (remainingDeductionBase <= 0.005) break
 
           const loanRemaining = toFiniteNumber(loan.remaining_balance)
+
           const loanRemainingBase = convertToBaseCurrency(
             loanRemaining,
             loan.currency,
             loan.exchange_rate,
             setup.currency_code || 'AFN'
           )
+
           const appliedBase = Math.min(remainingDeductionBase, loanRemainingBase)
+
           const appliedLoanCurrency = fromBaseCurrency(
             appliedBase,
             loan.currency,
             loan.exchange_rate,
             setup.currency_code || 'AFN'
           )
-          const nextRemaining = Math.max(0, loanRemaining - appliedLoanCurrency)
-          const nextRepaid = toFiniteNumber(loan.repaid_amount) + appliedLoanCurrency
 
-          await transaction.financeloan.update({
-            where: { id: loan.id },
-            data: {
-              repaid_amount: new Prisma.Decimal(nextRepaid),
-              remaining_balance: new Prisma.Decimal(nextRemaining),
-              ...(nextRemaining <= 0.005 && repaidStatus ? { status_id: repaidStatus.id } : {})
-            }
+          const repayment = await applyLoanRepayment(transaction, {
+            loanId: loan.id,
+            amount: appliedLoanCurrency,
+            source: 'SALARY_DEDUCTION',
+            repaymentDate: new Date(),
+            referenceId: salary.id,
+            createdByUserId: context.session.user.id,
+            notes: `Payroll deduction for ${salary.timesheet_month}`,
+            baseCurrency: setup.currency_code || 'AFN'
           })
 
-          remainingDeductionBase -= appliedBase
-          appliedLoans.push({ loanId: loan.id, amount: appliedLoanCurrency.toFixed(2), currency: loan.currency })
+          const actualAppliedBase = convertToBaseCurrency(
+            repayment.appliedAmount,
+            loan.currency,
+            loan.exchange_rate,
+            setup.currency_code || 'AFN'
+          )
+
+          remainingDeductionBase = Math.max(0, remainingDeductionBase - actualAppliedBase)
+          appliedLoans.push({
+            loanId: loan.id,
+            repaymentId: repayment.repayment.id,
+            amount: repayment.appliedAmount.toFixed(2),
+            currency: loan.currency
+          })
         }
+
+        const appliedDeductionBase = Math.max(
+          0,
+          convertToBaseCurrency(
+            salary.loan_deduction,
+            salary.currency,
+            salary.exchange_rate,
+            setup.currency_code || 'AFN'
+          ) - remainingDeductionBase
+        )
+
+        const appliedDeduction = fromBaseCurrency(
+          appliedDeductionBase,
+          salary.currency,
+          salary.exchange_rate,
+          setup.currency_code || 'AFN'
+        )
+
+        const correctedPayable = Math.max(
+          0,
+          toFiniteNumber(salary.earned_salary) + toFiniteNumber(salary.bonus_amount) - appliedDeduction
+        )
+
+        const correctedAmountBase = convertToBaseCurrency(
+          correctedPayable,
+          salary.currency,
+          salary.exchange_rate,
+          setup.currency_code || 'AFN'
+        )
 
         const updated = await transaction.financesalary.update({
           where: { id },
@@ -795,7 +944,10 @@ export const markSalaryPaid = async (salaryId, payload = {}) => {
             status: 'PAID',
             payment_date: new Date(),
             processed_by_id: processor?.id || null,
-            loan_status: toFiniteNumber(salary.loan_deduction) > 0 ? 'DEDUCTED' : 'NOT_APPLICABLE'
+            loan_deduction: new Prisma.Decimal(appliedDeduction),
+            payable_amount: new Prisma.Decimal(correctedPayable),
+            amount_base: new Prisma.Decimal(correctedAmountBase),
+            loan_status: appliedDeduction > 0.005 ? 'DEDUCTED' : 'NOT_APPLICABLE'
           },
           select: salarySelect
         })

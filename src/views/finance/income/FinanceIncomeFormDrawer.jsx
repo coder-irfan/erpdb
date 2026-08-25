@@ -246,11 +246,14 @@ const FinanceIncomeFormDrawer = ({ open, income, options, locale, dictionary, on
               if (!value) return
               setValue('client_id', value.client_id)
               setValue('contract_id', value.contract_id)
-              setValue('total_amount', String(value.amount || ''))
+              const outstanding = Number(value.remaining_balance) > 0 ? value.remaining_balance : value.amount
+
+              setValue('total_amount', String(outstanding || ''))
+              setValue('paid_amount', String(outstanding || ''))
               setValue('currency', value.currency || options.baseCurrency || 'AFN')
               setValue('exchange_rate', String(value.exchange_rate || options.exchangeRate || '65'))
             },
-            item => Boolean(item.payment_income && item.payment_income.id !== income?.id)
+            item => item.id !== income?.invoice_id && Number(item.remaining_balance) <= 0.005
           )}
           {relationField(
             'received_by_id',

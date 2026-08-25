@@ -8,7 +8,13 @@ import { safeParse } from 'valibot'
 import { i18n } from '@/configs/i18n'
 import { authorizeAction } from '@/libs/actionAuthorization'
 import { getCompanySetupRecord } from '@/libs/companySetup'
+import {
+  InvoiceSettlementError,
+  settlementTransactionOptions,
+  syncInvoiceSettlement
+} from '@/libs/invoiceSettlement'
 import { prisma } from '@/libs/prisma'
+import { nextSequentialNumber, withSequentialNumberRetry } from '@/libs/sequentialNumbers'
 import { createInvoiceSchema, recordInvoicePaymentSchema } from '@/schemas/invoices'
 import { toUtcDateOnly } from '@/utils/contractDuration'
 import { convertToBaseCurrency, toFiniteNumber } from '@/utils/formatCurrency'
@@ -20,13 +26,6 @@ const DELETE_PERMISSIONS = ['contracts:delete', 'finance:delete']
 const DEFAULT_PAGE_SIZE = 10
 const MAX_PAGE_SIZE = 100
 const OUTSTANDING_STATUSES = ['UNPAID', 'PARTIALLY_PAID']
-
-const DEFAULT_INVOICE_STATUSES = [
-  { label: 'Unpaid', value: 'UNPAID', color_code: 'warning', sort_order: 1, is_default: true },
-  { label: 'Partially Paid', value: 'PARTIALLY_PAID', color_code: 'info', sort_order: 2, is_default: false },
-  { label: 'Paid', value: 'PAID', color_code: 'success', sort_order: 3, is_default: false },
-  { label: 'Cancelled', value: 'CANCELLED', color_code: 'secondary', sort_order: 4, is_default: false }
-]
 
 const normalizeLocale = locale => (i18n.locales.includes(locale) ? locale : i18n.defaultLocale)
 const normalizeId = value => (typeof value === 'string' ? value.trim() : '')
@@ -57,6 +56,8 @@ const invoiceSelect = {
   currency: true,
   exchange_rate: true,
   amount_base: true,
+  paid_amount: true,
+  remaining_balance: true,
   due_date: true,
   status_id: true,
   issued_date: true,
@@ -78,7 +79,10 @@ const invoiceSelect = {
     select: { id: true, company_name: true, primary_contact_name: true, email: true, phone: true, address: true, tax_id: true }
   },
   status: { select: { id: true, label: true, value: true, color_code: true } },
-  payment_income: { select: { id: true, created_at: true, pay_details: true, total_amount: true, currency: true } }
+  payment_incomes: {
+    select: { id: true, created_at: true, pay_details: true, total_amount: true, paid_amount: true, currency: true },
+    orderBy: { created_at: 'desc' }
+  }
 }
 
 const normalizeInvoice = invoice => {
@@ -90,6 +94,8 @@ const normalizeInvoice = invoice => {
     amount: invoice.amount.toFixed(2),
     exchange_rate: invoice.exchange_rate.toFixed(4),
     amount_base: invoice.amount_base.toFixed(2),
+    paid_amount: invoice.paid_amount.toFixed(2),
+    remaining_balance: invoice.remaining_balance.toFixed(2),
     issued_date: invoice.issued_date.toISOString(),
     due_date: invoice.due_date.toISOString(),
     created_at: invoice.created_at.toISOString(),
@@ -101,11 +107,18 @@ const normalizeInvoice = invoice => {
       exchange_rate: invoice.contract.exchange_rate.toFixed(4),
       amount_base: invoice.contract.amount_base.toFixed(2)
     },
-    payment_income: invoice.payment_income
+    payment_incomes: invoice.payment_incomes.map(payment => ({
+      ...payment,
+      total_amount: payment.total_amount.toFixed(2),
+      paid_amount: payment.paid_amount.toFixed(2),
+      created_at: payment.created_at.toISOString()
+    })),
+    payment_income: invoice.payment_incomes[0]
       ? {
-          ...invoice.payment_income,
-          total_amount: invoice.payment_income.total_amount.toFixed(2),
-          created_at: invoice.payment_income.created_at.toISOString()
+          ...invoice.payment_incomes[0],
+          total_amount: invoice.payment_incomes[0].total_amount.toFixed(2),
+          paid_amount: invoice.payment_incomes[0].paid_amount.toFixed(2),
+          created_at: invoice.payment_incomes[0].created_at.toISOString()
         }
       : null
   }
@@ -119,65 +132,12 @@ const revalidateInvoices = () => {
   revalidatePath('/[lang]/finance/incomes', 'page')
 }
 
-const generateInvoiceNumber = async transaction => {
-  const year = new Date().getUTCFullYear()
-  const prefix = `INV-${year}-`
-
-  const latest = await transaction.contractinvoice.findFirst({
-    where: { invoice_number: { startsWith: prefix } },
-    select: { invoice_number: true },
-    orderBy: { invoice_number: 'desc' }
-  })
-
-  const sequence = Number.parseInt(latest?.invoice_number.slice(prefix.length), 10)
-
-  return `${prefix}${String(Number.isFinite(sequence) ? sequence + 1 : 1).padStart(4, '0')}`
-}
-
-const getOrCreateInvoiceStatuses = async () => {
-  const existingStatuses = await prisma.option.findMany({
-    where: { category: 'INVOICE_STATUS' },
-    select: { id: true, label: true, value: true, is_active: true, is_default: true, color_code: true, sort_order: true }
-  })
-
-  const existingValues = new Set(existingStatuses.map(status => status.value))
-  const missingStatuses = DEFAULT_INVOICE_STATUSES.filter(status => !existingValues.has(status.value))
-
-  if (missingStatuses.length > 0) {
-    await prisma.$transaction(
-      missingStatuses.map(status =>
-        prisma.option.upsert({
-          where: { category_value: { category: 'INVOICE_STATUS', value: status.value } },
-          update: {},
-          create: { category: 'INVOICE_STATUS', ...status, is_active: true }
-        })
-      )
-    )
-  }
-
-  let activeStatuses = await prisma.option.findMany({
+const getInvoiceStatuses = () =>
+  prisma.option.findMany({
     where: { category: 'INVOICE_STATUS', is_active: true },
     select: { id: true, label: true, value: true, is_default: true, color_code: true },
     orderBy: [{ sort_order: 'asc' }, { label: 'asc' }]
   })
-
-  // A database may already contain the category with every option disabled.
-  // Keep the form usable without overriding any other administrator choices.
-  if (activeStatuses.length === 0) {
-    await prisma.option.update({
-      where: { category_value: { category: 'INVOICE_STATUS', value: 'UNPAID' } },
-      data: { is_active: true, is_default: true }
-    })
-
-    activeStatuses = await prisma.option.findMany({
-      where: { category: 'INVOICE_STATUS', is_active: true },
-      select: { id: true, label: true, value: true, is_default: true, color_code: true },
-      orderBy: [{ sort_order: 'asc' }, { label: 'asc' }]
-    })
-  }
-
-  return activeStatuses
-}
 
 const validationPayload = payload => ({
   contract_id: payload?.contract_id,
@@ -209,7 +169,10 @@ const prepareInvoiceData = async (values, translations, currentInvoice = null) =
 
   if (!contract || contract.client_id !== values.client_id) return { success: false, error: translations.validation.invalidContract }
   if (!status) return { success: false, error: translations.validation.invalidStatus }
-  if (status.value === 'PAID') return { success: false, error: translations.validation.paidViaPaymentOnly }
+
+  if (['PAID', 'PARTIALLY_PAID'].includes(status.value)) {
+    return { success: false, error: translations.validation.paidViaPaymentOnly }
+  }
 
   const amount = toFiniteNumber(values.amount)
   const exchangeRate = toFiniteNumber(values.exchange_rate)
@@ -344,7 +307,7 @@ export const getInvoiceFormOptions = async (payload = {}) => {
         orderBy: { contract_number: 'desc' },
         take: 500
       }),
-      getOrCreateInvoiceStatuses(),
+      getInvoiceStatuses(),
       prisma.option.findMany({
         where: { category: 'PAYMENT_METHOD', is_active: true },
         select: { id: true, label: true, value: true, is_default: true },
@@ -404,16 +367,27 @@ export const createInvoice = async (payload = {}) => {
   if (!prepared.success) return { success: false, code: 'VALIDATION_ERROR', error: prepared.error }
 
   try {
-    const invoice = await prisma.$transaction(async transaction => {
-      const invoiceNumber = await generateInvoiceNumber(transaction)
-      const created = await transaction.contractinvoice.create({ data: { ...prepared.data, invoice_number: invoiceNumber } })
+    const invoice = await withSequentialNumberRetry(() => prisma.$transaction(async transaction => {
+      const invoiceNumber = await nextSequentialNumber(transaction, 'invoice', {
+        prefix: `INV-${new Date().getUTCFullYear()}-`,
+        digits: 4
+      })
+
+      const created = await transaction.contractinvoice.create({
+        data: {
+          ...prepared.data,
+          invoice_number: invoiceNumber,
+          paid_amount: new Prisma.Decimal(0),
+          remaining_balance: prepared.data.amount
+        }
+      })
 
       await transaction.auditlog.create({
         data: { user_id: context.session.user.id, action: 'INVOICE_CREATED', module: 'CONTRACTS', details: { invoiceId: created.id, invoiceNumber, contractId: created.contract_id } }
       })
 
       return created
-    })
+    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable }))
 
     revalidateInvoices()
 
@@ -438,7 +412,7 @@ export const updateInvoice = async (id, payload = {}) => {
     const current = await prisma.contractinvoice.findUnique({ where: { id: invoiceId }, select: invoiceSelect })
 
     if (!current) return { success: false, code: 'NOT_FOUND', error: context.translations.messages.notFound }
-    if (current.payment_income || current.status.value === 'PAID') return { success: false, code: 'PAID_LOCKED', error: context.translations.messages.paidLocked }
+    if (current.payment_incomes.length > 0 || current.status.value === 'PAID') return { success: false, code: 'PAID_LOCKED', error: context.translations.messages.paidLocked }
 
     const prepared = await prepareInvoiceData(validation.output, context.translations, current)
 
@@ -479,7 +453,7 @@ export const updateInvoiceStatus = async (id, statusId, payload = {}) => {
           invoice_number: true,
           status_id: true,
           status: { select: { value: true } },
-          payment_income: { select: { id: true } }
+          payment_incomes: { select: { id: true }, take: 1 }
         }
       }),
       prisma.option.findFirst({
@@ -492,11 +466,11 @@ export const updateInvoiceStatus = async (id, statusId, payload = {}) => {
       return { success: false, code: 'NOT_FOUND', error: context.translations.messages.notFound }
     }
 
-    if (invoice.payment_income || invoice.status.value === 'PAID') {
+    if (invoice.payment_incomes.length > 0 || invoice.status.value === 'PAID') {
       return { success: false, code: 'PAID_LOCKED', error: context.translations.messages.paidLocked }
     }
 
-    if (nextStatus.value === 'PAID') {
+    if (['PAID', 'PARTIALLY_PAID'].includes(nextStatus.value)) {
       return { success: false, code: 'PAYMENT_REQUIRED', error: context.translations.messages.paymentRequired }
     }
 
@@ -541,7 +515,7 @@ export const deleteInvoice = async (id, payload = {}) => {
     const invoice = await prisma.contractinvoice.findUnique({ where: { id: invoiceId }, select: invoiceSelect })
 
     if (!invoice) return { success: false, code: 'NOT_FOUND', error: context.translations.messages.notFound }
-    if (invoice.payment_income || invoice.status.value === 'PAID') return { success: false, code: 'PAID_LOCKED', error: context.translations.messages.paidDeleteBlocked }
+    if (invoice.payment_incomes.length > 0 || invoice.status.value === 'PAID') return { success: false, code: 'PAID_LOCKED', error: context.translations.messages.paidDeleteBlocked }
 
     await prisma.$transaction(async transaction => {
       await transaction.contractinvoice.delete({ where: { id: invoiceId } })
@@ -574,26 +548,23 @@ export const recordInvoicePayment = async (id, payload = {}) => {
   if (!invoiceId || !validation.success) return { success: false, code: 'VALIDATION_ERROR', error: validation.issues?.[0]?.message || context.translations.messages.notFound }
 
   try {
-    const [invoice, paidStatus, paymentMethod, incomeType] = await Promise.all([
+    const [invoice, paymentMethod, incomeType] = await Promise.all([
       prisma.contractinvoice.findUnique({ where: { id: invoiceId }, select: invoiceSelect }),
-      prisma.option.findFirst({ where: { category: 'INVOICE_STATUS', value: 'PAID', is_active: true }, select: { id: true } }),
       prisma.option.findFirst({ where: { id: validation.output.payment_method_id, category: 'PAYMENT_METHOD', is_active: true }, select: { id: true, label: true, value: true } }),
       prisma.option.findFirst({ where: { category: 'INCOME_TYPE', value: 'CONTRACT_PAYMENT', is_active: true }, select: { id: true } })
     ])
 
     if (!invoice) return { success: false, code: 'NOT_FOUND', error: context.translations.messages.notFound }
-    if (invoice.payment_income || invoice.status.value === 'PAID') return { success: false, code: 'ALREADY_PAID', error: context.translations.messages.alreadyPaid }
-    if (!paidStatus || !paymentMethod || !incomeType) return { success: false, code: 'PAYMENT_OPTIONS_MISSING', error: context.translations.messages.paymentOptionsMissing }
+    if (invoice.status.value === 'PAID' || toFiniteNumber(invoice.remaining_balance) <= 0.005) return { success: false, code: 'ALREADY_PAID', error: context.translations.messages.alreadyPaid }
+    if (!paymentMethod || !incomeType) return { success: false, code: 'PAYMENT_OPTIONS_MISSING', error: context.translations.messages.paymentOptionsMissing }
 
     const paymentAmount = toFiniteNumber(validation.output.amount)
 
-    if (Math.abs(paymentAmount - toFiniteNumber(invoice.amount)) > 0.005) return { success: false, code: 'AMOUNT_MISMATCH', error: context.translations.validation.fullPaymentRequired }
+    if (paymentAmount <= 0 || paymentAmount - toFiniteNumber(invoice.remaining_balance) > 0.005) {
+      return { success: false, code: 'INVOICE_OVERPAYMENT', error: context.translations.validation.fullPaymentRequired }
+    }
 
     const paymentDate = toUtcDateOnly(validation.output.payment_date)
-
-    const totalUsd = invoice.currency === 'USD'
-      ? paymentAmount
-      : convertToBaseCurrency(paymentAmount, 'AFN', invoice.exchange_rate, 'USD')
 
     const income = await prisma.$transaction(async transaction => {
       const createdIncome = await transaction.financeincome.create({
@@ -605,35 +576,47 @@ export const recordInvoicePayment = async (id, payload = {}) => {
           name: `${invoice.invoice_number} - ${invoice.contract.title}`,
           pay_details: JSON.stringify({ payment_method_id: paymentMethod.id, payment_method: paymentMethod.label, payment_date: validation.output.payment_date, notes: validation.output.notes || null }),
           income_type_id: incomeType.id,
-          total_amount: invoice.amount,
+          total_amount: new Prisma.Decimal(paymentAmount),
           currency: invoice.currency,
-          paid_amount: invoice.amount,
+          paid_amount: new Prisma.Decimal(paymentAmount),
           remind_amount: new Prisma.Decimal(0),
           exchange_rate: invoice.exchange_rate,
-          amount_base: invoice.amount_base,
-          total_usd: new Prisma.Decimal(totalUsd),
+          amount_base: new Prisma.Decimal(
+            (toFiniteNumber(invoice.amount_base) / toFiniteNumber(invoice.amount)) * paymentAmount
+          ),
           created_at: paymentDate
         }
       })
 
-      await transaction.contractinvoice.update({ where: { id: invoice.id }, data: { status_id: paidStatus.id } })
+      const settlement = await syncInvoiceSettlement(transaction, invoice.id)
+
       await transaction.auditlog.create({
         data: {
           user_id: context.session.user.id,
           action: 'INVOICE_PAYMENT_RECORDED',
           module: 'CONTRACTS',
-          details: { invoiceId: invoice.id, invoiceNumber: invoice.invoice_number, incomeId: createdIncome.id, paymentMethod: paymentMethod.value }
+          details: {
+            invoiceId: invoice.id,
+            invoiceNumber: invoice.invoice_number,
+            incomeId: createdIncome.id,
+            paymentMethod: paymentMethod.value,
+            paymentAmount: paymentAmount.toFixed(2),
+            invoiceStatus: settlement.status.value,
+            remainingBalance: settlement.remaining_balance.toString()
+          }
         }
       })
 
       return createdIncome
-    })
+    }, settlementTransactionOptions)
 
     revalidateInvoices()
 
     return { success: true, data: { incomeId: income.id }, message: context.translations.messages.paymentRecorded }
   } catch (error) {
-    if (error?.code === 'P2002') return { success: false, code: 'ALREADY_PAID', error: context.translations.messages.alreadyPaid }
+    if (error instanceof InvoiceSettlementError && error.code === 'INVOICE_OVERPAYMENT') {
+      return { success: false, code: error.code, error: context.translations.validation.fullPaymentRequired }
+    }
 
     return { success: false, code: 'PAYMENT_FAILED', error: context.translations.messages.paymentFailed }
   }

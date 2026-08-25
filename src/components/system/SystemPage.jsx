@@ -6,11 +6,18 @@ import { useParams, useRouter } from 'next/navigation'
 import { ArrowLeft, Home, LogOut, RotateCcw } from 'lucide-react'
 
 import { i18n } from '@/configs/i18n'
+import { getSystemPagesDictionary } from '@/data/dictionaries/systemPages'
 
 const actionClassName =
   'inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-slate-50 dark:focus-visible:ring-offset-slate-950'
 
 const getLocale = lang => (i18n.locales.includes(lang) ? lang : i18n.defaultLocale)
+
+export const useSystemPagesDictionary = () => {
+  const params = useParams()
+
+  return getSystemPagesDictionary(getLocale(params?.lang))
+}
 
 export const SystemPage = ({ children, description, icon: Icon, title }) => (
   <main className='relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-slate-50 px-4 py-10 text-center dark:bg-slate-950'>
@@ -28,43 +35,50 @@ export const SystemPage = ({ children, description, icon: Icon, title }) => (
 
 export const HomeLink = () => {
   const params = useParams()
+  const dictionary = useSystemPagesDictionary()
   const lang = getLocale(params?.lang)
 
   return (
     <Link href={`/${lang}/dashboard`} className={`${actionClassName} bg-primary text-white shadow-sm hover:opacity-90`}>
       <Home className='size-4' aria-hidden='true' />
-      Back to Home
+      {dictionary.actions.backToHome}
     </Link>
   )
 }
 
 export const GoBackButton = () => {
   const router = useRouter()
+  const dictionary = useSystemPagesDictionary()
 
   return (
     <button type='button' onClick={() => router.back()} className={`${actionClassName} border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800`}>
       <ArrowLeft className='size-4' aria-hidden='true' />
-      Go Back
+      {dictionary.actions.goBack}
     </button>
   )
 }
 
-export const RetryButton = ({ reset }) => (
-  <button type='button' onClick={reset} className={`${actionClassName} bg-primary text-white shadow-sm hover:opacity-90`}>
-    <RotateCcw className='size-4' aria-hidden='true' />
-    Try Again
-  </button>
-)
+export const RetryButton = ({ reset }) => {
+  const dictionary = useSystemPagesDictionary()
+
+  return (
+    <button type='button' onClick={reset} className={`${actionClassName} bg-primary text-white shadow-sm hover:opacity-90`}>
+      <RotateCcw className='size-4' aria-hidden='true' />
+      {dictionary.actions.tryAgain}
+    </button>
+  )
+}
 
 export const SwitchAccountButton = () => {
   const router = useRouter()
   const params = useParams()
+  const dictionary = useSystemPagesDictionary()
   const lang = getLocale(params?.lang)
 
   return (
     <button type='button' onClick={() => router.push(`/${lang}/login`)} className={`${actionClassName} border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800`}>
       <LogOut className='size-4' aria-hidden='true' />
-      Switch Account
+      {dictionary.actions.switchAccount}
     </button>
   )
 }

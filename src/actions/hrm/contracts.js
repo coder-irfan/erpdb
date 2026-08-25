@@ -14,10 +14,12 @@ import { getCompanySetupRecord } from '@/libs/companySetup'
 import { getContractStatusOptions } from '@/libs/contractStatuses'
 import { getContractTypeOptions } from '@/libs/contractTypes'
 import { prisma } from '@/libs/prisma'
+import { nextSequentialNumber, withSequentialNumberRetry } from '@/libs/sequentialNumbers'
 import { getBrandingSettings } from '@/libs/systemSettings'
 import { createStaffContractSchema } from '@/schemas/hrm/contracts'
 import { convertToBaseCurrency } from '@/utils/formatCurrency'
 import { getDictionary } from '@/utils/getDictionary'
+import { toUtcDateOnly, utcDateKey } from '@/utils/utcDate'
 
 const CONTRACT_READ_PERMISSIONS = ['hrm:read', 'hrm_contract:read', 'contracts:read']
 const CONTRACT_WRITE_PERMISSIONS = ['hrm:write', 'hrm_contract:write']
@@ -55,8 +57,8 @@ const CONTRACT_HTML_TAGS = [
 const normalizeLocale = locale => (i18n.locales.includes(locale) ? locale : i18n.defaultLocale)
 const normalizeId = value => (typeof value === 'string' ? value.trim() : '')
 const nullableText = value => value?.trim() || null
-const toDate = value => (value instanceof Date ? value : new Date(`${value}T00:00:00.000Z`))
-const toDateOnly = value => value.toISOString().slice(0, 10)
+const toDate = toUtcDateOnly
+const toDateOnly = utcDateKey
 
 const escapeHtml = value =>
   String(value ?? '')
@@ -276,22 +278,6 @@ const getValidatedRelations = async (values, currentContract = null) => {
         : null,
     setup
   }
-}
-
-const generateContractNumber = async transaction => {
-  const year = new Date().getUTCFullYear()
-  const prefix = `CTR-${year}-`
-
-  const latest = await transaction.hrmstaffcontract.findFirst({
-    where: { contract_number: { startsWith: prefix } },
-    select: { contract_number: true },
-    orderBy: { contract_number: 'desc' }
-  })
-
-  const currentSequence = Number.parseInt(latest?.contract_number.slice(prefix.length), 10)
-  const nextSequence = Number.isFinite(currentSequence) ? currentSequence + 1 : 1
-
-  return `${prefix}${String(nextSequence).padStart(4, '0')}`
 }
 
 const revalidateContractPaths = (id = null) => {
@@ -520,8 +506,11 @@ export const createStaffContract = async (payload = {}) => {
       setup: relations.setup
     })
 
-    const contract = await prisma.$transaction(async transaction => {
-      const contractNumber = await generateContractNumber(transaction)
+    const contract = await withSequentialNumberRetry(() => prisma.$transaction(async transaction => {
+      const contractNumber = await nextSequentialNumber(transaction, 'staffContract', {
+        prefix: `CTR-${new Date().getUTCFullYear()}-`,
+        digits: 4
+      })
 
       const created = await transaction.hrmstaffcontract.create({
         data: {
@@ -559,7 +548,7 @@ export const createStaffContract = async (payload = {}) => {
       })
 
       return created
-    })
+    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable }))
 
     revalidateContractPaths(contract.id)
 
@@ -619,11 +608,12 @@ export const updateStaffContract = async (id, payload = {}) => {
           position_title: validation.output.position_title,
           base_salary: new Prisma.Decimal(validation.output.base_salary),
           currency: validation.output.currency,
+          exchange_rate: new Prisma.Decimal(relations.setup.usd_afn_exchange_rate),
           amount_base: new Prisma.Decimal(
             convertToBaseCurrency(
               validation.output.base_salary,
               validation.output.currency,
-              existing.exchange_rate,
+              relations.setup.usd_afn_exchange_rate,
               relations.setup.currency_code
             )
           ),

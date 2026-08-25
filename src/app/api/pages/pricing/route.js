@@ -8,9 +8,15 @@
 // Next Imports
 import { NextResponse } from 'next/server'
 
+import { requireAuthenticatedApi } from '@/libs/apiSecurity'
+
 // Data Imports
 import { db } from '@/fake-db/pages/pricing'
 
 export async function GET() {
+  const authorization = await requireAuthenticatedApi()
+
+  if (!authorization.authorized) return authorization.response
+
   return NextResponse.json(db)
 }

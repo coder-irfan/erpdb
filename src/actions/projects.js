@@ -9,7 +9,9 @@ import { i18n } from '@/configs/i18n'
 import { getProjectsDictionary } from '@/data/dictionaries/projects'
 import { authorizeAction } from '@/libs/actionAuthorization'
 import { getCompanySetupRecord } from '@/libs/companySetup'
+import { ACTIVE_OPERATIONAL_STATUSES, isOverdue } from '@/libs/financialStatuses'
 import { prisma } from '@/libs/prisma'
+import { nextSequentialNumber, withSequentialNumberRetry } from '@/libs/sequentialNumbers'
 import { createProjectSchema } from '@/schemas/projects'
 import { toUtcDateOnly } from '@/utils/contractDuration'
 import { convertToBaseCurrency, toFiniteNumber } from '@/utils/formatCurrency'
@@ -17,27 +19,10 @@ import { convertToBaseCurrency, toFiniteNumber } from '@/utils/formatCurrency'
 const READ_PERMISSIONS = ['projects:read', 'projects:write']
 const WRITE_PERMISSIONS = ['projects:write']
 const DELETE_PERMISSIONS = ['projects:delete']
-const ACTIVE_VALUES = ['ACTIVE', 'IN_PROGRESS']
+const ACTIVE_VALUES = ACTIVE_OPERATIONAL_STATUSES
 const CLOSED_VALUES = ['COMPLETED', 'CANCELLED']
 const DEFAULT_PAGE_SIZE = 10
 const MAX_PAGE_SIZE = 100
-
-const DEFAULT_OPTIONS = {
-  PROJECT_STATUS: [
-    ['Planning', 'PLANNING', 'info', 1, true],
-    ['In Progress', 'IN_PROGRESS', 'primary', 2, false],
-    ['Active', 'ACTIVE', 'success', 3, false],
-    ['On Hold', 'ON_HOLD', 'warning', 4, false],
-    ['Completed', 'COMPLETED', 'success', 5, false],
-    ['Cancelled', 'CANCELLED', 'secondary', 6, false]
-  ],
-  PROJECT_PRIORITY: [
-    ['Low', 'LOW', 'success', 1, false],
-    ['Medium', 'MEDIUM', 'info', 2, true],
-    ['High', 'HIGH', 'warning', 3, false],
-    ['Urgent', 'URGENT', 'error', 4, false]
-  ]
-}
 
 const normalizeLocale = locale => (i18n.locales.includes(locale) ? locale : i18n.defaultLocale)
 const normalizeId = value => (typeof value === 'string' ? value.trim() : '')
@@ -128,33 +113,13 @@ const normalizeProject = project => ({
     start_date: iso(project.contract.start_date),
     end_date: iso(project.contract.end_date)
   } : null,
-  is_overdue: !project.actual_end_date && project.end_date < toUtcDateOnly(new Date()),
+  is_overdue: isOverdue({ dueDate: project.end_date, completed: Boolean(project.actual_end_date), today: toUtcDateOnly(new Date()) }),
   progress: Math.min(100, Math.round((toFiniteNumber(project.actual_hours) / Math.max(toFiniteNumber(project.estimated_hours), 1)) * 100))
 })
 
 const revalidateProjects = () => {
   revalidatePath('/[lang]/projects', 'page')
   revalidatePath('/[lang]/crm/clients', 'page')
-}
-
-const ensureProjectOptions = async () => {
-  const existing = await prisma.option.findMany({
-    where: { category: { in: Object.keys(DEFAULT_OPTIONS) } },
-    select: { category: true, value: true }
-  })
-
-  const keys = new Set(existing.map(option => `${option.category}:${option.value}`))
-  const creates = []
-
-  Object.entries(DEFAULT_OPTIONS).forEach(([category, options]) => {
-    options.forEach(([label, value, color_code, sort_order, is_default]) => {
-      if (!keys.has(`${category}:${value}`)) {
-        creates.push(prisma.option.create({ data: { category, label, value, color_code, sort_order, is_default, is_active: true } }))
-      }
-    })
-  })
-
-  if (creates.length) await prisma.$transaction(creates)
 }
 
 const validationPayload = payload => ({
@@ -225,15 +190,6 @@ const prepareProjectData = async (values, translations, current = null) => {
   }
 }
 
-const generateProjectCode = async transaction => {
-  const year = new Date().getUTCFullYear()
-  const prefix = `PRJ-${year}-`
-  const latest = await transaction.project.findFirst({ where: { project_code: { startsWith: prefix } }, select: { project_code: true }, orderBy: { project_code: 'desc' } })
-  const sequence = Number.parseInt(latest?.project_code.slice(prefix.length), 10)
-
-  return `${prefix}${String(Number.isFinite(sequence) ? sequence + 1 : 1).padStart(3, '0')}`
-}
-
 export const getProjects = async (payload = {}) => {
   const context = await getContext(payload, READ_PERMISSIONS)
 
@@ -258,8 +214,6 @@ export const getProjects = async (payload = {}) => {
   const today = toUtcDateOnly(new Date())
 
   try {
-    await ensureProjectOptions()
-
     const [totalCount, projects, active, totals, activeHours, overdueCount, setup, statuses, priorities] = await prisma.$transaction([
       prisma.project.count({ where }),
       prisma.project.findMany({ where, select: projectSelect, orderBy: [{ end_date: 'asc' }, { created_at: 'desc' }], skip: (page - 1) * limit, take: limit }),
@@ -284,8 +238,6 @@ export const getProjectFormOptions = async (payload = {}) => {
   if (!context.authorized) return { success: false, code: context.code, error: context.error }
 
   try {
-    await ensureProjectOptions()
-
     const [clients, staff, contracts, options, setup] = await Promise.all([
       prisma.crmclient.findMany({ where: { status: 'ACTIVE' }, select: { id: true, company_name: true, primary_contact_name: true }, orderBy: { company_name: 'asc' }, take: 500 }),
       prisma.hrmstaff.findMany({ where: { status: { not: 'TERMINATED' } }, select: staffSelect, orderBy: [{ first_name: 'asc' }, { last_name: 'asc' }], take: 500 }),
@@ -343,14 +295,18 @@ export const createProject = async (payload = {}) => {
   if (!prepared.success) return { success: false, code: 'VALIDATION_ERROR', error: prepared.error }
 
   try {
-    const created = await prisma.$transaction(async transaction => {
-      const projectCode = await generateProjectCode(transaction)
+    const created = await withSequentialNumberRetry(() => prisma.$transaction(async transaction => {
+      const projectCode = await nextSequentialNumber(transaction, 'project', {
+        prefix: `PRJ-${new Date().getUTCFullYear()}-`,
+        digits: 3
+      })
+
       const project = await transaction.project.create({ data: { ...prepared.data, project_code: projectCode } })
 
       await transaction.auditlog.create({ data: { user_id: context.session.user.id, action: 'PROJECT_CREATED', module: 'PROJECTS', details: { projectId: project.id, projectCode } } })
 
       return project
-    })
+    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable }))
 
     revalidateProjects()
 

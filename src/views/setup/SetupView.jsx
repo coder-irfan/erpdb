@@ -42,6 +42,7 @@ const getInitialForm = (settings, themeSettings = {}) => ({
   currency_code: settings.currency_code || 'AFN',
   usd_afn_exchange_rate: settings.usd_afn_exchange_rate || '65.0000',
   default_work_start: settings.default_work_start || '08:30',
+  weekend_days: settings.weekend_days || '5',
   default_work_end: settings.default_work_end || '17:30',
   primary_color_light: themeSettings.primaryColorLight || themeSettings.primaryColor || themeConfig.primaryColorLight,
   secondary_color_light:

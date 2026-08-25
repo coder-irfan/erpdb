@@ -12,6 +12,7 @@ import { prisma } from '@/libs/prisma'
 import { createStaffSchema, STAFF_STATUSES } from '@/schemas/hrm/staff'
 import { convertToBaseCurrency } from '@/utils/formatCurrency'
 import { getDictionary } from '@/utils/getDictionary'
+import { toUtcDateOnly } from '@/utils/utcDate'
 
 const STAFF_READ_PERMISSIONS = ['hrm:read', 'hrm_staff:read']
 const STAFF_CREATE_PERMISSIONS = ['hrm:write', 'hrm_staff:create']
@@ -44,6 +45,7 @@ const normalizeStaff = staff => ({
   guarantor_phone: staff.guarantor_phone,
   guarantor_license: staff.guarantor_license,
   join_date: staff.join_date.toISOString(),
+  termination_date: staff.termination_date?.toISOString() ?? null,
   contract_period: staff.contract_period,
   user_id: staff.user_id,
   status: staff.status,
@@ -99,6 +101,7 @@ const staffListSelect = {
   guarantor_phone: true,
   guarantor_license: true,
   join_date: true,
+  termination_date: true,
   contract_period: true,
   user_id: true,
   status: true,
@@ -168,7 +171,7 @@ const toStaffData = (values, exchangeRate, baseCurrency) => ({
   guarantor_name: nullableText(values.guarantor_name),
   guarantor_phone: nullableText(values.guarantor_phone),
   guarantor_license: nullableText(values.guarantor_license),
-  join_date: values.join_date instanceof Date ? values.join_date : new Date(`${values.join_date}T00:00:00.000Z`),
+  join_date: toUtcDateOnly(values.join_date),
   contract_period: nullableText(values.contract_period),
   user_id: values.user_id || null,
   status: values.status
@@ -186,6 +189,89 @@ const ensureUserAvailable = async (userId, staffId = null) => {
 }
 
 const revalidateStaffPage = () => revalidatePath('/[lang]/hrm/staff', 'page')
+
+const OFFBOARDING_STATUSES = new Set(['INACTIVE', 'TERMINATED'])
+const CLOSED_PROJECT_STATUSES = ['COMPLETED', 'CANCELLED', 'ARCHIVED']
+const CLOSED_TASK_STATUSES = ['COMPLETED', 'CANCELLED', 'ARCHIVED']
+
+const applyStaffOffboarding = async (transaction, { staffId, userIds, effectiveDate }) => {
+  const linkedUserIds = [...new Set(userIds.filter(Boolean))]
+
+  const [expiredContractStatus, rejectedLeaveStatus, activeProjects, activeTasks] = await Promise.all([
+    transaction.option.findUnique({
+      where: { category_value: { category: 'CONTRACT_STATUS', value: 'TERMINATED' } },
+      select: { id: true }
+    }),
+    transaction.option.findUnique({
+      where: { category_value: { category: 'LEAVE_STATUS', value: 'REJECTED' } },
+      select: { id: true }
+    }),
+    transaction.project.findMany({
+      where: {
+        OR: [{ project_manager_id: staffId }, { members: { some: { staff_id: staffId } } }],
+        status: { is: { value: { notIn: CLOSED_PROJECT_STATUSES } } }
+      },
+      select: { id: true }
+    }),
+    transaction.task.findMany({
+      where: {
+        assignees: { some: { staff_id: staffId } },
+        status: { is: { value: { notIn: CLOSED_TASK_STATUSES } } }
+      },
+      select: { id: true }
+    })
+  ])
+
+  if (!expiredContractStatus || !rejectedLeaveStatus) {
+    throw new Error('Offboarding statuses are not configured. Run the database seed.')
+  }
+
+  const projectIds = activeProjects.map(project => project.id)
+  const taskIds = activeTasks.map(task => task.id)
+
+  const [users, sessions, contracts, leaves, projectMemberships, taskAssignments, managedProjects] =
+    await Promise.all([
+      linkedUserIds.length
+        ? transaction.user.updateMany({
+            where: { id: { in: linkedUserIds } },
+            data: { account_status: 'INACTIVE' }
+          })
+        : { count: 0 },
+      linkedUserIds.length
+        ? transaction.session.deleteMany({ where: { userId: { in: linkedUserIds } } })
+        : { count: 0 },
+      transaction.hrmstaffcontract.updateMany({
+        where: { staff_id: staffId, status: { is: { value: 'ACTIVE' } } },
+        data: { status_id: expiredContractStatus.id, end_date: effectiveDate }
+      }),
+      transaction.hrmstaffleave.updateMany({
+        where: { staff_id: staffId, status: { is: { value: 'PENDING' } } },
+        data: { status_id: rejectedLeaveStatus.id }
+      }),
+      projectIds.length
+        ? transaction.projectmember.deleteMany({ where: { staff_id: staffId, project_id: { in: projectIds } } })
+        : { count: 0 },
+      taskIds.length
+        ? transaction.taskassignee.deleteMany({ where: { staff_id: staffId, task_id: { in: taskIds } } })
+        : { count: 0 },
+      projectIds.length
+        ? transaction.project.updateMany({
+            where: { id: { in: projectIds }, project_manager_id: staffId },
+            data: { project_manager_id: null }
+          })
+        : { count: 0 }
+    ])
+
+  return {
+    usersDisabled: users.count,
+    sessionsRevoked: sessions.count,
+    contractsClosed: contracts.count,
+    pendingLeavesRejected: leaves.count,
+    projectMembershipsRemoved: projectMemberships.count,
+    taskAssignmentsRemoved: taskAssignments.count,
+    projectManagerRolesCleared: managedProjects.count
+  }
+}
 
 export const getStaffList = async (payload = {}) => {
   const context = await getActionContext(payload, STAFF_READ_PERMISSIONS)
@@ -379,7 +465,7 @@ export const updateStaff = async (id, payload = {}) => {
     const [currentStaff, duplicateEmail, userAvailable, setup] = await Promise.all([
       prisma.hrmstaff.findUnique({
         where: { id: staffId },
-        select: { id: true, salary_exchange_rate: true }
+        select: { id: true, salary_exchange_rate: true, user_id: true, status: true, termination_date: true }
       }),
       prisma.hrmstaff.findFirst({
         where: { email: validation.output.email, NOT: { id: staffId } },
@@ -401,24 +487,48 @@ export const updateStaff = async (id, payload = {}) => {
       return { success: false, code: 'USER_UNAVAILABLE', error: context.translations.messages.userUnavailable }
     }
 
+    const effectiveDate =
+      OFFBOARDING_STATUSES.has(currentStaff.status) && currentStaff.termination_date
+        ? currentStaff.termination_date
+        : toUtcDateOnly(new Date())
+
     const updatedStaff = await prisma.$transaction(async transaction => {
+      const isOffboarding = OFFBOARDING_STATUSES.has(validation.output.status)
+
       const staff = await transaction.hrmstaff.update({
         where: { id: staffId },
-        data: toStaffData(validation.output, currentStaff.salary_exchange_rate, setup.currency_code),
+        data: {
+          ...toStaffData(validation.output, setup.usd_afn_exchange_rate, setup.currency_code),
+          termination_date: isOffboarding ? effectiveDate : null
+        },
         select: staffListSelect
       })
+
+      const offboarding = isOffboarding
+        ? await applyStaffOffboarding(transaction, {
+            staffId,
+            userIds: [currentStaff.user_id, staff.user_id],
+            effectiveDate
+          })
+        : null
 
       await transaction.auditlog.create({
         data: {
           user_id: context.session.user.id,
           action: 'HRM_STAFF_UPDATED',
           module: 'HRM',
-          details: { staffId: staff.id, staffName: `${staff.first_name} ${staff.last_name}`.trim() }
+          details: {
+            staffId: staff.id,
+            staffName: `${staff.first_name} ${staff.last_name}`.trim(),
+            previousStatus: currentStaff.status,
+            status: staff.status,
+            offboarding
+          }
         }
       })
 
       return staff
-    })
+    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable })
 
     revalidateStaffPage()
 
@@ -452,30 +562,54 @@ export const updateStaffStatus = async (id, newStatus, payload = {}) => {
   }
 
   try {
-    const currentStaff = await prisma.hrmstaff.findUnique({ where: { id: staffId }, select: { id: true } })
+    const currentStaff = await prisma.hrmstaff.findUnique({
+      where: { id: staffId },
+      select: { id: true, user_id: true, status: true, termination_date: true }
+    })
 
     if (!currentStaff) {
       return { success: false, code: 'STAFF_NOT_FOUND', error: context.translations.messages.notFound }
     }
 
+    const effectiveDate =
+      OFFBOARDING_STATUSES.has(currentStaff.status) && currentStaff.termination_date
+        ? currentStaff.termination_date
+        : toUtcDateOnly(new Date())
+
     const updatedStaff = await prisma.$transaction(async transaction => {
+      const isOffboarding = OFFBOARDING_STATUSES.has(newStatus)
+
       const staff = await transaction.hrmstaff.update({
         where: { id: staffId },
-        data: { status: newStatus },
+        data: { status: newStatus, termination_date: isOffboarding ? effectiveDate : null },
         select: staffListSelect
       })
+
+      const offboarding = isOffboarding
+        ? await applyStaffOffboarding(transaction, {
+            staffId,
+            userIds: [currentStaff.user_id],
+            effectiveDate
+          })
+        : null
 
       await transaction.auditlog.create({
         data: {
           user_id: context.session.user.id,
           action: 'HRM_STAFF_STATUS_UPDATED',
           module: 'HRM',
-          details: { staffId, staffName: `${staff.first_name} ${staff.last_name}`.trim(), status: newStatus }
+          details: {
+            staffId,
+            staffName: `${staff.first_name} ${staff.last_name}`.trim(),
+            previousStatus: currentStaff.status,
+            status: newStatus,
+            offboarding
+          }
         }
       })
 
       return staff
-    })
+    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable })
 
     revalidateStaffPage()
 

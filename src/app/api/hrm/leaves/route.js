@@ -7,6 +7,7 @@ import {
   calculateLeaveDays,
   createLeaveAttendance,
   getCurrentStaff,
+  hasOverlappingLeave,
   leaveSelect,
   normalizeLeave,
   parseLeaveDate
@@ -175,7 +176,7 @@ export async function POST(request) {
   try {
     const [staff, leaveType, pendingStatus, selectedStatus] = await Promise.all([
       prisma.hrmstaff.findFirst({ where: { id: validation.output.staff_id, status: { not: 'TERMINATED' } }, select: { id: true } }),
-      prisma.option.findFirst({ where: { id: validation.output.leave_type_id, category: 'LEAVE_TYPE', is_active: true }, select: { id: true } }),
+      prisma.option.findFirst({ where: { id: validation.output.leave_type_id, category: 'LEAVE_TYPE', is_active: true }, select: { id: true, is_paid_leave: true } }),
       prisma.option.findFirst({ where: { category: 'LEAVE_STATUS', value: 'PENDING', is_active: true }, select: { id: true, value: true } }),
       context.canManage && payload?.status_id
         ? prisma.option.findFirst({ where: { id: payload.status_id, category: 'LEAVE_STATUS', value: { in: ['PENDING', 'APPROVED'] }, is_active: true }, select: { id: true, value: true } })
@@ -189,16 +190,36 @@ export async function POST(request) {
     if (!leaveType) return responseError(context.dictionary.messages.leaveTypeNotFound, 404, 'LEAVE_TYPE_NOT_FOUND')
     if (context.canManage && payload?.status_id && !selectedStatus) return responseError(context.dictionary.validation.statusInvalid, 400, 'INVALID_STATUS')
     if (!status) return responseError(context.dictionary.messages.statusNotFound, 409, 'STATUS_NOT_CONFIGURED')
+    if (isApproved && context.staff?.id === validation.output.staff_id) {
+      return responseError(context.dictionary.messages.selfApprovalBlocked, 403, 'SELF_APPROVAL_BLOCKED')
+    }
+
+    const startDate = parseLeaveDate(validation.output.start_date)
+    const endDate = parseLeaveDate(validation.output.end_date)
 
     const created = await prisma.$transaction(async transaction => {
+      const overlap = await hasOverlappingLeave(transaction, {
+        staffId: validation.output.staff_id,
+        startDate,
+        endDate
+      })
+
+      if (overlap) {
+        const error = new Error('OVERLAPPING_LEAVE')
+
+        error.code = 'OVERLAPPING_LEAVE'
+        throw error
+      }
+
       const leave = await transaction.hrmstaffleave.create({
         data: {
           staff_id: validation.output.staff_id,
           leave_type_id: validation.output.leave_type_id,
           status_id: status.id,
-          start_date: parseLeaveDate(validation.output.start_date),
-          end_date: parseLeaveDate(validation.output.end_date),
+          start_date: startDate,
+          end_date: endDate,
           total_days: new Prisma.Decimal(totalDays),
+          is_paid: leaveType.is_paid_leave,
           reason: validation.output.reason || null,
           approved_by_id: isApproved ? context.staff?.id || null : null,
           approved_by_user_id: isApproved ? context.authorization.session.user.id : null
@@ -211,10 +232,13 @@ export async function POST(request) {
       await transaction.auditlog.create({ data: { user_id: context.authorization.session.user.id, action: 'LEAVE_CREATED', module: 'HRM', details: { leaveId: leave.id, staffId: leave.staff_id, totalDays } } })
 
       return leave
-    })
+    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable })
 
     return Response.json({ success: true, data: normalizeLeave(created), message: context.dictionary.messages.created }, { status: 201 })
   } catch (error) {
+    if (error?.code === 'OVERLAPPING_LEAVE') {
+      return responseError(context.dictionary.messages.overlappingLeave, 409, 'OVERLAPPING_LEAVE')
+    }
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2003') return responseError(context.dictionary.messages.invalidRelations, 409, 'INVALID_RELATIONS')
 
     return responseError(context.dictionary.messages.operationFailed, 500, 'LEAVE_CREATE_FAILED')

@@ -8,6 +8,7 @@ import { safeParse } from 'valibot'
 import { i18n } from '@/configs/i18n'
 import { getTasksDictionary } from '@/data/dictionaries/tasks'
 import { authorizeAction } from '@/libs/actionAuthorization'
+import { ACTIVE_OPERATIONAL_STATUSES, isOverdue } from '@/libs/financialStatuses'
 import { prisma } from '@/libs/prisma'
 import { createTaskSchema, logTaskHoursSchema } from '@/schemas/tasks'
 import { toUtcDateOnly } from '@/utils/contractDuration'
@@ -18,25 +19,10 @@ const READ_PERMISSIONS = ['tasks:read', 'tasks:read_assigned', 'tasks:write']
 const WRITE_PERMISSIONS = ['tasks:write']
 const SELF_UPDATE_PERMISSIONS = ['tasks:write', 'tasks:read_assigned']
 const DELETE_PERMISSIONS = ['tasks:delete']
-const ACTIVE_VALUES = ['ACTIVE', 'IN_PROGRESS']
+const ACTIVE_VALUES = ACTIVE_OPERATIONAL_STATUSES
 const COMPLETED_VALUES = ['COMPLETED', 'DONE']
 const DEFAULT_PAGE_SIZE = 10
 const MAX_PAGE_SIZE = 100
-
-const DEFAULT_OPTIONS = {
-  TASK_STATUS: [
-    ['To Do', 'TO_DO', 'secondary', 1, true],
-    ['In Progress', 'IN_PROGRESS', 'primary', 2, false],
-    ['Review', 'REVIEW', 'warning', 3, false],
-    ['Completed', 'COMPLETED', 'success', 4, false]
-  ],
-  TASK_PRIORITY: [
-    ['Low', 'LOW', 'success', 1, false],
-    ['Medium', 'MEDIUM', 'info', 2, true],
-    ['High', 'HIGH', 'warning', 3, false],
-    ['Urgent', 'URGENT', 'error', 4, false]
-  ]
-}
 
 const normalizeLocale = locale => (i18n.locales.includes(locale) ? locale : i18n.defaultLocale)
 const normalizeId = value => (typeof value === 'string' ? value.trim() : '')
@@ -116,7 +102,7 @@ const normalizeTask = task => {
     updated_at: iso(task.updated_at),
     created_by: withFullName(task.created_by),
     assignees: normalizedAssignees,
-    is_overdue: Boolean(task.due_date && task.due_date < today && !COMPLETED_VALUES.includes(task.status.value)),
+    is_overdue: isOverdue({ dueDate: task.due_date, completed: COMPLETED_VALUES.includes(task.status.value), today }),
     progress: Math.min(100, Math.round(toFiniteNumber(task.actual_hours) / Math.max(toFiniteNumber(task.estimated_hours), 1) * 100))
   }
 }
@@ -124,18 +110,6 @@ const normalizeTask = task => {
 const revalidateTasks = () => {
   revalidatePath('/[lang]/tasks', 'page')
   revalidatePath('/[lang]/projects', 'page')
-}
-
-const ensureTaskOptions = async () => {
-  const existing = await prisma.option.findMany({ where: { category: { in: Object.keys(DEFAULT_OPTIONS) } }, select: { category: true, value: true } })
-  const keys = new Set(existing.map(option => `${option.category}:${option.value}`))
-  const creates = []
-
-  Object.entries(DEFAULT_OPTIONS).forEach(([category, options]) => options.forEach(([label, value, color_code, sort_order, is_default]) => {
-    if (!keys.has(`${category}:${value}`)) creates.push(prisma.option.create({ data: { category, label, value, color_code, sort_order, is_default, is_active: true } }))
-  }))
-
-  if (creates.length) await prisma.$transaction(creates)
 }
 
 const validationPayload = payload => ({
@@ -191,8 +165,6 @@ export const getTasks = async (payload = {}) => {
   const today = toUtcDateOnly(new Date())
 
   try {
-    await ensureTaskOptions()
-
     const [totalCount, tasks, inProgress, overdue, hours, statuses, priorities] = await prisma.$transaction([
       prisma.task.count({ where: filters }),
       prisma.task.findMany({ where: filters, select: taskSelect, orderBy: [{ due_date: 'asc' }, { created_at: 'desc' }], ...(isKanban ? { take: 500 } : { skip: (page - 1) * limit, take: limit }) }),
@@ -215,7 +187,6 @@ export const getTaskFormOptions = async (payload = {}) => {
   if (!context.authorized) return { success: false, code: context.code, error: context.error }
 
   try {
-    await ensureTaskOptions()
     const projectWhere = context.globalRead ? {} : context.staffId ? { OR: [{ project_manager_id: context.staffId }, { members: { some: { staff_id: context.staffId } } }, { tasks: { some: visibilityWhere(context) } }] } : { id: '__NONE__' }
 
     const [projects, staff, options] = await Promise.all([

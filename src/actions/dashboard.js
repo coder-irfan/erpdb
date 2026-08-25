@@ -3,15 +3,16 @@
 import { i18n } from '@/configs/i18n'
 import { authorizeAction } from '@/libs/actionAuthorization'
 import { getCompanySetupRecord } from '@/libs/companySetup'
+import { ACTIVE_OPERATIONAL_STATUSES, CLOSED_LOAN_STATUSES } from '@/libs/financialStatuses'
 import { prisma } from '@/libs/prisma'
 import { hasPermission } from '@/utils/rbac'
 
 const PERIODS = new Set([6, 12])
 const CLOSED_LEADS = ['WON', 'LOST', 'CONVERTED', 'CLOSED']
 const CLOSED_CONTRACTS = ['EXPIRED', 'TERMINATED', 'CANCELLED', 'COMPLETED']
-const ACTIVE_PROJECTS = ['ACTIVE', 'IN_PROGRESS']
+const ACTIVE_PROJECTS = ACTIVE_OPERATIONAL_STATUSES
 const CLOSED_TASKS = ['COMPLETED', 'DONE', 'CANCELLED']
-const CLOSED_LOANS = ['CLOSED', 'REPAID', 'CANCELLED']
+const CLOSED_LOANS = CLOSED_LOAN_STATUSES
 
 const toNumber = value => {
   const number = Number(value ?? 0)

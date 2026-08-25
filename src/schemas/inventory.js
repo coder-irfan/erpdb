@@ -21,7 +21,15 @@ export const inventoryItemSchema = messages => object({
 
 export const inventoryAdjustmentSchema = messages => object({
   quantity_delta: pipe(string(messages.adjustmentInvalid), trim(), regex(SIGNED_INTEGER_PATTERN, messages.adjustmentInvalid)),
-  direction: picklist(['IN', 'OUT'], messages.required)
+  direction: picklist(['IN', 'OUT'], messages.required),
+  movement_type: optional(
+    picklist(['ADDITION', 'DEDUCTION', 'DAMAGE', 'RETURN', 'TRANSFER_IN', 'TRANSFER_OUT'], messages.required),
+    'ADDITION'
+  ),
+  occurred_at: optional(pipe(string(), trim()), ''),
+  reference_id: optional(pipe(string(), trim(), maxLength(191, messages.descriptionTooLong)), ''),
+  related_inventory_id: optional(pipe(string(), trim()), ''),
+  notes: optional(pipe(string(), trim(), maxLength(2000, messages.descriptionTooLong)), '')
 })
 
 export const inventoryCategorySchema = messages => object({

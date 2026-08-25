@@ -94,7 +94,7 @@ const PrintLayout = ({
               <div className='text-sm font-semibold text-gray-800'>{text.authorizedRepresentative}</div>
               <div className='mt-1 text-xs font-medium text-gray-600'>{authorizedName || setup?.signatory_name || companyName}</div>
               {(authorizedTitle || setup?.signatory_title) && <div className='text-[11px] text-gray-500'>{authorizedTitle || setup.signatory_title}</div>}
-              <div className='enterprise-stamp-box absolute right-3 top-9 flex items-center justify-center'>
+              <div className='enterprise-stamp-box absolute end-3 top-9 flex items-center justify-center'>
                 {setup?.signatory_stamp ? (
                   <img
                     src={setup.signatory_stamp}

@@ -21,7 +21,7 @@ const InvoiceTableView = ({ data, loading, statusUpdating, page, rowsPerPage, lo
     <EntityActionsMenu
       actions={[
         { label: dictionary.actions.viewPrint, icon: 'tabler-printer', onClick: () => onView(invoice) },
-        canWrite && !invoice.payment_income && !['PAID', 'CANCELLED'].includes(invoice.status.value) && {
+        canWrite && Number(invoice.remaining_balance) > 0.005 && !['PAID', 'CANCELLED'].includes(invoice.status.value) && {
           label: dictionary.actions.recordPayment,
           icon: 'tabler-cash',
           onClick: () => onPay(invoice)
@@ -40,7 +40,7 @@ const InvoiceTableView = ({ data, loading, statusUpdating, page, rowsPerPage, lo
       ]}
       statusOptions={
         canWrite && !invoice.payment_income && invoice.status.value !== 'PAID'
-          ? data.statuses.filter(status => status.value !== 'PAID')
+          ? data.statuses.filter(status => !['PAID', 'PARTIALLY_PAID'].includes(status.value))
           : []
       }
       currentStatus={invoice.status_id}
@@ -123,10 +123,10 @@ const InvoiceTableView = ({ data, loading, statusUpdating, page, rowsPerPage, lo
           <th>{dictionary.table.invoiceContract}</th>
           <th>{dictionary.table.client}</th>
           <th>{dictionary.table.issueDue}</th>
-          <th className='text-right'>{dictionary.table.amountCurrency}</th>
-          <th className='text-right'>{dictionary.table.baseAmount}</th>
+          <th className='text-end'>{dictionary.table.amountCurrency}</th>
+          <th className='text-end'>{dictionary.table.baseAmount}</th>
           <th>{dictionary.table.status}</th>
-          <th className='text-right'>{dictionary.table.actions}</th>
+          <th className='text-end'>{dictionary.table.actions}</th>
         </tr></thead>
         <tbody>
           {loading ? <TableSkeletonRows columns={7} /> : data.invoices.length === 0 ? (
@@ -152,13 +152,13 @@ const InvoiceTableView = ({ data, loading, statusUpdating, page, rowsPerPage, lo
                     <Typography variant='caption' className={`whitespace-nowrap ${invoice.is_overdue ? 'font-semibold text-error' : 'text-textSecondary'}`}>{toDateInputValue(invoice.due_date)}</Typography>
                   </div>
                 </td>
-                <td className='text-right'>
+                <td className='text-end'>
                   <Typography variant='body2' className='whitespace-nowrap font-semibold'>{formatCurrency(invoice.amount, locale, invoice.currency)}</Typography>
                   <Typography variant='caption' color='text.secondary'>{invoice.currency}</Typography>
                 </td>
-                <td className='whitespace-nowrap text-right font-semibold'>{formatCurrency(invoice.amount_base, locale, data.baseCurrency)}</td>
+                <td className='whitespace-nowrap text-end font-semibold'>{formatCurrency(invoice.amount_base, locale, data.baseCurrency)}</td>
                 <td><Chip size='small' variant='tonal' color={STATUS_COLORS[displayStatus] || 'default'} label={invoice.is_overdue ? dictionary.status.OVERDUE : invoice.status.label} /></td>
-                <td className='text-right' onClick={event => event.stopPropagation()}>
+                <td className='text-end' onClick={event => event.stopPropagation()}>
                   {renderActions(invoice)}
                 </td>
               </tr>

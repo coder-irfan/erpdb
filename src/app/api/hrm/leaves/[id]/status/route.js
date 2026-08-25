@@ -1,5 +1,7 @@
+import { Prisma } from '@prisma/client'
+
 import { authorizeAction } from '@/libs/actionAuthorization'
-import { LEAVE_WRITE_PERMISSIONS, createLeaveAttendance, getCurrentStaff, leaveSelect, normalizeLeave } from '@/libs/hrmLeaves'
+import { LEAVE_WRITE_PERMISSIONS, createLeaveAttendance, getCurrentStaff, hasOverlappingLeave, leaveSelect, normalizeLeave, removeLeaveAttendance } from '@/libs/hrmLeaves'
 import { prisma } from '@/libs/prisma'
 import { LEAVE_DECISIONS } from '@/schemas/hrm/leaves'
 import { getDictionary } from '@/utils/getDictionary'
@@ -38,10 +40,29 @@ export async function PATCH(request, routeContext) {
 
   if (!status) return responseError(dictionary.messages.statusNotFound, 409, 'STATUS_NOT_CONFIGURED')
   if (!existing) return responseError(dictionary.messages.notFound, 404, 'LEAVE_NOT_FOUND')
+  if (payload.status === 'APPROVED' && currentStaff?.id === existing.staff_id) {
+    return responseError(dictionary.messages.selfApprovalBlocked, 403, 'SELF_APPROVAL_BLOCKED')
+  }
 
   try {
     const updated = await prisma.$transaction(async transaction => {
-      await transaction.hrmstafftimesheet.deleteMany({ where: { notes: `Approved leave request ${id}`, status: 'LEAVE' } })
+      if (payload.status === 'APPROVED') {
+        const overlap = await hasOverlappingLeave(transaction, {
+          staffId: existing.staff_id,
+          startDate: existing.start_date,
+          endDate: existing.end_date,
+          excludeId: id
+        })
+
+        if (overlap) {
+          const error = new Error('OVERLAPPING_LEAVE')
+
+          error.code = 'OVERLAPPING_LEAVE'
+          throw error
+        }
+      }
+
+      await removeLeaveAttendance(transaction, id)
 
       const leave = await transaction.hrmstaffleave.update({
         where: { id },
@@ -58,10 +79,14 @@ export async function PATCH(request, routeContext) {
       await transaction.auditlog.create({ data: { user_id: authorization.session.user.id, action: `LEAVE_${payload.status}`, module: 'HRM', details: { leaveId: id, staffId: leave.staff_id, approvedByStaffId: currentStaff?.id || null } } })
 
       return leave
-    })
+    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable })
 
     return Response.json({ success: true, data: normalizeLeave(updated), message: payload.status === 'APPROVED' ? dictionary.messages.approved : dictionary.messages.rejected })
-  } catch {
+  } catch (error) {
+    if (error?.code === 'OVERLAPPING_LEAVE') {
+      return responseError(dictionary.messages.overlappingLeave, 409, 'OVERLAPPING_LEAVE')
+    }
+
     return responseError(dictionary.messages.operationFailed, 500, 'LEAVE_STATUS_UPDATE_FAILED')
   }
 }

@@ -1,16 +1,8 @@
+import { toUtcDateOnly } from '@/utils/utcDate'
+
+export { toUtcDateOnly } from '@/utils/utcDate'
+
 const DAY_IN_MS = 24 * 60 * 60 * 1000
-
-export const toUtcDateOnly = value => {
-  if (value instanceof Date) {
-    return new Date(Date.UTC(value.getUTCFullYear(), value.getUTCMonth(), value.getUTCDate()))
-  }
-
-  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return null
-
-  const date = new Date(`${value}T00:00:00.000Z`)
-
-  return Number.isNaN(date.getTime()) ? null : date
-}
 
 export const parseDurationOption = option => {
   const source = [option?.label, option?.value, option?.description].filter(Boolean).join(' ')
