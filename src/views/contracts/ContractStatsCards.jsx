@@ -46,18 +46,42 @@ const ContractStatsCards = ({ summary, locale, currency, dictionary, variant = '
   ]
 
   const otherCards = [
-    { label: 'Total Contracts', value: summary.totalCount || 0, detail: 'Other and third-party agreements', icon: 'tabler-files', tone: 'primary' },
-    { label: 'Active', value: summary.activeCount, detail: 'Currently active', icon: 'tabler-file-check', tone: 'success' },
-    { label: 'Expiring Soon', value: summary.expiringCount, detail: 'Within 30 days', icon: 'tabler-clock-exclamation', tone: 'warning' },
-    { label: 'Total Value', value: formatCurrency(toFiniteNumber(summary.totalValue), locale, currency), detail: dictionary.kpis.baseCurrency.replace('{currency}', currency), icon: 'tabler-cash', tone: 'info' }
+    {
+      label: 'Total Contracts',
+      value: summary.totalCount || 0,
+      detail: 'Other and third-party agreements',
+      icon: 'tabler-files',
+      tone: 'primary'
+    },
+    {
+      label: 'Active',
+      value: summary.activeCount,
+      detail: 'Currently active',
+      icon: 'tabler-file-check',
+      tone: 'success'
+    },
+    {
+      label: 'Expiring Soon',
+      value: summary.expiringCount,
+      detail: 'Within 30 days',
+      icon: 'tabler-clock-exclamation',
+      tone: 'warning'
+    },
+    {
+      label: 'Total Value',
+      value: formatCurrency(toFiniteNumber(summary.totalValue), locale, currency),
+      detail: dictionary.kpis.baseCurrency.replace('{currency}', currency),
+      icon: 'tabler-cash',
+      tone: 'info'
+    }
   ]
 
   const cards = variant === 'others' ? otherCards : standardCards
 
   return (
-     <div className='no-scrollbar flex w-full snap-x items-center gap-4 overflow-x-auto xl:grid xl:grid-cols-4 xl:overflow-visible'>
+    <div className='no-scrollbar flex w-full snap-x items-center gap-4 overflow-x-auto xl:grid xl:grid-cols-4 xl:overflow-visible pb-4'>
       {cards.map(card => (
-        <Card key={card.label} className='min-w-[280px] snap-start xl:min-w-0'>
+        <Card key={card.label} className='min-w-[265px] snap-start xl:min-w-0 border border-divider/70 shadow-sm'>
           <CardContent className='flex items-center justify-between gap-4'>
             <div className='min-is-0'>
               <Typography variant='body2' color='text.secondary' className='truncate'>

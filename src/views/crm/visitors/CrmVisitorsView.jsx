@@ -15,6 +15,7 @@ import TableFiltersPopover from '@/components/table/TableFiltersPopover'
 
 import VisitorConvertDialog from './VisitorConvertDialog'
 import VisitorFormDrawer from './VisitorFormDrawer'
+import VisitorDetailDialog from './VisitorDetailDialog'
 import VisitorStatsCards from './VisitorStatsCards'
 import VisitorTableView from './VisitorTableView'
 
@@ -37,6 +38,7 @@ const CrmVisitorsView = ({ locale, dictionary, canWrite, canDelete }) => {
   const [loading, setLoading] = useState(true)
   const [formOpen, setFormOpen] = useState(false)
   const [editingVisitor, setEditingVisitor] = useState(null)
+  const [viewingVisitor, setViewingVisitor] = useState(null)
   const [convertTarget, setConvertTarget] = useState(null)
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [busyId, setBusyId] = useState(null)
@@ -142,7 +144,7 @@ const CrmVisitorsView = ({ locale, dictionary, canWrite, canDelete }) => {
   return (
     <div className='flex flex-col md:gap-4 gap-2'>
       <VisitorStatsCards summary={data.summary} dictionary={dictionary} />
-      <Card>
+      <Card className='border border-divider/70 shadow-sm'>
         <CardContent className='flex flex-wrap items-center justify-between gap-4 border-be border-divider'>
           <CustomTextField
             label={dictionary.filters.search}
@@ -152,7 +154,7 @@ const CrmVisitorsView = ({ locale, dictionary, canWrite, canDelete }) => {
             className='is-full sm:is-[340px]'
             slotProps={{ input: { startAdornment: <i className='tabler-search' /> } }}
           />
-          <div className='flex is-full flex-wrap items-center gap-3 sm:is-auto sm:justify-end'>
+          <div className='grid is-full grid-cols-2 gap-2 sm:flex sm:is-auto sm:flex-wrap sm:gap-3 sm:justify-end'>
             <TableFiltersPopover
               activeCount={Number(Boolean(hostId)) + Number(Boolean(status)) + Number(dateRange !== 'TODAY')}
               locale={locale}
@@ -221,12 +223,14 @@ const CrmVisitorsView = ({ locale, dictionary, canWrite, canDelete }) => {
               <Button
                 variant='contained'
                 startIcon={<i className='tabler-user-plus' />}
+                aria-label={dictionary.actions.add}
+                title={dictionary.actions.add}
                 onClick={() => {
                   setEditingVisitor(null)
                   setFormOpen(true)
                 }}
               >
-                {dictionary.actions.add}
+                <span>{dictionary.actions.add}</span>
               </Button>
             )}
           </div>
@@ -253,6 +257,7 @@ const CrmVisitorsView = ({ locale, dictionary, canWrite, canDelete }) => {
             setFormOpen(true)
           }}
           onDelete={setDeleteTarget}
+          onView={setViewingVisitor}
           onAdd={() => {
             setEditingVisitor(null)
             setFormOpen(true)
@@ -267,6 +272,18 @@ const CrmVisitorsView = ({ locale, dictionary, canWrite, canDelete }) => {
         dictionary={dictionary}
         onClose={() => setFormOpen(false)}
         onSaved={loadData}
+      />
+      <VisitorDetailDialog
+        open={Boolean(viewingVisitor)}
+        visitor={viewingVisitor}
+        locale={locale}
+        dictionary={dictionary}
+        purposeLabel={visitor =>
+          data.options.purposes?.find(option => option.value === visitor.purpose)?.label ||
+          dictionary.purposes[visitor.purpose] ||
+          visitor.purpose
+        }
+        onClose={() => setViewingVisitor(null)}
       />
       <VisitorConvertDialog
         open={Boolean(convertTarget)}

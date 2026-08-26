@@ -28,6 +28,7 @@ const DashboardTablePagination = ({
   onRowsPerPageChange
 }) => (
   <TablePagination
+    className='overflow-x-auto text-xs sm:text-sm'
     component='div'
     count={count}
     page={page}

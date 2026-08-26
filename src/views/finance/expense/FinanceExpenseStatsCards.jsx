@@ -39,9 +39,9 @@ const FinanceExpenseStatsCards = ({ summary, locale, currency, dictionary }) => 
   ]
 
   return (
-    <div className='no-scrollbar flex w-full snap-x items-center gap-4 overflow-x-auto xl:grid xl:grid-cols-4 xl:overflow-visible'>
+    <div className='no-scrollbar flex w-full snap-x items-center gap-4 overflow-x-auto xl:grid xl:grid-cols-4 xl:overflow-visible pb-4'>
       {cards.map(card => (
-        <Card key={card.label} className='min-w-[280px] snap-start xl:min-w-0'>
+        <Card key={card.label} className='min-w-[265px] snap-start xl:min-w-0 border border-divider/70 shadow-sm'>
           <CardContent className='flex items-center justify-between gap-4'>
             <div className='min-is-0'>
               <Typography variant='body2' color='text.secondary' className='truncate'>

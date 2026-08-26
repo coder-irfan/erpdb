@@ -68,7 +68,9 @@ const useFormatters = locale =>
     return {
       number: value => new Intl.NumberFormat(resolvedLocale, { maximumFractionDigits: 1 }).format(Number(value || 0)),
       compact: value =>
-        new Intl.NumberFormat(resolvedLocale, { notation: 'compact', maximumFractionDigits: 1 }).format(Number(value || 0)),
+        new Intl.NumberFormat(resolvedLocale, { notation: 'compact', maximumFractionDigits: 1 }).format(
+          Number(value || 0)
+        ),
       date: value =>
         value
           ? new Intl.DateTimeFormat(resolvedLocale, { month: 'short', day: 'numeric', year: 'numeric' }).format(
@@ -151,7 +153,9 @@ const KpiCard = ({ title, value, hint, trend, series, color = 'primary', icon, v
             {value}
           </Typography>
         </div>
-        <span className={`flex size-9 shrink-0 items-center justify-center rounded-xl ${TONE_CLASSES[color] || TONE_CLASSES.primary}`}>
+        <span
+          className={`flex size-9 shrink-0 items-center justify-center rounded-xl ${TONE_CLASSES[color] || TONE_CLASSES.primary}`}
+        >
           <i className={`${icon} text-xl`} aria-hidden='true' />
         </span>
       </div>
@@ -163,7 +167,8 @@ const KpiCard = ({ title, value, hint, trend, series, color = 'primary', icon, v
                 trend >= 0 ? 'bg-successLight text-success' : 'bg-errorLight text-error'
               }`}
             >
-              {trend >= 0 ? '+' : ''}{trend.toFixed(1)}%
+              {trend >= 0 ? '+' : ''}
+              {trend.toFixed(1)}%
             </span>
           )}
           <Typography variant='caption' color='text.secondary' className='mt-1 block max-is-[155px] truncate'>
@@ -179,10 +184,10 @@ const KpiCard = ({ title, value, hint, trend, series, color = 'primary', icon, v
 )
 
 const KpiStrip = ({ items }) => (
-  <div className='no-scrollbar overflow-x-auto pb-1'>
+  <div className='no-scrollbar overflow-x-auto'>
     <div className='grid min-is-max grid-cols-4 gap-4 lg:min-is-0'>
       {items.map(({ key, ...item }) => (
-        <div key={key} className='is-[260px] lg:is-auto'>
+        <div key={key} className='is-[265px] lg:is-auto'>
           <KpiCard key={key} {...item} />
         </div>
       ))}
@@ -220,8 +225,18 @@ const CashFlowChart = ({ data, currency, locale, dictionary, loading, periodCont
                 <stop offset='100%' stopColor={COLORS.primary} stopOpacity={0.02} />
               </linearGradient>
             </defs>
-            <CartesianGrid stroke='var(--mui-palette-divider)' strokeOpacity={0.55} strokeDasharray='3 3' vertical={false} />
-            <XAxis dataKey='month' axisLine={false} tickLine={false} tick={{ fill: 'var(--mui-palette-text-secondary)', fontSize: 11 }} />
+            <CartesianGrid
+              stroke='var(--mui-palette-divider)'
+              strokeOpacity={0.55}
+              strokeDasharray='3 3'
+              vertical={false}
+            />
+            <XAxis
+              dataKey='month'
+              axisLine={false}
+              tickLine={false}
+              tick={{ fill: 'var(--mui-palette-text-secondary)', fontSize: 11 }}
+            />
             <YAxis
               axisLine={false}
               tickLine={false}
@@ -236,7 +251,9 @@ const CashFlowChart = ({ data, currency, locale, dictionary, loading, periodCont
                 name === 'income' ? dictionary.cashFlow.income : dictionary.cashFlow.expenses
               ]}
             />
-            <Legend formatter={name => (name === 'income' ? dictionary.cashFlow.income : dictionary.cashFlow.expenses)} />
+            <Legend
+              formatter={name => (name === 'income' ? dictionary.cashFlow.income : dictionary.cashFlow.expenses)}
+            />
             <Area type='monotone' dataKey='income' stroke={COLORS.primary} strokeWidth={2.5} fill='url(#cashIncome)' />
             <Line
               type='monotone'
@@ -296,9 +313,14 @@ const DistributionChart = ({ finance, currency, locale, dictionary }) => {
             <ResponsiveContainer width='100%' height='100%' initialDimension={{ width: 240, height: 230 }}>
               <PieChart>
                 <Pie data={data} dataKey='value' innerRadius={68} outerRadius={92} paddingAngle={3} stroke='none'>
-                  {data.map(item => <Cell key={item.id} fill={resolveColor(item.color)} />)}
+                  {data.map(item => (
+                    <Cell key={item.id} fill={resolveColor(item.color)} />
+                  ))}
                 </Pie>
-                <ChartTooltip contentStyle={tooltipStyle} formatter={value => formatCurrency(value, locale, currency)} />
+                <ChartTooltip
+                  contentStyle={tooltipStyle}
+                  formatter={value => formatCurrency(value, locale, currency)}
+                />
               </PieChart>
             </ResponsiveContainer>
           </div>
@@ -306,8 +328,13 @@ const DistributionChart = ({ finance, currency, locale, dictionary }) => {
             {data.slice(0, 6).map(item => (
               <div key={item.id} className='flex items-center justify-between gap-3'>
                 <div className='flex min-is-0 items-center gap-2'>
-                  <span className='size-2.5 shrink-0 rounded-full' style={{ backgroundColor: resolveColor(item.color) }} />
-                  <Typography variant='body2' className='truncate'>{item.label}</Typography>
+                  <span
+                    className='size-2.5 shrink-0 rounded-full'
+                    style={{ backgroundColor: resolveColor(item.color) }}
+                  />
+                  <Typography variant='body2' className='truncate'>
+                    {item.label}
+                  </Typography>
                 </div>
                 <Typography variant='caption' className='whitespace-nowrap font-semibold'>
                   {Math.round((item.value / total) * 100)}%
@@ -334,16 +361,25 @@ const FunnelCard = ({ pipeline, currency, locale, dictionary }) => {
           {pipeline.funnel.map(item => (
             <div key={item.id} className='grid grid-cols-[minmax(90px,0.8fr)_2fr_auto] items-center gap-3'>
               <div className='min-is-0'>
-                <Typography variant='body2' className='truncate font-medium'>{item.label}</Typography>
-                <Typography variant='caption' color='text.secondary'>{formatCurrency(item.value, locale, currency)}</Typography>
+                <Typography variant='body2' className='truncate font-medium'>
+                  {item.label}
+                </Typography>
+                <Typography variant='caption' color='text.secondary'>
+                  {formatCurrency(item.value, locale, currency)}
+                </Typography>
               </div>
               <div className='h-2.5 overflow-hidden rounded-full bg-actionHover'>
                 <div
                   className='h-full rounded-full transition-[width] duration-300'
-                  style={{ width: `${Math.max(item.count ? 8 : 0, (item.count / max) * 100)}%`, backgroundColor: resolveColor(item.color) }}
+                  style={{
+                    width: `${Math.max(item.count ? 8 : 0, (item.count / max) * 100)}%`,
+                    backgroundColor: resolveColor(item.color)
+                  }}
                 />
               </div>
-              <span className='min-is-8 rounded-full bg-actionHover px-2 py-1 text-center text-xs font-bold'>{item.count}</span>
+              <span className='min-is-8 rounded-full bg-actionHover px-2 py-1 text-center text-xs font-bold'>
+                {item.count}
+              </span>
             </div>
           ))}
         </div>
@@ -366,7 +402,9 @@ const ProjectTrackers = ({ projects, dictionary, formatters }) => (
             <div key={project.id} className='py-3'>
               <div className='flex items-start justify-between gap-3'>
                 <div className='min-is-0'>
-                  <Typography variant='body2' className='truncate font-semibold'>{project.title}</Typography>
+                  <Typography variant='body2' className='truncate font-semibold'>
+                    {project.title}
+                  </Typography>
                   <Typography variant='caption' color='text.secondary' className='block truncate'>
                     {project.code} · {project.client}
                   </Typography>
@@ -375,16 +413,31 @@ const ProjectTrackers = ({ projects, dictionary, formatters }) => (
                   size='small'
                   variant='tonal'
                   color={overdue ? 'error' : 'secondary'}
-                  label={replace(overdue ? dictionary.projects.overdue : dictionary.projects.due, { date: formatters.date(project.endDate) })}
+                  label={replace(overdue ? dictionary.projects.overdue : dictionary.projects.due, {
+                    date: formatters.date(project.endDate)
+                  })}
                 />
               </div>
               <div className='mt-2 flex items-center gap-3'>
-                <LinearProgress variant='determinate' value={project.taskProgress} className='h-1.5 flex-1 rounded-full' />
-                <Typography variant='caption' className='min-is-9 text-end font-bold'>{project.taskProgress}%</Typography>
+                <LinearProgress
+                  variant='determinate'
+                  value={project.taskProgress}
+                  className='h-1.5 flex-1 rounded-full'
+                />
+                <Typography variant='caption' className='min-is-9 text-end font-bold'>
+                  {project.taskProgress}%
+                </Typography>
               </div>
               <div className='mt-1.5 flex flex-wrap justify-between gap-2 text-[11px] text-textSecondary'>
-                <span>{replace(dictionary.projects.tasks, { completed: project.completedTasks, total: project.totalTasks })}</span>
-                <span>{replace(dictionary.projects.hours, { actual: formatters.number(project.loggedHours), estimated: formatters.number(project.estimatedHours) })}</span>
+                <span>
+                  {replace(dictionary.projects.tasks, { completed: project.completedTasks, total: project.totalTasks })}
+                </span>
+                <span>
+                  {replace(dictionary.projects.hours, {
+                    actual: formatters.number(project.loggedHours),
+                    estimated: formatters.number(project.estimatedHours)
+                  })}
+                </span>
               </div>
             </div>
           )
@@ -398,14 +451,24 @@ const ProjectTrackers = ({ projects, dictionary, formatters }) => (
 
 const DenseRow = ({ icon, color = 'primary', title, subtitle, value, action }) => (
   <div className='flex min-is-0 items-center gap-3 py-2.5'>
-    <span className={`flex size-8 shrink-0 items-center justify-center rounded-lg ${TONE_CLASSES[color] || TONE_CLASSES.primary}`}>
+    <span
+      className={`flex size-8 shrink-0 items-center justify-center rounded-lg ${TONE_CLASSES[color] || TONE_CLASSES.primary}`}
+    >
       <i className={`${icon} text-base`} aria-hidden='true' />
     </span>
     <div className='min-is-0 flex-1'>
-      <Typography variant='body2' className='truncate font-medium'>{title}</Typography>
-      <Typography variant='caption' color='text.secondary' className='block truncate'>{subtitle}</Typography>
+      <Typography variant='body2' className='truncate font-medium'>
+        {title}
+      </Typography>
+      <Typography variant='caption' color='text.secondary' className='block truncate'>
+        {subtitle}
+      </Typography>
     </div>
-    {value && <Typography variant='caption' className='whitespace-nowrap font-bold'>{value}</Typography>}
+    {value && (
+      <Typography variant='caption' className='whitespace-nowrap font-bold'>
+        {value}
+      </Typography>
+    )}
     {action}
   </div>
 )
@@ -415,7 +478,11 @@ const OutstandingCard = ({ items, dictionary, locale, currency, formatters }) =>
     <PanelHeader
       title={dictionary.urgent.outstanding}
       subtitle={dictionary.urgent.outstandingHint}
-      action={<Button component={Link} href={`/${locale}/finance/income`} size='small' variant='text'>{dictionary.common.viewAll}</Button>}
+      action={
+        <Button component={Link} href={`/${locale}/finance/income`} size='small' variant='text'>
+          {dictionary.common.viewAll}
+        </Button>
+      }
     />
     {items.length ? (
       <div className='divide-y divide-divider px-4 pb-2'>
@@ -428,14 +495,22 @@ const OutstandingCard = ({ items, dictionary, locale, currency, formatters }) =>
             subtitle={`${item.reference} · ${replace(dictionary.urgent.due, { date: formatters.date(item.dueDate) })}`}
             value={formatCurrency(item.amountBase, locale, currency)}
             action={
-              <Button component={Link} href={`/${locale}/finance/income`} size='small' variant='tonal' className='min-is-0 px-2'>
+              <Button
+                component={Link}
+                href={`/${locale}/finance/income`}
+                size='small'
+                variant='tonal'
+                className='min-is-0 px-2'
+              >
                 <i className='tabler-arrow-up-right text-base' />
               </Button>
             }
           />
         ))}
       </div>
-    ) : <EmptyInline message={dictionary.urgent.noOutstanding} />}
+    ) : (
+      <EmptyInline message={dictionary.urgent.noOutstanding} />
+    )}
   </Card>
 )
 
@@ -455,7 +530,9 @@ const ContractExpiryCard = ({ items, dictionary, locale, formatters }) => (
           />
         ))}
       </div>
-    ) : <EmptyInline message={dictionary.urgent.noContracts} />}
+    ) : (
+      <EmptyInline message={dictionary.urgent.noContracts} />
+    )}
   </Card>
 )
 
@@ -481,7 +558,9 @@ const LoanCard = ({ urgent, dictionary, locale, currency }) => (
           />
         ))}
       </div>
-    ) : <EmptyInline message={dictionary.urgent.noLoans} />}
+    ) : (
+      <EmptyInline message={dictionary.urgent.noLoans} />
+    )}
   </Card>
 )
 
@@ -501,7 +580,9 @@ const InventoryCard = ({ items, dictionary }) => (
           />
         ))}
       </div>
-    ) : <EmptyInline message={dictionary.urgent.noInventory} />}
+    ) : (
+      <EmptyInline message={dictionary.urgent.noInventory} />
+    )}
   </Card>
 )
 
@@ -553,7 +634,9 @@ const DashboardHome = ({ initialData, dictionary }) => {
       key: 'revenue',
       title: dictionary.kpis.revenue,
       value: formatCurrency(finance.kpis.revenue, data.locale, currency),
-      hint: replace(dictionary.kpis.revenueHint, { amount: formatCurrency(finance.kpis.pendingRevenue, data.locale, currency) }),
+      hint: replace(dictionary.kpis.revenueHint, {
+        amount: formatCurrency(finance.kpis.pendingRevenue, data.locale, currency)
+      }),
       trend: finance.kpis.revenueGrowth,
       series: finance.kpis.revenueSparkline,
       color: 'primary',
@@ -579,23 +662,56 @@ const DashboardHome = ({ initialData, dictionary }) => {
       color: 'warning',
       icon: 'tabler-briefcase-2'
     },
-    workforce && !operations && {
-      key: 'workforce',
-      title: dictionary.kpis.workforce,
-      value: `${workforce.checkedIn} / ${workforce.active}`,
-      hint: replace(dictionary.kpis.workforceHint, { rate: workforce.attendanceRate }),
-      series: workforce.sparkline,
-      color: 'success',
-      icon: 'tabler-users-group'
-    }
+    workforce &&
+      !operations && {
+        key: 'workforce',
+        title: dictionary.kpis.workforce,
+        value: `${workforce.checkedIn} / ${workforce.active}`,
+        hint: replace(dictionary.kpis.workforceHint, { rate: workforce.attendanceRate }),
+        series: workforce.sparkline,
+        color: 'success',
+        icon: 'tabler-users-group'
+      }
   ].filter(Boolean)
 
   const personalKpis = personal
     ? [
-        { key: 'tasks', title: dictionary.personal.openTasks, value: personal.openTasks, hint: dictionary.personal.assigned, series: [0, personal.openTasks], color: 'primary', icon: 'tabler-list-check' },
-        { key: 'overdue', title: dictionary.personal.overdue, value: personal.overdueTasks, hint: dictionary.personal.needsAttention, series: [0, personal.overdueTasks], color: 'error', icon: 'tabler-alert-triangle' },
-        { key: 'hours', title: dictionary.personal.hours, value: `${formatters.number(personal.monthHours)}h`, hint: dictionary.personal.thisMonth, series: [0, personal.monthHours], color: 'info', icon: 'tabler-clock-hour-4' },
-        { key: 'loan', title: dictionary.personal.loan, value: formatCurrency(personal.loans.balance, data.locale, currency), hint: replace(dictionary.personal.loanHint, { count: personal.loans.count }), series: [0, personal.loans.balance], color: 'warning', icon: 'tabler-coins' }
+        {
+          key: 'tasks',
+          title: dictionary.personal.openTasks,
+          value: personal.openTasks,
+          hint: dictionary.personal.assigned,
+          series: [0, personal.openTasks],
+          color: 'primary',
+          icon: 'tabler-list-check'
+        },
+        {
+          key: 'overdue',
+          title: dictionary.personal.overdue,
+          value: personal.overdueTasks,
+          hint: dictionary.personal.needsAttention,
+          series: [0, personal.overdueTasks],
+          color: 'error',
+          icon: 'tabler-alert-triangle'
+        },
+        {
+          key: 'hours',
+          title: dictionary.personal.hours,
+          value: `${formatters.number(personal.monthHours)}h`,
+          hint: dictionary.personal.thisMonth,
+          series: [0, personal.monthHours],
+          color: 'info',
+          icon: 'tabler-clock-hour-4'
+        },
+        {
+          key: 'loan',
+          title: dictionary.personal.loan,
+          value: formatCurrency(personal.loans.balance, data.locale, currency),
+          hint: replace(dictionary.personal.loanHint, { count: personal.loans.count }),
+          series: [0, personal.loans.balance],
+          color: 'warning',
+          icon: 'tabler-coins'
+        }
       ]
     : []
 
@@ -617,7 +733,9 @@ const DashboardHome = ({ initialData, dictionary }) => {
         <div className='flex min-is-0 items-center gap-3'>
           <UserAvatar user={data.user} size={44} />
           <div className='min-is-0'>
-            <Typography variant='h5' className='truncate font-bold'>{dictionary.title}</Typography>
+            <Typography variant='h5' className='truncate font-bold'>
+              {dictionary.title}
+            </Typography>
             <Typography variant='body2' color='text.secondary' className='truncate'>
               {replace(dictionary.subtitle, { name: data.user.name })}
             </Typography>
@@ -638,28 +756,60 @@ const DashboardHome = ({ initialData, dictionary }) => {
 
       {finance && (
         <section className='grid grid-cols-1 gap-4 xl:grid-cols-2'>
-          <CashFlowChart data={finance.cashFlow} currency={currency} locale={data.locale} dictionary={dictionary} loading={isPending} periodControl={periodControl} />
+          <CashFlowChart
+            data={finance.cashFlow}
+            currency={currency}
+            locale={data.locale}
+            dictionary={dictionary}
+            loading={isPending}
+            periodControl={periodControl}
+          />
           <DistributionChart finance={finance} currency={currency} locale={data.locale} dictionary={dictionary} />
         </section>
       )}
 
       {(pipeline?.funnel?.length || operations) && (
         <section className='grid grid-cols-1 gap-4 xl:grid-cols-2'>
-          {pipeline?.funnel?.length ? <FunnelCard pipeline={pipeline} currency={currency} locale={data.locale} dictionary={dictionary} /> : null}
-          {operations ? <ProjectTrackers projects={operations.projects} dictionary={dictionary} formatters={formatters} /> : null}
+          {pipeline?.funnel?.length ? (
+            <FunnelCard pipeline={pipeline} currency={currency} locale={data.locale} dictionary={dictionary} />
+          ) : null}
+          {operations ? (
+            <ProjectTrackers projects={operations.projects} dictionary={dictionary} formatters={formatters} />
+          ) : null}
         </section>
       )}
 
       {urgentVisible ? (
         <section>
           <div className='mb-3'>
-            <Typography variant='h6' className='font-semibold'>{dictionary.urgent.title}</Typography>
-            <Typography variant='body2' color='text.secondary'>{dictionary.urgent.subtitle}</Typography>
+            <Typography variant='h6' className='font-semibold'>
+              {dictionary.urgent.title}
+            </Typography>
+            <Typography variant='body2' color='text.secondary'>
+              {dictionary.urgent.subtitle}
+            </Typography>
           </div>
           <div className='grid grid-cols-1 gap-4 xl:grid-cols-2'>
-            {(data.capabilities.finance || data.capabilities.contracts) && <OutstandingCard items={data.urgent.outstanding} dictionary={dictionary} locale={data.locale} currency={currency} formatters={formatters} />}
-            {data.capabilities.contracts && <ContractExpiryCard items={data.urgent.contracts} dictionary={dictionary} locale={data.locale} formatters={formatters} />}
-            {data.capabilities.loans && <LoanCard urgent={data.urgent} dictionary={dictionary} locale={data.locale} currency={currency} />}
+            {(data.capabilities.finance || data.capabilities.contracts) && (
+              <OutstandingCard
+                items={data.urgent.outstanding}
+                dictionary={dictionary}
+                locale={data.locale}
+                currency={currency}
+                formatters={formatters}
+              />
+            )}
+            {data.capabilities.contracts && (
+              <ContractExpiryCard
+                items={data.urgent.contracts}
+                dictionary={dictionary}
+                locale={data.locale}
+                formatters={formatters}
+              />
+            )}
+            {data.capabilities.loans && (
+              <LoanCard urgent={data.urgent} dictionary={dictionary} locale={data.locale} currency={currency} />
+            )}
             {data.capabilities.inventory && <InventoryCard items={data.urgent.inventory} dictionary={dictionary} />}
           </div>
         </section>

@@ -147,7 +147,7 @@ const CrmClientsView = ({ locale, dictionary, currencyCode, canWrite, canDelete 
             className='is-full sm:is-[360px]'
             slotProps={{ input: { startAdornment: <i className='tabler-search' /> } }}
           />
-          <div className='flex is-full flex-wrap items-center gap-3 sm:is-auto sm:justify-end'>
+          <div className='grid is-full grid-cols-2 gap-2 sm:flex sm:is-auto sm:flex-wrap sm:gap-3 sm:justify-end'>
             <TableFiltersPopover activeCount={Number(Boolean(managerId)) + Number(Boolean(status))} locale={locale}>
               <CustomTextField
                 select

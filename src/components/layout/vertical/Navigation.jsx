@@ -90,6 +90,7 @@ const Navigation = props => {
     <VerticalNav
       customStyles={navigationCustomStyles(verticalNavOptions, theme)}
       width={236}
+      mobileWidth={320}
       collapsedWidth={60}
       defaultCollapsed={defaultCollapsed}
       backgroundColor='var(--mui-palette-background-paper)'

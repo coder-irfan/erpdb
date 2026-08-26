@@ -210,7 +210,7 @@ const TasksView = ({ locale, dictionary, canManage, canUpdate, canDelete }) => {
               slotProps={{ input: { startAdornment: <i className='tabler-search' /> } }}
             />
           </div>
-          <div className='flex is-full flex-wrap items-center gap-3 sm:is-auto sm:justify-end'>
+          <div className='grid is-full grid-cols-2 gap-2 sm:flex sm:is-auto sm:flex-wrap sm:gap-3 sm:justify-end'>
             <ToggleButtonGroup
               exclusive
               size='small'

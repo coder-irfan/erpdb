@@ -17,6 +17,7 @@ import TableFiltersPopover from '@/components/table/TableFiltersPopover'
 
 import LeadActivityDrawer from './LeadActivityDrawer'
 import LeadDrawer from './LeadDrawer'
+import LeadDetailDialog from './LeadDetailDialog'
 import LeadKanbanBoard from './LeadKanbanBoard'
 import LeadStatsCards from './LeadStatsCards'
 import LeadTableView from './LeadTableView'
@@ -41,6 +42,7 @@ const CrmLeadsView = ({ locale, dictionary, currencyCode, canWrite, canDelete })
   const [loading, setLoading] = useState(true)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [editingLead, setEditingLead] = useState(null)
+  const [viewingLead, setViewingLead] = useState(null)
   const [activityLeadId, setActivityLeadId] = useState(null)
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [busy, setBusy] = useState(false)
@@ -136,7 +138,7 @@ const CrmLeadsView = ({ locale, dictionary, currencyCode, canWrite, canDelete })
   return (
     <div className='flex flex-col md:gap-4 gap-2'>
       <LeadStatsCards summary={data.summary} locale={locale} currencyCode={currencyCode} dictionary={dictionary} />
-      <Card>
+      <Card className='border border-divider/70 shadow-sm'>
         <CardContent className='flex flex-wrap items-center justify-between gap-4 border-be border-divider'>
           <div className='flex is-full flex-wrap items-center gap-3 md:is-auto'>
             <CustomTextField
@@ -148,7 +150,7 @@ const CrmLeadsView = ({ locale, dictionary, currencyCode, canWrite, canDelete })
               slotProps={{ input: { startAdornment: <i className='tabler-search' /> } }}
             />
           </div>
-          <div className='flex is-full flex-wrap items-center gap-3 sm:is-auto sm:justify-end'>
+          <div className='grid is-full grid-cols-2 gap-2 sm:flex sm:is-auto sm:flex-wrap sm:gap-3 sm:justify-end'>
             <ToggleButtonGroup
               exclusive
               size='small'
@@ -229,12 +231,14 @@ const CrmLeadsView = ({ locale, dictionary, currencyCode, canWrite, canDelete })
               <Button
                 variant='contained'
                 startIcon={<i className='tabler-plus' />}
+                aria-label={dictionary.actions.newLead}
+                title={dictionary.actions.newLead}
                 onClick={() => {
                   setEditingLead(null)
                   setDrawerOpen(true)
                 }}
               >
-                {dictionary.actions.newLead}
+                <span>{dictionary.actions.newLead}</span>
               </Button>
             )}
           </div>
@@ -262,6 +266,7 @@ const CrmLeadsView = ({ locale, dictionary, currencyCode, canWrite, canDelete })
               setDrawerOpen(true)
             }}
             onDelete={setDeleteTarget}
+            onView={setViewingLead}
             onAdd={() => {
               setEditingLead(null)
               setDrawerOpen(true)
@@ -291,6 +296,14 @@ const CrmLeadsView = ({ locale, dictionary, currencyCode, canWrite, canDelete })
         dictionary={dictionary}
         onClose={() => setDrawerOpen(false)}
         onSaved={loadData}
+      />
+      <LeadDetailDialog
+        open={Boolean(viewingLead)}
+        lead={viewingLead}
+        locale={locale}
+        currencyCode={currencyCode}
+        dictionary={dictionary}
+        onClose={() => setViewingLead(null)}
       />
       <LeadActivityDrawer
         open={Boolean(activityLead)}

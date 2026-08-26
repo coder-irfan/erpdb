@@ -22,6 +22,7 @@ import ResponsiveDataTable from '@/components/tables/ResponsiveDataTable'
 import { formatCurrency } from '@/utils/formatCurrency'
 
 import StaffContractDetailDialog from './StaffContractDetailDialog'
+import StaffContractPrintPreviewModal from './StaffContractPrintPreviewModal'
 import ContractFormDrawer from '@/views/contracts/ContractFormDrawer'
 import StaffContractStatsCards from './StaffContractStatsCards'
 
@@ -54,6 +55,7 @@ const StaffContractsView = ({ initialResult, initialError, formOptions, canWrite
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [editingContract, setEditingContract] = useState(null)
   const [viewingContract, setViewingContract] = useState(null)
+  const [printingContract, setPrintingContract] = useState(null)
 
   const currencyCode = formOptions.setup.currency_code || 'AFN'
   const filterContractTypes = useMemo(() => formOptions.contractTypes || [], [formOptions.contractTypes])
@@ -153,7 +155,7 @@ const StaffContractsView = ({ initialResult, initialError, formOptions, canWrite
         {
           label: dictionary.actions.print,
           icon: 'tabler-printer',
-          onClick: () => window.open(`/${locale}/hrm/contracts/${contract.id}/print`, '_blank', 'noopener,noreferrer')
+          onClick: () => setPrintingContract(contract)
         },
         canWrite && { label: dictionary.actions.edit, icon: 'tabler-edit', onClick: () => openEdit(contract) }
       ]}
@@ -181,7 +183,7 @@ const StaffContractsView = ({ initialResult, initialError, formOptions, canWrite
         currency={currencyCode}
         dictionary={dictionary.stats}
       />
-      <Card>
+      <Card className='border border-divider/70 shadow-sm'>
         <CardContent className='flex flex-wrap items-center justify-between gap-4 border-be border-divider'>
           <CustomTextField
             className='is-full sm:max-is-[320px]'
@@ -191,7 +193,7 @@ const StaffContractsView = ({ initialResult, initialError, formOptions, canWrite
             label={dictionary.filters.search}
             slotProps={{ input: { startAdornment: <i className='tabler-search text-textSecondary' /> } }}
           />
-          <div className='flex is-full flex-wrap items-center gap-3 sm:is-auto sm:justify-end'>
+          <div className='grid is-full grid-cols-2 gap-2 sm:flex sm:is-auto sm:flex-wrap sm:gap-3 sm:justify-end'>
             <TableFiltersPopover
               activeCount={Number(Boolean(statusId)) + Number(Boolean(contractTypeId))}
               locale={locale}
@@ -299,6 +301,7 @@ const StaffContractsView = ({ initialResult, initialError, formOptions, canWrite
             actionLabel: canWrite ? dictionary.actions.addFirst : undefined,
             onAction: canWrite ? openCreate : undefined
           }}
+          onRowClick={contract => setViewingContract(contract)}
         >
           <div className='no-scrollbar overflow-x-auto scroll-smooth'>
           <table className={tableStyles.table}>
@@ -328,7 +331,7 @@ const StaffContractsView = ({ initialResult, initialError, formOptions, canWrite
                 />
               ) : (
                 contracts.map(contract => (
-                  <tr key={contract.id}>
+                  <tr key={contract.id} className='cursor-pointer' onClick={() => setViewingContract(contract)}>
                     <td>
                       <div className='flex min-is-[170px] items-center gap-3'>
                         <span className='flex size-9 shrink-0 items-center justify-center rounded-full bg-primaryLighter text-primary'>
@@ -410,6 +413,13 @@ const StaffContractsView = ({ initialResult, initialError, formOptions, canWrite
         dictionary={{ ...dictionary, currencyCode }}
         onClose={() => setViewingContract(null)}
         onEdit={openEdit}
+      />
+      <StaffContractPrintPreviewModal
+        contract={printingContract}
+        setup={formOptions.setup}
+        locale={locale}
+        dictionary={contractDictionary}
+        onClose={() => setPrintingContract(null)}
       />
     </div>
   )

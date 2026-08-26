@@ -14,8 +14,8 @@ const NotFound = () => {
       description={dictionary.notFound.description}
     >
       <div className='mt-7 flex flex-col justify-center gap-3 sm:flex-row'>
-        <HomeLink />
-        <GoBackButton />
+        <HomeLink className="cursor-pointer" />
+        <GoBackButton className="cursor-pointer" />
       </div>
     </SystemPage>
   )

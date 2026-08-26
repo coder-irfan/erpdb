@@ -155,7 +155,7 @@ const FinanceExpenseView = ({ locale, dictionary, canWrite, canDelete, setup }) 
             className='is-full sm:is-[380px]'
             slotProps={{ input: { startAdornment: <i className='tabler-search' /> } }}
           />
-          <div className='flex is-full flex-wrap items-center gap-3 sm:is-auto sm:justify-end'>
+          <div className='grid is-full grid-cols-2 gap-2 sm:flex sm:is-auto sm:flex-wrap sm:gap-3 sm:justify-end'>
             <TableFiltersPopover activeCount={activeFilters} locale={locale}>
               <CustomTextField
                 select

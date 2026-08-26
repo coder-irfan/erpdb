@@ -48,7 +48,8 @@ const VisitorTableView = ({
   onConvert,
   onEdit,
   onDelete,
-  onAdd
+  onAdd,
+  onView
 }) => {
   const getPurposeLabel = visitor =>
     data.options.purposes?.find(option => option.value === visitor.purpose)?.label ||
@@ -58,6 +59,7 @@ const VisitorTableView = ({
   const renderActions = visitor => (
     <EntityActionsMenu
       actions={[
+        { label: dictionary.actions.view || 'View details', icon: 'tabler-eye', onClick: () => onView(visitor) },
         canWrite &&
           visitor.status === 'CHECKED_IN' && {
             label: dictionary.actions.checkout,
@@ -151,6 +153,7 @@ const VisitorTableView = ({
           actionLabel: canWrite ? dictionary.actions.add : undefined,
           onAction: canWrite ? onAdd : undefined
         }}
+        onRowClick={row => onView(row.original || row)}
       >
         <div className='no-scrollbar overflow-x-auto scroll-smooth'>
           <table className={tableStyles.table}>
@@ -178,7 +181,9 @@ const VisitorTableView = ({
                 />
               ) : (
                 data.visitors.map(visitor => (
-                  <tr key={visitor.id}>
+                  <tr key={visitor.id} className='cursor-pointer' onClick={event => {
+                    if (!event.target.closest('button, a, input, select, textarea, [role="button"], [data-row-action]')) onView(visitor)
+                  }}>
                     <td>
                       <div className='flex min-is-[220px] items-center gap-3'>
                         <UserAvatar user={visitor} size={40} />

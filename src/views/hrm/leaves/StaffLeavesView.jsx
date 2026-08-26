@@ -23,6 +23,7 @@ import ResponsiveDataTable from '@/components/tables/ResponsiveDataTable'
 
 import LeaveStatsCards from './LeaveStatsCards'
 import StaffLeaveDrawer from './StaffLeaveDrawer'
+import LeaveDetailDialog from './LeaveDetailDialog'
 
 import tableStyles from '@core/styles/table.module.css'
 
@@ -61,6 +62,7 @@ const StaffLeavesView = ({ locale, dictionary }) => {
   const [busyId, setBusyId] = useState(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [editingLeave, setEditingLeave] = useState(null)
+  const [viewingLeave, setViewingLeave] = useState(null)
   const [deleteTarget, setDeleteTarget] = useState(null)
 
   const loadLeaves = useCallback(async () => {
@@ -175,7 +177,8 @@ const StaffLeavesView = ({ locale, dictionary }) => {
 
     return (
       <EntityActionsMenu
-        actions={[
+      actions={[
+          { label: dictionary.actions.view || 'View details', icon: 'tabler-eye', onClick: () => setViewingLeave(leave) },
           data.canManage &&
             isPending && {
               label: dictionary.actions.approve,
@@ -214,7 +217,7 @@ const StaffLeavesView = ({ locale, dictionary }) => {
     <div className='flex flex-col md:gap-4 gap-2'>
       <LeaveStatsCards summary={data.summary} dictionary={dictionary} />
 
-      <Card>
+      <Card className='border border-divider/70 shadow-sm'>
         <CardContent className='flex flex-wrap items-center justify-between gap-4 border-be border-divider'>
           <CustomTextField
             value={searchInput}
@@ -224,7 +227,7 @@ const StaffLeavesView = ({ locale, dictionary }) => {
             className='is-full sm:is-[320px]'
             slotProps={{ input: { startAdornment: <i className='tabler-search text-textSecondary' /> } }}
           />
-          <div className='flex is-full flex-wrap items-center gap-3 sm:is-auto sm:justify-end'>
+          <div className='grid is-full grid-cols-2 gap-2 sm:flex sm:is-auto sm:flex-wrap sm:gap-3 sm:justify-end'>
             <TableFiltersPopover
               activeCount={Number(Boolean(staffId)) + Number(Boolean(leaveTypeId)) + Number(Boolean(statusId))}
               locale={locale}
@@ -310,9 +313,11 @@ const StaffLeavesView = ({ locale, dictionary }) => {
               </CustomTextField>
             </TableFiltersPopover>
             {canCreate && (
-              <Button variant='contained' startIcon={<i className='tabler-plus' />} onClick={openCreate}>
-                {dictionary.actions.requestLeave}
-              </Button>
+              <Tooltip title={dictionary.actions.requestLeave} arrow>
+                <Button variant='contained' startIcon={<i className='tabler-plus' />} onClick={openCreate}>
+                  <span>{dictionary.actions.requestLeave}</span>
+                </Button>
+              </Tooltip>
             )}
           </div>
         </CardContent>
@@ -369,6 +374,7 @@ const StaffLeavesView = ({ locale, dictionary }) => {
             actionLabel: canCreate ? dictionary.empty.action : undefined,
             onAction: canCreate ? openCreate : undefined
           }}
+          onRowClick={leave => setViewingLeave(leave)}
         >
           <div className='no-scrollbar overflow-x-auto scroll-smooth'>
             <table className={tableStyles.table}>
@@ -397,7 +403,9 @@ const StaffLeavesView = ({ locale, dictionary }) => {
                   />
                 ) : (
                   data.leaves.map(leave => (
-                    <tr key={leave.id}>
+                    <tr key={leave.id} className='cursor-pointer' onClick={event => {
+                      if (!event.target.closest('button, a, input, select, textarea, [role="button"], [data-row-action]')) setViewingLeave(leave)
+                    }}>
                       <td>
                         <div className='flex min-is-[220px] items-center gap-3'>
                           <UserAvatar user={leave.staff} size={40} />
@@ -480,6 +488,13 @@ const StaffLeavesView = ({ locale, dictionary }) => {
         dictionary={dictionary}
         onClose={() => setDrawerOpen(false)}
         onSaved={loadLeaves}
+      />
+      <LeaveDetailDialog
+        open={Boolean(viewingLeave)}
+        leave={viewingLeave}
+        locale={locale}
+        dictionary={dictionary}
+        onClose={() => setViewingLeave(null)}
       />
 
       <ConfirmDeleteModal

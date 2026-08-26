@@ -41,7 +41,8 @@ const LeadTableView = ({
   onConvert,
   onEdit,
   onDelete,
-  onAdd
+  onAdd,
+  onView
 }) => {
   const formatDate = value =>
     value
@@ -53,6 +54,7 @@ const LeadTableView = ({
   const renderActions = lead => (
     <EntityActionsMenu
       actions={[
+        { label: dictionary.actions.view || 'View details', icon: 'tabler-eye', onClick: () => onView(lead) },
         { label: dictionary.actions.activity, icon: 'tabler-activity', onClick: () => onActivity(lead) },
         canWrite &&
           !lead.converted_client && {
@@ -131,6 +133,7 @@ const LeadTableView = ({
           actionLabel: canWrite ? dictionary.actions.newLead : undefined,
           onAction: canWrite ? onAdd : undefined
         }}
+        onRowClick={row => onView(row.original || row)}
       >
         <div className='no-scrollbar overflow-x-auto scroll-smooth'>
           <table className={tableStyles.table}>
@@ -164,7 +167,9 @@ const LeadTableView = ({
                     lead.next_follow_up_date && new Date(lead.next_follow_up_date) < now && !lead.converted_client
 
                   return (
-                    <tr key={lead.id}>
+                    <tr key={lead.id} className='cursor-pointer' onClick={event => {
+                      if (!event.target.closest('button, a, input, select, textarea, [role="button"], [data-row-action]')) onView(lead)
+                    }}>
                       <td>
                         <div className='flex min-is-[220px] items-center gap-3'>
                           <UserAvatar user={{ name: lead.title }} size={40} />

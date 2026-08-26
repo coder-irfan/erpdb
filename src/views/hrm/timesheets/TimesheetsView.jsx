@@ -26,6 +26,7 @@ import ResponsiveDataTable from '@/components/tables/ResponsiveDataTable'
 import AttendanceDrawer from './AttendanceDrawer'
 import AttendanceStatsCards from './AttendanceStatsCards'
 import TimesheetPrintDocument from './TimesheetPrintDocument'
+import TimesheetDetailDialog from './TimesheetDetailDialog'
 
 import tableStyles from '@core/styles/table.module.css'
 
@@ -68,6 +69,7 @@ const TimesheetsView = ({ initialDate, canWrite, canDelete, defaultWorkHours, pr
   const [rowsPerPage, setRowsPerPage] = useState(10)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [editingRecord, setEditingRecord] = useState(null)
+  const [viewingRecord, setViewingRecord] = useState(null)
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [deleteLoading, setDeleteLoading] = useState(false)
   const [printData, setPrintData] = useState(null)
@@ -218,6 +220,7 @@ const TimesheetsView = ({ initialDate, canWrite, canDelete, defaultWorkHours, pr
   const renderRecordActions = record => (
     <EntityActionsMenu
       actions={[
+        { label: dictionary.actions.view || 'View details', icon: 'tabler-eye', onClick: () => setViewingRecord(record) },
         {
           label: dictionary.actions.print,
           icon: 'tabler-printer',
@@ -247,7 +250,7 @@ const TimesheetsView = ({ initialDate, canWrite, canDelete, defaultWorkHours, pr
     <div className='attendance-print-report flex flex-col gap-6'>
       <AttendanceStatsCards summary={data.summary} dictionary={dictionary} />
 
-      <Card>
+      <Card className='border border-divider/70 shadow-sm'>
         <CardContent className='no-print flex flex-wrap items-center justify-between gap-4 border-be border-divider'>
           <CustomTextField
             className='is-full sm:max-is-[300px]'
@@ -257,7 +260,7 @@ const TimesheetsView = ({ initialDate, canWrite, canDelete, defaultWorkHours, pr
             onChange={event => setSearchInput(event.target.value)}
             slotProps={{ input: { startAdornment: <i className='tabler-search text-textSecondary' /> } }}
           />
-          <div className='flex is-full flex-wrap items-center gap-2 sm:is-auto sm:justify-end'>
+          <div className='grid is-full grid-cols-2 gap-2 sm:flex sm:is-auto sm:flex-wrap sm:justify-end'>
             <TableFiltersPopover
               activeCount={Number(Boolean(statusFilter)) + Number(selectedDate !== initialDate)}
               locale={locale}
@@ -312,13 +315,17 @@ const TimesheetsView = ({ initialDate, canWrite, canDelete, defaultWorkHours, pr
                 ))}
               </CustomTextField>
             </TableFiltersPopover>
-            <Button variant='tonal' startIcon={<i className='tabler-file-download' />} onClick={exportCsv}>
-              {dictionary.actions.export}
-            </Button>
-            {canWrite && (
-              <Button variant='contained' startIcon={<i className='tabler-user-plus' />} onClick={openCreate}>
-                {dictionary.actions.mark}
+            <Tooltip title={dictionary.actions.export} arrow>
+              <Button variant='tonal' startIcon={<i className='tabler-file-download' />} onClick={exportCsv}>
+                <span>{dictionary.actions.export}</span>
               </Button>
+            </Tooltip>
+            {canWrite && (
+              <Tooltip title={dictionary.actions.mark} arrow>
+                <Button variant='contained' startIcon={<i className='tabler-user-plus' />} onClick={openCreate}>
+                  <span>{dictionary.actions.mark}</span>
+                </Button>
+              </Tooltip>
             )}
           </div>
         </CardContent>
@@ -368,6 +375,7 @@ const TimesheetsView = ({ initialDate, canWrite, canDelete, defaultWorkHours, pr
             actionLabel: canWrite && data.unmarkedStaff.length > 0 ? dictionary.actions.mark : undefined,
             onAction: canWrite && data.unmarkedStaff.length > 0 ? openCreate : undefined
           }}
+          onRowClick={record => setViewingRecord(record)}
         >
           <div className='no-scrollbar overflow-x-auto scroll-smooth'>
             <table className={tableStyles.table}>
@@ -397,7 +405,9 @@ const TimesheetsView = ({ initialDate, canWrite, canDelete, defaultWorkHours, pr
                   />
                 ) : (
                   data.records.map(record => (
-                    <tr key={record.id}>
+                    <tr key={record.id} className='cursor-pointer' onClick={event => {
+                      if (!event.target.closest('button, a, input, select, textarea, [role="button"], [data-row-action]')) setViewingRecord(record)
+                    }}>
                       <td>
                         <div className='flex min-is-[250px] items-center gap-3'>
                           <UserAvatar user={record.staff} size={40} />
@@ -473,6 +483,12 @@ const TimesheetsView = ({ initialDate, canWrite, canDelete, defaultWorkHours, pr
         dictionary={dictionary}
         onClose={() => setDrawerOpen(false)}
         onSaved={loadData}
+      />
+      <TimesheetDetailDialog
+        open={Boolean(viewingRecord)}
+        record={viewingRecord}
+        dictionary={dictionary}
+        onClose={() => setViewingRecord(null)}
       />
       <ConfirmDeleteModal
         open={Boolean(deleteTarget)}

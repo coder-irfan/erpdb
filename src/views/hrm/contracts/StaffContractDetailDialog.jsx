@@ -2,14 +2,12 @@
 
 import Button from '@mui/material/Button'
 import Chip from '@mui/material/Chip'
-import Dialog from '@mui/material/Dialog'
 import DialogActions from '@mui/material/DialogActions'
-import DialogContent from '@mui/material/DialogContent'
-import DialogTitle from '@mui/material/DialogTitle'
 import Divider from '@mui/material/Divider'
 import Typography from '@mui/material/Typography'
 
 import UserAvatar from '@/components/common/UserAvatar'
+import DetailDialog from '@/components/dialogs/DetailDialog'
 import { formatCurrency } from '@/utils/formatCurrency'
 
 const localeMap = { en: 'en-US', fa: 'fa-AF', ps: 'ps-AF' }
@@ -43,8 +41,8 @@ const StaffContractDetailDialog = ({ contract, open, locale, dictionary, onClose
   if (!contract) return null
 
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth='lg'>
-      <DialogTitle component='div' className='flex flex-wrap items-center justify-between gap-3'>
+    <DetailDialog open={open} onClose={onClose} title={contract.staff.full_name} subtitle={contract.contract_number}>
+      <div className='flex flex-wrap items-center justify-between gap-3'>
         <div className='flex items-center gap-3'>
           <UserAvatar user={contract.staff} size={48} />
           <div>
@@ -62,8 +60,8 @@ const StaffContractDetailDialog = ({ contract, open, locale, dictionary, onClose
           color={STATUS_COLORS[contract.status.value] || 'default'}
           label={dictionary.status[contract.status.value] || contract.status.label}
         />
-      </DialogTitle>
-      <DialogContent dividers className='flex flex-col gap-6'>
+      </div>
+      <div className='mt-5 flex flex-col gap-5 sm:mt-6 sm:gap-6'>
         <div className='grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4'>
           <DetailItem
             label={dictionary.fields.staffMember}
@@ -104,8 +102,8 @@ const StaffContractDetailDialog = ({ contract, open, locale, dictionary, onClose
             dangerouslySetInnerHTML={{ __html: contract.content_html || `<p>${dictionary.details.noContent}</p>` }}
           />
         </div>
-      </DialogContent>
-      <DialogActions className='pt-4'>
+      </div>
+      <DialogActions className='px-0 pb-0 pt-4'>
         <Button color='secondary' variant='tonal' onClick={onClose}>
           {dictionary.actions.close}
         </Button>
@@ -113,7 +111,7 @@ const StaffContractDetailDialog = ({ contract, open, locale, dictionary, onClose
           {dictionary.actions.edit}
         </Button>
       </DialogActions>
-    </Dialog>
+    </DetailDialog>
   )
 }
 

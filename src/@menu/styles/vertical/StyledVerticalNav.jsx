@@ -36,7 +36,9 @@ const StyledVerticalNav = styled.aside`
     position: fixed;
     block-size: 100%;
     inset-block-start: 0;
-    inset-inline-start: ${({ width }) => `-${width}px`};
+    inline-size: ${({ mobileWidth }) => `${mobileWidth}px`};
+    min-inline-size: ${({ mobileWidth }) => `${mobileWidth}px`};
+    inset-inline-start: ${({ mobileWidth }) => `-${mobileWidth}px`};
     z-index: 100;
     margin: 0;
     &.${verticalNavClasses.collapsed} {

@@ -33,7 +33,15 @@ const button = {
       root: ({ theme, ownerState }) => ({
         '@media (max-width:599.95px)': {
           fontSize: theme.typography.caption.fontSize,
-          minHeight: 32
+          minHeight: 32,
+          paddingInline: theme.spacing(2.5),
+          paddingBlock: theme.spacing(1.5),
+          '& .MuiButton-startIcon, & .MuiButton-endIcon': {
+            '& > *:nth-of-type(1)': { fontSize: '14px' }
+          },
+          '.grid > &': {
+            width: '100%'
+          }
         },
         '&.Mui-disabled': {
           opacity: 0.45

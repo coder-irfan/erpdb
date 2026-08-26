@@ -29,11 +29,13 @@ const InventoryTable = ({
   onEdit,
   onAdjust,
   onDelete,
-  onCreate
+  onCreate,
+  onView
 }) => {
   const renderActions = item => (
     <EntityActionsMenu
       actions={[
+        { label: dictionary.actions.view || 'View details', icon: 'tabler-eye', onClick: () => onView(item) },
         canWrite && { label: dictionary.actions.edit, icon: 'tabler-edit', onClick: () => onEdit(item) },
         canWrite && { label: dictionary.actions.adjust, icon: 'tabler-arrows-exchange', onClick: () => onAdjust(item) },
         canDelete && {
@@ -100,6 +102,7 @@ const InventoryTable = ({
           actionLabel: canWrite ? dictionary.actions.add : undefined,
           onAction: canWrite ? onCreate : undefined
         }}
+        onRowClick={onView}
       >
         <div className='no-scrollbar overflow-x-auto scroll-smooth'>
           <table className={tableStyles.table}>
@@ -140,7 +143,9 @@ const InventoryTable = ({
                   const statusColor = COLORS.has(item.status.color_code) ? item.status.color_code : stockColor
 
                   return (
-                    <tr key={item.id}>
+                    <tr key={item.id} className='cursor-pointer' onClick={event => {
+                      if (!event.target.closest('button, a, input, select, textarea, [role="button"], [data-row-action]')) onView(item)
+                    }}>
                       <td>
                         <div className='flex min-is-[150px] items-center gap-3'>
                           <span className='flex size-9 shrink-0 items-center justify-center rounded bg-primaryLighter text-primary'>

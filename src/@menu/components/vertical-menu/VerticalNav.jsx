@@ -29,6 +29,7 @@ const VerticalNav = props => {
   // Props
   const {
     width = 260,
+    mobileWidth = 320,
     collapsedWidth = 80,
     defaultCollapsed = false,
     backgroundColor = 'white',
@@ -87,8 +88,13 @@ const VerticalNav = props => {
         verticalNavCollapsedRef.current = true
       }
 
-      isCollapsedContext && updateVerticalNavState({ isCollapsed: false })
-      isHoveredContext && updateVerticalNavState({ isHovered: false })
+      // A desktop sidebar must never carry its visible state into the mobile drawer.
+      // Users can explicitly open the drawer again with the navigation toggle.
+      updateVerticalNavState({
+        isCollapsed: false,
+        isHovered: false,
+        isToggled: false
+      })
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [width, collapsedWidth, scrollWithContent, breakpointReached, updateVerticalNavState])
@@ -141,6 +147,7 @@ const VerticalNav = props => {
   return (
     <StyledVerticalNav
       width={defaultCollapsed && !widthContext ? collapsedWidth : width}
+      mobileWidth={mobileWidth}
       isBreakpointReached={isBreakpointReachedContext}
       collapsedWidth={collapsedWidth}
       collapsing={collapsingContext}

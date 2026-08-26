@@ -6,6 +6,7 @@ const dialog = skin => ({
     styleOverrides: {
       paper: ({ theme }) => ({
         borderRadius: 'var(--mui-shape-customBorderRadius-lg)',
+        overflow: 'hidden',
         ...(skin !== 'bordered'
           ? {
               boxShadow: 'var(--mui-customShadows-lg)'
@@ -14,11 +15,36 @@ const dialog = skin => ({
               boxShadow: 'none'
             }),
         [theme.breakpoints.down('sm')]: {
-          '&:not(.MuiDialog-paperFullScreen)': {
-            margin: theme.spacing(6)
+          '&.MuiDialog-paperFullWidth': {
+            width: '100%',
+            maxWidth: 'none',
+            height: '100dvh',
+            maxHeight: 'none',
+            minHeight: '100dvh',
+            margin: 0,
+            borderRadius: 0,
+            '& .MuiDialogTitle-root': {
+              position: 'sticky',
+              top: 0,
+              zIndex: 1,
+              backgroundColor: 'var(--mui-palette-background-paper)',
+              padding: theme.spacing(4)
+            },
+            '& .MuiDialogContent-root': {
+              maxHeight: 'calc(100dvh - 76px)',
+              overflowY: 'auto',
+              padding: theme.spacing(4),
+              fontSize: theme.typography.caption.fontSize
+            },
+            '& .MuiDialogTitle-root .MuiIconButton-root:last-child': {
+              color: 'var(--mui-palette-error-main)',
+              backgroundColor: 'var(--mui-palette-error-lighterOpacity)'
+            }
           }
         }
       }),
+      paperWidthMd: { maxWidth: 'min(1152px, calc(100% - 64px))' },
+      paperWidthLg: { maxWidth: 'min(1152px, calc(100% - 64px))' },
       paperFullScreen: {
         borderRadius: 0
       }

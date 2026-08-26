@@ -83,8 +83,14 @@ const ResponsiveDataTable = ({
   const headersByColumnId = new Map(table?.getFlatHeaders().map(header => [header.column.id, header]) || [])
   const cardRows = table ? tanstackRows : mobileRows || []
 
+  const triggerRowClick = (event, row) => {
+    if (!onRowClick || event.target.closest('button, a, input, select, textarea, [role="button"], [data-row-action]')) return
+
+    onRowClick(row.original || row)
+  }
+
   const desktopContent = children || (
-    <div className='no-scrollbar overflow-x-auto scroll-smooth'>
+    <div className='no-scrollbar overflow-x-auto scroll-smooth border border-divider/70 shadow-sm print:border-0 print:shadow-none'>
       <table className={desktopTableClassName}>
         <thead>
           {table.getHeaderGroups().map(headerGroup => (
@@ -112,7 +118,11 @@ const ResponsiveDataTable = ({
             <TableEmptyStateRow {...emptyState} colSpan={columns.length} />
           ) : (
             tanstackRows.map(row => (
-              <tr key={row.id} onClick={onRowClick ? () => onRowClick(row) : undefined}>
+              <tr
+                key={row.id}
+                onClick={event => triggerRowClick(event, row)}
+                className={onRowClick ? 'cursor-pointer' : undefined}
+              >
                 {row.getVisibleCells().map(cell => (
                   <td
                     key={cell.id}
@@ -143,7 +153,7 @@ const ResponsiveDataTable = ({
             <MobileEmptyState {...emptyState} />
           </div>
         ) : (
-          <div className='grid grid-cols-1 gap-3 p-3 sm:grid-cols-2 sm:gap-4 sm:p-4'>
+          <div className='grid grid-cols-1 gap-4 p-4 sm:grid-cols-2 sm:gap-5 sm:p-5'>
             {cardRows.map((row, rowIndex) => {
               const cells = table ? row.getVisibleCells() : []
               const primaryCell = cells.find(cell => cell.column.id === primaryColumnId)
@@ -169,7 +179,12 @@ const ResponsiveDataTable = ({
                 : renderMobileActions?.(row, rowIndex)
 
               return (
-                <Card key={rowKey} variant='outlined' onClick={onRowClick ? () => onRowClick(row) : undefined}>
+                <Card
+                  key={rowKey}
+                  variant='outlined'
+                  onClick={event => triggerRowClick(event, row)}
+                  className={`border border-divider/70 shadow-sm ${onRowClick ? 'cursor-pointer transition-transform hover:-translate-y-0.5' : ''}`}
+                >
                   <CardContent className='flex flex-col gap-2 p-3 sm:gap-3 sm:p-4'>
                     <div className='flex items-end justify-between gap-3'>
                       <div className='min-is-0 flex-1'>{primaryContent}</div>

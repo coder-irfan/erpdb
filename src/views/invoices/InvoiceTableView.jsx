@@ -116,6 +116,7 @@ const InvoiceTableView = ({ data, loading, statusUpdating, page, rowsPerPage, lo
           actionLabel: canWrite ? dictionary.actions.create : undefined,
           onAction: canWrite ? onAdd : undefined
         }}
+        onRowClick={onView}
       >
         <div className='no-scrollbar overflow-x-auto scroll-smooth'>
       <table className={tableStyles.table}>
@@ -135,7 +136,7 @@ const InvoiceTableView = ({ data, loading, statusUpdating, page, rowsPerPage, lo
             const displayStatus = invoice.is_overdue ? 'OVERDUE' : invoice.status.value
 
             return (
-              <tr key={invoice.id}>
+              <tr key={invoice.id} className='cursor-pointer' onClick={() => onView(invoice)}>
                 <td>
                   <div className='flex min-is-[205px] items-center gap-3'>
                     <span className='flex size-9 shrink-0 items-center justify-center rounded bg-primaryLighter text-primary'><i className='tabler-receipt' /></span>

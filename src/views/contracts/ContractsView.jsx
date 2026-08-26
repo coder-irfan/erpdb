@@ -139,7 +139,7 @@ const ContractsView = ({ locale, dictionary, setup, canWrite, canDelete, canRunA
       <Card>
         <CardContent className='flex flex-wrap items-center justify-between gap-4 border-be border-divider'>
           <CustomTextField label={dictionary.filters.search} placeholder={dictionary.filters.searchPlaceholder} value={searchInput} onChange={event => setSearchInput(event.target.value)} className='is-full sm:is-[360px]' slotProps={{ input: { startAdornment: <i className='tabler-search' /> } }} />
-          <div className='flex is-full flex-wrap items-center gap-3 sm:is-auto sm:justify-end'>
+          <div className='grid is-full grid-cols-2 gap-2 sm:flex sm:is-auto sm:flex-wrap sm:gap-3 sm:justify-end'>
             <TableFiltersPopover activeCount={activeFilterCount} locale={locale}>
               <CustomTextField select label={dictionary.filters.status} value={statusFilter} onChange={event => { setStatusFilter(event.target.value); setPage(0) }} className='is-full'>
                 {statusFilters.map(([value, label]) => <MenuItem key={value} value={value}>{label}</MenuItem>)}

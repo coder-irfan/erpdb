@@ -19,7 +19,7 @@ const NavToggle = () => {
       {/* Comment following code and uncomment above code in order to toggle menu on desktop screens as well */}
       {isBreakpointReached && (
         <IconButton color='inherit' aria-label='Open navigation menu' onClick={handleClick}>
-          <i className='tabler-menu-2' />
+          <i className='tabler-menu-2 text-xl' />
         </IconButton>
       )}
     </>

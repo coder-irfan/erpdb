@@ -11,12 +11,17 @@ const ACCENTS = [
 ]
 
 const ReportStatsCards = ({ items, loading, className = '' }) => (
-  <div className={`no-scrollbar flex w-full snap-x items-center gap-4 overflow-x-auto xl:grid xl:grid-cols-4 xl:overflow-visible ${className}`}>
+  <div
+    className={`no-scrollbar flex w-full snap-x items-center gap-4 overflow-x-auto xl:grid xl:grid-cols-4 xl:overflow-visible pb-4 ${className}`}
+  >
     {items.map((item, index) => {
       const accentClasses = ACCENTS[index % ACCENTS.length]
 
       return (
-        <Card key={item.label} className='report-summary-card min-w-[280px] snap-start xl:min-w-0'>
+        <Card
+          key={item.label}
+          className='report-summary-card min-w-[265px] snap-start xl:min-w-0 border border-divider/70 shadow-sm'
+        >
           <CardContent className='flex items-center justify-between gap-4'>
             <div className='min-w-0'>
               <Typography color='text.secondary' className='truncate'>
