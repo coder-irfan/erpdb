@@ -502,7 +502,9 @@
     "drawer": {
       "title": "Mark Daily Attendance",
       "editTitle": "Edit Attendance",
-      "description": "Only staff not yet marked for this date are available."
+      "description": "Only staff not yet marked for this date are available.",
+      "completeTitle": "Attendance is complete for this date",
+      "completeDescription": "Every active staff member has already been marked."
     },
     "placeholders": {
       "selectStaff": "Select remaining staff member",
@@ -544,15 +546,7 @@
       "taxId": "License / TIN"
     },
     "export": {
-      "columns": [
-        "Staff Name",
-        "Position",
-        "Status",
-        "Check-In",
-        "Check-Out",
-        "Hours",
-        "Notes"
-      ]
+      "columns": ["Staff Name", "Position", "Status", "Check-In", "Check-Out", "Hours", "Notes"]
     },
     "messages": {
       "created": "Attendance saved successfully.",

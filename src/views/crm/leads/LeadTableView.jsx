@@ -198,7 +198,7 @@ const LeadTableView = ({
                         <Tooltip title={[lead.email, lead.phone].filter(Boolean).join(' · ')}>
                           <Typography variant='body2' color='text.secondary' className='max-is-[220px] truncate'>
                             {lead.email || lead.phone ? (
-                              <QuickContact email={lead.email} phone={lead.phone}>
+                              <QuickContact table email={lead.email} phone={lead.phone}>
                                 {lead.email || lead.phone}
                               </QuickContact>
                             ) : (

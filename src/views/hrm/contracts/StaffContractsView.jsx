@@ -363,7 +363,9 @@ const StaffContractsView = ({
                       <td>
                         <Typography color='text.primary'>{contract.staff.full_name}</Typography>
                         <Typography variant='body2' color='text.secondary'>
-                          <QuickContact email={contract.staff.email}>{contract.staff.email}</QuickContact>
+                          <QuickContact table email={contract.staff.email}>
+                            {contract.staff.email}
+                          </QuickContact>
                         </Typography>
                       </td>
                       <td>{contract.position_title}</td>
@@ -434,7 +436,7 @@ const StaffContractsView = ({
         contract={printingContract}
         setup={formOptions.setup}
         locale={locale}
-        dictionary={contractDictionary}
+        dictionary={dictionary}
         onClose={() => setPrintingContract(null)}
       />
     </div>

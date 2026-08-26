@@ -199,7 +199,9 @@ const StaffListTable = ({
                   {employee.full_name}
                 </Typography>
                 <Typography variant='body2' color='text.secondary' className='truncate'>
-                  <QuickContact email={employee.email}>{employee.email}</QuickContact>
+                  <QuickContact table email={employee.email}>
+                    {employee.email}
+                  </QuickContact>
                 </Typography>
               </div>
             </div>
@@ -209,7 +211,11 @@ const StaffListTable = ({
       columnHelper.accessor('position', { header: dictionary.table.position }),
       columnHelper.accessor('phone', {
         header: dictionary.table.phone,
-        cell: info => <QuickContact phone={info.getValue()}>{info.getValue()}</QuickContact>
+        cell: info => (
+          <QuickContact table phone={info.getValue()}>
+            {info.getValue()}
+          </QuickContact>
+        )
       }),
       columnHelper.accessor('join_date', {
         header: dictionary.table.joinDate,

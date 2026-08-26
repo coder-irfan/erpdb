@@ -108,7 +108,7 @@ const VisitorTableView = ({
               </Typography>
               <Typography variant='body2' color='text.secondary' className='truncate'>
                 {visitor.company_name && `${visitor.company_name} · `}
-                <QuickContact email={visitor.email} phone={visitor.phone}>
+                <QuickContact table email={visitor.email} phone={visitor.phone}>
                   {visitor.email || visitor.phone}
                 </QuickContact>
               </Typography>
@@ -207,7 +207,7 @@ const VisitorTableView = ({
                           >
                             <Typography variant='body2' color='text.secondary' className='max-is-[240px] truncate'>
                               {visitor.company_name && `${visitor.company_name} · `}
-                              <QuickContact email={visitor.email} phone={visitor.phone}>
+                              <QuickContact table email={visitor.email} phone={visitor.phone}>
                                 {visitor.email || visitor.phone}
                               </QuickContact>
                             </Typography>

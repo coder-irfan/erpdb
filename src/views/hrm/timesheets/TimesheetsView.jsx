@@ -347,7 +347,9 @@ const TimesheetsView = ({ initialDate, canWrite, canDelete, defaultWorkHours, pr
                   {record.staff.full_name}
                 </Typography>
                 <Typography variant='body2' color='text.secondary' className='truncate'>
-                  <QuickContact email={record.staff.email}>{record.staff.email}</QuickContact>
+                  <QuickContact table email={record.staff.email}>
+                    {record.staff.email}
+                  </QuickContact>
                 </Typography>
               </div>
             </div>
@@ -430,7 +432,9 @@ const TimesheetsView = ({ initialDate, canWrite, canDelete, defaultWorkHours, pr
                               {record.staff.full_name}
                             </Typography>
                             <Typography variant='body2' color='text.secondary'>
-                              <QuickContact email={record.staff.email}>{record.staff.email}</QuickContact>
+                              <QuickContact table email={record.staff.email}>
+                                {record.staff.email}
+                              </QuickContact>
                             </Typography>
                           </div>
                         </div>

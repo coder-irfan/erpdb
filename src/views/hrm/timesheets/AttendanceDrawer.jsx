@@ -18,6 +18,27 @@ import CustomTextField from '@core/components/mui/TextField'
 import LoadingButtonContent from '@/components/LoadingButtonContent'
 import { createTimesheetSchema } from '@/schemas/hrm/timesheets'
 
+const LOCALIZED_COPY = {
+  en: {
+    markAll: 'Mark All Present',
+    saveAll: 'Save All Attendance',
+    complete: 'Attendance is complete for this date',
+    completeDescription: 'Every active staff member has already been marked.'
+  },
+  ps: {
+    markAll: 'ټول کارکوونکي حاضر ثبتول',
+    saveAll: 'ټوله حاضري خوندي کول',
+    complete: 'د دې نېټې حاضري بشپړه شوې ده',
+    completeDescription: 'د ټولو فعالو کارکوونکو حاضري ثبت شوې ده.'
+  },
+  fa: {
+    markAll: 'ثبت حضور همه',
+    saveAll: 'ذخیره همه حاضری‌ها',
+    complete: 'حاضری این تاریخ کامل است',
+    completeDescription: 'حاضری تمام کارکنان فعال ثبت شده است.'
+  }
+}
+
 const getDefaults = (record, date, defaultWorkHours, defaultStaffId = '') => ({
   staff_id: record?.staff_id || defaultStaffId,
   status: record?.status || 'PRESENT',
@@ -224,8 +245,9 @@ const AttendanceDrawer = ({
     }
   }
 
-  const markAllPresentLabel = dictionary.actions.markAllPresent || 'Mark All Present'
-  const saveAllLabel = dictionary.actions.saveAll || 'Save All Attendance'
+  const localizedCopy = LOCALIZED_COPY[locale] || LOCALIZED_COPY.en
+  const markAllPresentLabel = dictionary.actions.markAllPresent || localizedCopy.markAll || dictionary.actions.mark
+  const saveAllLabel = dictionary.actions.saveAll || localizedCopy.saveAll || dictionary.actions.save
 
   return (
     <Drawer
@@ -260,10 +282,12 @@ const AttendanceDrawer = ({
           </div>
           <div>
             <Typography variant='h6'>
-              {dictionary.drawer.completeTitle || 'Attendance is complete for this date'}
+              {dictionary.drawer.completeTitle || localizedCopy.complete || dictionary.table.emptyTitle}
             </Typography>
             <Typography color='text.secondary' className='mt-1'>
-              {dictionary.drawer.completeDescription || 'Every active staff member has already been marked.'}
+              {dictionary.drawer.completeDescription ||
+                localizedCopy.completeDescription ||
+                dictionary.table.description}
             </Typography>
           </div>
           <Button variant='tonal' onClick={onClose}>

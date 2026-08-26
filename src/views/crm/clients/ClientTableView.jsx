@@ -86,7 +86,7 @@ const ClientTableView = ({
               </Typography>
               <Typography variant='body2' color='text.secondary' className='truncate'>
                 {client.primary_contact_name && `${client.primary_contact_name} · `}
-                <QuickContact email={client.email} phone={client.phone}>
+                <QuickContact table email={client.email} phone={client.phone}>
                   {client.email || client.phone}
                 </QuickContact>
               </Typography>
@@ -173,7 +173,7 @@ const ClientTableView = ({
                           >
                             <Typography variant='body2' color='text.secondary' className='max-is-[240px] truncate'>
                               {client.primary_contact_name && `${client.primary_contact_name} · `}
-                              <QuickContact email={client.email} phone={client.phone}>
+                              <QuickContact table email={client.email} phone={client.phone}>
                                 {client.email || client.phone}
                               </QuickContact>
                             </Typography>
