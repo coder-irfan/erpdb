@@ -14,6 +14,16 @@ const StyledVerticalNav = styled.aside`
   `}
   z-index: 9;
 
+  /* CSS-first mobile safety: never paint the desktop sidebar before hydration. */
+  @media (max-width: 1199.95px) {
+    &:not(.${verticalNavClasses.toggled}) {
+      position: fixed;
+      inset-inline-start: -${({ mobileWidth }) => `${mobileWidth}px`};
+      visibility: hidden;
+      pointer-events: none;
+    }
+  }
+
   /* Transition */
   transition-property: inline-size, min-inline-size, margin-inline-start, inset-inline-start;
   transition-duration: ${({ transitionDuration }) => `${transitionDuration}ms`};
