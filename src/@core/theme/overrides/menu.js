@@ -28,7 +28,7 @@ const menu = skin => ({
   MuiMenuItem: {
     styleOverrides: {
       root: ({ theme }) => ({
-        paddingBlock: theme.spacing(2),
+        paddingBlock: theme.spacing(1.5),
         gap: theme.spacing(2),
         color: 'var(--mui-palette-text-primary)',
         marginInline: theme.spacing(2),

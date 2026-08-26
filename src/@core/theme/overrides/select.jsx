@@ -27,6 +27,7 @@ const select = {
     },
     styleOverrides: {
       select: ({ theme, ownerState }) => ({
+        paddingBlock: theme.spacing(1.25),
         WebkitPaddingEnd: '44px !important',
         paddingInlineEnd: '44px !important',
         ...(ownerState.variant === 'outlined' && {
