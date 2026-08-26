@@ -10,7 +10,7 @@ import { useTheme } from '@mui/material/styles'
 
 import { formatCurrency, toFiniteNumber } from '@/utils/formatCurrency'
 
-const AppReactApexCharts = dynamic(() => import('@/libs/styles/AppReactApexCharts'))
+const AppReactApexCharts = dynamic(() => import('@/libs/styles/AppReactApexCharts'), { ssr: false })
 
 const COLORS = [
   'var(--mui-palette-primary-main)',

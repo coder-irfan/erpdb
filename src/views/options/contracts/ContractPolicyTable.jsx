@@ -2,6 +2,9 @@
 
 import { useCallback, useEffect, useState } from 'react'
 
+// Next Imports
+import dynamic from 'next/dynamic'
+
 import Alert from '@mui/material/Alert'
 import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
@@ -23,7 +26,7 @@ import TableEmptyStateRow from '@/components/table/TableEmptyStateRow'
 import TableSkeletonRows from '@/components/table/TableSkeletonRows'
 import ResponsiveDataTable from '@/components/tables/ResponsiveDataTable'
 
-import ContractPolicyForm from './ContractPolicyForm'
+const ContractPolicyForm = dynamic(() => import('./ContractPolicyForm'), { ssr: false })
 
 import tableStyles from '@core/styles/table.module.css'
 
@@ -284,14 +287,16 @@ const ContractPolicyTable = ({ initialResult, initialError, canCreate, canUpdate
         />
       </Card>
 
-      <ContractPolicyForm
-        open={formOpen}
-        option={editingOption}
-        locale={locale}
-        dictionary={dictionary}
-        onClose={() => setFormOpen(false)}
-        onSaved={refreshData}
-      />
+      {formOpen && (
+        <ContractPolicyForm
+          open
+          option={editingOption}
+          locale={locale}
+          dictionary={dictionary}
+          onClose={() => setFormOpen(false)}
+          onSaved={refreshData}
+        />
+      )}
 
       <Dialog open={Boolean(viewingOption)} onClose={() => setViewingOption(null)} fullWidth maxWidth='lg'>
         <DialogTitle className='flex items-start justify-between gap-4'>

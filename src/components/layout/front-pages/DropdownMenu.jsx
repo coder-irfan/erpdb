@@ -2,6 +2,7 @@
 import { Fragment, useEffect, useState } from 'react'
 
 // Next Imports
+import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 
 // MUI Imports
@@ -282,7 +283,7 @@ const DropdownMenu = props => {
         </div>
         {!isBelowLgScreen && (
           <div className='flex bg-backgroundDefault p-2 rounded'>
-            <img src='/images/front-pages/dropdown-image.png' width='385' alt='dropdown image' className='rounded' />
+            <Image src='/images/front-pages/dropdown-image.png' width={385} height={240} alt='dropdown image' className='rounded' />
           </div>
         )}
       </MenuWrapper>
