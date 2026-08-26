@@ -82,8 +82,8 @@ const LoginV1 = ({ dictionary, locale }) => {
 
   return (
     <AuthIllustrationWrapper>
-      <Card className='flex flex-col sm:is-[450px]'>
-        <CardContent className='sm:!p-12'>
+      <Card className='flex flex-col overflow-hidden border border-divider/70 bg-paper/95 shadow-2xl backdrop-blur sm:is-[460px]'>
+        <CardContent className='sm:!p-10'>
           <Link href={getLocalizedUrl('/', locale)} className='flex justify-center mbe-6'>
             <Logo />
           </Link>
@@ -97,6 +97,7 @@ const LoginV1 = ({ dictionary, locale }) => {
               render={({ field }) => (
                 <CustomTextField
                   {...field}
+                  className='[&_.MuiInputBase-input]:pe-12'
                   autoFocus
                   fullWidth
                   type='email'
@@ -126,6 +127,7 @@ const LoginV1 = ({ dictionary, locale }) => {
                         <InputAdornment position='end'>
                           <IconButton
                             edge='end'
+                            className='-mie-1 rounded-md hover:bg-actionHover'
                             onClick={() => setIsPasswordShown(shown => !shown)}
                             onMouseDown={event => event.preventDefault()}
                             aria-label={
@@ -162,7 +164,13 @@ const LoginV1 = ({ dictionary, locale }) => {
                 <Link href={getLocalizedUrl('/forgot-password', locale)}>{dictionary.login.forgotPassword}</Link>
               </Typography>
             </div>
-            <Button fullWidth variant='contained' type='submit' disabled={isSubmitting}>
+            <Button
+              fullWidth
+              variant='contained'
+              type='submit'
+              disabled={isSubmitting}
+              className='min-h-11 shadow-md transition-transform hover:-translate-y-px hover:shadow-lg'
+            >
               <LoadingButtonContent loading={isSubmitting} loadingLabel={dictionary.login.submitting}>
                 {dictionary.login.submit}
               </LoadingButtonContent>

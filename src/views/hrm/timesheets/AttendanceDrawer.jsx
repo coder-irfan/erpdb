@@ -28,16 +28,18 @@ const getDefaults = (record, date, defaultWorkHours, defaultStaffId = '') => ({
 })
 
 const getBulkEntries = attendanceStaff =>
-  attendanceStaff.map(staff => ({
-    staff_id: staff.id,
-    full_name: staff.full_name,
-    position: staff.position,
-    locked: Boolean(staff.record?.leave_request_id),
-    status: staff.record?.status || '',
-    check_in_time: staff.record?.check_in_time || '',
-    check_out_time: staff.record?.check_out_time || '',
-    notes: staff.record?.notes || ''
-  }))
+  attendanceStaff
+    .filter(staff => !staff.record)
+    .map(staff => ({
+      staff_id: staff.id,
+      full_name: staff.full_name,
+      position: staff.position,
+      locked: Boolean(staff.record?.leave_request_id),
+      status: staff.record?.status || '',
+      check_in_time: staff.record?.check_in_time || '',
+      check_out_time: staff.record?.check_out_time || '',
+      notes: staff.record?.notes || ''
+    }))
 
 const AttendanceDrawer = ({
   open,
@@ -75,6 +77,7 @@ const AttendanceDrawer = ({
   const status = watch('status')
   const isSavingSingle = savingMode !== null
   const isSaving = isSavingSingle || bulkSaving
+  const isAttendanceComplete = !record && attendanceStaff.length > 0 && attendanceStaff.every(item => item.record)
 
   useEffect(() => {
     initialDataRef.current = { staff, attendanceStaff }
@@ -239,7 +242,7 @@ const AttendanceDrawer = ({
           <Typography color='text.secondary'>{dictionary.drawer.description}</Typography>
         </div>
         <div className='flex items-center gap-1'>
-          {!record && !bulkMode && attendanceStaff.length > 0 && (
+          {!record && !bulkMode && !isAttendanceComplete && attendanceStaff.some(item => !item.record) && (
             <Button variant='tonal' size='small' startIcon={<i className='tabler-users' />} onClick={markAllPresent}>
               {markAllPresentLabel}
             </Button>
@@ -250,7 +253,24 @@ const AttendanceDrawer = ({
         </div>
       </div>
       <Divider />
-      {bulkMode ? (
+      {isAttendanceComplete ? (
+        <div className='flex flex-1 flex-col items-center justify-center gap-4 px-6 text-center'>
+          <div className='flex size-16 items-center justify-center rounded-full bg-success/15 text-success'>
+            <i className='tabler-circle-check text-4xl' />
+          </div>
+          <div>
+            <Typography variant='h6'>
+              {dictionary.drawer.completeTitle || 'Attendance is complete for this date'}
+            </Typography>
+            <Typography color='text.secondary' className='mt-1'>
+              {dictionary.drawer.completeDescription || 'Every active staff member has already been marked.'}
+            </Typography>
+          </div>
+          <Button variant='tonal' onClick={onClose}>
+            {dictionary.actions.cancel}
+          </Button>
+        </div>
+      ) : bulkMode ? (
         <div className='flex flex-1 flex-col overflow-hidden'>
           <div className='flex flex-wrap items-center justify-between gap-3 px-6 pb-3 pt-5'>
             <Typography variant='body2' color='text.secondary'>

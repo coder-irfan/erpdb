@@ -7,6 +7,7 @@ import MenuItem from '@mui/material/MenuItem'
 import Typography from '@mui/material/Typography'
 
 import UserAvatar from '@/components/common/UserAvatar'
+import KanbanCardSkeleton from '@/components/common/KanbanCardSkeleton'
 import CustomTextField from '@core/components/mui/TextField'
 import { formatCurrency } from '@/utils/formatCurrency'
 
@@ -35,10 +36,13 @@ const LeadKanbanBoard = ({
   currencyCode,
   dictionary,
   canWrite,
+  loading,
   onStatusChange,
   onActivity
 }) => {
   const now = new Date()
+
+  if (loading) return <KanbanCardSkeleton minWidth={300} />
 
   return (
     <div className='no-scrollbar overflow-x-auto scroll-smooth pb-3'>

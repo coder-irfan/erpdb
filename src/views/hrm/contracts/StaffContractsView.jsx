@@ -13,6 +13,7 @@ import { toast } from 'sonner'
 
 import CustomTextField from '@core/components/mui/TextField'
 import { getStaffContracts, updateStaffContractStatus } from '@/actions/hrm/contracts'
+import QuickContact from '@/components/common/QuickContact'
 import DashboardTablePagination from '@/components/table/DashboardTablePagination'
 import EntityActionsMenu from '@/components/table/EntityActionsMenu'
 import TableEmptyStateRow from '@/components/table/TableEmptyStateRow'
@@ -40,10 +41,22 @@ const STATUS_COLORS = {
 const formatDate = (value, locale) =>
   value ? new Intl.DateTimeFormat(localeMap[locale] || 'en-US', { dateStyle: 'medium' }).format(new Date(value)) : '—'
 
-const StaffContractsView = ({ initialResult, initialError, formOptions, canWrite, locale, dictionary, contractDictionary }) => {
+const StaffContractsView = ({
+  initialResult,
+  initialError,
+  formOptions,
+  canWrite,
+  locale,
+  dictionary,
+  contractDictionary
+}) => {
   const [contracts, setContracts] = useState(initialResult.contracts)
   const [totalCount, setTotalCount] = useState(initialResult.totalCount)
-  const [summary, setSummary] = useState(initialResult.summary || { active: 0, expiringSoon: 0, draft: 0, totalValue: 0 })
+
+  const [summary, setSummary] = useState(
+    initialResult.summary || { active: 0, expiringSoon: 0, draft: 0, totalValue: 0 }
+  )
+
   const [page, setPage] = useState(Math.max(0, initialResult.page - 1))
   const [rowsPerPage, setRowsPerPage] = useState(10)
   const [searchInput, setSearchInput] = useState('')
@@ -267,8 +280,12 @@ const StaffContractsView = ({ initialResult, initialError, formOptions, canWrite
           getMobileRowId={contract => contract.id}
           renderMobilePrimary={contract => (
             <div>
-              <Typography className='font-semibold' color='primary.main'>{contract.contract_number}</Typography>
-              <Typography variant='body2' color='text.secondary'>{contract.staff.full_name}</Typography>
+              <Typography className='font-semibold' color='primary.main'>
+                {contract.contract_number}
+              </Typography>
+              <Typography variant='body2' color='text.secondary'>
+                {contract.staff.full_name}
+              </Typography>
             </div>
           )}
           renderMobileStatus={contract => (
@@ -291,7 +308,8 @@ const StaffContractsView = ({ initialResult, initialError, formOptions, canWrite
             {
               id: 'period',
               label: dictionary.table.period,
-              render: contract => `${formatDate(contract.start_date, locale)} — ${formatDate(contract.end_date, locale)}`
+              render: contract =>
+                `${formatDate(contract.start_date, locale)} — ${formatDate(contract.end_date, locale)}`
             }
           ]}
           emptyState={{
@@ -304,82 +322,80 @@ const StaffContractsView = ({ initialResult, initialError, formOptions, canWrite
           onRowClick={contract => setViewingContract(contract)}
         >
           <div className='no-scrollbar overflow-x-auto scroll-smooth'>
-          <table className={tableStyles.table}>
-            <thead>
-              <tr>
-                <th>{dictionary.table.contractNumber}</th>
-                <th>{dictionary.table.staff}</th>
-                <th>{dictionary.table.position}</th>
-                <th>{dictionary.table.contractType}</th>
-                <th>{dictionary.table.salary}</th>
-                <th>{dictionary.table.period}</th>
-                <th>{dictionary.table.status}</th>
-                <th className='text-end'>{dictionary.table.actions}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                <TableSkeletonRows columns={8} />
-              ) : contracts.length === 0 ? (
-                <TableEmptyStateRow
-                  colSpan={8}
-                  icon='tabler-file-certificate'
-                  title={dictionary.table.emptyTitle}
-                  description={dictionary.table.emptyDescription}
-                  actionLabel={canWrite ? dictionary.actions.addFirst : undefined}
-                  onAction={canWrite ? openCreate : undefined}
-                />
-              ) : (
-                contracts.map(contract => (
-                  <tr key={contract.id} className='cursor-pointer' onClick={() => setViewingContract(contract)}>
-                    <td>
-                      <div className='flex min-is-[170px] items-center gap-3'>
-                        <span className='flex size-9 shrink-0 items-center justify-center rounded-full bg-primaryLighter text-primary'>
-                          <i className='tabler-file-certificate text-xl' />
-                        </span>
-                        <Typography className='font-semibold' color='primary.main'>
-                          {contract.contract_number}
+            <table className={tableStyles.table}>
+              <thead>
+                <tr>
+                  <th>{dictionary.table.contractNumber}</th>
+                  <th>{dictionary.table.staff}</th>
+                  <th>{dictionary.table.position}</th>
+                  <th>{dictionary.table.contractType}</th>
+                  <th>{dictionary.table.salary}</th>
+                  <th>{dictionary.table.period}</th>
+                  <th>{dictionary.table.status}</th>
+                  <th className='text-end'>{dictionary.table.actions}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {loading ? (
+                  <TableSkeletonRows columns={8} />
+                ) : contracts.length === 0 ? (
+                  <TableEmptyStateRow
+                    colSpan={8}
+                    icon='tabler-file-certificate'
+                    title={dictionary.table.emptyTitle}
+                    description={dictionary.table.emptyDescription}
+                    actionLabel={canWrite ? dictionary.actions.addFirst : undefined}
+                    onAction={canWrite ? openCreate : undefined}
+                  />
+                ) : (
+                  contracts.map(contract => (
+                    <tr key={contract.id} className='cursor-pointer' onClick={() => setViewingContract(contract)}>
+                      <td>
+                        <div className='flex min-is-[170px] items-center gap-3'>
+                          <span className='flex size-9 shrink-0 items-center justify-center rounded-full bg-primaryLighter text-primary'>
+                            <i className='tabler-file-certificate text-xl' />
+                          </span>
+                          <Typography className='font-semibold' color='primary.main'>
+                            {contract.contract_number}
+                          </Typography>
+                        </div>
+                      </td>
+                      <td>
+                        <Typography color='text.primary'>{contract.staff.full_name}</Typography>
+                        <Typography variant='body2' color='text.secondary'>
+                          <QuickContact email={contract.staff.email}>{contract.staff.email}</QuickContact>
                         </Typography>
-                      </div>
-                    </td>
-                    <td>
-                      <Typography color='text.primary'>{contract.staff.full_name}</Typography>
-                      <Typography variant='body2' color='text.secondary'>
-                        {contract.staff.email}
-                      </Typography>
-                    </td>
-                    <td>{contract.position_title}</td>
-                    <td>{contract.contract_type.label}</td>
-                    <td>
-                      <Typography
-                        component='span'
-                        className='inline-flex rounded bg-successLighter px-3 py-1 font-semibold text-success'
-                      >
-                        {formatCurrency(contract.base_salary, locale, contract.currency || currencyCode)}
-                      </Typography>
-                    </td>
-                    <td className='whitespace-nowrap'>
-                      <Typography variant='body2'>{formatDate(contract.start_date, locale)}</Typography>
-                      <Typography variant='body2' color='text.secondary'>
-                        {formatDate(contract.end_date, locale)}
-                      </Typography>
-                    </td>
-                    <td>
-                      <Chip
-                        size='small'
-                        variant='tonal'
-                        color={STATUS_COLORS[contract.status.value] || 'default'}
-                        label={dictionary.status[contract.status.value] || contract.status.label}
-                      />
-                    </td>
-                    <td className='text-end'>
-                      {renderContractActions(contract)}
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                      </td>
+                      <td>{contract.position_title}</td>
+                      <td>{contract.contract_type.label}</td>
+                      <td>
+                        <Typography
+                          component='span'
+                          className='inline-flex rounded bg-successLighter px-3 py-1 font-semibold text-success'
+                        >
+                          {formatCurrency(contract.base_salary, locale, contract.currency || currencyCode)}
+                        </Typography>
+                      </td>
+                      <td className='whitespace-nowrap'>
+                        <Typography variant='body2'>{formatDate(contract.start_date, locale)}</Typography>
+                        <Typography variant='body2' color='text.secondary'>
+                          {formatDate(contract.end_date, locale)}
+                        </Typography>
+                      </td>
+                      <td>
+                        <Chip
+                          size='small'
+                          variant='tonal'
+                          color={STATUS_COLORS[contract.status.value] || 'default'}
+                          label={dictionary.status[contract.status.value] || contract.status.label}
+                        />
+                      </td>
+                      <td className='text-end'>{renderContractActions(contract)}</td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
           </div>
         </ResponsiveDataTable>
         <DashboardTablePagination

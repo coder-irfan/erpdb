@@ -278,7 +278,7 @@ const TasksView = ({ locale, dictionary, canManage, canUpdate, canDelete }) => {
         </CardContent>
         {view === 'KANBAN' ? (
           <CardContent>
-            <TaskKanbanView {...sharedViewProps} />
+            <TaskKanbanView {...sharedViewProps} loading={loading} />
           </CardContent>
         ) : (
           <TaskTableView

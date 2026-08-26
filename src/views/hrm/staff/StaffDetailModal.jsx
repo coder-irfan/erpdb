@@ -20,6 +20,7 @@ import Tabs from '@mui/material/Tabs'
 import Typography from '@mui/material/Typography'
 
 import { getStaffById } from '@/actions/hrm/staff'
+import QuickContact from '@/components/common/QuickContact'
 import UserAvatar from '@/components/common/UserAvatar'
 import TableEmptyStateRow from '@/components/table/TableEmptyStateRow'
 import { formatCurrency } from '@/utils/formatCurrency'
@@ -152,8 +153,14 @@ const StaffDetailModal = ({ open, staffId, locale, dictionary, onClose }) => {
                   </Typography>
                   <div className='grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3'>
                     <DetailItem label={dictionary.fields.fatherName} value={staff.father_name} />
-                    <DetailItem label={dictionary.fields.email} value={staff.email} />
-                    <DetailItem label={dictionary.fields.phone} value={staff.phone} />
+                    <DetailItem
+                      label={dictionary.fields.email}
+                      value={<QuickContact email={staff.email}>{staff.email}</QuickContact>}
+                    />
+                    <DetailItem
+                      label={dictionary.fields.phone}
+                      value={<QuickContact phone={staff.phone}>{staff.phone}</QuickContact>}
+                    />
                     <DetailItem label={dictionary.fields.tazkiraNo} value={staff.tazkira_no} />
                     <DetailItem label={dictionary.fields.address} value={staff.address} />
                     <DetailItem label={dictionary.fields.educations} value={staff.educations} />
@@ -183,7 +190,10 @@ const StaffDetailModal = ({ open, staffId, locale, dictionary, onClose }) => {
                   </Typography>
                   <div className='grid grid-cols-1 gap-5 sm:grid-cols-3'>
                     <DetailItem label={dictionary.fields.guarantorName} value={staff.guarantor_name} />
-                    <DetailItem label={dictionary.fields.guarantorPhone} value={staff.guarantor_phone} />
+                    <DetailItem
+                      label={dictionary.fields.guarantorPhone}
+                      value={<QuickContact phone={staff.guarantor_phone}>{staff.guarantor_phone}</QuickContact>}
+                    />
                     <DetailItem label={dictionary.fields.guarantorLicense} value={staff.guarantor_license} />
                   </div>
                 </div>

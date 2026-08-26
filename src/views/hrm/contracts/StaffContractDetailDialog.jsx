@@ -7,6 +7,7 @@ import Divider from '@mui/material/Divider'
 import Typography from '@mui/material/Typography'
 
 import UserAvatar from '@/components/common/UserAvatar'
+import QuickContact from '@/components/common/QuickContact'
 import DetailDialog from '@/components/dialogs/DetailDialog'
 import { formatCurrency } from '@/utils/formatCurrency'
 
@@ -89,8 +90,14 @@ const StaffContractDetailDialog = ({ contract, open, locale, dictionary, onClose
           />
           <DetailItem label={dictionary.fields.startDate} value={formatDate(contract.start_date, locale)} />
           <DetailItem label={dictionary.fields.endDate} value={formatDate(contract.end_date, locale)} />
-          <DetailItem label={dictionary.fields.email} value={contract.staff.email} />
-          <DetailItem label={dictionary.fields.phone} value={contract.staff.phone} />
+          <DetailItem
+            label={dictionary.fields.email}
+            value={<QuickContact email={contract.staff.email}>{contract.staff.email}</QuickContact>}
+          />
+          <DetailItem
+            label={dictionary.fields.phone}
+            value={<QuickContact phone={contract.staff.phone}>{contract.staff.phone}</QuickContact>}
+          />
         </div>
         <Divider />
         <div>

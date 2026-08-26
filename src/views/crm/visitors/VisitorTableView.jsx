@@ -5,6 +5,7 @@ import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
 
 import DashboardTablePagination from '@/components/table/DashboardTablePagination'
+import QuickContact from '@/components/common/QuickContact'
 import UserAvatar from '@/components/common/UserAvatar'
 import EntityActionsMenu from '@/components/table/EntityActionsMenu'
 import TableEmptyStateRow from '@/components/table/TableEmptyStateRow'
@@ -106,7 +107,10 @@ const VisitorTableView = ({
                 {visitor.full_name}
               </Typography>
               <Typography variant='body2' color='text.secondary' className='truncate'>
-                {[visitor.company_name, visitor.phone].filter(Boolean).join(' · ') || '—'}
+                {visitor.company_name && `${visitor.company_name} · `}
+                <QuickContact email={visitor.email} phone={visitor.phone}>
+                  {visitor.email || visitor.phone}
+                </QuickContact>
               </Typography>
             </div>
           </div>
@@ -181,9 +185,16 @@ const VisitorTableView = ({
                 />
               ) : (
                 data.visitors.map(visitor => (
-                  <tr key={visitor.id} className='cursor-pointer' onClick={event => {
-                    if (!event.target.closest('button, a, input, select, textarea, [role="button"], [data-row-action]')) onView(visitor)
-                  }}>
+                  <tr
+                    key={visitor.id}
+                    className='cursor-pointer'
+                    onClick={event => {
+                      if (
+                        !event.target.closest('button, a, input, select, textarea, [role="button"], [data-row-action]')
+                      )
+                        onView(visitor)
+                    }}
+                  >
                     <td>
                       <div className='flex min-is-[220px] items-center gap-3'>
                         <UserAvatar user={visitor} size={40} />
@@ -195,7 +206,10 @@ const VisitorTableView = ({
                             title={[visitor.company_name, visitor.phone, visitor.email].filter(Boolean).join(' · ')}
                           >
                             <Typography variant='body2' color='text.secondary' className='max-is-[240px] truncate'>
-                              {[visitor.company_name, visitor.phone].filter(Boolean).join(' · ') || '—'}
+                              {visitor.company_name && `${visitor.company_name} · `}
+                              <QuickContact email={visitor.email} phone={visitor.phone}>
+                                {visitor.email || visitor.phone}
+                              </QuickContact>
                             </Typography>
                           </Tooltip>
                         </div>

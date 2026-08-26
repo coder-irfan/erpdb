@@ -5,6 +5,7 @@ import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
 
 import DashboardTablePagination from '@/components/table/DashboardTablePagination'
+import QuickContact from '@/components/common/QuickContact'
 import UserAvatar from '@/components/common/UserAvatar'
 import EntityActionsMenu from '@/components/table/EntityActionsMenu'
 import TableEmptyStateRow from '@/components/table/TableEmptyStateRow'
@@ -167,9 +168,18 @@ const LeadTableView = ({
                     lead.next_follow_up_date && new Date(lead.next_follow_up_date) < now && !lead.converted_client
 
                   return (
-                    <tr key={lead.id} className='cursor-pointer' onClick={event => {
-                      if (!event.target.closest('button, a, input, select, textarea, [role="button"], [data-row-action]')) onView(lead)
-                    }}>
+                    <tr
+                      key={lead.id}
+                      className='cursor-pointer'
+                      onClick={event => {
+                        if (
+                          !event.target.closest(
+                            'button, a, input, select, textarea, [role="button"], [data-row-action]'
+                          )
+                        )
+                          onView(lead)
+                      }}
+                    >
                       <td>
                         <div className='flex min-is-[220px] items-center gap-3'>
                           <UserAvatar user={{ name: lead.title }} size={40} />
@@ -187,7 +197,13 @@ const LeadTableView = ({
                         <Typography>{lead.contact_name}</Typography>
                         <Tooltip title={[lead.email, lead.phone].filter(Boolean).join(' · ')}>
                           <Typography variant='body2' color='text.secondary' className='max-is-[220px] truncate'>
-                            {lead.email || lead.phone || '—'}
+                            {lead.email || lead.phone ? (
+                              <QuickContact email={lead.email} phone={lead.phone}>
+                                {lead.email || lead.phone}
+                              </QuickContact>
+                            ) : (
+                              '—'
+                            )}
                           </Typography>
                         </Tooltip>
                       </td>

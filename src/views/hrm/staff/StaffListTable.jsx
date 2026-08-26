@@ -13,6 +13,7 @@ import { createColumnHelper, getCoreRowModel, useReactTable } from '@tanstack/re
 import { toast } from 'sonner'
 
 import CustomTextField from '@core/components/mui/TextField'
+import QuickContact from '@/components/common/QuickContact'
 import UserAvatar from '@/components/common/UserAvatar'
 import DashboardTablePagination from '@/components/table/DashboardTablePagination'
 import EntityActionsMenu from '@/components/table/EntityActionsMenu'
@@ -198,7 +199,7 @@ const StaffListTable = ({
                   {employee.full_name}
                 </Typography>
                 <Typography variant='body2' color='text.secondary' className='truncate'>
-                  {employee.email}
+                  <QuickContact email={employee.email}>{employee.email}</QuickContact>
                 </Typography>
               </div>
             </div>
@@ -206,7 +207,10 @@ const StaffListTable = ({
         }
       }),
       columnHelper.accessor('position', { header: dictionary.table.position }),
-      columnHelper.accessor('phone', { header: dictionary.table.phone }),
+      columnHelper.accessor('phone', {
+        header: dictionary.table.phone,
+        cell: info => <QuickContact phone={info.getValue()}>{info.getValue()}</QuickContact>
+      }),
       columnHelper.accessor('join_date', {
         header: dictionary.table.joinDate,
         cell: info => formatDate(info.getValue(), locale)

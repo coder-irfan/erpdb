@@ -16,6 +16,7 @@ import { toast } from 'sonner'
 import UserAvatar from '@/components/common/UserAvatar'
 import ResponsiveDataTable from '@/components/tables/ResponsiveDataTable'
 import PhoneNumber from '@/components/common/PhoneNumber'
+import QuickContact from '@/components/common/QuickContact'
 import { formatCurrency, toFiniteNumber } from '@/utils/formatCurrency'
 
 const localeMap = { en: 'en-US', fa: 'fa-AF', ps: 'ps-AF' }
@@ -149,12 +150,7 @@ const ClientProfileModal = ({
           </div>
         ) : (
           <>
-            <Tabs
-              value={tab}
-              onChange={(_, value) => setTab(value)}
-              variant='scrollable'
-              className='px-3'
-            >
+            <Tabs value={tab} onChange={(_, value) => setTab(value)} variant='scrollable' className='px-3'>
               <Tab icon={<i className='tabler-address-book' />} iconPosition='start' label={dictionary.tabs.overview} />
               <Tab
                 icon={<i className='tabler-briefcase' />}
@@ -169,8 +165,12 @@ const ClientProfileModal = ({
                 <div className='flex flex-col md:gap-4 gap-2'>
                   <div className='grid grid-cols-1 gap-5 rounded border border-divider p-5 sm:grid-cols-2'>
                     <Info label={dictionary.fields.contact}>{client.primary_contact_name}</Info>
-                    <Info label={dictionary.fields.email}>{client.email}</Info>
-                    <Info label={dictionary.fields.phone}><PhoneNumber value={client.phone} /></Info>
+                    <Info label={dictionary.fields.email}>
+                      <QuickContact email={client.email}>{client.email}</QuickContact>
+                    </Info>
+                    <Info label={dictionary.fields.phone}>
+                      <PhoneNumber value={client.phone} />
+                    </Info>
                     <Info label={dictionary.fields.tax}>{client.tax_id}</Info>
                     <Info label={dictionary.fields.address}>{client.address}</Info>
                     <Info label={dictionary.fields.created}>{formatDate(client.created_at, locale)}</Info>
@@ -338,10 +338,7 @@ const ClientProfileModal = ({
                           </thead>
                           <tbody>
                             {client.invoices.map(invoice => (
-                              <tr
-                                key={invoice.id}
-                                className='transition-colors hover:bg-actionHover'
-                              >
+                              <tr key={invoice.id} className='transition-colors hover:bg-actionHover'>
                                 <td className='p-3 font-medium'>{invoice.invoice_number}</td>
                                 <td className='p-3'>
                                   <Chip

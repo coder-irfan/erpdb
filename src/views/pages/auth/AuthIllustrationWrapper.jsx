@@ -11,12 +11,13 @@ const AuthPageContainer = styled('div')(({ theme }) => ({
   alignItems: 'center',
   justifyContent: 'center',
   padding: theme.spacing(4),
-  backgroundColor: theme.palette.background.default
+  overflow: 'hidden',
+  background: `radial-gradient(circle at 15% 15%, ${theme.palette.primary.main}22 0, transparent 32%), radial-gradient(circle at 88% 82%, ${theme.palette.secondary.main}1f 0, transparent 28%), ${theme.palette.background.default}`
 }))
 
 const AuthCardContainer = styled('div')(({ theme }) => ({
   width: '100%',
-  maxWidth: 450,
+  maxWidth: 460,
   position: 'relative',
   [theme.breakpoints.up('md')]: {
     '&:before': {
@@ -43,7 +44,7 @@ const AuthCardContainer = styled('div')(({ theme }) => ({
 }))
 
 const AuthIllustrationWrapper = ({ children }) => (
-  <AuthPageContainer>
+  <AuthPageContainer className='auth-page-surface'>
     <AuthCardContainer>{children}</AuthCardContainer>
   </AuthPageContainer>
 )

@@ -280,6 +280,7 @@ const CrmLeadsView = ({ locale, dictionary, currencyCode, canWrite, canDelete })
               locale={locale}
               currencyCode={currencyCode}
               dictionary={dictionary}
+              loading={loading}
               canWrite={canWrite}
               onStatusChange={statusChange}
               onActivity={lead => setActivityLeadId(lead.id)}

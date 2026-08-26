@@ -74,8 +74,8 @@ const ResetPasswordV1 = ({ dictionary, locale, token }) => {
 
   return (
     <AuthIllustrationWrapper>
-      <Card className='flex flex-col sm:is-[450px]'>
-        <CardContent className='sm:!p-12'>
+      <Card className='flex flex-col overflow-hidden border border-divider/70 bg-paper/95 shadow-2xl backdrop-blur sm:is-[460px]'>
+        <CardContent className='sm:!p-10'>
           <Link href={getLocalizedUrl('/login', locale)} className='flex justify-center mbe-6'>
             <Logo />
           </Link>
@@ -103,6 +103,7 @@ const ResetPasswordV1 = ({ dictionary, locale, token }) => {
                   render={({ field }) => (
                     <CustomTextField
                       {...field}
+                      className='[&_.MuiInputBase-input]:pe-12'
                       autoFocus
                       fullWidth
                       label={dictionary.resetPassword.newPassword}
@@ -116,6 +117,7 @@ const ResetPasswordV1 = ({ dictionary, locale, token }) => {
                             <InputAdornment position='end'>
                               <IconButton
                                 edge='end'
+                                className='-mie-1 rounded-md hover:bg-actionHover'
                                 onClick={() => setIsPasswordShown(shown => !shown)}
                                 onMouseDown={event => event.preventDefault()}
                                 aria-label={
@@ -137,6 +139,7 @@ const ResetPasswordV1 = ({ dictionary, locale, token }) => {
                   render={({ field }) => (
                     <CustomTextField
                       {...field}
+                      className='[&_.MuiInputBase-input]:pe-12'
                       fullWidth
                       label={dictionary.resetPassword.confirmPassword}
                       placeholder={dictionary.resetPassword.confirmPasswordPlaceholder}
@@ -149,6 +152,7 @@ const ResetPasswordV1 = ({ dictionary, locale, token }) => {
                             <InputAdornment position='end'>
                               <IconButton
                                 edge='end'
+                                className='-mie-1 rounded-md hover:bg-actionHover'
                                 onClick={() => setIsConfirmPasswordShown(shown => !shown)}
                                 onMouseDown={event => event.preventDefault()}
                                 aria-label={
@@ -166,7 +170,13 @@ const ResetPasswordV1 = ({ dictionary, locale, token }) => {
                     />
                   )}
                 />
-                <Button fullWidth variant='contained' type='submit' disabled={isSubmitting}>
+                <Button
+                  fullWidth
+                  variant='contained'
+                  type='submit'
+                  disabled={isSubmitting}
+                  className='min-h-11 shadow-md transition-transform hover:-translate-y-px hover:shadow-lg'
+                >
                   <LoadingButtonContent loading={isSubmitting} loadingLabel={dictionary.resetPassword.submitting}>
                     {dictionary.resetPassword.submit}
                   </LoadingButtonContent>

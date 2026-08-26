@@ -47,14 +47,35 @@ const IndividualTimesheetPrintDocument = ({ staff, records, period, locale, dict
     <div className='timesheet-print-root hidden print:block'>
       <style jsx global>{`
         @media print {
-          @page { size: A4 landscape; margin: 10mm; }
-          .timesheet-print-root .enterprise-print-document { width: 100% !important; max-width: none !important; }
-          .timesheet-print-root .enterprise-print-document > div { min-height: 0 !important; padding: 6mm 8mm !important; }
-          .timesheet-print-root .enterprise-print-footer { margin-top: 0.75rem !important; padding-top: 0.5rem !important; page-break-inside: avoid; }
-          .timesheet-print-root .enterprise-signature-card { min-height: 0; padding: 0.5rem; }
-          .timesheet-print-root .enterprise-signature-card > .mt-12 { margin-top: 1rem !important; }
+          @page {
+            size: A4 landscape;
+            margin: 10mm;
+          }
+          .timesheet-print-root .enterprise-print-document {
+            width: 100% !important;
+            max-width: none !important;
+          }
+          .timesheet-print-root .enterprise-print-document > div {
+            min-height: 0 !important;
+            padding: 6mm 8mm !important;
+          }
+          .timesheet-print-root .enterprise-print-footer {
+            margin-top: 0.75rem !important;
+            padding-top: 0.5rem !important;
+            page-break-inside: avoid;
+          }
+          .timesheet-print-root .enterprise-signature-card {
+            min-height: 0;
+            padding: 0.5rem;
+          }
+          .timesheet-print-root .enterprise-signature-card > .mt-12 {
+            margin-top: 1rem !important;
+          }
           .timesheet-print-root .enterprise-print-content th,
-          .timesheet-print-root .enterprise-print-content td { padding: 3px 6px !important; font-size: 10px !important; }
+          .timesheet-print-root .enterprise-print-content td {
+            padding: 3px 6px !important;
+            font-size: 10px !important;
+          }
         }
       `}</style>
       <PrintLayout
@@ -100,22 +121,39 @@ const IndividualTimesheetPrintDocument = ({ staff, records, period, locale, dict
               </tr>
             </thead>
             <tbody>
-              {orderedRecords.length ? orderedRecords.map((record, index) => (
-                <tr key={record.id} className={index % 2 ? 'bg-gray-50' : ''}>
-                  <td className='border border-gray-300 px-2 py-1'>{record.date}</td>
-                  <td className='border border-gray-300 px-2 py-1'>{formatDay(record.date, locale)}</td>
-                  <td className='border border-gray-300 px-2 py-1 whitespace-nowrap'>{formatTimeRange(record)}</td>
-                  <td className='border border-gray-300 px-2 py-1'>{dictionary.status[record.status] || record.status}</td>
-                  <td className='border border-gray-300 px-2 py-1 text-end'>{record.hours_worked ? `${Number(record.hours_worked).toFixed(2)} ${dictionary.hoursShort}` : '—'}</td>
+              {orderedRecords.length ? (
+                orderedRecords.map((record, index) => (
+                  <tr key={record.id} className={index % 2 ? 'bg-gray-50' : ''}>
+                    <td className='border border-gray-300 px-2 py-1'>{record.date}</td>
+                    <td className='border border-gray-300 px-2 py-1'>{formatDay(record.date, locale)}</td>
+                    <td className='border border-gray-300 px-2 py-1'>{formatTimeRange(record)}</td>
+                    <td className='border border-gray-300 px-2 py-1'>
+                      {dictionary.status[record.status] || record.status}
+                    </td>
+                    <td className='border border-gray-300 px-2 py-1 text-end'>
+                      {record.hours_worked ? `${Number(record.hours_worked).toFixed(2)} ${dictionary.hoursShort}` : '—'}
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={5} className='border border-gray-300 px-2 py-4 text-center text-gray-500'>
+                    {print.noRecords}
+                  </td>
                 </tr>
-              )) : (
-                <tr><td colSpan={5} className='border border-gray-300 px-2 py-4 text-center text-gray-500'>{print.noRecords}</td></tr>
               )}
             </tbody>
             <tfoot className='bg-gray-50 font-bold'>
               <tr>
-                <td colSpan={4} className='border border-gray-300 px-2 py-1 text-end uppercase tracking-wide text-gray-600'>{print.totalLoggedHours}</td>
-                <td className='border border-gray-300 px-2 py-1 text-end'>{totalHours.toFixed(2)} {dictionary.hoursShort}</td>
+                <td
+                  colSpan={4}
+                  className='border border-gray-300 px-2 py-1 text-end uppercase tracking-wide text-gray-600'
+                >
+                  {print.totalLoggedHours}
+                </td>
+                <td className='border border-gray-300 px-2 py-1 text-end'>
+                  {totalHours.toFixed(2)} {dictionary.hoursShort}
+                </td>
               </tr>
             </tfoot>
           </table>

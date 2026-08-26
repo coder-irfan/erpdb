@@ -14,6 +14,7 @@ import Typography from '@mui/material/Typography'
 import { toast } from 'sonner'
 
 import CustomTextField from '@core/components/mui/TextField'
+import QuickContact from '@/components/common/QuickContact'
 import UserAvatar from '@/components/common/UserAvatar'
 import ConfirmDeleteModal from '@/components/dialogs/ConfirmDeleteModal'
 import DashboardTablePagination from '@/components/table/DashboardTablePagination'
@@ -220,7 +221,11 @@ const TimesheetsView = ({ initialDate, canWrite, canDelete, defaultWorkHours, pr
   const renderRecordActions = record => (
     <EntityActionsMenu
       actions={[
-        { label: dictionary.actions.view || 'View details', icon: 'tabler-eye', onClick: () => setViewingRecord(record) },
+        {
+          label: dictionary.actions.view || 'View details',
+          icon: 'tabler-eye',
+          onClick: () => setViewingRecord(record)
+        },
         {
           label: dictionary.actions.print,
           icon: 'tabler-printer',
@@ -342,7 +347,7 @@ const TimesheetsView = ({ initialDate, canWrite, canDelete, defaultWorkHours, pr
                   {record.staff.full_name}
                 </Typography>
                 <Typography variant='body2' color='text.secondary' className='truncate'>
-                  {record.staff.email}
+                  <QuickContact email={record.staff.email}>{record.staff.email}</QuickContact>
                 </Typography>
               </div>
             </div>
@@ -405,9 +410,18 @@ const TimesheetsView = ({ initialDate, canWrite, canDelete, defaultWorkHours, pr
                   />
                 ) : (
                   data.records.map(record => (
-                    <tr key={record.id} className='cursor-pointer' onClick={event => {
-                      if (!event.target.closest('button, a, input, select, textarea, [role="button"], [data-row-action]')) setViewingRecord(record)
-                    }}>
+                    <tr
+                      key={record.id}
+                      className='cursor-pointer'
+                      onClick={event => {
+                        if (
+                          !event.target.closest(
+                            'button, a, input, select, textarea, [role="button"], [data-row-action]'
+                          )
+                        )
+                          setViewingRecord(record)
+                      }}
+                    >
                       <td>
                         <div className='flex min-is-[250px] items-center gap-3'>
                           <UserAvatar user={record.staff} size={40} />
@@ -416,7 +430,7 @@ const TimesheetsView = ({ initialDate, canWrite, canDelete, defaultWorkHours, pr
                               {record.staff.full_name}
                             </Typography>
                             <Typography variant='body2' color='text.secondary'>
-                              {record.staff.email}
+                              <QuickContact email={record.staff.email}>{record.staff.email}</QuickContact>
                             </Typography>
                           </div>
                         </div>

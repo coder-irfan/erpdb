@@ -20,16 +20,15 @@ const getRequiredEnvironmentValue = name => {
 const getTransporter = () => {
   if (transporter) return transporter
 
-  const port = Number(getRequiredEnvironmentValue('SMTP_PORT'))
-
-  if (!Number.isInteger(port) || port <= 0) {
-    throw new Error('SMTP_PORT must be a valid positive integer.')
-  }
+  const port = Number(process.env.SMTP_PORT) || 465
 
   transporter = nodemailer.createTransport({
     host: getRequiredEnvironmentValue('SMTP_HOST'),
     port,
-    secure: process.env.SMTP_SECURE === 'true',
+    secure: Number(process.env.SMTP_PORT) === 465,
+    connectionTimeout: 10_000,
+    socketTimeout: 10_000,
+    greetingTimeout: 5_000,
     auth: {
       user: getRequiredEnvironmentValue('EMAIL_USER'),
       pass: getRequiredEnvironmentValue('EMAIL_PASS')
@@ -37,6 +36,15 @@ const getTransporter = () => {
   })
 
   return transporter
+}
+
+const dispatchMail = async options => {
+  try {
+    return await getTransporter().sendMail(options)
+  } catch (error) {
+    console.error('SMTP mail dispatch failed.', error)
+    throw error
+  }
 }
 
 const escapeHtml = value =>
@@ -61,7 +69,7 @@ export const sendPasswordResetEmail = async (toEmail, resetToken, requestedLocal
 
     resetUrl.searchParams.set('token', resetToken)
 
-    await getTransporter().sendMail({
+    await dispatchMail({
       from: `"${fromName.replaceAll('"', '')}" <${emailUser}>`,
       to: toEmail,
       subject: translations.subject,
@@ -78,6 +86,7 @@ export const sendPasswordResetEmail = async (toEmail, resetToken, requestedLocal
       `
     })
   } catch (error) {
+    console.error('Password reset email delivery failed.', error)
     throw new Error('Unable to deliver the password reset email.', { cause: error })
   }
 }
@@ -97,7 +106,7 @@ export const sendUserInvitationEmail = async (toEmail, invitationToken, requeste
 
     invitationUrl.searchParams.set('token', invitationToken)
 
-    await getTransporter().sendMail({
+    await dispatchMail({
       from: `"${fromName.replaceAll('"', '')}" <${emailUser}>`,
       to: toEmail,
       subject: translations.subject,
@@ -115,6 +124,7 @@ export const sendUserInvitationEmail = async (toEmail, invitationToken, requeste
       `
     })
   } catch (error) {
+    console.error('User invitation email delivery failed.', error)
     throw new Error('Unable to deliver the user invitation email.', { cause: error })
   }
 }
@@ -144,7 +154,7 @@ export const sendContractExpirationEmail = async ({
 
   const subject = `${contractNumber} expires in ${remainingDays} days`
 
-  await getTransporter().sendMail({
+  await dispatchMail({
     from: `"${fromName.replaceAll('"', '')}" <${emailUser}>`,
     to: toEmail,
     subject,

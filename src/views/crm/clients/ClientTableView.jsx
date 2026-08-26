@@ -5,6 +5,7 @@ import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
 
 import DashboardTablePagination from '@/components/table/DashboardTablePagination'
+import QuickContact from '@/components/common/QuickContact'
 import UserAvatar from '@/components/common/UserAvatar'
 import EntityActionsMenu from '@/components/table/EntityActionsMenu'
 import TableEmptyStateRow from '@/components/table/TableEmptyStateRow'
@@ -84,7 +85,10 @@ const ClientTableView = ({
                 {client.company_name}
               </Typography>
               <Typography variant='body2' color='text.secondary' className='truncate'>
-                {[client.primary_contact_name, client.phone].filter(Boolean).join(' · ') || '—'}
+                {client.primary_contact_name && `${client.primary_contact_name} · `}
+                <QuickContact email={client.email} phone={client.phone}>
+                  {client.email || client.phone}
+                </QuickContact>
               </Typography>
             </div>
           </div>
@@ -168,7 +172,10 @@ const ClientTableView = ({
                               .join(' · ')}
                           >
                             <Typography variant='body2' color='text.secondary' className='max-is-[240px] truncate'>
-                              {[client.primary_contact_name, client.phone].filter(Boolean).join(' · ') || '—'}
+                              {client.primary_contact_name && `${client.primary_contact_name} · `}
+                              <QuickContact email={client.email} phone={client.phone}>
+                                {client.email || client.phone}
+                              </QuickContact>
                             </Typography>
                           </Tooltip>
                         </div>
