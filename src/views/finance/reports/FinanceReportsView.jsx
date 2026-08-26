@@ -529,7 +529,7 @@ const FinanceReportsView = ({ locale, dictionary, setup, generatedAt }) => {
       </div>
 
       <Card className='report-table-card'>
-        <CardContent className='flex flex-wrap items-center justify-between gap-2 border-be border-divider'>
+        <CardContent className='flex flex-wrap items-center justify-between gap-2'>
           <div>
             <Typography variant='h5'>{activeReport.tableTitle}</Typography>
             <Typography variant='body2' color='text.secondary'>

@@ -165,7 +165,7 @@ const SingleCategoryOptionsView = ({
 
   return (
     <Card>
-      <CardContent className='flex is-full flex-wrap items-center gap-3 sm:is-auto justify-between border-be border-divider'>
+      <CardContent className='flex is-full flex-wrap items-center gap-3 sm:is-auto justify-between'>
         <CustomTextField
           value={search}
           onChange={event => setSearch(event.target.value)}

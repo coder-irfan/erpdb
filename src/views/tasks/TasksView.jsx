@@ -199,7 +199,7 @@ const TasksView = ({ locale, dictionary, canManage, canUpdate, canDelete }) => {
     <div className='flex flex-col gap-4'>
       <TaskStatsCards summary={data.summary} dictionary={dictionary} />
       <Card>
-        <CardContent className='flex flex-wrap items-center justify-between gap-4 border-be border-divider'>
+        <CardContent className='flex flex-wrap items-center justify-between gap-4'>
           <div className='flex is-full flex-wrap items-center gap-3 md:is-auto'>
             <CustomTextField
               label={dictionary.filters.search}

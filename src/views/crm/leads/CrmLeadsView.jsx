@@ -139,7 +139,7 @@ const CrmLeadsView = ({ locale, dictionary, currencyCode, canWrite, canDelete })
     <div className='flex flex-col md:gap-4 gap-2'>
       <LeadStatsCards summary={data.summary} locale={locale} currencyCode={currencyCode} dictionary={dictionary} />
       <Card className='border border-divider/70 shadow-sm'>
-        <CardContent className='flex flex-wrap items-center justify-between gap-4 border-be border-divider'>
+        <CardContent className='flex flex-wrap items-center justify-between gap-4'>
           <div className='flex is-full flex-wrap items-center gap-3 md:is-auto'>
             <CustomTextField
               label={dictionary.filters.search}

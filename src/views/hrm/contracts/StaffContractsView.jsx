@@ -184,7 +184,7 @@ const StaffContractsView = ({ initialResult, initialError, formOptions, canWrite
         dictionary={dictionary.stats}
       />
       <Card className='border border-divider/70 shadow-sm'>
-        <CardContent className='flex flex-wrap items-center justify-between gap-4 border-be border-divider'>
+        <CardContent className='flex flex-wrap items-center justify-between gap-4'>
           <CustomTextField
             className='is-full sm:max-is-[320px]'
             value={searchInput}

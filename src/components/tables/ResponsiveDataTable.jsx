@@ -193,7 +193,7 @@ const ResponsiveDataTable = ({
                         {actionsContent && <div onClick={event => event.stopPropagation()}>{actionsContent}</div>}
                       </div>
                     </div>
-                    {metadataCells.length > 0 && <div className='border-be border-divider' />}
+                    {metadataCells.length > 0 && <div />}
                     {metadataCells.length > 0 && (
                       <div className='flex flex-col gap-1.5 text-xs sm:gap-2'>
                         {metadataCells.map((cell, cellIndex) => {

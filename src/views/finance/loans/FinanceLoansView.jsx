@@ -80,7 +80,7 @@ const FinanceLoansView = ({ locale, dictionary, canWrite, setup }) => {
     <div className='flex flex-col gap-4'>
       <FinanceLoanStatsCards summary={data.summary} locale={locale} dictionary={dictionary} />
       <Card>
-        <CardContent className='flex flex-wrap items-center justify-between gap-4 border-be border-divider'>
+        <CardContent className='flex flex-wrap items-center justify-between gap-4'>
           <CustomTextField
             label={dictionary.filters.search}
             placeholder={dictionary.filters.searchPlaceholder}

@@ -218,7 +218,7 @@ const StaffLeavesView = ({ locale, dictionary }) => {
       <LeaveStatsCards summary={data.summary} dictionary={dictionary} />
 
       <Card className='border border-divider/70 shadow-sm'>
-        <CardContent className='flex flex-wrap items-center justify-between gap-4 border-be border-divider'>
+        <CardContent className='flex flex-wrap items-center justify-between gap-4'>
           <CustomTextField
             value={searchInput}
             onChange={event => setSearchInput(event.target.value)}

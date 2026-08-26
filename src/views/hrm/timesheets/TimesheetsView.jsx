@@ -251,7 +251,7 @@ const TimesheetsView = ({ initialDate, canWrite, canDelete, defaultWorkHours, pr
       <AttendanceStatsCards summary={data.summary} dictionary={dictionary} />
 
       <Card className='border border-divider/70 shadow-sm'>
-        <CardContent className='no-print flex flex-wrap items-center justify-between gap-4 border-be border-divider'>
+        <CardContent className='no-print flex flex-wrap items-center justify-between gap-4'>
           <CustomTextField
             className='is-full sm:max-is-[300px]'
             label={dictionary.filters.search}

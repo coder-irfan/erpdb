@@ -175,7 +175,7 @@ const FinanceIncomeView = ({ locale, dictionary, canWrite, canDelete, setup }) =
     <div className='flex flex-col gap-4'>
       <FinanceIncomeStatsCards summary={data.summary} locale={locale} currency={data.baseCurrency} dictionary={dictionary} />
       <Card>
-        <CardContent className='flex flex-wrap items-center justify-between gap-4 border-be border-divider'>
+        <CardContent className='flex flex-wrap items-center justify-between gap-4'>
           <CustomTextField
             label={dictionary.filters.search}
             placeholder={dictionary.filters.searchPlaceholder}

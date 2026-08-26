@@ -152,7 +152,7 @@ const ClientProfileModal = ({
               value={tab}
               onChange={(_, value) => setTab(value)}
               variant='scrollable'
-              className='border-be border-divider px-3'
+              className='px-3'
             >
               <Tab icon={<i className='tabler-address-book' />} iconPosition='start' label={dictionary.tabs.overview} />
               <Tab
@@ -328,7 +328,7 @@ const ClientProfileModal = ({
                       <div className='no-scrollbar overflow-x-auto scroll-smooth rounded border border-divider'>
                         <table className='w-full'>
                           <thead>
-                            <tr className='border-be border-divider bg-actionHover'>
+                            <tr className='bg-actionHover'>
                               <th className='p-3 text-start'>{dictionary.detail.invoice}</th>
                               <th className='p-3 text-start'>{dictionary.table.status}</th>
                               <th className='p-3 text-start'>{dictionary.detail.dueDate}</th>
@@ -339,7 +339,7 @@ const ClientProfileModal = ({
                             {client.invoices.map(invoice => (
                               <tr
                                 key={invoice.id}
-                                className='border-be border-divider transition-colors hover:bg-actionHover'
+                                className='transition-colors hover:bg-actionHover'
                               >
                                 <td className='p-3 font-medium'>{invoice.invoice_number}</td>
                                 <td className='p-3'>

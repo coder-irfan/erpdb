@@ -137,7 +137,7 @@ const ContractsView = ({ locale, dictionary, setup, canWrite, canDelete, canRunA
     <div className='flex flex-col gap-4'>
       <ContractStatsCards summary={data.summary} locale={locale} currency={data.baseCurrency} dictionary={dictionary} variant={scope === 'OTHERS' ? 'others' : 'default'} />
       <Card>
-        <CardContent className='flex flex-wrap items-center justify-between gap-4 border-be border-divider'>
+        <CardContent className='flex flex-wrap items-center justify-between gap-4'>
           <CustomTextField label={dictionary.filters.search} placeholder={dictionary.filters.searchPlaceholder} value={searchInput} onChange={event => setSearchInput(event.target.value)} className='is-full sm:is-[360px]' slotProps={{ input: { startAdornment: <i className='tabler-search' /> } }} />
           <div className='grid is-full grid-cols-2 gap-2 sm:flex sm:is-auto sm:flex-wrap sm:gap-3 sm:justify-end'>
             <TableFiltersPopover activeCount={activeFilterCount} locale={locale}>

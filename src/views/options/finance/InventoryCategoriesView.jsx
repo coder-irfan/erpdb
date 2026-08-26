@@ -173,7 +173,7 @@ const InventoryCategoriesView = ({ locale, dictionary, canWrite, canDelete }) =>
 
   return (
     <Card>
-      <CardContent className='flex flex-wrap items-center justify-between gap-4 border-be border-divider'>
+      <CardContent className='flex flex-wrap items-center justify-between gap-4'>
         <CustomTextField
           label={dictionary.filters.searchCategories}
           placeholder={dictionary.filters.searchCategoriesPlaceholder}

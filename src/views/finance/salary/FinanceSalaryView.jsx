@@ -159,7 +159,7 @@ const FinanceSalaryView = ({ locale, dictionary, canWrite, canDelete }) => {
         dictionary={dictionary}
       />
       <Card>
-        <CardContent className='flex flex-wrap items-center justify-between gap-4 border-be border-divider'>
+        <CardContent className='flex flex-wrap items-center justify-between gap-4'>
           <div className='flex is-full flex-wrap items-end gap-3 lg:is-auto'>
             <CustomTextField
               label={dictionary.filters.search}
