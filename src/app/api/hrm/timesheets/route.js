@@ -13,9 +13,11 @@ import {
   parseDate,
   attendanceSelect
 } from '@/libs/hrmTimesheets'
+import { getCurrentStaff } from '@/libs/hrmLeaves'
 import { prisma } from '@/libs/prisma'
 import { ATTENDANCE_STATUSES, createTimesheetSchema, DATE_PATTERN } from '@/schemas/hrm/timesheets'
 import { getDictionary } from '@/utils/getDictionary'
+import { hasAnyPermission } from '@/utils/rbac'
 
 const responseError = (error, status, code) => Response.json({ success: false, error, code }, { status })
 const localeFrom = value => (['en', 'fa', 'ps'].includes(value) ? value : 'en')
@@ -35,6 +37,13 @@ export async function GET(request) {
     )
   }
 
+  const canManage = hasAnyPermission(authorization.session, ['hrm:read'])
+  const currentStaff = canManage ? null : await getCurrentStaff(authorization.session.user.id)
+
+  if (!canManage && !currentStaff) {
+    return responseError(dictionary.messages.forbidden, 403, 'STAFF_PROFILE_REQUIRED')
+  }
+
   const date = params.get('date') || getKabulToday()
   const monthValue = Number.parseInt(params.get('month'), 10)
   const yearValue = Number.parseInt(params.get('year'), 10)
@@ -51,7 +60,17 @@ export async function GET(request) {
   }
 
   try {
-    const data = await getAttendanceDashboard({ date, month, year, staffId, status, search, page, limit })
+    const data = await getAttendanceDashboard({
+      date,
+      month,
+      year,
+      staffId,
+      status,
+      search,
+      page,
+      limit,
+      scopeStaffId: canManage ? null : currentStaff.id
+    })
 
     return Response.json({ success: true, data })
   } catch {
@@ -80,6 +99,13 @@ export async function POST(request) {
     )
   }
 
+  const canManage = hasAnyPermission(authorization.session, ['hrm:write'])
+  const currentStaff = canManage ? null : await getCurrentStaff(authorization.session.user.id)
+
+  if (!canManage && !currentStaff) {
+    return responseError(dictionary.messages.forbidden, 403, 'STAFF_PROFILE_REQUIRED')
+  }
+
   const date = payload?.date || getKabulToday()
 
   if (!DATE_PATTERN.test(date) || !parseDate(date)) {
@@ -87,6 +113,8 @@ export async function POST(request) {
   }
 
   if (payload?.bulkRemainingAbsent === true) {
+    if (!canManage) return responseError(dictionary.messages.forbidden, 403, 'FORBIDDEN')
+
     try {
       const day = parseDate(date)
 
@@ -128,7 +156,7 @@ export async function POST(request) {
   }
 
   const validation = safeParse(createTimesheetSchema(dictionary.validation), {
-    staff_id: payload?.staff_id,
+    staff_id: canManage ? payload?.staff_id : currentStaff.id,
     status: payload?.status,
     date,
     check_in_time: payload?.check_in_time || '',

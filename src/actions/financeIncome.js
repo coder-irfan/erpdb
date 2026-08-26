@@ -236,6 +236,8 @@ const prepareIncomeData = async (values, translations, currentIncome = null) => 
             amount: true,
             paid_amount: true,
             remaining_balance: true,
+            currency: true,
+            exchange_rate: true,
             status: { select: { value: true } }
           }
         })
@@ -282,10 +284,15 @@ const prepareIncomeData = async (values, translations, currentIncome = null) => 
     return { success: false, error: translations.validation.positiveInvalid }
   }
 
+  // An invoice's balance is denominated in its own locked currency.  Recording
+  // a linked receipt with a user-supplied currency/rate would otherwise make a
+  // numeric payment settle the wrong amount of that invoice.
+  const settledCurrency = invoice ? invoice.currency : values.currency
+  const settledExchangeRate = invoice ? toFiniteNumber(invoice.exchange_rate) : exchangeRate
   const settledAmount = invoice ? paidAmount : totalAmount
   const paymentValues = invoice ? { remaining: 0, status: 'PAID' } : derivePaymentValues(totalAmount, paidAmount)
   const baseCurrency = setup.currency_code || 'AFN'
-  const amountBase = convertToBaseCurrency(settledAmount, values.currency, exchangeRate, baseCurrency)
+  const amountBase = convertToBaseCurrency(settledAmount, settledCurrency, settledExchangeRate, baseCurrency)
   const reminderDate = values.remind_date ? toUtcDateOnly(values.remind_date) : null
 
   if (values.remind_date && !reminderDate) {
@@ -306,8 +313,8 @@ const prepareIncomeData = async (values, translations, currentIncome = null) => 
       paid_amount: new Prisma.Decimal(paidAmount),
       remind_amount: new Prisma.Decimal(paymentValues.remaining),
       status: paymentValues.status,
-      currency: values.currency,
-      exchange_rate: new Prisma.Decimal(exchangeRate),
+      currency: settledCurrency,
+      exchange_rate: new Prisma.Decimal(settledExchangeRate),
       amount_base: new Prisma.Decimal(amountBase),
       pay_details: values.pay_details || null,
       remind_date: reminderDate

@@ -5,6 +5,7 @@ import { ATTENDANCE_WRITE_PERMISSIONS, calculateHours, normalizeAttendanceInput,
 import { prisma } from '@/libs/prisma'
 import { createTimesheetSchema, DATE_PATTERN } from '@/schemas/hrm/timesheets'
 import { getDictionary } from '@/utils/getDictionary'
+import { hasAnyPermission } from '@/utils/rbac'
 
 const MAX_BULK_RECORDS = 1_000
 const responseError = (error, status, code) => Response.json({ success: false, error, code }, { status })
@@ -29,6 +30,10 @@ export async function POST(request) {
       authorization.code === 'UNAUTHENTICATED' ? 401 : 403,
       authorization.code
     )
+  }
+
+  if (!hasAnyPermission(authorization.session, ['hrm:write'])) {
+    return responseError(dictionary.messages.forbidden, 403, 'FORBIDDEN')
   }
 
   const date = payload?.date

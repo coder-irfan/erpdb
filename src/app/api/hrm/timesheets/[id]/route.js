@@ -11,9 +11,11 @@ import {
   normalizeAttendanceInput,
   attendanceSelect
 } from '@/libs/hrmTimesheets'
+import { getCurrentStaff } from '@/libs/hrmLeaves'
 import { prisma } from '@/libs/prisma'
 import { updateTimesheetSchema } from '@/schemas/hrm/timesheets'
 import { getDictionary } from '@/utils/getDictionary'
+import { hasAnyPermission } from '@/utils/rbac'
 
 const responseError = (error, status, code) => Response.json({ success: false, error, code }, { status })
 const localeFrom = value => (['en', 'fa', 'ps'].includes(value) ? value : 'en')
@@ -39,6 +41,11 @@ export async function PUT(request, context) {
     )
   }
 
+  const canManage = hasAnyPermission(authorization.session, ['hrm:write'])
+  const currentStaff = canManage ? null : await getCurrentStaff(authorization.session.user.id)
+
+  if (!canManage && !currentStaff) return responseError(dictionary.messages.forbidden, 403, 'STAFF_PROFILE_REQUIRED')
+
   const validation = safeParse(updateTimesheetSchema(dictionary.validation), {
     status: payload?.status,
     check_in_time: payload?.check_in_time || '',
@@ -49,9 +56,10 @@ export async function PUT(request, context) {
   if (!validation.success) return responseError(validation.issues[0]?.message, 400, 'VALIDATION_ERROR')
 
   try {
-    const existing = await prisma.hrmstafftimesheet.findUnique({ where: { id }, select: { id: true, date: true, leave_id: true } })
+    const existing = await prisma.hrmstafftimesheet.findUnique({ where: { id }, select: { id: true, staff_id: true, date: true, leave_id: true } })
 
     if (!existing) return responseError(dictionary.messages.notFound, 404, 'TIMESHEET_NOT_FOUND')
+    if (!canManage && existing.staff_id !== currentStaff.id) return responseError(dictionary.messages.forbidden, 403, 'FORBIDDEN')
     if (existing.leave_id) return responseError(dictionary.messages.forbidden, 409, 'APPROVED_LEAVE_LOCKED')
 
     const date = dateToString(existing.date)
@@ -101,10 +109,16 @@ export async function DELETE(request, context) {
     )
   }
 
+  const canManage = hasAnyPermission(authorization.session, ['hrm:delete'])
+  const currentStaff = canManage ? null : await getCurrentStaff(authorization.session.user.id)
+
+  if (!canManage && !currentStaff) return responseError(dictionary.messages.forbidden, 403, 'STAFF_PROFILE_REQUIRED')
+
   try {
-    const existing = await prisma.hrmstafftimesheet.findUnique({ where: { id }, select: { id: true, leave_id: true } })
+    const existing = await prisma.hrmstafftimesheet.findUnique({ where: { id }, select: { id: true, staff_id: true, leave_id: true } })
 
     if (!existing) return responseError(dictionary.messages.notFound, 404, 'TIMESHEET_NOT_FOUND')
+    if (!canManage && existing.staff_id !== currentStaff.id) return responseError(dictionary.messages.forbidden, 403, 'FORBIDDEN')
     if (existing.leave_id) return responseError(dictionary.messages.forbidden, 409, 'APPROVED_LEAVE_LOCKED')
 
     await prisma.$transaction(async transaction => {

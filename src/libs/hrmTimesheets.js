@@ -84,7 +84,17 @@ export const normalizeAttendanceInput = (values, date) => {
   }
 }
 
-export const getAttendanceDashboard = async ({ date, month, year, staffId, status, search, page = 1, limit = 10 }) => {
+export const getAttendanceDashboard = async ({
+  date,
+  month,
+  year,
+  staffId,
+  status,
+  search,
+  page = 1,
+  limit = 10,
+  scopeStaffId = null
+}) => {
   const selectedDate = date || getKabulToday()
   const dayStart = parseDate(selectedDate)
 
@@ -96,7 +106,7 @@ export const getAttendanceDashboard = async ({ date, month, year, staffId, statu
 
   const recordWhere = {
     date: { gte: rangeStart, lt: rangeEnd },
-    ...(staffId && { staff_id: staffId }),
+    ...(scopeStaffId ? { staff_id: scopeStaffId } : staffId && { staff_id: staffId }),
     ...(status && { status }),
     ...(search && {
       staff: {
@@ -112,7 +122,7 @@ export const getAttendanceDashboard = async ({ date, month, year, staffId, statu
     })
   }
 
-  const dailyWhere = { date: dayStart }
+  const dailyWhere = { date: dayStart, ...(scopeStaffId && { staff_id: scopeStaffId }) }
 
   const [records, totalCount, dailyRecords, activeStaff] = await Promise.all([
     prisma.hrmstafftimesheet.findMany({
@@ -125,7 +135,7 @@ export const getAttendanceDashboard = async ({ date, month, year, staffId, statu
     prisma.hrmstafftimesheet.count({ where: recordWhere }),
     prisma.hrmstafftimesheet.findMany({ where: dailyWhere, select: attendanceSelect }),
     prisma.hrmstaff.findMany({
-      where: { status: 'ACTIVE' },
+      where: { status: 'ACTIVE', ...(scopeStaffId && { id: scopeStaffId }) },
       select: { id: true, first_name: true, last_name: true, position: true },
       orderBy: [{ first_name: 'asc' }, { last_name: 'asc' }]
     })

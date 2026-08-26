@@ -162,10 +162,13 @@ export const prepareLoanData = async (values, messages, setup, current = null) =
 
   if (totalAmount + 0.005 < repaidAmount) return { success: false, error: messages.amountInvalid }
 
+  // Preserve the locked rate for an already-posted currency, but use the
+  // validated rate supplied for a new loan (or a pre-repayment currency change).
+  // Falling back to the setup rate here silently discarded the entered quote.
   const effectiveExchangeRate =
     current && current.currency === values.currency
       ? toFiniteNumber(current.exchange_rate)
-      : toFiniteNumber(setup.usd_afn_exchange_rate)
+      : exchangeRate
 
   const remainingBalance = Math.max(0, totalAmount - repaidAmount)
 
