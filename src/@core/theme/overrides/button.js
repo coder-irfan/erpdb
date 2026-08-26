@@ -31,6 +31,8 @@ const button = {
     },
     styleOverrides: {
       root: ({ theme, ownerState }) => ({
+        boxShadow: 'none !important',
+        '&:hover, &:focus-visible, &:active': { boxShadow: 'none !important' },
         '@media (max-width:599.95px)': {
           fontSize: theme.typography.caption.fontSize,
           minHeight: 32,

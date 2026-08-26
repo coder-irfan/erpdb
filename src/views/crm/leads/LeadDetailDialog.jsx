@@ -4,6 +4,7 @@ import Chip from '@mui/material/Chip'
 import Typography from '@mui/material/Typography'
 
 import DetailDialog from '@/components/dialogs/DetailDialog'
+import PhoneNumber from '@/components/common/PhoneNumber'
 import { formatCurrency } from '@/utils/formatCurrency'
 import { formatMetadata } from '@/utils/formatMetadata'
 
@@ -26,7 +27,7 @@ const LeadDetailDialog = ({ lead, open, locale, currencyCode, dictionary, onClos
         <div className='grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3'>
           <Item label='Contact' value={lead.contact_name} />
           <Item label='Email' value={lead.email} />
-          <Item label='Phone' value={lead.phone} />
+          <Item label='Phone' value={<PhoneNumber value={lead.phone} />} />
           <Item label='Estimated value' value={formatCurrency(lead.estimated_value, locale, lead.currency || currencyCode)} />
           <Item label='Assigned to' value={lead.assigned_to?.full_name} />
           <Item label='Next follow-up' value={date(lead.next_follow_up_date, locale)} />

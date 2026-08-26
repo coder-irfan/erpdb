@@ -15,6 +15,7 @@ import { toast } from 'sonner'
 
 import UserAvatar from '@/components/common/UserAvatar'
 import ResponsiveDataTable from '@/components/tables/ResponsiveDataTable'
+import PhoneNumber from '@/components/common/PhoneNumber'
 import { formatCurrency, toFiniteNumber } from '@/utils/formatCurrency'
 
 const localeMap = { en: 'en-US', fa: 'fa-AF', ps: 'ps-AF' }
@@ -169,7 +170,7 @@ const ClientProfileModal = ({
                   <div className='grid grid-cols-1 gap-5 rounded border border-divider p-5 sm:grid-cols-2'>
                     <Info label={dictionary.fields.contact}>{client.primary_contact_name}</Info>
                     <Info label={dictionary.fields.email}>{client.email}</Info>
-                    <Info label={dictionary.fields.phone}>{client.phone}</Info>
+                    <Info label={dictionary.fields.phone}><PhoneNumber value={client.phone} /></Info>
                     <Info label={dictionary.fields.tax}>{client.tax_id}</Info>
                     <Info label={dictionary.fields.address}>{client.address}</Info>
                     <Info label={dictionary.fields.created}>{formatDate(client.created_at, locale)}</Info>

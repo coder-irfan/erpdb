@@ -21,6 +21,7 @@ import { valibotResolver } from '@hookform/resolvers/valibot'
 import { formatDistanceToNow } from 'date-fns'
 import { enUS, faIR } from 'date-fns/locale'
 import { useSession } from 'next-auth/react'
+import PhoneNumber from '@/components/common/PhoneNumber'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 
@@ -425,7 +426,7 @@ const ProfileView = ({ initialProfile, dictionary, uploadTranslations, locale })
                   <DetailItem
                     icon='tabler-phone'
                     label={dictionary.employment.phone}
-                    value={displayValue(staff.phone)}
+                    value={<PhoneNumber value={displayValue(staff.phone)} />}
                   />
                   <DetailItem
                     icon='tabler-map-pin'

@@ -4,6 +4,7 @@ import Chip from '@mui/material/Chip'
 import Typography from '@mui/material/Typography'
 
 import DetailDialog from '@/components/dialogs/DetailDialog'
+import PhoneNumber from '@/components/common/PhoneNumber'
 import { formatMetadata } from '@/utils/formatMetadata'
 
 const localeMap = { en: 'en-US', fa: 'fa-AF', ps: 'ps-AF' }
@@ -21,7 +22,7 @@ const VisitorDetailDialog = ({ visitor, open, locale, dictionary, purposeLabel, 
           {visitor.converted_lead && <Chip size='small' variant='tonal' color='primary' icon={<i className='tabler-user-share' />} label={`Converted: ${visitor.converted_lead.title}`} />}
         </div>
         <div className='grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3'>
-          <Item label='Phone' value={visitor.phone} />
+          <Item label='Phone' value={<PhoneNumber value={visitor.phone} />} />
           <Item label='Email' value={visitor.email} />
           <Item label='Purpose' value={purposeLabel(visitor)} />
           <Item label='Host' value={visitor.host_staff?.full_name} />

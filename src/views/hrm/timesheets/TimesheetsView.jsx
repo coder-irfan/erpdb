@@ -247,7 +247,7 @@ const TimesheetsView = ({ initialDate, canWrite, canDelete, defaultWorkHours, pr
   )
 
   return (
-    <div className='attendance-print-report flex flex-col gap-6'>
+    <div className='attendance-print-report flex flex-col'>
       <AttendanceStatsCards summary={data.summary} dictionary={dictionary} />
 
       <Card className='border border-divider/70 shadow-sm'>

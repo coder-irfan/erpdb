@@ -38,7 +38,7 @@ const SearchItem = ({ children, shortcut, value, currentPath, url, onSelect = ()
     <CommandItem
       onSelect={onSelect}
       value={value}
-      className={classnames('mli-2 mbe-px last:mbe-0 rounded', {
+      className={classnames('mli-2 my-2 rounded py-3 sm:py-4', {
         'active-searchItem': currentPath === url
       })}
     >
@@ -224,7 +224,7 @@ const NavSearch = ({ dictionary }) => {
         <CommandList>
           {limitedData.length > 0 ? (
             limitedData.map(section => (
-              <CommandGroup key={section.title} heading={section.title.toUpperCase()} className='text-xs'>
+              <CommandGroup key={section.title} heading={section.title.toUpperCase()} className='my-2 px-1 text-xs'>
                 {section.items.map(item => (
                   <SearchItem
                     shortcut={item.shortcut}
