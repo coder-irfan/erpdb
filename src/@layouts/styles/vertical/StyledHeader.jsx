@@ -151,6 +151,20 @@ const StyledHeader = styled.header`
     inline-size: calc(100% - ${2 * themeConfig.layoutPadding}px);
   }
 
+  @media (max-width: 599.95px) {
+    &.${verticalLayoutClasses.headerFloating} {
+      padding-block-start: 0;
+
+      .${verticalLayoutClasses.navbar} {
+        inline-size: 100%;
+        max-inline-size: none;
+        margin-inline: 0;
+        border-radius: 0;
+        padding-inline: 16px;
+      }
+    }
+  }
+
   &:not(.${verticalLayoutClasses.headerFloating}).${verticalLayoutClasses.headerStatic}
     .${verticalLayoutClasses.navbar} {
     padding-inline: 16px;

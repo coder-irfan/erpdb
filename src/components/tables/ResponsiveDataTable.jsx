@@ -90,7 +90,7 @@ const ResponsiveDataTable = ({
   }
 
   const desktopContent = children || (
-    <div className='no-scrollbar overflow-x-auto scroll-smooth border border-divider/70 shadow-sm print:border-0 print:shadow-none'>
+    <div className='no-scrollbar overflow-x-auto scroll-smooth'>
       <table className={desktopTableClassName}>
         <thead>
           {table.getHeaderGroups().map(headerGroup => (
@@ -193,7 +193,6 @@ const ResponsiveDataTable = ({
                         {actionsContent && <div onClick={event => event.stopPropagation()}>{actionsContent}</div>}
                       </div>
                     </div>
-                    {metadataCells.length > 0 && <div />}
                     {metadataCells.length > 0 && (
                       <div className='flex flex-col gap-1.5 text-xs sm:gap-2'>
                         {metadataCells.map((cell, cellIndex) => {

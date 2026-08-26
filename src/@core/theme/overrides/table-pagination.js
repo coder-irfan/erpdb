@@ -29,12 +29,21 @@ const tablePagination = {
           color: 'var(--mui-palette-text-secondary)'
         },
         [theme.breakpoints.down('sm')]: {
+          minHeight: 52,
+          padding: `${theme.spacing(1.5)} ${theme.spacing(2)} !important`,
+          fontSize: theme.typography.caption.fontSize,
           justifyContent: 'center',
           '& .MuiTablePagination-actions': {
             display: 'flex',
             justifyContent: 'center',
             inlineSize: '100%',
             marginInline: 0
+          },
+          '& .MuiPaginationItem-root': {
+            minWidth: 28,
+            height: 28,
+            margin: 1,
+            fontSize: theme.typography.caption.fontSize
           }
         }
       }),

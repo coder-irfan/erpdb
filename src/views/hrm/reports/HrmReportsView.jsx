@@ -908,7 +908,7 @@ const HrmReportsView = ({ locale, dictionary, setup, generatedAt }) => {
 
       <ReportStatsCards items={stats} loading={loading} className='print:hidden' />
 
-      <Card className='report-table-card print:hidden'>
+      <Card className='report-table-card print:hidden border border-divider/70 shadow-sm'>
         <CardContent className='flex flex-wrap items-center justify-between gap-2 border-be border-divider'>
           <div>
             <Typography variant='h5'>{activeReport.tableTitle}</Typography>

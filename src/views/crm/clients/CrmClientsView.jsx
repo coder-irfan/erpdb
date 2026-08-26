@@ -137,7 +137,7 @@ const CrmClientsView = ({ locale, dictionary, currencyCode, canWrite, canDelete 
   return (
     <div className='flex flex-col md:gap-4 gap-2'>
       <ClientStatsCards summary={data.summary} locale={locale} currencyCode={currencyCode} dictionary={dictionary} />
-      <Card>
+      <Card className='border border-divider/70 shadow-sm'>
         <CardContent className='flex flex-wrap items-center justify-between gap-4'>
           <CustomTextField
             label={dictionary.filters.search}

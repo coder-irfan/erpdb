@@ -55,6 +55,14 @@ const menu = skin => ({
         '&.Mui-disabled': {
           color: 'var(--mui-palette-text-disabled)',
           opacity: 0.45
+        },
+        [theme.breakpoints.down('sm')]: {
+          paddingBlock: theme.spacing(0.5),
+          paddingInline: theme.spacing(2),
+          gap: theme.spacing(1),
+          '&:not(:last-of-type)': { marginBlockEnd: theme.spacing(0.25) },
+          fontSize: theme.typography.caption.fontSize,
+          '& i, & svg': { fontSize: '1rem' }
         }
       })
     }

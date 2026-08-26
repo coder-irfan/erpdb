@@ -120,7 +120,7 @@ const PreviewCard = ({ invoiceData, id }) => {
             </Grid>
           </Grid>
           <Grid size={{ xs: 12 }}>
-            <div className='overflow-x-auto border rounded'>
+            <div className='overflow-x-auto rounded'>
               <table className={tableStyles.table}>
                 <thead className='border-bs-0'>
                   <tr>

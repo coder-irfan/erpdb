@@ -325,7 +325,7 @@ const ClientProfileModal = ({
                         }
                       ]}
                     >
-                      <div className='no-scrollbar overflow-x-auto scroll-smooth rounded border border-divider'>
+                      <div className='no-scrollbar overflow-x-auto scroll-smooth rounded'>
                         <table className='w-full'>
                           <thead>
                             <tr className='bg-actionHover'>

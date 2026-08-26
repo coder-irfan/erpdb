@@ -44,6 +44,12 @@ const select = {
         },
         '&:not(aria-label="Without label") ~ .MuiOutlinedInput-notchedOutline > legend > span': {
           paddingInline: '5px'
+        },
+        [theme.breakpoints.down('sm')]: {
+          paddingBlock: theme.spacing(0.5),
+          paddingInline: theme.spacing(1.5),
+          minHeight: '1.125rem',
+          fontSize: theme.typography.caption.fontSize
         }
       })
     }

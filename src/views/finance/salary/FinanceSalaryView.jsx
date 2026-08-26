@@ -158,7 +158,7 @@ const FinanceSalaryView = ({ locale, dictionary, canWrite, canDelete }) => {
         currency={data.baseCurrency}
         dictionary={dictionary}
       />
-      <Card>
+      <Card className='border border-divider/70 shadow-sm'>
         <CardContent className='flex flex-wrap items-center justify-between gap-4'>
           <div className='flex is-full flex-wrap items-end gap-3 lg:is-auto'>
             <CustomTextField

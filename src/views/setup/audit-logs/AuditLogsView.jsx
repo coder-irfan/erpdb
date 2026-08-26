@@ -119,7 +119,7 @@ const AuditLogsView = ({ initialResult, initialError, locale, dictionary }) => {
   return (
     <div className='flex flex-col gap-4'>
       {initialError && <Alert severity='error'>{initialError}</Alert>}
-      <Card>
+      <Card className='border border-divider/70 shadow-sm'>
         <CardContent>
           <CustomTextField
             value={searchInput}

@@ -145,7 +145,7 @@ const FinanceExpenseView = ({ locale, dictionary, canWrite, canDelete, setup }) 
         currency={data.baseCurrency}
         dictionary={dictionary}
       />
-      <Card>
+      <Card className='border border-divider/70 shadow-sm'>
         <CardContent className='flex flex-wrap items-center justify-between gap-4'>
           <CustomTextField
             label={dictionary.filters.search}

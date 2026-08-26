@@ -108,7 +108,7 @@ const InvoicesView = ({ locale, dictionary, setup, canWrite, canDelete }) => {
   return (
     <div className='flex flex-col gap-4'>
       <InvoiceStatsCards summary={data.summary} locale={locale} currency={data.baseCurrency} dictionary={dictionary} />
-      <Card>
+      <Card className='border border-divider/70 shadow-sm'>
         <CardContent className='flex flex-wrap items-center justify-between gap-4'>
           <CustomTextField label={dictionary.filters.search} placeholder={dictionary.filters.searchPlaceholder} value={searchInput} onChange={event => setSearchInput(event.target.value)} className='is-full sm:is-[360px]' slotProps={{ input: { startAdornment: <i className='tabler-search' /> } }} />
           <div className='grid is-full grid-cols-2 gap-2 sm:flex sm:is-auto sm:flex-wrap sm:gap-3 sm:justify-end'>
