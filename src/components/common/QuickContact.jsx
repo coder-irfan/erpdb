@@ -35,7 +35,7 @@ const QuickContact = ({ email, phone, children, className = '', table = false })
   }
 
   const contactClass = table
-    ? 'text-textPrimary underline underline-offset-2 transition-colors hover:text-primary'
+    ? 'text-[color-mix(in_srgb,var(--mui-palette-text-primary)_82%,black)] underline underline-offset-2 transition-colors hover:text-primary'
     : 'text-primary hover:underline'
 
   return (
