@@ -123,7 +123,7 @@ export const getAttendanceDashboard = async ({ date, month, year, staffId, statu
       take: limit
     }),
     prisma.hrmstafftimesheet.count({ where: recordWhere }),
-    prisma.hrmstafftimesheet.findMany({ where: dailyWhere, select: { staff_id: true, status: true } }),
+    prisma.hrmstafftimesheet.findMany({ where: dailyWhere, select: attendanceSelect }),
     prisma.hrmstaff.findMany({
       where: { status: 'ACTIVE' },
       select: { id: true, first_name: true, last_name: true, position: true },
@@ -132,7 +132,10 @@ export const getAttendanceDashboard = async ({ date, month, year, staffId, statu
   ])
 
   const markedIds = new Set(dailyRecords.map(record => record.staff_id))
-  const leaveIds = records.map(record => record.leave_id || record.notes?.match(leaveRequestPattern)?.[1]).filter(Boolean)
+
+  const leaveIds = dailyRecords
+    .map(record => record.leave_id || record.notes?.match(leaveRequestPattern)?.[1])
+    .filter(Boolean)
 
   const approvedLeaves = leaveIds.length
     ? await prisma.hrmstaffleave.findMany({
@@ -152,12 +155,21 @@ export const getAttendanceDashboard = async ({ date, month, year, staffId, statu
     .filter(staff => !markedIds.has(staff.id))
     .map(staff => ({ ...staff, full_name: `${staff.first_name} ${staff.last_name}`.trim() }))
 
+  const dailyRecordByStaffId = new Map(dailyRecords.map(record => [record.staff_id, normalizeAttendance(record, leaveLabels)]))
+
+  const attendanceStaff = activeStaff.map(staff => ({
+    ...staff,
+    full_name: `${staff.first_name} ${staff.last_name}`.trim(),
+    record: dailyRecordByStaffId.get(staff.id) || null
+  }))
+
   return {
     records: records.map(record => normalizeAttendance(record, leaveLabels)),
     totalCount,
     page,
     totalPages: Math.max(1, Math.ceil(totalCount / limit)),
     unmarkedStaff,
+    attendanceStaff,
     summary: {
       total_present: dailyRecords.filter(record => record.status === 'PRESENT').length,
       total_absent: dailyRecords.filter(record => record.status === 'ABSENT').length,

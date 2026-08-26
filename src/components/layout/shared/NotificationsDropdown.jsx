@@ -164,10 +164,14 @@ const NotificationDropdown = ({ dictionary: providedDictionary }) => {
   const persistState = useCallback(
     (nextRead, nextDismissed, owner = userId) => {
       if (!owner || owner === 'anonymous') return
-      localStorage.setItem(
-        `audit-notifications:${owner}`,
-        JSON.stringify({ read: [...nextRead], dismissed: [...nextDismissed] })
-      )
+      try {
+        localStorage.setItem(
+          `audit-notifications:${owner}`,
+          JSON.stringify({ read: [...nextRead], dismissed: [...nextDismissed] })
+        )
+      } catch {
+        // Storage may be blocked (private browsing/security settings); feed state remains usable in memory.
+      }
     },
     [userId]
   )
@@ -182,7 +186,12 @@ const NotificationDropdown = ({ dictionary: providedDictionary }) => {
     try {
       saved = JSON.parse(localStorage.getItem(`audit-notifications:${owner}`) || '{}')
     } catch {
-      localStorage.removeItem(`audit-notifications:${owner}`)
+      saved = {}
+      try {
+        localStorage.removeItem(`audit-notifications:${owner}`)
+      } catch {
+        // Ignore unavailable localStorage APIs (for example Firefox private windows).
+      }
     }
 
     setUserId(owner)

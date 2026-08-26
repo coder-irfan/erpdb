@@ -247,7 +247,7 @@ const TimesheetsView = ({ initialDate, canWrite, canDelete, defaultWorkHours, pr
   )
 
   return (
-    <div className='attendance-print-report flex flex-col'>
+    <div className='attendance-print-report flex flex-col md:gap-4 gap-2'>
       <AttendanceStatsCards summary={data.summary} dictionary={dictionary} />
 
       <Card className='border border-divider/70 shadow-sm'>
@@ -478,6 +478,7 @@ const TimesheetsView = ({ initialDate, canWrite, canDelete, defaultWorkHours, pr
         record={editingRecord}
         date={selectedDate}
         staff={data.unmarkedStaff}
+        attendanceStaff={data.attendanceStaff}
         defaultWorkHours={defaultWorkHours}
         locale={locale}
         dictionary={dictionary}
