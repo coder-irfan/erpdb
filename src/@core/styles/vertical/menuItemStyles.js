@@ -16,7 +16,7 @@ const menuItemStyles = (verticalNavOptions, theme) => {
         }),
       ...(!isPopoutWhenCollapsed || popoutExpanded || (popoutCollapsed && level === 0)
         ? {
-            marginBlockStart: theme.spacing(1.5)
+            marginBlockStart: theme.spacing(2)
           }
         : {
             marginBlockStart: 0

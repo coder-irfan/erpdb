@@ -12,7 +12,7 @@ const ACCENTS = [
 
 const ReportStatsCards = ({ items, loading, className = '' }) => (
   <div
-    className={`no-scrollbar flex w-full snap-x items-center gap-4 overflow-x-auto xl:grid xl:grid-cols-4 xl:overflow-visible pb-4 ${className}`}
+    className={`no-scrollbar flex w-full snap-x items-center gap-4 overflow-x-auto xl:grid xl:grid-cols-4 xl:overflow-visible pb-3 md:pb-0 ${className}`}
   >
     {items.map((item, index) => {
       const accentClasses = ACCENTS[index % ACCENTS.length]

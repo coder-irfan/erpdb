@@ -278,7 +278,7 @@ const StaffListTable = ({
       {initialError && <Alert severity='error'>{initialError}</Alert>}
 
       <Card>
-        <CardContent className='border-be border-divider'>
+        <CardContent>
           <div className='flex flex-wrap items-center justify-between gap-4'>
             <CustomTextField
               value={searchInput}
