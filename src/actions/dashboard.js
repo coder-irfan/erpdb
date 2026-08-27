@@ -598,7 +598,7 @@ const loadPersonalSnapshot = async ({ staffId, today, monthStart }) => {
 }
 
 export const getDashboardData = async (payload = {}) => {
-  const authorization = await authorizeAction([])
+  const authorization = await authorizeAction(['dashboard:read'])
 
   if (!authorization.authorized) return { success: false, code: authorization.code, error: authorization.error }
 

@@ -2304,6 +2304,8 @@
       "title": "Role & Security Summary",
       "assignedRoles": "Assigned Roles",
       "lastLogin": "Last Login",
+      "activeNow": "Active Now (Current Session)",
+      "lastPreviousLogin": "Last Previous Login",
       "createdBy": "Created By",
       "recentActivity": "Recent Activity",
       "noActivity": "No recent activity is available.",

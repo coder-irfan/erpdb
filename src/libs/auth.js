@@ -21,6 +21,7 @@ const getUserAccess = userId =>
       image: true,
       locale: true,
       account_status: true,
+      last_login_at: true,
       roles: {
         where: { is_active: true },
         select: {
@@ -164,6 +165,20 @@ export const authOptions = {
       const accessClaims =
         accessUser.account_status === 'ACTIVE' ? getAccessClaims(accessUser) : { roles: [], permissions: [] }
 
+      if (user && accessUser.account_status === 'ACTIVE') {
+        const currentSessionStartedAt = new Date()
+
+        // Keep the old value in the new session before replacing it. This lets
+        // the profile show the current session separately from the prior login.
+        token.previousLoginAt = accessUser.last_login_at?.toISOString() ?? null
+        token.currentSessionStartedAt = currentSessionStartedAt.toISOString()
+
+        await prisma.user.update({
+          where: { id: accessUser.id },
+          data: { last_login_at: currentSessionStartedAt }
+        })
+      }
+
       token.id = accessUser.id
       token.name = accessUser.name
       token.email = accessUser.email
@@ -190,6 +205,8 @@ export const authOptions = {
         session.user.roles = token.roles || []
         session.user.permissions = token.permissions || []
         session.user.rememberMe = token.rememberMe === true
+        session.user.currentSessionStartedAt = token.currentSessionStartedAt || null
+        session.user.previousLoginAt = token.previousLoginAt || null
       }
 
       return session

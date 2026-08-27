@@ -156,7 +156,7 @@ const UsersTable = ({
             disabled: protectedUser || busyUserId === user.id,
             onClick: () => setConfirmAction({ type: 'revoke', user })
           },
-          {
+          user.status !== 'PENDING_ACTIVATION' && {
             label: translations.removeUserAccess,
             icon: 'tabler-user-x',
             color: 'error',

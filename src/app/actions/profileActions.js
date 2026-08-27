@@ -71,8 +71,7 @@ const profileSelect = {
 
 const canEditEmail = roles => roles.some(role => ['admin', 'super_admin'].includes(role.name))
 
-const getAuditDetails = details =>
-  details && typeof details === 'object' && !Array.isArray(details) ? details : {}
+const getAuditDetails = details => (details && typeof details === 'object' && !Array.isArray(details) ? details : {})
 
 const uniqueIds = values => [...new Set(values.filter(value => typeof value === 'string' && value))]
 
@@ -127,7 +126,7 @@ const resolveActivityEntityLabels = async logs => {
   )
 }
 
-const normalizeProfile = user => ({
+const normalizeProfile = (user, session) => ({
   id: user.id,
   name: user.name,
   email: user.email,
@@ -163,6 +162,9 @@ const normalizeProfile = user => ({
     createdAt: log.created_at.toISOString()
   })),
   lastLoginAt: user.last_login_at?.toISOString() ?? null,
+  isCurrentSessionActive: session?.user?.accountStatus === 'ACTIVE',
+  currentSessionStartedAt: session?.user?.currentSessionStartedAt ?? null,
+  previousLoginAt: session?.user?.previousLoginAt ?? null,
   createdAt: user.created_at.toISOString(),
   updatedAt: user.updated_at.toISOString()
 })
@@ -194,7 +196,7 @@ export const getCurrentUserProfile = async (payload = {}) => {
       return { success: false, code: 'PROFILE_NOT_FOUND', error: context.translations.messages.profileNotFound }
     }
 
-    return { success: true, data: normalizeProfile(user) }
+    return { success: true, data: normalizeProfile(user, context.session) }
   } catch {
     return { success: false, code: 'PROFILE_LOAD_FAILED', error: context.translations.messages.loadFailed }
   }

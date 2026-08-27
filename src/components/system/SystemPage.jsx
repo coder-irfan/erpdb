@@ -39,7 +39,10 @@ export const HomeLink = () => {
   const lang = getLocale(params?.lang)
 
   return (
-    <Link href={`/${lang}/dashboard`} className={`${actionClassName} bg-primary text-white shadow-sm hover:opacity-90`}>
+    <Link
+      href={`/${lang}/dashboard`}
+      className={`${actionClassName} bg-primary text-white shadow-sm hover:opacity-90 cursor-pointer`}
+    >
       <Home className='size-4' aria-hidden='true' />
       {dictionary.actions.backToHome}
     </Link>
@@ -51,7 +54,11 @@ export const GoBackButton = () => {
   const dictionary = useSystemPagesDictionary()
 
   return (
-    <button type='button' onClick={() => router.back()} className={`${actionClassName} border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800`}>
+    <button
+      type='button'
+      onClick={() => router.back()}
+      className={`${actionClassName} border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800 cursor-pointer`}
+    >
       <ArrowLeft className='size-4' aria-hidden='true' />
       {dictionary.actions.goBack}
     </button>
@@ -62,7 +69,11 @@ export const RetryButton = ({ reset }) => {
   const dictionary = useSystemPagesDictionary()
 
   return (
-    <button type='button' onClick={reset} className={`${actionClassName} bg-primary text-white shadow-sm hover:opacity-90 cursor-pointer`}>
+    <button
+      type='button'
+      onClick={reset}
+      className={`${actionClassName} bg-primary text-white shadow-sm hover:opacity-90 cursor-pointer`}
+    >
       <RotateCcw className='size-4' aria-hidden='true' />
       {dictionary.actions.tryAgain}
     </button>
@@ -76,7 +87,11 @@ export const SwitchAccountButton = () => {
   const lang = getLocale(params?.lang)
 
   return (
-    <button type='button' onClick={() => router.push(`/${lang}/login`)} className={`${actionClassName} border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800`}>
+    <button
+      type='button'
+      onClick={() => router.push(`/${lang}/login`)}
+      className={`${actionClassName} border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800`}
+    >
       <LogOut className='size-4' aria-hidden='true' />
       {dictionary.actions.switchAccount}
     </button>

@@ -10,7 +10,7 @@ import { prisma } from '@/libs/prisma'
 import { getDictionary } from '@/utils/getDictionary'
 import { createRolePermissionSchema, createRoleSchema } from '@/utils/validation/roleSchemas'
 
-const ROLE_MANAGEMENT_PERMISSIONS = ['settings:manage', 'settings_roles:manage']
+const ROLE_MANAGEMENT_PERMISSIONS = ['settings_roles:manage']
 
 const normalizeLocale = locale => (i18n.locales.includes(locale) ? locale : i18n.defaultLocale)
 
@@ -21,7 +21,8 @@ const getActionContext = async payload => {
   const translations = dictionary.rolesPermissions
 
   if (!authorization.authorized) {
-    const error = authorization.code === 'UNAUTHENTICATED' ? translations.messages.unauthenticated : translations.messages.forbidden
+    const error =
+      authorization.code === 'UNAUTHENTICATED' ? translations.messages.unauthenticated : translations.messages.forbidden
 
     return { authorized: false, error, code: authorization.code, translations }
   }

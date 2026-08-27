@@ -510,9 +510,22 @@ const ProfileView = ({ initialProfile, dictionary, uploadTranslations, locale })
                   <Typography variant='caption' color='text.secondary'>
                     {dictionary.security.lastLogin}
                   </Typography>
-                  <Typography color='text.primary'>
-                    {formatDate(profile.lastLoginAt, locale, dictionary.security.never)}
-                  </Typography>
+                  {profile.isCurrentSessionActive ? (
+                    <>
+                      <Typography color='text.primary'>
+                        {dictionary.security.activeNow || 'Active Now (Current Session)'}
+                      </Typography>
+                      <Typography variant='caption' color='text.secondary'>
+                        {(dictionary.security.lastPreviousLogin || 'Last Previous Login') +
+                          ': ' +
+                          formatDate(profile.previousLoginAt, locale, dictionary.security.never)}
+                      </Typography>
+                    </>
+                  ) : (
+                    <Typography color='text.primary'>
+                      {formatDate(profile.lastLoginAt, locale, dictionary.security.never)}
+                    </Typography>
+                  )}
                 </div>
                 <div>
                   <Typography variant='caption' color='text.secondary'>

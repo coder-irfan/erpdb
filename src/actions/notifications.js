@@ -2,32 +2,8 @@
 
 import { authorizeAction } from '@/libs/actionAuthorization'
 import { prisma } from '@/libs/prisma'
-import { hasPermission } from '@/utils/rbac'
 
-const ADMIN_ROLES = new Set(['super_admin', 'admin', 'administrator'])
-
-const roleScope = session => {
-  const roles = new Set(session.user.roles || [])
-
-  if ([...roles].some(role => ADMIN_ROLES.has(role)) || hasPermission(session, 'audit:read')) return {}
-
-  const or = []
-
-  if (roles.has('hr_manager')) {
-    or.push({ module: 'HRM' }, { module: 'FINANCE', action: { startsWith: 'FINANCE_SALARY_' } }, { module: 'FINANCE', action: { startsWith: 'FINANCE_LOAN_' } })
-  }
-
-  if (roles.has('finance_manager')) {
-    or.push({ module: { in: ['FINANCE', 'INVENTORY'] } }, { module: 'CONTRACTS', action: { startsWith: 'INVOICE_' } })
-  }
-
-  if (roles.has('sales_manager')) or.push({ module: { in: ['CRM', 'CONTRACTS'] } })
-  if (roles.has('project_manager')) or.push({ module: { in: ['PROJECTS', 'TASKS'] } })
-
-  if (or.length > 0) return { OR: or }
-
-  return { user_id: session.user.id }
-}
+const AUDIT_READ_PERMISSIONS = ['audit:read']
 
 const categoryForModule = module => {
   if (module === 'CONTRACTS') return 'CONTRACT'
@@ -38,13 +14,14 @@ const categoryForModule = module => {
   return 'SYSTEM'
 }
 
-const iconForCategory = category => ({
-  CONTRACT: { icon: 'tabler-file-text', color: 'primary' },
-  HRM: { icon: 'tabler-user-check', color: 'success' },
-  FINANCE: { icon: 'tabler-cash-banknote', color: 'warning' },
-  CRM: { icon: 'tabler-address-book', color: 'info' },
-  SYSTEM: { icon: 'tabler-shield-check', color: 'secondary' }
-})[category]
+const iconForCategory = category =>
+  ({
+    CONTRACT: { icon: 'tabler-file-text', color: 'primary' },
+    HRM: { icon: 'tabler-user-check', color: 'success' },
+    FINANCE: { icon: 'tabler-cash-banknote', color: 'warning' },
+    CRM: { icon: 'tabler-address-book', color: 'info' },
+    SYSTEM: { icon: 'tabler-shield-check', color: 'secondary' }
+  })[category]
 
 const serializeAuditLog = log => {
   const category = categoryForModule(log.module)
@@ -65,12 +42,13 @@ const serializeAuditLog = log => {
 }
 
 export const getAuditNotificationFeed = async ({ limit = 30 } = {}) => {
-  const authorization = await authorizeAction([])
+  const authorization = await authorizeAction(AUDIT_READ_PERMISSIONS)
 
-  if (!authorization.authorized) return { success: false, error: authorization.error }
+  if (!authorization.authorized) {
+    return { success: false, code: authorization.code, error: authorization.error }
+  }
 
   const logs = await prisma.auditlog.findMany({
-    where: roleScope(authorization.session),
     orderBy: { created_at: 'desc' },
     take: Math.min(Math.max(Number(limit) || 30, 1), 100),
     include: { user: { select: { name: true, email: true } } }
@@ -86,26 +64,32 @@ export const getAuditNotificationFeed = async ({ limit = 30 } = {}) => {
 }
 
 export const getAuditLogsPage = async ({ page = 1, limit = 10, search = '' } = {}) => {
-  const authorization = await authorizeAction([])
+  const authorization = await authorizeAction(AUDIT_READ_PERMISSIONS)
 
-  if (!authorization.authorized) return { success: false, error: authorization.error }
+  if (!authorization.authorized) {
+    return { success: false, code: authorization.code, error: authorization.error }
+  }
 
   const normalizedPage = Math.max(Number.parseInt(page, 10) || 1, 1)
   const normalizedLimit = [10, 25, 50].includes(Number.parseInt(limit, 10)) ? Number.parseInt(limit, 10) : 10
   const normalizedSearch = typeof search === 'string' ? search.trim() : ''
-  const scope = roleScope(authorization.session)
 
   const where = {
     AND: [
-      scope,
       ...(normalizedSearch
-        ? [{
-            OR: [
-              { action: { contains: normalizedSearch } },
-              { module: { contains: normalizedSearch } },
-              { user: { is: { OR: [{ name: { contains: normalizedSearch } }, { email: { contains: normalizedSearch } }] } } }
-            ]
-          }]
+        ? [
+            {
+              OR: [
+                { action: { contains: normalizedSearch } },
+                { module: { contains: normalizedSearch } },
+                {
+                  user: {
+                    is: { OR: [{ name: { contains: normalizedSearch } }, { email: { contains: normalizedSearch } }] }
+                  }
+                }
+              ]
+            }
+          ]
         : [])
     ]
   }
@@ -138,9 +122,11 @@ export const getAuditLogsPage = async ({ page = 1, limit = 10, search = '' } = {
 }
 
 export const deleteAuditLog = async id => {
-  const authorization = await authorizeAction([])
+  const authorization = await authorizeAction(AUDIT_READ_PERMISSIONS)
 
-  if (!authorization.authorized) return { success: false, error: authorization.error }
+  if (!authorization.authorized) {
+    return { success: false, code: authorization.code, error: authorization.error }
+  }
 
   return {
     success: false,

@@ -17,7 +17,7 @@ import {
   createUserStatusSchema
 } from '@/utils/validation/roleSchemas'
 
-const USER_MANAGEMENT_PERMISSIONS = ['settings:manage', 'settings_roles:manage']
+const USER_MANAGEMENT_PERMISSIONS = ['settings_roles:manage']
 const INVITATION_EXPIRATION_MS = 48 * 60 * 60 * 1000
 
 const normalizeLocale = locale => (i18n.locales.includes(locale) ? locale : i18n.defaultLocale)
@@ -30,7 +30,8 @@ const getActionContext = async payload => {
   const translations = dictionary.rolesPermissions
 
   if (!authorization.authorized) {
-    const error = authorization.code === 'UNAUTHENTICATED' ? translations.messages.unauthenticated : translations.messages.forbidden
+    const error =
+      authorization.code === 'UNAUTHENTICATED' ? translations.messages.unauthenticated : translations.messages.forbidden
 
     return { authorized: false, error, code: authorization.code, locale, translations }
   }
@@ -40,6 +41,38 @@ const getActionContext = async payload => {
 
 const hashInvitationToken = token => createHash('sha256').update(token).digest('hex')
 const getInvitationIdentifier = userId => `invite:${userId}`
+
+const isUnacceptedInvitation = user =>
+  user.account_status === 'PENDING_ACTIVATION' ||
+  (user.account_status === 'INACTIVE' &&
+    !user.emailVerified &&
+    !user.password_hash &&
+    !user.last_login_at &&
+    (user._count?.accounts ?? 0) === 0)
+
+const deleteUnacceptedInvitation = async (transaction, user) => {
+  await transaction.verificationToken.deleteMany({ where: { identifier: getInvitationIdentifier(user.id) } })
+  await transaction.session.deleteMany({ where: { userId: user.id } })
+  await transaction.hrmstaff.updateMany({ where: { user_id: user.id }, data: { user_id: null } })
+
+  const deletedUser = await transaction.user.deleteMany({
+    where: {
+      id: user.id,
+      OR: [
+        { account_status: 'PENDING_ACTIVATION' },
+        {
+          account_status: 'INACTIVE',
+          emailVerified: null,
+          password_hash: null,
+          last_login_at: null,
+          accounts: { none: {} }
+        }
+      ]
+    }
+  })
+
+  if (deletedUser.count !== 1) throw new Error('INVITATION_NOT_PENDING')
+}
 
 const userDetailsSelect = {
   id: true,
@@ -164,7 +197,17 @@ export const inviteUser = async payload => {
 
   try {
     const [existingUser, role, staff] = await Promise.all([
-      prisma.user.findUnique({ where: { email: validation.output.email }, select: { id: true } }),
+      prisma.user.findUnique({
+        where: { email: validation.output.email },
+        select: {
+          id: true,
+          account_status: true,
+          emailVerified: true,
+          password_hash: true,
+          last_login_at: true,
+          _count: { select: { accounts: true } }
+        }
+      }),
       prisma.role.findUnique({
         where: { id: validation.output.roleId },
         select: { id: true, name: true, is_active: true }
@@ -177,7 +220,7 @@ export const inviteUser = async payload => {
         : Promise.resolve(null)
     ])
 
-    if (existingUser) {
+    if (existingUser && !isUnacceptedInvitation(existingUser)) {
       return { success: false, code: 'EMAIL_EXISTS', error: context.translations.messages.emailExists }
     }
 
@@ -198,6 +241,8 @@ export const inviteUser = async payload => {
     const invitationExpires = new Date(Date.now() + INVITATION_EXPIRATION_MS)
 
     const userId = await prisma.$transaction(async transaction => {
+      if (existingUser) await deleteUnacceptedInvitation(transaction, existingUser)
+
       const user = await transaction.user.create({
         data: {
           name: validation.output.name,
@@ -388,7 +433,7 @@ export const assignUserRole = async payload => {
     const [user, role] = await Promise.all([
       prisma.user.findUnique({
         where: { id: validation.output.userId },
-        select: { id: true, roles: { select: { name: true } } }
+        select: { id: true, account_status: true, roles: { select: { name: true } } }
       }),
       prisma.role.findUnique({
         where: { id: validation.output.roleId },
@@ -415,14 +460,22 @@ export const assignUserRole = async payload => {
     await prisma.$transaction([
       prisma.user.update({
         where: { id: user.id },
-        data: { roles: { set: [{ id: role.id }] } }
+        data: {
+          roles: { set: [{ id: role.id }] },
+          ...(user.account_status === 'INACTIVE' ? { account_status: 'ACTIVE' } : {})
+        }
       }),
       prisma.auditlog.create({
         data: {
           user_id: context.session.user.id,
           action: 'USER_ROLE_ASSIGNED',
           module: 'SETTINGS',
-          details: { targetUserId: user.id, roleId: role.id }
+          details: {
+            targetUserId: user.id,
+            roleId: role.id,
+            previousStatus: user.account_status,
+            accessRestored: user.account_status === 'INACTIVE'
+          }
         }
       })
     ])
@@ -448,7 +501,16 @@ const getAccessRemovalTarget = async (userId, context) => {
 
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { id: true, email: true, account_status: true, roles: { select: { name: true } } }
+    select: {
+      id: true,
+      email: true,
+      account_status: true,
+      emailVerified: true,
+      password_hash: true,
+      last_login_at: true,
+      roles: { select: { name: true } },
+      _count: { select: { accounts: true } }
+    }
   })
 
   if (!user) {
@@ -474,7 +536,7 @@ export const revokeUserInvitation = async payload => {
 
     if (target.error) return target.error
 
-    if (target.user.account_status !== 'PENDING_ACTIVATION') {
+    if (!isUnacceptedInvitation(target.user)) {
       return {
         success: false,
         code: 'INVITATION_NOT_PENDING',
@@ -483,12 +545,7 @@ export const revokeUserInvitation = async payload => {
     }
 
     await prisma.$transaction(async transaction => {
-      await transaction.verificationToken.deleteMany({ where: { identifier: getInvitationIdentifier(target.user.id) } })
-      await transaction.session.deleteMany({ where: { userId: target.user.id } })
-      await transaction.user.update({
-        where: { id: target.user.id },
-        data: { account_status: 'INACTIVE', roles: { set: [] } }
-      })
+      await deleteUnacceptedInvitation(transaction, target.user)
       await transaction.auditlog.create({
         data: {
           user_id: context.session.user.id,
@@ -499,12 +556,22 @@ export const revokeUserInvitation = async payload => {
       })
     })
 
-    const updatedUser = await getNormalizedUser(target.user.id, context.session.user.id)
-
     revalidateRolesPage()
 
-    return { success: true, data: updatedUser, message: context.translations.messages.invitationRevoked }
-  } catch {
+    return {
+      success: true,
+      data: { deletedUserId: target.user.id },
+      message: context.translations.messages.invitationRevoked
+    }
+  } catch (error) {
+    if (error?.message === 'INVITATION_NOT_PENDING') {
+      return {
+        success: false,
+        code: 'INVITATION_NOT_PENDING',
+        error: context.translations.messages.invitationNotPending
+      }
+    }
+
     return { success: false, code: 'INVITATION_REVOKE_FAILED', error: context.translations.messages.operationFailed }
   }
 }
@@ -520,6 +587,28 @@ export const removeUserAccess = async payload => {
     const target = await getAccessRemovalTarget(userId, context)
 
     if (target.error) return target.error
+
+    if (isUnacceptedInvitation(target.user)) {
+      await prisma.$transaction(async transaction => {
+        await deleteUnacceptedInvitation(transaction, target.user)
+        await transaction.auditlog.create({
+          data: {
+            user_id: context.session.user.id,
+            action: 'USER_INVITATION_REVOKED',
+            module: 'SETTINGS',
+            details: { targetUserId: target.user.id, email: target.user.email }
+          }
+        })
+      })
+
+      revalidateRolesPage()
+
+      return {
+        success: true,
+        data: { deletedUserId: target.user.id },
+        message: context.translations.messages.invitationRevoked
+      }
+    }
 
     await prisma.$transaction(async transaction => {
       await transaction.verificationToken.deleteMany({ where: { identifier: getInvitationIdentifier(target.user.id) } })
@@ -547,7 +636,15 @@ export const removeUserAccess = async payload => {
     revalidateRolesPage()
 
     return { success: true, data: updatedUser, message: context.translations.messages.userAccessRemoved }
-  } catch {
+  } catch (error) {
+    if (error?.message === 'INVITATION_NOT_PENDING') {
+      return {
+        success: false,
+        code: 'INVITATION_NOT_PENDING',
+        error: context.translations.messages.invitationNotPending
+      }
+    }
+
     return { success: false, code: 'USER_ACCESS_REMOVE_FAILED', error: context.translations.messages.operationFailed }
   }
 }

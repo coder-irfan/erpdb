@@ -186,10 +186,7 @@ const RolesPermissionsView = ({
   }
 
   const handleInvitationRevoke = async userId => {
-    const result = await runAction(
-      () => revokeUserInvitation({ userId, locale }),
-      dictionary.messages.operationFailed
-    )
+    const result = await runAction(() => revokeUserInvitation({ userId, locale }), dictionary.messages.operationFailed)
 
     if (!result.success) {
       toast.error(result.error)
@@ -197,17 +194,14 @@ const RolesPermissionsView = ({
       return false
     }
 
-    setUsers(current => current.map(user => (user.id === userId ? result.data : user)))
+    setUsers(current => current.filter(user => user.id !== result.data.deletedUserId))
     toast.success(result.message)
 
     return true
   }
 
   const handleUserAccessRemove = async userId => {
-    const result = await runAction(
-      () => removeUserAccess({ userId, locale }),
-      dictionary.messages.operationFailed
-    )
+    const result = await runAction(() => removeUserAccess({ userId, locale }), dictionary.messages.operationFailed)
 
     if (!result.success) {
       toast.error(result.error)
@@ -215,7 +209,11 @@ const RolesPermissionsView = ({
       return false
     }
 
-    setUsers(current => current.map(user => (user.id === userId ? result.data : user)))
+    setUsers(current =>
+      result.data.deletedUserId
+        ? current.filter(user => user.id !== result.data.deletedUserId)
+        : current.map(user => (user.id === userId ? result.data : user))
+    )
     toast.success(result.message)
 
     return true
