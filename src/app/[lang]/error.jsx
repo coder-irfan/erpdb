@@ -26,7 +26,7 @@ const ErrorPage = ({ error, reset }) => {
         </details>
       )}
       <div className='mt-7 flex flex-col justify-center gap-3 sm:flex-row'>
-        <RetryButton className="cursor-pointer" reset={reset} />
+        <RetryButton reset={reset} />
         <HomeLink className="cursor-pointer" />
       </div>
     </SystemPage>

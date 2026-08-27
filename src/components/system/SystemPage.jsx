@@ -62,7 +62,7 @@ export const RetryButton = ({ reset }) => {
   const dictionary = useSystemPagesDictionary()
 
   return (
-    <button type='button' onClick={reset} className={`${actionClassName} bg-primary text-white shadow-sm hover:opacity-90`}>
+    <button type='button' onClick={reset} className={`${actionClassName} bg-primary text-white shadow-sm hover:opacity-90 cursor-pointer`}>
       <RotateCcw className='size-4' aria-hidden='true' />
       {dictionary.actions.tryAgain}
     </button>
