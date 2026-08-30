@@ -44,7 +44,7 @@ const FormSectionCards = ({ children, labels = ['General information'] }) => {
           <h4 className='border-be border-divider/80 pb-2 text-xs font-semibold uppercase tracking-wider text-textSecondary'>
             {section.label}
           </h4>
-          <div className='grid w-full min-w-0 grid-cols-1 gap-4 sm:grid-cols-2'>
+          <div className='flex w-full min-w-0 flex-col gap-4'>
             {section.items}
           </div>
         </section>
