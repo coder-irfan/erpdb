@@ -90,6 +90,9 @@ const dialog = skin => ({
         zIndex: 2,
         flexShrink: 0,
         borderTop: '1px solid var(--mui-palette-divider)',
+        background: 'rgb(var(--mui-palette-background-paperChannel) / 0.78)',
+        backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)',
         '& .MuiButtonBase-root:not(:first-of-type)': {
           marginInlineStart: theme.spacing(4)
         },

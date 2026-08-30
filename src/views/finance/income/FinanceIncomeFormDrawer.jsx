@@ -198,7 +198,7 @@ const FinanceIncomeFormDrawer = ({ open, income, options, locale, dictionary, on
           <i className='tabler-x' />
         </IconButton>
       </div>
-      <form className='form-surface-scroll flex flex-1 flex-col gap-5 p-5' onSubmit={handleSubmit(submit)} noValidate>
+      <form className='form-surface-scroll flex flex-1 flex-col gap-5 px-5' onSubmit={handleSubmit(submit)} noValidate>
         <FormSectionCards
           labels={[
             dictionary.tabs?.general || 'Income information',

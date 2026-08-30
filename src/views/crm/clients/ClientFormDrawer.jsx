@@ -108,7 +108,7 @@ const ClientFormDrawer = ({ open, client, staff, locale, dictionary, onClose, on
           <i className='tabler-x' />
         </IconButton>
       </div>
-      <form onSubmit={handleSubmit(submit)} className='form-surface-scroll flex flex-1 flex-col gap-5 p-5' noValidate>
+      <form onSubmit={handleSubmit(submit)} className='form-surface-scroll flex flex-1 flex-col gap-5 px-5' noValidate>
         <FormSectionCards
           labels={[
             dictionary.tabs?.general || 'Client information',
