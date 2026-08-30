@@ -103,7 +103,11 @@ const FinanceSalaryAdjustmentDrawer = ({ open, salary, baseCurrency, locale, dic
           <i className='tabler-x' />
         </IconButton>
       </div>
-      <form className='form-surface-scroll flex flex-1 flex-col gap-5 px-5' onSubmit={handleSubmit(submit)} noValidate>
+      <form
+        className='form-surface-scroll flex flex-1 flex-col gap-5 px-5 pt-5'
+        onSubmit={handleSubmit(submit)}
+        noValidate
+      >
         <FormSectionCards labels={[dictionary.tabs?.general || 'Salary adjustment']}>
           <Typography color='text.secondary'>{dictionary.form.description}</Typography>
           <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>

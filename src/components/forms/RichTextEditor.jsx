@@ -9,7 +9,7 @@ import { TaskItem, TaskList } from '@tiptap/extension-list'
 import { EditorContent, useEditor } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 
-const ToolButton = ({ label, icon, active, disabled, onClick }) => (
+const ToolButton = ({ label, icon, active, disabled, onClick, compact = false }) => (
   <Button
     type='button'
     size='small'
@@ -19,13 +19,13 @@ const ToolButton = ({ label, icon, active, disabled, onClick }) => (
     aria-label={label}
     title={label}
     onClick={onClick}
-    className='min-is-0 px-2'
+    className={compact ? 'min-is-0 is-7 bs-7 p-0 sm:is-8 sm:bs-8 sm:p-1' : 'min-is-0 px-2'}
   >
-    <i className={icon} />
+    <i className={`${icon}${compact ? ' text-[0.875rem] sm:text-base' : ''}`} />
   </Button>
 )
 
-const RichTextEditor = ({ value = '', onChange, onBlur, label, error, helperText, disabled = false, className = '' }) => {
+const RichTextEditor = ({ value = '', onChange, onBlur, label, error, helperText, disabled = false, className = '', compact = false }) => {
   const editor = useEditor({
     immediatelyRender: false,
     extensions: [StarterKit, TaskList, TaskItem.configure({ nested: true })],
@@ -70,17 +70,17 @@ const RichTextEditor = ({ value = '', onChange, onBlur, label, error, helperText
         {label}
       </Typography>
       <div className={`overflow-hidden rounded border ${error ? 'border-error' : 'border-divider'}`}>
-        <div className='flex flex-wrap gap-1 border-be border-divider bg-actionHover p-1'>
-          <ToolButton label='Bold' icon='tabler-bold' active={editor?.isActive('bold')} disabled={disabled} onClick={command(() => editor?.chain().focus().toggleBold().run())} />
-          <ToolButton label='Italic' icon='tabler-italic' active={editor?.isActive('italic')} disabled={disabled} onClick={command(() => editor?.chain().focus().toggleItalic().run())} />
-          <ToolButton label='Heading' icon='tabler-h-2' active={editor?.isActive('heading', { level: 2 })} disabled={disabled} onClick={command(() => editor?.chain().focus().toggleHeading({ level: 2 }).run())} />
-          <ToolButton label='Bulleted list' icon='tabler-list' active={editor?.isActive('bulletList')} disabled={disabled} onClick={command(() => editor?.chain().focus().toggleBulletList().run())} />
-          <ToolButton label='Numbered list' icon='tabler-list-numbers' active={editor?.isActive('orderedList')} disabled={disabled} onClick={command(() => editor?.chain().focus().toggleOrderedList().run())} />
-          <ToolButton label='Code block' icon='tabler-code' active={editor?.isActive('codeBlock')} disabled={disabled} onClick={command(() => editor?.chain().focus().toggleCodeBlock().run())} />
-          <ToolButton label='Task checklist' icon='tabler-list-check' active={editor?.isActive('taskList')} disabled={disabled} onClick={command(() => editor?.chain().focus().toggleTaskList().run())} />
-          <ToolButton label='Inline link' icon='tabler-link' active={editor?.isActive('link')} disabled={disabled} onClick={setLink} />
-          <ToolButton label='Undo' icon='tabler-arrow-back-up' disabled={disabled || !editor?.can().undo()} onClick={command(() => editor?.chain().focus().undo().run())} />
-          <ToolButton label='Redo' icon='tabler-arrow-forward-up' disabled={disabled || !editor?.can().redo()} onClick={command(() => editor?.chain().focus().redo().run())} />
+        <div className={`flex flex-wrap gap-1 border-be border-divider bg-actionHover p-1${compact ? ' sm:gap-1.5' : ''}`}>
+          <ToolButton compact={compact} label='Bold' icon='tabler-bold' active={editor?.isActive('bold')} disabled={disabled} onClick={command(() => editor?.chain().focus().toggleBold().run())} />
+          <ToolButton compact={compact} label='Italic' icon='tabler-italic' active={editor?.isActive('italic')} disabled={disabled} onClick={command(() => editor?.chain().focus().toggleItalic().run())} />
+          <ToolButton compact={compact} label='Heading' icon='tabler-h-2' active={editor?.isActive('heading', { level: 2 })} disabled={disabled} onClick={command(() => editor?.chain().focus().toggleHeading({ level: 2 }).run())} />
+          <ToolButton compact={compact} label='Bulleted list' icon='tabler-list' active={editor?.isActive('bulletList')} disabled={disabled} onClick={command(() => editor?.chain().focus().toggleBulletList().run())} />
+          <ToolButton compact={compact} label='Numbered list' icon='tabler-list-numbers' active={editor?.isActive('orderedList')} disabled={disabled} onClick={command(() => editor?.chain().focus().toggleOrderedList().run())} />
+          <ToolButton compact={compact} label='Code block' icon='tabler-code' active={editor?.isActive('codeBlock')} disabled={disabled} onClick={command(() => editor?.chain().focus().toggleCodeBlock().run())} />
+          <ToolButton compact={compact} label='Task checklist' icon='tabler-list-check' active={editor?.isActive('taskList')} disabled={disabled} onClick={command(() => editor?.chain().focus().toggleTaskList().run())} />
+          <ToolButton compact={compact} label='Inline link' icon='tabler-link' active={editor?.isActive('link')} disabled={disabled} onClick={setLink} />
+          <ToolButton compact={compact} label='Undo' icon='tabler-arrow-back-up' disabled={disabled || !editor?.can().undo()} onClick={command(() => editor?.chain().focus().undo().run())} />
+          <ToolButton compact={compact} label='Redo' icon='tabler-arrow-forward-up' disabled={disabled || !editor?.can().redo()} onClick={command(() => editor?.chain().focus().redo().run())} />
         </div>
         <EditorContent editor={editor} />
       </div>

@@ -62,13 +62,20 @@ const StaffContractDetailDialog = ({ contract, open, locale, dictionary, onClose
               variant='tonal'
               color={contract.remaining_days < 0 ? 'error' : contract.remaining_days <= 30 ? 'warning' : 'info'}
               icon={<i className='tabler-calendar-time' />}
-              label={contract.remaining_days < 0 ? `Expired ${Math.abs(contract.remaining_days)} days ago` : `${contract.remaining_days} days remaining`}
+              label={
+                contract.remaining_days < 0
+                  ? `Expired ${Math.abs(contract.remaining_days)} days ago`
+                  : `${contract.remaining_days} days remaining`
+              }
             />
           )}
           <Chip
             variant='tonal'
             color={STATUS_COLORS[contract.status.value] || 'default'}
-            label={formatStatusLabel(contract.status.value, dictionary.status[contract.status.value] || contract.status.label)}
+            label={formatStatusLabel(
+              contract.status.value,
+              dictionary.status[contract.status.value] || contract.status.label
+            )}
           />
         </div>
       </div>
@@ -94,7 +101,11 @@ const StaffContractDetailDialog = ({ contract, open, locale, dictionary, onClose
           />
           <DetailItem
             label={dictionary.fields.baseSalary}
-            value={<span className='font-bold'>{formatCurrency(contract.base_salary, locale, contract.currency || dictionary.currencyCode || 'AFN')}</span>}
+            value={
+              <span className='font-bold'>
+                {formatCurrency(contract.base_salary, locale, contract.currency || dictionary.currencyCode || 'AFN')}
+              </span>
+            }
             icon='tabler-cash'
           />
           <DetailItem label={dictionary.fields.startDate} value={formatDate(contract.start_date, locale)} />
@@ -121,7 +132,7 @@ const StaffContractDetailDialog = ({ contract, open, locale, dictionary, onClose
           />
         </div>
       </div>
-      <DialogActions className='px-0 pb-0 pt-4'>
+      <DialogActions className='p-4 mt-2'>
         <Button color='secondary' variant='tonal' onClick={onClose}>
           {dictionary.actions.close}
         </Button>

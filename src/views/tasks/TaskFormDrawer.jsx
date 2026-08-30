@@ -143,7 +143,11 @@ const TaskFormDrawer = ({ open, task, options, defaultProjectId = '', locale, di
           <i className='tabler-x' />
         </IconButton>
       </div>
-      <form className='form-surface-scroll flex flex-1 flex-col gap-5 px-5' onSubmit={handleSubmit(submit)} noValidate>
+      <form
+        className='form-surface-scroll flex flex-1 flex-col gap-5 px-5 pt-5'
+        onSubmit={handleSubmit(submit)}
+        noValidate
+      >
         <FormSectionCards
           labels={[
             dictionary.tabs?.general || 'General information',
@@ -179,6 +183,7 @@ const TaskFormDrawer = ({ open, task, options, defaultProjectId = '', locale, di
             render={({ field: input }) => (
               <RichTextEditor
                 className='sm:col-span-2'
+                compact
                 {...input}
                 value={input.value || ''}
                 label={dictionary.fields.description}

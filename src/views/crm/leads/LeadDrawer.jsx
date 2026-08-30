@@ -114,7 +114,11 @@ const LeadDrawer = ({ open, lead, options, baseCurrency, locale, dictionary, onC
           <i className='tabler-x' />
         </IconButton>
       </div>
-      <form onSubmit={handleSubmit(submit)} className='form-surface-scroll flex flex-1 flex-col gap-5 px-5' noValidate>
+      <form
+        onSubmit={handleSubmit(submit)}
+        className='form-surface-scroll flex flex-1 flex-col gap-5 px-5 pt-5'
+        noValidate
+      >
         <FormSectionCards
           labels={[
             dictionary.tabs?.general || 'Lead information',
