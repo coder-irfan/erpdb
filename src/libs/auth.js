@@ -7,6 +7,7 @@ import bcrypt from 'bcrypt'
 
 // Lib Imports
 import { prisma } from '@/libs/prisma'
+import { isAccessDeactivated, USER_DEACTIVATED_CODE } from '@/libs/authDeactivation'
 
 export const STANDARD_SESSION_MAX_AGE = 2 * 24 * 60 * 60
 export const REMEMBERED_SESSION_MAX_AGE = 7 * 24 * 60 * 60
@@ -22,6 +23,9 @@ const getUserAccess = userId =>
       locale: true,
       account_status: true,
       last_login_at: true,
+      staff: {
+        select: { status: true }
+      },
       roles: {
         where: { is_active: true },
         select: {
@@ -78,11 +82,14 @@ export const authOptions = {
             email: true,
             image: true,
             password_hash: true,
-            account_status: true
+            account_status: true,
+            staff: {
+              select: { status: true }
+            }
           }
         })
 
-        if (!user?.password_hash || user.account_status !== 'ACTIVE') return null
+        if (!user?.password_hash || isAccessDeactivated(user)) return null
 
         const passwordMatches = await bcrypt.compare(password, user.password_hash)
 
@@ -156,16 +163,18 @@ export const authOptions = {
 
       if (!accessUser) {
         token.accountStatus = 'INACTIVE'
+        token.staffStatus = null
+        token.error = USER_DEACTIVATED_CODE
         token.roles = []
         token.permissions = []
 
         return token
       }
 
-      const accessClaims =
-        accessUser.account_status === 'ACTIVE' ? getAccessClaims(accessUser) : { roles: [], permissions: [] }
+      const deactivated = isAccessDeactivated(accessUser)
+      const accessClaims = deactivated ? { roles: [], permissions: [] } : getAccessClaims(accessUser)
 
-      if (user && accessUser.account_status === 'ACTIVE') {
+      if (user && !deactivated) {
         const currentSessionStartedAt = new Date()
 
         // Keep the old value in the new session before replacing it. This lets
@@ -185,6 +194,8 @@ export const authOptions = {
       token.picture = accessUser.image
       token.locale = accessUser.locale
       token.accountStatus = accessUser.account_status
+      token.staffStatus = accessUser.staff?.status ?? null
+      token.error = deactivated ? USER_DEACTIVATED_CODE : undefined
       token.roles = accessClaims.roles
       token.permissions = accessClaims.permissions
 
@@ -202,12 +213,15 @@ export const authOptions = {
         session.user.image = token.picture
         session.user.locale = token.locale
         session.user.accountStatus = token.accountStatus
+        session.user.staffStatus = token.staffStatus
         session.user.roles = token.roles || []
         session.user.permissions = token.permissions || []
         session.user.rememberMe = token.rememberMe === true
         session.user.currentSessionStartedAt = token.currentSessionStartedAt || null
         session.user.previousLoginAt = token.previousLoginAt || null
       }
+
+      session.error = token.error || null
 
       return session
     }

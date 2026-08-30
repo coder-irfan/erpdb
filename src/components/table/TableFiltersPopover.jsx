@@ -11,7 +11,9 @@ const FILTER_LABELS = {
   ps: 'فلټرونه'
 }
 
-const TableFiltersPopover = ({ activeCount = 0, children, locale = 'en' }) => {
+const RESET_LABELS = { en: 'Clear Filters', fa: 'پاک‌کردن فیلترها', ps: 'فلټرونه پاک کړئ' }
+
+const TableFiltersPopover = ({ activeCount = 0, children, locale = 'en', onReset }) => {
   const [anchorElement, setAnchorElement] = useState(null)
   const open = Boolean(anchorElement)
   const label = FILTER_LABELS[locale] || FILTER_LABELS.en
@@ -35,7 +37,14 @@ const TableFiltersPopover = ({ activeCount = 0, children, locale = 'en' }) => {
         transformOrigin={{ vertical: 'top', horizontal: 'right' }}
         slotProps={{ paper: { className: 'mt-2 w-[min(360px,calc(100vw-2rem))] p-4' } }}
       >
-        <div className='flex flex-col md:gap-4 gap-2'>{children}</div>
+        <div className='flex flex-col md:gap-4 gap-2'>
+          {children}
+          {activeCount > 0 && onReset && (
+            <Button variant='tonal' color='secondary' startIcon={<i className='tabler-filter-off' />} onClick={onReset}>
+              {RESET_LABELS[locale] || RESET_LABELS.en}
+            </Button>
+          )}
+        </div>
       </Popover>
     </>
   )

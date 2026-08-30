@@ -36,7 +36,10 @@ const emptyValues = options => ({
   paid_amount: '0',
   currency: options.baseCurrency || 'AFN',
   exchange_rate: String(options.exchangeRate || '65'),
-  received_by_id: '',
+  received_by_id: options.currentStaffId || '',
+  payment_method_id: options.paymentMethods.find(option => option.is_default)?.id || options.paymentMethods[0]?.id || '',
+  payment_date: toDateInputValue(new Date()),
+  notes: '',
   pay_details: '',
   remind_date: ''
 })
@@ -48,6 +51,7 @@ const FinanceIncomeFormDrawer = ({ open, income, options, locale, dictionary, on
     control,
     handleSubmit,
     reset,
+    setError,
     setValue,
     formState: { errors, isSubmitting }
   } = useForm({
@@ -59,6 +63,7 @@ const FinanceIncomeFormDrawer = ({ open, income, options, locale, dictionary, on
   const projectId = useWatch({ control, name: 'project_id' })
   const contractId = useWatch({ control, name: 'contract_id' })
   const invoiceId = useWatch({ control, name: 'invoice_id' })
+  const incomeTypeId = useWatch({ control, name: 'income_type_id' })
   const totalAmount = useWatch({ control, name: 'total_amount' })
   const paidAmount = useWatch({ control, name: 'paid_amount' })
   const currency = useWatch({ control, name: 'currency' })
@@ -67,6 +72,8 @@ const FinanceIncomeFormDrawer = ({ open, income, options, locale, dictionary, on
   const paid = toFiniteNumber(paidAmount)
   const remaining = Math.max(0, total - paid)
   const derivedStatus = total > 0 && paid >= total ? 'PAID' : paid > 0 ? 'PARTIAL' : 'PENDING'
+  const selectedIncomeType = options.incomeTypes.find(option => option.id === incomeTypeId)
+  const isClientIncome = Boolean(selectedIncomeType?.requires_invoice || invoiceId)
 
   const baseAmount = useMemo(
     () => convertToBaseCurrency(total, currency, exchangeRate, options.baseCurrency),
@@ -95,6 +102,9 @@ const FinanceIncomeFormDrawer = ({ open, income, options, locale, dictionary, on
             currency: income.currency || options.baseCurrency || 'AFN',
             exchange_rate: String(income.exchange_rate || options.exchangeRate || '65'),
             received_by_id: income.received_by_id || '',
+            payment_method_id: income.payment_method_id || options.paymentMethods[0]?.id || '',
+            payment_date: toDateInputValue(income.payment_date || income.created_at),
+            notes: income.notes || '',
             pay_details: income.pay_details || '',
             remind_date: toDateInputValue(income.remind_date)
           }
@@ -103,6 +113,14 @@ const FinanceIncomeFormDrawer = ({ open, income, options, locale, dictionary, on
   }, [income, open, options, reset])
 
   const submit = async values => {
+    const type = options.incomeTypes.find(option => option.id === values.income_type_id)
+
+    if (type?.requires_invoice && !values.invoice_id) {
+      setError('invoice_id', { type: 'manual', message: dictionary.validation.invoiceRequired })
+
+      return
+    }
+
     const result = income
       ? await updateFinanceIncome(income.id, { ...values, locale })
       : await createFinanceIncome({ ...values, locale })
@@ -131,13 +149,14 @@ const FinanceIncomeFormDrawer = ({ open, income, options, locale, dictionary, on
     />
   )
 
-  const relationField = (name, label, items, placeholder, getLabel, onSelected, getDisabled) => (
+  const relationField = (name, label, items, placeholder, getLabel, onSelected, getDisabled, disabled = false) => (
     <Controller
       name={name}
       control={control}
       render={({ field: controllerField }) => (
         <Autocomplete
           options={items}
+          disabled={disabled}
           value={items.find(item => item.id === controllerField.value) || null}
           onChange={(_, value) => {
             controllerField.onChange(value?.id || '')
@@ -180,7 +199,7 @@ const FinanceIncomeFormDrawer = ({ open, income, options, locale, dictionary, on
         {field('name', dictionary.fields.name)}
 
         <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
-          {relationField(
+          {isClientIncome && relationField(
             'client_id',
             dictionary.fields.client,
             options.clients,
@@ -195,7 +214,9 @@ const FinanceIncomeFormDrawer = ({ open, income, options, locale, dictionary, on
               if (selectedProject && selectedProject.client_id !== value.id) setValue('project_id', '')
               if (selectedContract && selectedContract.client_id !== value.id) setValue('contract_id', '')
               if (selectedInvoice && selectedInvoice.client_id !== value.id) setValue('invoice_id', '')
-            }
+            },
+            undefined,
+            Boolean(invoiceId)
           )}
           <Controller
             name='income_type_id'
@@ -204,6 +225,14 @@ const FinanceIncomeFormDrawer = ({ open, income, options, locale, dictionary, on
               <CustomTextField
                 {...controllerField}
                 select
+                onChange={event => {
+                  controllerField.onChange(event)
+                  const nextType = options.incomeTypes.find(item => item.id === event.target.value)
+
+                  if (nextType?.requires_invoice) {
+                    setError('invoice_id', { type: 'manual', message: dictionary.validation.invoiceRequired })
+                  }
+                }}
                 value={controllerField.value || ''}
                 label={dictionary.fields.incomeType}
                 error={Boolean(errors.income_type_id)}
@@ -220,21 +249,25 @@ const FinanceIncomeFormDrawer = ({ open, income, options, locale, dictionary, on
               </CustomTextField>
             )}
           />
-          {relationField(
+          {isClientIncome && relationField(
             'project_id',
             dictionary.fields.project,
             projects,
             dictionary.placeholders.project,
             item => `${item.project_code} · ${item.title}`,
-            value => value && setValue('client_id', value.client_id)
+            value => value && setValue('client_id', value.client_id),
+            undefined,
+            Boolean(invoiceId)
           )}
-          {relationField(
+          {isClientIncome && relationField(
             'contract_id',
             dictionary.fields.contract,
             contracts,
             dictionary.placeholders.contract,
             item => `${item.contract_number} · ${item.title}`,
-            value => value && setValue('client_id', value.client_id)
+            value => value && setValue('client_id', value.client_id),
+            undefined,
+            Boolean(invoiceId)
           )}
           {relationField(
             'invoice_id',
@@ -243,9 +276,17 @@ const FinanceIncomeFormDrawer = ({ open, income, options, locale, dictionary, on
             dictionary.placeholders.invoice,
             item => item.invoice_number,
             value => {
-              if (!value) return
+              if (!value) {
+                setValue('client_id', '')
+                setValue('contract_id', '')
+                setValue('project_id', '')
+
+                return
+              }
+
               setValue('client_id', value.client_id)
               setValue('contract_id', value.contract_id)
+              setValue('project_id', value.project_id || '')
               const outstanding = Number(value.remaining_balance) > 0 ? value.remaining_balance : value.amount
 
               setValue('total_amount', String(outstanding || ''))
@@ -253,7 +294,7 @@ const FinanceIncomeFormDrawer = ({ open, income, options, locale, dictionary, on
               setValue('currency', value.currency || options.baseCurrency || 'AFN')
               setValue('exchange_rate', String(value.exchange_rate || options.exchangeRate || '65'))
             },
-            item => item.id !== income?.invoice_id && Number(item.remaining_balance) <= 0.005
+            item => item.id !== income?.invoice_id && (Number(item.remaining_balance) <= 0.005 || !item.project_id)
           )}
           {relationField(
             'received_by_id',
@@ -262,22 +303,33 @@ const FinanceIncomeFormDrawer = ({ open, income, options, locale, dictionary, on
             dictionary.placeholders.receivedBy,
             item => `${item.full_name} · ${item.position}`
           )}
+          {relationField(
+            'payment_method_id',
+            dictionary.fields.paymentMethod,
+            options.paymentMethods,
+            dictionary.placeholders.paymentMethod,
+            item => item.label
+          )}
+          {field('payment_date', dictionary.fields.paymentDate, {
+            type: 'date',
+            slotProps: { inputLabel: { shrink: true } }
+          })}
         </div>
 
         <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
-          {field('total_amount', dictionary.fields.totalAmount, { type: 'number', inputProps: { min: 0, step: '0.01' } })}
+          {field('total_amount', dictionary.fields.totalAmount, { type: 'number', inputProps: { min: 0, step: '0.01', readOnly: Boolean(invoiceId) } })}
           {field('paid_amount', dictionary.fields.paidAmount, { type: 'number', inputProps: { min: 0, step: '0.01' } })}
           <Controller
             name='currency'
             control={control}
             render={({ field: controllerField }) => (
-              <CustomTextField {...controllerField} select value={controllerField.value || options.baseCurrency || 'AFN'} label={dictionary.fields.currency} error={Boolean(errors.currency)} helperText={errors.currency?.message}>
+              <CustomTextField {...controllerField} select disabled={Boolean(invoiceId)} value={controllerField.value || options.baseCurrency || 'AFN'} label={dictionary.fields.currency} error={Boolean(errors.currency)} helperText={errors.currency?.message}>
                 <MenuItem value='AFN'>AFN</MenuItem>
                 <MenuItem value='USD'>USD</MenuItem>
               </CustomTextField>
             )}
           />
-          {field('exchange_rate', dictionary.fields.exchangeRate, { type: 'number', inputProps: { min: 0, step: '0.0001' } })}
+          {field('exchange_rate', dictionary.fields.exchangeRate, { type: 'number', inputProps: { min: 0, step: '0.0001', readOnly: Boolean(invoiceId) } })}
         </div>
 
         <Card variant='outlined'>
@@ -295,7 +347,12 @@ const FinanceIncomeFormDrawer = ({ open, income, options, locale, dictionary, on
           </CardContent>
         </Card>
 
-        {field('remind_date', dictionary.fields.reminderDate, { type: 'date', slotProps: { inputLabel: { shrink: true } } })}
+        {remaining > 0.005 && field('remind_date', dictionary.fields.reminderDate, { type: 'date', slotProps: { inputLabel: { shrink: true } } })}
+        {field('notes', dictionary.fields.notes, {
+          multiline: true,
+          minRows: 2,
+          placeholder: dictionary.placeholders.notes
+        })}
         {field('pay_details', dictionary.fields.paymentDetails, {
           multiline: true,
           minRows: 3,

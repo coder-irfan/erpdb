@@ -1,8 +1,10 @@
 import { Prisma } from '@prisma/client'
 
+import { DAY_IN_MILLISECONDS, isAfghanistanWorkingDay } from '../utils/payrollCalendar.js'
+
 const SEED_PREFIX = 'seed-'
 const USD_AFN_RATE = 70
-const DAY_MS = 86_400_000
+const DAY_MS = DAY_IN_MILLISECONDS
 
 const decimal = value => new Prisma.Decimal(value)
 const dateKey = date => date.toISOString().slice(0, 10)
@@ -22,7 +24,7 @@ const dateTime = (date, hour, minute = 0) =>
   new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), hour, minute))
 
 const amountInBase = (amount, currency) => decimal(currency === 'USD' ? amount * USD_AFN_RATE : amount)
-const isWeekend = date => [5, 6].includes(date.getUTCDay())
+const isWeekend = date => !isAfghanistanWorkingDay(date)
 
 const findWorkingBlock = (startOffset, length, holidayKeys) => {
   let candidate = relativeDate(startOffset)
@@ -102,7 +104,7 @@ const seedSetupAndUsers = async (transaction, passwordHash) => {
       fiscal_year_start: '01-01',
       default_work_start: '08:30',
       default_work_end: '17:30',
-      weekend_days: '5,6',
+      weekend_days: '5',
       signatory_name: 'Amina Rahimi',
       signatory_title: 'General Manager'
     },
@@ -121,7 +123,7 @@ const seedSetupAndUsers = async (transaction, passwordHash) => {
       fiscal_year_start: '01-01',
       default_work_start: '08:30',
       default_work_end: '17:30',
-      weekend_days: '5,6',
+      weekend_days: '5',
       signatory_name: 'Amina Rahimi',
       signatory_title: 'General Manager'
     }
@@ -1097,6 +1099,9 @@ const seedInvoicesAndFinance = async (transaction, options) => {
     status: 'PAID',
     name: `Invoice settlement ${payment[1].slice(-2)}`,
     pay_details: JSON.stringify({ payment_method: payment[6], seeded: true }),
+    payment_method_id: requireOption(options, 'PAYMENT_METHOD', payment[6]),
+    payment_date: monthDate(payment[7], 22),
+    notes: 'Seeded invoice payment',
     income_type_id: requireOption(options, 'INCOME_TYPE', 'CONTRACT_PAYMENT'),
     total_amount: decimal(payment[4]),
     paid_amount: decimal(payment[4]),
@@ -1210,6 +1215,11 @@ const seedInvoicesAndFinance = async (transaction, options) => {
   await transaction.financeexpense.createMany({
     data: expenseData.map((expense, index) => ({
       id: `seed-expense-${String(index + 1).padStart(2, '0')}`,
+      voucher_number: `EXP-2026-${String(index + 1).padStart(3, '0')}`,
+      vendor_payee: ['Kabul Property Management', 'Kabul Electric', 'Cloud Software Vendor', 'Office Supplies Vendor'][index % 4],
+      approval_status: 'PAID',
+      approved_at: monthDate(-(index % 6), 3 + (index % 20)),
+      paid_at: monthDate(-(index % 6), 4 + (index % 20)),
       project_id: ['PROJECT_COST', 'TRAVEL'].includes(expense[0])
         ? `seed-project-${String((index % 6) + 1).padStart(2, '0')}`
         : null,
@@ -1227,16 +1237,32 @@ const seedInvoicesAndFinance = async (transaction, options) => {
       amount_base: amountInBase(expense[2], expense[3])
     }))
   })
+
+  await transaction.generalledgerentry.createMany({
+    data: expenseData.map((expense, index) => ({
+      id: `seed-ledger-expense-${String(index + 1).padStart(2, '0')}`,
+      expense_id: `seed-expense-${String(index + 1).padStart(2, '0')}`,
+      account_code: ['PROJECT_COST', 'TRAVEL'].includes(expense[0]) ? 'EXPENSE-PROJECT' : 'EXPENSE-OVERHEAD',
+      entry_type: 'DEBIT',
+      transaction_amount: decimal(expense[2]),
+      transaction_currency: expense[3],
+      exchange_rate: decimal(USD_AFN_RATE),
+      debit_base: amountInBase(expense[2], expense[3]),
+      credit_base: decimal(0),
+      entry_date: monthDate(-(index % 6), 4 + (index % 20)),
+      description: `${expense[1]} (${expense[3]})`
+    }))
+  })
 }
 
 const seedLoansAndPayroll = async (transaction, options, attendanceRows, holidays, leaveDefinitions) => {
   const loanData = [
-    ['seed-loan-01', 'LN-SEED-001', 'seed-staff-05', 60000, 10000, 0, 'REQUESTED', 'AFN'],
-    ['seed-loan-02', 'LN-SEED-002', 'seed-staff-07', 45000, 7500, 0, 'APPROVED', 'AFN'],
-    ['seed-loan-03', 'LN-SEED-003', 'seed-staff-04', 90000, 15000, 30000, 'ACTIVE', 'AFN'],
-    ['seed-loan-04', 'LN-SEED-004', 'seed-staff-05', 1200, 200, 400, 'ACTIVE', 'USD'],
-    ['seed-loan-05', 'LN-SEED-005', 'seed-staff-06', 50000, 10000, 50000, 'REPAID', 'AFN'],
-    ['seed-loan-06', 'LN-SEED-006', 'seed-staff-02', 700, 140, 0, 'REJECTED', 'USD']
+    ['seed-loan-01', 'SLN-2026-001', 'seed-staff-05', 60000, 10000, 0, 'REQUESTED', 'AFN'],
+    ['seed-loan-02', 'SLN-2026-002', 'seed-staff-07', 45000, 7500, 0, 'APPROVED', 'AFN'],
+    ['seed-loan-03', 'SLN-2026-003', 'seed-staff-04', 90000, 15000, 30000, 'ACTIVE', 'AFN'],
+    ['seed-loan-04', 'SLN-2026-004', 'seed-staff-05', 1200, 200, 400, 'ACTIVE', 'USD'],
+    ['seed-loan-05', 'SLN-2026-005', 'seed-staff-06', 50000, 10000, 50000, 'REPAID', 'AFN'],
+    ['seed-loan-06', 'SLN-2026-006', 'seed-staff-02', 700, 140, 0, 'REJECTED', 'USD']
   ]
 
   await transaction.financeloan.createMany({
@@ -1251,6 +1277,8 @@ const seedLoansAndPayroll = async (transaction, options, attendanceRows, holiday
       remaining_balance: decimal(loan[3] - loan[5]),
       status_id: requireOption(options, 'LOAN_STATUS', loan[6]),
       issue_date: monthDate(-8 + Math.min(index, 2), 7),
+      repayment_start_date: monthDate(-7 + Math.min(index, 2), 1),
+      auto_deduct: true,
       reason: [
         'Medical support',
         'Education expenses',

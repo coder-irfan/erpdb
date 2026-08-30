@@ -16,7 +16,7 @@ export async function GET() {
   try {
     const options = await prisma.option.findMany({
       where: { category: 'INCOME_TYPE', is_active: true },
-      select: { id: true, label: true, value: true, description: true, color_code: true, is_default: true, sort_order: true },
+      select: { id: true, label: true, value: true, description: true, color_code: true, is_default: true, requires_invoice: true, sort_order: true },
       orderBy: [{ sort_order: 'asc' }, { label: 'asc' }]
     })
 

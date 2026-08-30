@@ -26,6 +26,9 @@ export const createFinanceIncomeSchema = customMessages => {
     currency: picklist(['AFN', 'USD'], messages.required),
     exchange_rate: pipe(string(messages.positiveInvalid), trim(), regex(NUMBER_PATTERN, messages.positiveInvalid)),
     received_by_id: optional(pipe(string(), trim()), ''),
+    payment_method_id: pipe(string(messages.required), trim(), nonEmpty(messages.required)),
+    payment_date: pipe(string(messages.required), trim(), regex(DATE_PATTERN, messages.dateInvalid)),
+    notes: optional(pipe(string(), trim(), maxLength(2000, messages.detailsTooLong)), ''),
     pay_details: optional(pipe(string(), trim(), maxLength(2000, messages.detailsTooLong)), ''),
     remind_date: optional(union([literal(''), pipe(string(), trim(), regex(DATE_PATTERN, messages.dateInvalid))]), '')
   })

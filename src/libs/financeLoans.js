@@ -9,8 +9,9 @@ import { ACTIVE_LOAN_STATUSES } from '@/libs/financialStatuses'
 import { prisma } from '@/libs/prisma'
 import { nextSequentialNumber } from '@/libs/sequentialNumbers'
 import { toUtcDateOnly } from '@/utils/contractDuration'
-import { convertToBaseCurrency, toFiniteNumber } from '@/utils/formatCurrency'
+import { SYSTEM_BASE_CURRENCY, convertAfnToUsd, convertToBaseCurrency, normalizeToAfn, toFiniteNumber } from '@/utils/formatCurrency'
 import { formatLedgerText } from '@/utils/ledgerDisplay'
+import { calculateAmortizationSchedule } from '@/utils/loanCalculations'
 
 export const LOAN_READ_PERMISSIONS = ['finance:read', 'finance_loan:read']
 export const LOAN_WRITE_PERMISSIONS = ['finance:write', 'finance_loan:write']
@@ -50,6 +51,7 @@ export const loanSelect = {
   staff_id: true,
   loan_type: true,
   entity_name: true,
+  lender_type: true,
   loan_number: true,
   total_amount: true,
   monthly_deduction: true,
@@ -57,6 +59,11 @@ export const loanSelect = {
   remaining_balance: true,
   status_id: true,
   issue_date: true,
+  repayment_start_date: true,
+  auto_deduct: true,
+  annual_interest_rate: true,
+  tenure_months: true,
+  disbursement_bank_account: true,
   reason: true,
   approved_by_id: true,
   created_at: true,
@@ -64,6 +71,7 @@ export const loanSelect = {
   amount_base: true,
   currency: true,
   exchange_rate: true,
+  fx_snapshot_at: true,
   staff: { select: staffSelect },
   approved_by: { select: staffSelect },
   status: { select: optionSelect },
@@ -76,6 +84,7 @@ export const loanSelect = {
       reference_id: true,
       currency: true,
       exchange_rate: true,
+      fx_snapshot_at: true,
       amount_base: true,
       notes: true,
       created_at: true,
@@ -83,6 +92,9 @@ export const loanSelect = {
     },
     orderBy: [{ repayment_date: 'desc' }, { created_at: 'desc' }],
     take: 100
+  },
+  repayment_schedule: {
+    orderBy: { installment_number: 'asc' }
   }
 }
 
@@ -98,17 +110,36 @@ export const normalizeLoan = loan => ({
   repaid_amount: numberString(loan.repaid_amount),
   remaining_balance: numberString(loan.remaining_balance),
   amount_base: numberString(loan.amount_base),
+  amount_usd: numberString(convertAfnToUsd(loan.amount_base, loan.exchange_rate)),
+  monthly_deduction_usd: numberString(convertAfnToUsd(normalizeToAfn(loan.monthly_deduction, loan.currency, loan.exchange_rate), loan.exchange_rate)),
+  repaid_amount_usd: numberString(convertAfnToUsd(normalizeToAfn(loan.repaid_amount, loan.currency, loan.exchange_rate), loan.exchange_rate)),
+  remaining_balance_usd: numberString(convertAfnToUsd(normalizeToAfn(loan.remaining_balance, loan.currency, loan.exchange_rate), loan.exchange_rate)),
   exchange_rate: numberString(loan.exchange_rate, 4),
+  annual_interest_rate: numberString(loan.annual_interest_rate, 4),
+  fx_snapshot_at: iso(loan.fx_snapshot_at),
   issue_date: iso(loan.issue_date),
+  repayment_start_date: iso(loan.repayment_start_date),
   created_at: iso(loan.created_at),
   updated_at: iso(loan.updated_at),
   staff: normalizeStaff(loan.staff),
   approved_by: normalizeStaff(loan.approved_by),
+  repayment_schedule: (loan.repayment_schedule || []).map(item => ({
+    ...item,
+    due_date: iso(item.due_date),
+    paid_at: iso(item.paid_at),
+    created_at: iso(item.created_at),
+    opening_principal: numberString(item.opening_principal),
+    principal_amount: numberString(item.principal_amount),
+    interest_amount: numberString(item.interest_amount),
+    payment_amount: numberString(item.payment_amount),
+    remaining_principal: numberString(item.remaining_principal)
+  })),
   repayments: (loan.repayments || []).map(repayment => ({
     ...repayment,
     amount: numberString(repayment.amount),
     amount_base: numberString(repayment.amount_base),
     exchange_rate: numberString(repayment.exchange_rate, 4),
+    fx_snapshot_at: iso(repayment.fx_snapshot_at),
     repayment_date: iso(repayment.repayment_date),
     created_at: iso(repayment.created_at),
     notes: formatLedgerText(repayment.notes)
@@ -121,11 +152,17 @@ export const loanPayload = (payload, setup) => ({
   loan_type: payload?.loan_type || 'STAFF',
   staff_id: payload?.staff_id || '',
   entity_name: payload?.entity_name || '',
+  lender_type: payload?.lender_type || 'BANK',
   total_amount: String(payload?.total_amount ?? ''),
-  monthly_deduction: String(payload?.monthly_deduction ?? ''),
-  currency: payload?.currency || setup.currency_code || 'AFN',
+  monthly_deduction: String(payload?.monthly_deduction || '1'),
+  currency: payload?.currency || SYSTEM_BASE_CURRENCY,
   exchange_rate: String(payload?.exchange_rate || setup.usd_afn_exchange_rate || ''),
   issue_date: payload?.issue_date || '',
+  repayment_start_date: payload?.repayment_start_date || payload?.issue_date || '',
+  auto_deduct: Boolean(payload?.auto_deduct),
+  annual_interest_rate: String(payload?.annual_interest_rate ?? '0'),
+  tenure_months: String(payload?.tenure_months ?? '1'),
+  disbursement_bank_account: payload?.disbursement_bank_account || '',
   reason: payload?.reason || ''
 })
 
@@ -143,12 +180,21 @@ export const prepareLoanData = async (values, messages, setup, current = null) =
   const totalAmount = toFiniteNumber(values.total_amount)
   const monthlyDeduction = toFiniteNumber(values.monthly_deduction)
   const exchangeRate = toFiniteNumber(values.exchange_rate)
+  const annualInterestRate = toFiniteNumber(values.annual_interest_rate)
+  const tenureMonths = Math.trunc(toFiniteNumber(values.tenure_months))
 
-  if (monthlyDeduction > totalAmount) return { success: false, error: messages.monthlyTooHigh }
+  if (values.loan_type === 'STAFF' && monthlyDeduction > totalAmount) return { success: false, error: messages.monthlyTooHigh }
 
   const issueDate = toUtcDateOnly(values.issue_date)
+  const repaymentStartDate = toUtcDateOnly(values.repayment_start_date || values.issue_date)
 
-  if (!issueDate || exchangeRate <= 0) return { success: false, error: messages.rateInvalid }
+  if (!issueDate || !repaymentStartDate || exchangeRate <= 0 || annualInterestRate < 0 || tenureMonths < 1) return { success: false, error: messages.rateInvalid }
+
+  const schedule = values.loan_type === 'CORPORATE'
+    ? calculateAmortizationSchedule({ principal: totalAmount, annualInterestRate, tenureMonths, issueDate })
+    : []
+
+  const scheduledMonthlyPayment = schedule[0]?.payment_amount || monthlyDeduction
 
   const repaidAmount = current ? toFiniteNumber(current.repaid_amount) : 0
 
@@ -178,18 +224,25 @@ export const prepareLoanData = async (values, messages, setup, current = null) =
       staff_id: staffId || null,
       loan_type: values.loan_type,
       entity_name: entityName || null,
+      lender_type: values.loan_type === 'CORPORATE' ? values.lender_type : null,
       total_amount: new Prisma.Decimal(totalAmount),
-      monthly_deduction: new Prisma.Decimal(monthlyDeduction),
+      monthly_deduction: new Prisma.Decimal(scheduledMonthlyPayment),
       repaid_amount: new Prisma.Decimal(repaidAmount),
       remaining_balance: new Prisma.Decimal(remainingBalance),
       issue_date: issueDate,
+      repayment_start_date: repaymentStartDate,
+      auto_deduct: values.loan_type === 'STAFF' && values.auto_deduct,
+      annual_interest_rate: new Prisma.Decimal(values.loan_type === 'CORPORATE' ? annualInterestRate : 0),
+      tenure_months: values.loan_type === 'CORPORATE' ? tenureMonths : null,
+      disbursement_bank_account: values.loan_type === 'CORPORATE' ? cleanLoanText(values.disbursement_bank_account) || null : null,
       reason: cleanLoanText(values.reason) || null,
       amount_base: new Prisma.Decimal(
-        convertToBaseCurrency(totalAmount, values.currency, effectiveExchangeRate, setup.currency_code || 'AFN')
+        convertToBaseCurrency(totalAmount, values.currency, effectiveExchangeRate, SYSTEM_BASE_CURRENCY)
       ),
       currency: values.currency,
       exchange_rate: new Prisma.Decimal(effectiveExchangeRate)
-    }
+    },
+    schedule
   }
 }
 
@@ -202,6 +255,10 @@ export const applyLoanStatusTransition = async (
     select: {
       id: true,
       remaining_balance: true,
+      total_amount: true,
+      currency: true,
+      exchange_rate: true,
+      fx_snapshot_at: true,
       status: { select: { value: true } }
     }
   })
@@ -231,10 +288,23 @@ export const applyLoanStatusTransition = async (
 
   if (!nextStatus) throw new LoanLedgerError('LOAN_STATUS_NOT_CONFIGURED', 'Loan statuses are not configured.')
 
+  const shouldSnapshot = ['APPROVED', 'ACTIVE'].includes(nextStatusValue) && !loan.fx_snapshot_at
+
+  const snapshotRate = shouldSnapshot ? toFiniteNumber(loan.exchange_rate) : null
+
+  const snapshotAt = shouldSnapshot ? new Date() : null
+
   return transaction.financeloan.update({
     where: { id: loanId },
     data: {
       status_id: nextStatus.id,
+      ...(shouldSnapshot
+        ? {
+            exchange_rate: new Prisma.Decimal(snapshotRate),
+            amount_base: new Prisma.Decimal(normalizeToAfn(loan.total_amount, loan.currency, snapshotRate)),
+            fx_snapshot_at: snapshotAt
+          }
+        : {}),
       ...(nextStatusValue === 'APPROVED' ? { approved_by_id: approvedById } : {})
     },
     select: loanSelect
@@ -252,7 +322,9 @@ export const applyLoanRepayment = async (
     referenceId = null,
     createdByUserId = null,
     notes = null,
-    baseCurrency = 'AFN'
+    baseCurrency = SYSTEM_BASE_CURRENCY,
+    fxSnapshotRate = null,
+    fxSnapshotAt = new Date()
   }
 ) => {
   if (!LOAN_REPAYMENT_SOURCES.includes(source)) {
@@ -274,6 +346,8 @@ export const applyLoanRepayment = async (
   })
 
   if (!loan) throw new LoanLedgerError('LOAN_NOT_FOUND', 'Loan not found.')
+
+  const postingRate = toFiniteNumber(fxSnapshotRate || loan.exchange_rate)
 
   if (loan.status.value !== 'ACTIVE') {
     throw new LoanLedgerError('LOAN_NOT_ACTIVE', 'Only active loans can receive repayments.')
@@ -308,8 +382,9 @@ export const applyLoanRepayment = async (
         reference_id: `legacy-${loan.id}`,
         currency: loan.currency,
         exchange_rate: loan.exchange_rate,
+        fx_snapshot_at: loan.issue_date,
         amount_base: new Prisma.Decimal(
-          convertToBaseCurrency(legacyAmount, loan.currency, loan.exchange_rate, baseCurrency)
+          normalizeToAfn(legacyAmount, loan.currency, loan.exchange_rate)
         ),
         notes: 'Opening repayment balance migrated from the legacy aggregate.'
       }
@@ -357,9 +432,10 @@ export const applyLoanRepayment = async (
       source,
       reference_id: referenceId,
       currency: loan.currency,
-      exchange_rate: loan.exchange_rate,
+      exchange_rate: new Prisma.Decimal(postingRate),
+      fx_snapshot_at: fxSnapshotAt,
       amount_base: new Prisma.Decimal(
-        convertToBaseCurrency(appliedAmount, loan.currency, loan.exchange_rate, baseCurrency)
+        normalizeToAfn(appliedAmount, loan.currency, postingRate)
       ),
       created_by_user_id: createdByUserId,
       notes: cleanLoanText(notes) || null
@@ -381,8 +457,8 @@ export const applyLoanRepayment = async (
 
 export const getLoanSetup = getCompanySetupRecord
 
-export const nextLoanNumber = async (client = prisma) => {
+export const nextLoanNumber = async (client = prisma, loanType = 'STAFF') => {
   const year = new Date().getUTCFullYear()
 
-  return nextSequentialNumber(client, 'loan', { prefix: `LN-${year}-`, digits: 3 })
+  return nextSequentialNumber(client, 'loan', { prefix: `${loanType === 'CORPORATE' ? 'CLN' : 'SLN'}-${year}-`, digits: 3 })
 }

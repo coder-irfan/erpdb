@@ -13,6 +13,12 @@ export const getCurrentStaffId = async userId => {
   return staff?.id || null
 }
 
+export const resolveActivityStaffId = async (userId, fallbackStaffIds = []) => {
+  const currentStaffId = await getCurrentStaffId(userId)
+
+  return currentStaffId || fallbackStaffIds.find(Boolean) || null
+}
+
 export const leadInclude = {
   source: { select: { id: true, label: true, value: true, color_code: true } },
   status: { select: { id: true, label: true, value: true, color_code: true } },

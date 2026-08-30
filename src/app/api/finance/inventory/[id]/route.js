@@ -79,7 +79,7 @@ export async function PATCH(request, routeContext) {
   const signedDelta = payload?.direction === 'OUT' ? `-${String(payload?.quantity_delta || '').replace(/^-/, '')}` : String(payload?.quantity_delta || '').replace(/^-/, '')
 
   const movementType = String(
-    payload?.movement_type || (payload?.direction === 'OUT' ? 'DEDUCTION' : 'ADDITION')
+    payload?.movement_type || (payload?.reason === 'DAMAGED_LOST_WRITTEN_OFF' ? 'DAMAGE' : payload?.direction === 'OUT' ? 'DEDUCTION' : 'ADDITION')
   ).toUpperCase()
 
   const validation = safeParse(inventoryAdjustmentSchema(dictionary.validation), {
@@ -89,6 +89,9 @@ export async function PATCH(request, routeContext) {
     occurred_at: payload?.occurred_at || '',
     reference_id: payload?.reference_id || '',
     related_inventory_id: payload?.related_inventory_id || '',
+    source_vendor: payload?.source_vendor || '',
+    reason: payload?.reason || '',
+    assigned_staff_id: payload?.assigned_staff_id || '',
     notes: payload?.notes || ''
   })
 
@@ -116,11 +119,14 @@ export async function PATCH(request, routeContext) {
         occurredAt,
         referenceId: validation.output.reference_id || null,
         relatedInventoryId: validation.output.related_inventory_id || null,
+        sourceVendor: validation.output.source_vendor || null,
+        reason: validation.output.reason || null,
+        assignedStaffId: validation.output.assigned_staff_id || null,
         notes: validation.output.notes,
         createdByUserId: authorization.session.user.id
       })
 
-      await transaction.auditlog.create({ data: { user_id: authorization.session.user.id, action: 'INVENTORY_MOVEMENT_RECORDED', module: 'INVENTORY', details: { inventoryId: id, movementId: movement.movement.id, movementType: validation.output.movement_type, direction: validation.output.direction, quantity: movement.movement.quantity, previousQuantity: movement.movement.quantity_before, newQuantity: movement.movement.quantity_after } } })
+      await transaction.auditlog.create({ data: { user_id: authorization.session.user.id, action: 'INVENTORY_MOVEMENT_RECORDED', module: 'INVENTORY', details: { inventoryId: id, movementId: movement.movement.id, movementType: validation.output.movement_type, direction: validation.output.direction, quantity: movement.movement.quantity, previousQuantity: movement.movement.quantity_before, newQuantity: movement.movement.quantity_after, sourceVendor: movement.movement.source_vendor, reason: movement.movement.reason, assignedStaffId: movement.movement.assigned_staff_id } } })
 
       return movement
     }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable })
@@ -130,7 +136,7 @@ export async function PATCH(request, routeContext) {
     if (error?.message === 'INVENTORY_NOT_FOUND') return errorResponse(dictionary.messages.notFound, 404, 'INVENTORY_NOT_FOUND')
     if (error?.message === 'INSUFFICIENT_STOCK') return errorResponse(dictionary.messages.insufficientStock, 409, 'INSUFFICIENT_STOCK')
     if (error?.message === 'STATUS_NOT_CONFIGURED') return errorResponse(dictionary.validation.statusMissing, 409, 'STATUS_NOT_CONFIGURED')
-    if (['INVALID_INVENTORY_MOVEMENT', 'INVALID_INVENTORY_QUANTITY', 'INVALID_INVENTORY_MOVEMENT_DATE', 'BACKDATED_INVENTORY_MOVEMENT'].includes(error?.message)) return errorResponse(dictionary.validation.adjustmentInvalid, 400, error.message)
+    if (['INVALID_INVENTORY_MOVEMENT', 'INVALID_INVENTORY_QUANTITY', 'INVALID_INVENTORY_MOVEMENT_DATE', 'BACKDATED_INVENTORY_MOVEMENT', 'INVALID_INVENTORY_REASON', 'INVALID_INVENTORY_ASSIGNEE'].includes(error?.message)) return errorResponse(dictionary.validation.adjustmentInvalid, 400, error.message)
 
     return errorResponse(dictionary.messages.operationFailed, 500, 'INVENTORY_ADJUST_FAILED')
   }

@@ -39,6 +39,7 @@ const TaskTableView = ({
 }) => {
   const renderActions = task => (
     <EntityActionsMenu
+      locale={locale}
       moreActionsLabel={dictionary.table.actions}
       actions={[
         { label: dictionary.actions.view, icon: 'tabler-eye', onClick: () => onView(task) },
@@ -205,7 +206,7 @@ const TaskTableView = ({
                         {task.progress}%
                       </Typography>
                     </div>
-                    <LinearProgress variant='determinate' value={task.progress} className='bs-1.5 rounded' />
+                    <LinearProgress variant='determinate' value={Math.min(100, task.progress)} color={task.progress > 100 ? 'error' : 'primary'} className='bs-1.5 rounded' />
                   </div>
                 </td>
                 <td className='text-end' onClick={event => event.stopPropagation()}>

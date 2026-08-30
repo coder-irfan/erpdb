@@ -7,6 +7,10 @@ import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import Chip from '@mui/material/Chip'
+import Dialog from '@mui/material/Dialog'
+import DialogActions from '@mui/material/DialogActions'
+import DialogContent from '@mui/material/DialogContent'
+import DialogTitle from '@mui/material/DialogTitle'
 import MenuItem from '@mui/material/MenuItem'
 import Typography from '@mui/material/Typography'
 import { toast } from 'sonner'
@@ -14,10 +18,12 @@ import { toast } from 'sonner'
 import CustomTextField from '@core/components/mui/TextField'
 import { getStaffContracts, updateStaffContractStatus } from '@/actions/hrm/contracts'
 import QuickContact from '@/components/common/QuickContact'
+import DualCurrencyAmount from '@/components/currency/DualCurrencyAmount'
 import DashboardTablePagination from '@/components/table/DashboardTablePagination'
 import EntityActionsMenu from '@/components/table/EntityActionsMenu'
 import TableEmptyStateRow from '@/components/table/TableEmptyStateRow'
 import TableFiltersPopover from '@/components/table/TableFiltersPopover'
+import LocalizedDateTimePicker from '@/components/inputs/LocalizedDateTimePicker'
 import TableSkeletonRows from '@/components/table/TableSkeletonRows'
 import ResponsiveDataTable from '@/components/tables/ResponsiveDataTable'
 import { formatCurrency } from '@/utils/formatCurrency'
@@ -69,6 +75,9 @@ const StaffContractsView = ({
   const [editingContract, setEditingContract] = useState(null)
   const [viewingContract, setViewingContract] = useState(null)
   const [printingContract, setPrintingContract] = useState(null)
+  const [terminationTarget, setTerminationTarget] = useState(null)
+  const [terminationDate, setTerminationDate] = useState(new Date().toISOString().slice(0, 10))
+  const [terminationReason, setTerminationReason] = useState('')
 
   const currencyCode = formOptions.setup.currency_code || 'AFN'
   const filterContractTypes = useMemo(() => formOptions.contractTypes || [], [formOptions.contractTypes])
@@ -137,13 +146,13 @@ const StaffContractsView = ({
     void refreshData()
   }
 
-  const handleStatusChange = async (contract, nextStatusId) => {
+  const executeStatusChange = async (contract, nextStatusId, transitionPayload = {}) => {
     if (nextStatusId === contract.status_id) return
 
     setBusyId(contract.id)
 
     try {
-      const result = await updateStaffContractStatus(contract.id, nextStatusId, { locale })
+      const result = await updateStaffContractStatus(contract.id, nextStatusId, { locale, ...transitionPayload })
 
       if (!result.success) {
         toast.error(result.error)
@@ -152,6 +161,8 @@ const StaffContractsView = ({
       }
 
       setContracts(current => current.map(item => (item.id === contract.id ? result.data : item)))
+      setTerminationTarget(null)
+      setTerminationReason('')
       await refreshData()
       toast.success(result.message)
     } catch {
@@ -161,8 +172,25 @@ const StaffContractsView = ({
     }
   }
 
+  const handleStatusChange = (contract, nextStatusId) => {
+    if (nextStatusId === contract.status_id) return
+
+    const nextStatus = formOptions.statuses.find(status => status.id === nextStatusId)
+
+    if (nextStatus?.value === 'TERMINATED') {
+      setTerminationTarget({ contract, nextStatusId })
+      setTerminationDate(new Date().toISOString().slice(0, 10))
+      setTerminationReason('')
+
+      return
+    }
+
+    void executeStatusChange(contract, nextStatusId)
+  }
+
   const renderContractActions = contract => (
     <EntityActionsMenu
+      locale={locale}
       actions={[
         { label: dictionary.actions.view, icon: 'tabler-eye', onClick: () => setViewingContract(contract) },
         {
@@ -176,6 +204,7 @@ const StaffContractsView = ({
         canWrite
           ? formOptions.statuses.map(status => ({
               ...status,
+              skipConfirmation: status.value === 'TERMINATED',
               label: dictionary.status[status.value] || status.label
             }))
           : []
@@ -208,8 +237,9 @@ const StaffContractsView = ({
           />
           <div className='grid is-full grid-cols-2 gap-2 sm:flex sm:is-auto sm:flex-wrap sm:gap-3 sm:justify-end'>
             <TableFiltersPopover
-              activeCount={Number(Boolean(statusId)) + Number(Boolean(contractTypeId))}
+              activeCount={Number(Boolean(searchInput.trim())) + Number(Boolean(statusId)) + Number(Boolean(contractTypeId))}
               locale={locale}
+              onReset={() => { setSearchInput(''); setSearch(''); setStatusId(''); setContractTypeId(''); setPage(0) }}
             >
               <CustomTextField
                 select
@@ -303,7 +333,7 @@ const StaffContractsView = ({
             {
               id: 'salary',
               label: dictionary.table.salary,
-              render: contract => formatCurrency(contract.base_salary, locale, contract.currency || currencyCode)
+              render: contract => <DualCurrencyAmount amount={contract.base_salary} amountBase={contract.amount_base} currency={contract.currency || currencyCode} exchangeRate={contract.exchange_rate} locale={locale} />
             },
             {
               id: 'period',
@@ -371,12 +401,7 @@ const StaffContractsView = ({
                       <td>{contract.position_title}</td>
                       <td>{contract.contract_type.label}</td>
                       <td>
-                        <Typography
-                          component='span'
-                          className='inline-flex rounded bg-successLighter px-3 py-1 font-semibold text-success'
-                        >
-                          {formatCurrency(contract.base_salary, locale, contract.currency || currencyCode)}
-                        </Typography>
+                        <DualCurrencyAmount amount={contract.base_salary} amountBase={contract.amount_base} currency={contract.currency || currencyCode} exchangeRate={contract.exchange_rate} locale={locale} className='rounded bg-successLighter px-3 py-1' primaryClassName='text-success' />
                       </td>
                       <td className='whitespace-nowrap'>
                         <Typography variant='body2'>{formatDate(contract.start_date, locale)}</Typography>
@@ -420,7 +445,7 @@ const StaffContractsView = ({
         formOptions={formOptions}
         locale={locale}
         dictionary={contractDictionary}
-        defaultTarget='HRM'
+        contractContext='HRM'
         onClose={() => setDrawerOpen(false)}
         onSaved={handleSaved}
       />
@@ -439,6 +464,25 @@ const StaffContractsView = ({
         dictionary={dictionary}
         onClose={() => setPrintingContract(null)}
       />
+      <Dialog open={Boolean(terminationTarget)} onClose={busyId ? undefined : () => setTerminationTarget(null)} fullWidth maxWidth='sm'>
+        <DialogTitle>Terminate staff contract</DialogTitle>
+        <DialogContent className='flex flex-col gap-4 pt-2'>
+          <Typography color='text.secondary'>Termination freezes payroll, flags final settlement, archives the staff record, and revokes linked user sessions immediately.</Typography>
+          <LocalizedDateTimePicker locale={locale} label='Termination Date' value={terminationDate} onChange={event => setTerminationDate(event.target.value)} />
+          <CustomTextField multiline minRows={3} label='Termination Reason' value={terminationReason} onChange={event => setTerminationReason(event.target.value)} />
+        </DialogContent>
+        <DialogActions>
+          <Button color='secondary' variant='tonal' onClick={() => setTerminationTarget(null)} disabled={Boolean(busyId)}>Cancel</Button>
+          <Button
+            color='error'
+            variant='contained'
+            disabled={!terminationDate || !terminationReason.trim() || Boolean(busyId)}
+            onClick={() => executeStatusChange(terminationTarget.contract, terminationTarget.nextStatusId, { termination_date: terminationDate, termination_reason: terminationReason })}
+          >
+            Confirm termination
+          </Button>
+        </DialogActions>
+      </Dialog>
     </div>
   )
 }

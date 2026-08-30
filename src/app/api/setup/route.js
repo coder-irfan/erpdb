@@ -6,10 +6,11 @@ import { Prisma } from '@prisma/client'
 
 import { SYSTEM_SETTING_ID } from '@/configs/branding'
 import { authOptions } from '@/libs/auth'
+import { USER_DEACTIVATED_CODE, USER_DEACTIVATED_MESSAGE } from '@/libs/authDeactivation'
 import { DEFAULT_COMPANY_SETUP, getCompanySetupRecord } from '@/libs/companySetup'
 import { prisma } from '@/libs/prisma'
 import { createCompanySetupSchema } from '@/schemas/setup'
-import { convertToBaseCurrency, toFiniteNumber } from '@/utils/formatCurrency'
+import { SYSTEM_BASE_CURRENCY, convertToBaseCurrency, toFiniteNumber } from '@/utils/formatCurrency'
 import { hasAnyPermission } from '@/utils/rbac'
 
 const SETUP_PERMISSIONS = ['setup:manage', 'settings:manage']
@@ -21,11 +22,27 @@ const jsonError = (error, status, code) => Response.json({ success: false, error
 const getAuthorizedSession = async () => {
   const session = await getServerSession(authOptions)
 
-  if (!session?.user || session.user.accountStatus !== 'ACTIVE') return null
-  if (!hasAnyPermission(session, SETUP_PERMISSIONS)) return null
+  if (!session?.user) return { session: null, code: 'UNAUTHENTICATED' }
 
-  return session
+  if (session.error === USER_DEACTIVATED_CODE || session.user.accountStatus !== 'ACTIVE') {
+    return { session: null, code: USER_DEACTIVATED_CODE }
+  }
+
+  if (!hasAnyPermission(session, SETUP_PERMISSIONS)) return { session: null, code: 'FORBIDDEN' }
+
+  return { session, code: null }
 }
+
+const authorizationError = code =>
+  code === USER_DEACTIVATED_CODE
+    ? jsonError(USER_DEACTIVATED_MESSAGE, 401, USER_DEACTIVATED_CODE)
+    : jsonError(
+        code === 'UNAUTHENTICATED'
+          ? 'Authentication is required.'
+          : 'You do not have permission to access company setup.',
+        code === 'UNAUTHENTICATED' ? 401 : 403,
+        code
+      )
 
 const nullableText = value => value?.trim() || null
 
@@ -108,9 +125,9 @@ const normalizeLocalPath = (value, pattern) => {
 }
 
 export async function GET() {
-  const session = await getAuthorizedSession()
+  const authorization = await getAuthorizedSession()
 
-  if (!session) return jsonError('You do not have permission to access company setup.', 403, 'FORBIDDEN')
+  if (!authorization.session) return authorizationError(authorization.code)
 
   try {
     const [company, branding] = await Promise.all([
@@ -133,9 +150,11 @@ export async function GET() {
 }
 
 export async function PUT(request) {
-  const session = await getAuthorizedSession()
+  const authorization = await getAuthorizedSession()
 
-  if (!session) return jsonError('You do not have permission to update company setup.', 403, 'FORBIDDEN')
+  if (!authorization.session) return authorizationError(authorization.code)
+
+  const { session } = authorization
 
   let payload
 
@@ -156,13 +175,13 @@ export async function PUT(request) {
     signatory_name: payload?.signatory_name || '',
     signatory_title: payload?.signatory_title || '',
     signatory_stamp: payload?.signatory_stamp || '',
-    currency_code: payload?.currency_code || DEFAULT_COMPANY_SETUP.currency_code,
+    currency_code: SYSTEM_BASE_CURRENCY,
     usd_afn_exchange_rate: String(
       payload?.usd_afn_exchange_rate || DEFAULT_COMPANY_SETUP.usd_afn_exchange_rate
     ),
     default_work_start: payload?.default_work_start || DEFAULT_COMPANY_SETUP.default_work_start,
     default_work_end: payload?.default_work_end || DEFAULT_COMPANY_SETUP.default_work_end,
-    weekend_days: payload?.weekend_days || DEFAULT_COMPANY_SETUP.weekend_days,
+    weekend_days: '5',
     lightLogoUrl: payload?.lightLogoUrl || '',
     darkLogoUrl: payload?.darkLogoUrl || '',
     faviconUrl: payload?.faviconUrl || '',
@@ -191,7 +210,7 @@ export async function PUT(request) {
     return jsonError('The USD/AFN exchange rate must be greater than zero.', 400, 'INVALID_EXCHANGE_RATE')
   }
 
-  const weekendDays = [...new Set(validation.output.weekend_days.split(','))].sort().join(',')
+  const weekendDays = '5'
 
   try {
     const currentSetup = await prisma.setup.findUnique({
@@ -213,7 +232,7 @@ export async function PUT(request) {
           signatory_name: nullableText(validation.output.signatory_name),
           signatory_title: nullableText(validation.output.signatory_title),
           signatory_stamp: signatoryStamp,
-          currency_code: validation.output.currency_code,
+          currency_code: SYSTEM_BASE_CURRENCY,
           currency_symbol: validation.output.currency_code === 'USD' ? '$' : '؋',
           usd_afn_exchange_rate: validation.output.usd_afn_exchange_rate,
           default_work_start: validation.output.default_work_start,
@@ -231,7 +250,7 @@ export async function PUT(request) {
           signatory_name: nullableText(validation.output.signatory_name),
           signatory_title: nullableText(validation.output.signatory_title),
           signatory_stamp: signatoryStamp,
-          currency_code: validation.output.currency_code,
+          currency_code: SYSTEM_BASE_CURRENCY,
           currency_symbol: validation.output.currency_code === 'USD' ? '$' : '؋',
           usd_afn_exchange_rate: validation.output.usd_afn_exchange_rate,
           default_work_start: validation.output.default_work_start,
@@ -254,17 +273,17 @@ export async function PUT(request) {
 
       const nextExchangeRate = toFiniteNumber(validation.output.usd_afn_exchange_rate)
 
-      if (previousBaseCurrency !== validation.output.currency_code) {
-        await rebaseStoredAmounts(transaction, validation.output.currency_code)
+      if (previousBaseCurrency !== SYSTEM_BASE_CURRENCY) {
+        await rebaseStoredAmounts(transaction, SYSTEM_BASE_CURRENCY)
       }
 
       if (
-        previousBaseCurrency !== validation.output.currency_code ||
+        previousBaseCurrency !== SYSTEM_BASE_CURRENCY ||
         Math.abs(previousExchangeRate - nextExchangeRate) > 0.00005
       ) {
         await refreshCurrentCompensationRates(
           transaction,
-          validation.output.currency_code,
+          SYSTEM_BASE_CURRENCY,
           nextExchangeRate
         )
       }
@@ -276,7 +295,7 @@ export async function PUT(request) {
           module: 'SETUP',
           details: {
             companyName: validation.output.company_name,
-            baseCurrency: validation.output.currency_code,
+            baseCurrency: SYSTEM_BASE_CURRENCY,
             previousBaseCurrency,
             previousUsdAfnExchangeRate: previousExchangeRate,
             usdAfnExchangeRate: nextExchangeRate,

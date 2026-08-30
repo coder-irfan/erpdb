@@ -7,13 +7,16 @@ import {
   ATTENDANCE_WRITE_PERMISSIONS,
   calculateHours,
   getAttendanceDashboard,
+  getAttendanceDateGuard,
   getKabulToday,
   normalizeAttendance,
   normalizeAttendanceInput,
   parseDate,
+  resolveOpenProjectTimeTarget,
   attendanceSelect
 } from '@/libs/hrmTimesheets'
 import { getCurrentStaff } from '@/libs/hrmLeaves'
+import { activeStaffContractRelation } from '@/libs/hrmContractAccess'
 import { prisma } from '@/libs/prisma'
 import { ATTENDANCE_STATUSES, createTimesheetSchema, DATE_PATTERN } from '@/schemas/hrm/timesheets'
 import { getDictionary } from '@/utils/getDictionary'
@@ -112,14 +115,26 @@ export async function POST(request) {
     return responseError(dictionary.validation.dateInvalid, 400, 'INVALID_DATE')
   }
 
+  const guard = await getAttendanceDateGuard(date)
+
+  if (guard.isFuture) return responseError(dictionary.messages.futureDateBlocked, 409, guard.code)
+  if (guard.payrollLocked) return responseError(dictionary.messages.payrollLocked, 409, guard.code)
+
   if (payload?.bulkRemainingAbsent === true) {
     if (!canManage) return responseError(dictionary.messages.forbidden, 403, 'FORBIDDEN')
+
+    if (!guard.isWorkingDay) {
+      return Response.json({ success: true, data: { count: 0 }, message: dictionary.messages.noRemainingStaff })
+    }
 
     try {
       const day = parseDate(date)
 
       const [activeStaff, marked] = await Promise.all([
-        prisma.hrmstaff.findMany({ where: { status: 'ACTIVE' }, select: { id: true } }),
+        prisma.hrmstaff.findMany({
+          where: { status: 'ACTIVE', contracts: activeStaffContractRelation({ startDate: day }) },
+          select: { id: true }
+        }),
         prisma.hrmstafftimesheet.findMany({ where: { date: day }, select: { staff_id: true } })
       ])
 
@@ -161,6 +176,8 @@ export async function POST(request) {
     date,
     check_in_time: payload?.check_in_time || '',
     check_out_time: payload?.check_out_time || '',
+    project_id: payload?.project_id || '',
+    task_id: payload?.task_id || '',
     notes: payload?.notes || ''
   })
 
@@ -173,18 +190,43 @@ export async function POST(request) {
   if (Number.isNaN(hours)) return responseError(dictionary.validation.checkoutBeforeCheckin, 400, 'INVALID_TIME_RANGE')
 
   try {
-    const staff = await prisma.hrmstaff.findFirst({
-      where: { id: validation.output.staff_id, status: 'ACTIVE' },
-      select: { id: true }
-    })
+    const attendanceDate = parseDate(date)
+
+    const [staff, approvedLeave, timeTarget] = await Promise.all([
+      prisma.hrmstaff.findFirst({
+        where: {
+          id: validation.output.staff_id,
+          status: 'ACTIVE',
+          contracts: activeStaffContractRelation({ startDate: attendanceDate })
+        },
+        select: { id: true }
+      }),
+      prisma.hrmstaffleave.findFirst({
+        where: {
+          staff_id: validation.output.staff_id,
+          start_date: { lte: attendanceDate },
+          end_date: { gte: attendanceDate },
+          status: { is: { category: 'LEAVE_STATUS', value: 'APPROVED' } }
+        },
+        select: { id: true }
+      }),
+      resolveOpenProjectTimeTarget({ projectId: validation.output.project_id, taskId: validation.output.task_id })
+    ])
 
     if (!staff) return responseError(dictionary.messages.staffNotFound, 404, 'STAFF_NOT_FOUND')
+    if (approvedLeave) return responseError('Manual work entries are blocked on approved leave dates.', 409, 'APPROVED_LEAVE_LOCKED')
+
+    if (!timeTarget.valid) {
+      return responseError(timeTarget.code === 'PROJECT_TIMESHEETS_LOCKED' ? 'This project is completed and no longer accepts timesheets.' : 'Select a valid project and task.', 409, timeTarget.code)
+    }
 
     const record = await prisma.$transaction(async transaction => {
       const created = await transaction.hrmstafftimesheet.create({
         data: {
           staff_id: validation.output.staff_id,
-          date: parseDate(date),
+          date: attendanceDate,
+          project_id: timeTarget.project_id,
+          task_id: timeTarget.task_id,
           ...normalizeAttendanceInput(validation.output, date)
         },
         select: attendanceSelect

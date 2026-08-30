@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react'
 
 import Alert from '@mui/material/Alert'
 import Button from '@mui/material/Button'
-import CircularProgress from '@mui/material/CircularProgress'
 import Dialog from '@mui/material/Dialog'
 import DialogContent from '@mui/material/DialogContent'
 import DialogTitle from '@mui/material/DialogTitle'
@@ -12,6 +11,7 @@ import IconButton from '@mui/material/IconButton'
 import Typography from '@mui/material/Typography'
 
 import { getFinanceSalaryDetail } from '@/actions/financeSalary'
+import DetailSkeleton from '@/components/dialogs/DetailSkeleton'
 
 import SalaryPayslipPrintDocument from './SalaryPayslipPrintDocument'
 
@@ -42,7 +42,7 @@ const FinanceSalaryPayslipModal = ({ open, salaryId, locale, dictionary, refresh
   const company = data?.company
 
   return (
-    <Dialog open={open} onClose={loading ? undefined : onClose} fullWidth maxWidth='md'>
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth='md'>
       <DialogTitle className='finance-payslip-toolbar flex items-center justify-between gap-4'>
         <div>
           <Typography variant='h5'>{dictionary.payslip.title}</Typography>
@@ -54,16 +54,14 @@ const FinanceSalaryPayslipModal = ({ open, salaryId, locale, dictionary, refresh
               {dictionary.actions.print}
             </Button>
           )}
-          <IconButton onClick={onClose} disabled={loading} aria-label={dictionary.actions.close}>
+          <IconButton onClick={onClose} aria-label={dictionary.actions.close}>
             <i className='tabler-x' />
           </IconButton>
         </div>
       </DialogTitle>
       <DialogContent dividers className='min-bs-[560px]'>
         {loading ? (
-          <div className='flex min-bs-[480px] items-center justify-center'>
-            <CircularProgress />
-          </div>
+          <DetailSkeleton rows={6} />
         ) : error ? (
           <Alert severity='error'>{error}</Alert>
         ) : salary ? (

@@ -9,6 +9,7 @@ import { getDictionary } from '@/utils/getDictionary'
 const localeFrom = value => (['en', 'fa', 'ps'].includes(value) ? value : 'en')
 const cleanText = value => sanitizeHtml(value || '', { allowedTags: [], allowedAttributes: {} }).trim()
 const errorResponse = (error, status, code) => Response.json({ success: false, error, code }, { status })
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 export async function POST(request, context) {
   const locale = localeFrom(request.nextUrl.searchParams.get('locale'))
@@ -19,11 +20,15 @@ export async function POST(request, context) {
 
   try {
     const { id } = await context.params
+    const payload = await request.json().catch(() => ({}))
     const visitor = await prisma.crmvisitor.findUnique({ where: { id }, include: { converted_lead: { select: { id: true } } } })
 
     if (!visitor) return errorResponse(dictionary.messages.notFound, 404, 'VISITOR_NOT_FOUND')
     if (visitor.converted_lead) return errorResponse(dictionary.messages.alreadyConverted, 409, 'ALREADY_CONVERTED')
-    if (!visitor.email) return errorResponse(dictionary.messages.emailRequiredForLead, 409, 'EMAIL_REQUIRED')
+    const submittedEmail = typeof payload?.email === 'string' ? payload.email : ''
+    const email = cleanText(submittedEmail || visitor.email).toLowerCase()
+
+    if (!EMAIL_PATTERN.test(email) || email.length > 191) return errorResponse(dictionary.validation.emailInvalid, 400, 'INVALID_EMAIL')
     if (!visitor.host_staff_id) return errorResponse(dictionary.messages.invalidHost, 409, 'HOST_REQUIRED')
 
     const [source, status, setup] = await Promise.all([
@@ -42,7 +47,7 @@ export async function POST(request, context) {
         title: leadTitle,
         contact_name: visitor.full_name,
         company_name: visitor.company_name,
-        email: visitor.email.toLowerCase(),
+        email,
         phone: visitor.phone,
         source_id: source.id,
         status_id: status.id,
@@ -56,7 +61,7 @@ export async function POST(request, context) {
 
       const conversionNote = dictionary.conversion.note.replace('{title}', created.title)
 
-      await transaction.crmvisitor.update({ where: { id }, data: { converted_lead_id: created.id, notes: [visitor.notes, conversionNote].filter(Boolean).join('\n\n') } })
+      await transaction.crmvisitor.update({ where: { id }, data: { email, converted_lead_id: created.id, notes: [visitor.notes, conversionNote].filter(Boolean).join('\n\n') } })
       await transaction.auditlog.create({ data: { user_id: authorization.session.user.id, action: 'CRM_VISITOR_CONVERTED_TO_LEAD', module: 'CRM', details: { visitorId: id, leadId: created.id } } })
 
       return created

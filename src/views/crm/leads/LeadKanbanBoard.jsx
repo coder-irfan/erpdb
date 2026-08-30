@@ -1,5 +1,7 @@
 'use client'
 
+import { useState } from 'react'
+
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import Chip from '@mui/material/Chip'
@@ -7,7 +9,9 @@ import MenuItem from '@mui/material/MenuItem'
 import Typography from '@mui/material/Typography'
 
 import UserAvatar from '@/components/common/UserAvatar'
+import DualCurrencyAmount from '@/components/currency/DualCurrencyAmount'
 import KanbanCardSkeleton from '@/components/common/KanbanCardSkeleton'
+import ConfirmationComponent from '@/components/dialogs/ConfirmationComponent'
 import CustomTextField from '@core/components/mui/TextField'
 import { formatCurrency } from '@/utils/formatCurrency'
 
@@ -41,6 +45,7 @@ const LeadKanbanBoard = ({
   onActivity
 }) => {
   const now = new Date()
+  const [pendingChange, setPendingChange] = useState(null)
 
   if (loading) return <KanbanCardSkeleton minWidth={300} />
 
@@ -89,9 +94,7 @@ const LeadKanbanBoard = ({
                               {lead.company_name || lead.contact_name}
                             </Typography>
                           </div>
-                          <Typography className='text-end font-semibold text-success'>
-                            {formatCurrency(lead.estimated_value, locale, lead.currency || currencyCode)}
-                          </Typography>
+                          <DualCurrencyAmount amount={lead.estimated_value} amountBase={lead.amount_base} currency={lead.currency || currencyCode} exchangeRate={lead.exchange_rate} locale={locale} className='items-end' primaryClassName='text-success' />
                           {lead.next_follow_up_date && (
                             <Chip
                               size='small'
@@ -127,7 +130,7 @@ const LeadKanbanBoard = ({
                               size='small'
                               value={lead.status_id}
                               onClick={event => event.stopPropagation()}
-                              onChange={event => onStatusChange(lead, event.target.value)}
+                              onChange={event => setPendingChange({ lead, status: statuses.find(item => item.id === event.target.value) })}
                             >
                               {statuses.map(item => (
                                 <MenuItem key={item.id} value={item.id}>
@@ -146,6 +149,18 @@ const LeadKanbanBoard = ({
           )
         })}
       </div>
+      <ConfirmationComponent
+        open={Boolean(pendingChange)}
+        title={locale === 'en' ? 'Confirm Status Change' : locale === 'fa' ? 'تأیید تغییر وضعیت' : 'د حالت بدلون تایید'}
+        message={locale === 'en' ? `Change this lead's status to “${pendingChange?.status?.label || ''}”?` : `«${pendingChange?.status?.label || ''}»`}
+        confirmText={locale === 'en' ? 'Change Status' : locale === 'fa' ? 'تغییر وضعیت' : 'حالت بدلول'}
+        cancelText={locale === 'en' ? 'Cancel' : 'لغو'}
+        onClose={() => setPendingChange(null)}
+        onConfirm={async () => {
+          await onStatusChange(pendingChange.lead, pendingChange.status.id)
+          setPendingChange(null)
+        }}
+      />
     </div>
   )
 }

@@ -5,6 +5,7 @@ import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
 
 import DashboardTablePagination from '@/components/table/DashboardTablePagination'
+import DualCurrencyAmount from '@/components/currency/DualCurrencyAmount'
 import QuickContact from '@/components/common/QuickContact'
 import UserAvatar from '@/components/common/UserAvatar'
 import EntityActionsMenu from '@/components/table/EntityActionsMenu'
@@ -114,7 +115,7 @@ const LeadTableView = ({
           {
             id: 'value',
             label: dictionary.table.value,
-            render: lead => formatCurrency(lead.estimated_value, locale, lead.currency || currencyCode)
+            render: lead => <DualCurrencyAmount amount={lead.estimated_value} amountBase={lead.amount_base} currency={lead.currency || currencyCode} exchangeRate={lead.exchange_rate} locale={locale} />
           },
           {
             id: 'assigned',
@@ -223,8 +224,8 @@ const LeadTableView = ({
                           label={lead.status.label}
                         />
                       </td>
-                      <td className='text-end font-semibold text-success'>
-                        {formatCurrency(lead.estimated_value, locale, lead.currency || currencyCode)}
+                      <td className='text-end'>
+                        <DualCurrencyAmount amount={lead.estimated_value} amountBase={lead.amount_base} currency={lead.currency || currencyCode} exchangeRate={lead.exchange_rate} locale={locale} className='items-end' primaryClassName='text-success' />
                       </td>
                       <td>
                         {lead.assigned_to ? (

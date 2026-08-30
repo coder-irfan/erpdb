@@ -40,6 +40,8 @@ const EMPTY_OPTIONS = {
   invoices: [],
   staff: [],
   incomeTypes: [],
+  paymentMethods: [],
+  currentStaffId: null,
   baseCurrency: 'AFN',
   exchangeRate: '65.0000'
 }
@@ -161,9 +163,11 @@ const FinanceIncomeView = ({ locale, dictionary, canWrite, canDelete, setup }) =
     setDeleting(false)
   }
 
-  const activeFilters = [clientId, projectId, typeId, status].filter(Boolean).length
+  const activeFilters = [searchInput.trim(), clientId, projectId, typeId, status].filter(Boolean).length
 
   const resetFilters = () => {
+    setSearchInput('')
+    setSearch('')
     setClientId('')
     setProjectId('')
     setTypeId('')

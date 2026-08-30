@@ -24,6 +24,7 @@ import { i18n } from '@configs/i18n'
 import { getSystemMode } from '@core/utils/serverHelpers'
 import { getBrandingSettings } from '@/libs/systemSettings'
 import { prisma } from '@/libs/prisma'
+import { getAppLocale } from '@/utils/afghanDate'
 
 // Style Imports
 import '@/app/globals.css'
@@ -70,7 +71,7 @@ const RootLayout = async props => {
     <TranslationWrapper headersList={headersList} lang={lang}>
       <html
         id='__next'
-        lang={lang}
+        lang={getAppLocale(lang)}
         dir={direction}
         className={`${publicSans.variable} ${peyda.variable} ${vazirmatn.variable} locale-${lang}`}
         suppressHydrationWarning

@@ -21,6 +21,7 @@ import DashboardTablePagination from '@/components/table/DashboardTablePaginatio
 import EntityActionsMenu from '@/components/table/EntityActionsMenu'
 import TableEmptyStateRow from '@/components/table/TableEmptyStateRow'
 import TableFiltersPopover from '@/components/table/TableFiltersPopover'
+import LocalizedDateTimePicker from '@/components/inputs/LocalizedDateTimePicker'
 import TableSkeletonRows from '@/components/table/TableSkeletonRows'
 import ResponsiveDataTable from '@/components/tables/ResponsiveDataTable'
 
@@ -34,9 +35,11 @@ import tableStyles from '@core/styles/table.module.css'
 const EMPTY_DATA = {
   records: [],
   unmarkedStaff: [],
+  attendanceStaff: [],
   totalCount: 0,
   page: 1,
   totalPages: 1,
+  guard: { blocked: false, isFuture: false, payrollLocked: false },
   summary: { total_present: 0, total_absent: 0, total_leave: 0, unmarked_count: 0 }
 }
 
@@ -69,7 +72,6 @@ const TimesheetsView = ({ initialDate, canWrite, canDelete, defaultWorkHours, pr
   const [page, setPage] = useState(0)
   const [rowsPerPage, setRowsPerPage] = useState(10)
   const [drawerOpen, setDrawerOpen] = useState(false)
-  const [editingRecord, setEditingRecord] = useState(null)
   const [viewingRecord, setViewingRecord] = useState(null)
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [deleteLoading, setDeleteLoading] = useState(false)
@@ -79,6 +81,7 @@ const TimesheetsView = ({ initialDate, canWrite, canDelete, defaultWorkHours, pr
   const changeDate = nextDate => {
     setSelectedDate(nextDate)
     setPage(0)
+    setDrawerOpen(false)
   }
 
   const loadData = useCallback(async () => {
@@ -135,9 +138,16 @@ const TimesheetsView = ({ initialDate, canWrite, canDelete, defaultWorkHours, pr
   }, [printData])
 
   const openCreate = () => {
-    setEditingRecord(null)
     setDrawerOpen(true)
   }
+
+  const attendanceBlocked = loading || data.guard?.blocked
+
+  const attendanceBlockedMessage = data.guard?.isFuture
+    ? dictionary.messages.futureDateBlocked
+    : data.guard?.payrollLocked
+      ? dictionary.messages.payrollLocked
+      : ''
 
   const confirmDelete = async () => {
     if (!deleteTarget) return
@@ -235,15 +245,14 @@ const TimesheetsView = ({ initialDate, canWrite, canDelete, defaultWorkHours, pr
         canWrite && {
           label: dictionary.actions.edit,
           icon: 'tabler-edit',
-          onClick: () => {
-            setEditingRecord(record)
-            setDrawerOpen(true)
-          }
+          disabled: attendanceBlocked,
+          onClick: openCreate
         },
         canDelete && {
           label: dictionary.actions.delete,
           icon: 'tabler-trash',
           color: 'error',
+          disabled: attendanceBlocked,
           onClick: () => setDeleteTarget(record)
         }
       ]}
@@ -267,8 +276,9 @@ const TimesheetsView = ({ initialDate, canWrite, canDelete, defaultWorkHours, pr
           />
           <div className='grid is-full grid-cols-2 gap-2 sm:flex sm:is-auto sm:flex-wrap sm:justify-end'>
             <TableFiltersPopover
-              activeCount={Number(Boolean(statusFilter)) + Number(selectedDate !== initialDate)}
+              activeCount={Number(Boolean(searchInput.trim())) + Number(Boolean(statusFilter)) + Number(selectedDate !== initialDate)}
               locale={locale}
+              onReset={() => { setSearchInput(''); setSearch(''); setStatusFilter(''); changeDate(initialDate) }}
             >
               <div className='flex items-end gap-2'>
                 <Tooltip title={dictionary.date.previous}>
@@ -279,16 +289,20 @@ const TimesheetsView = ({ initialDate, canWrite, canDelete, defaultWorkHours, pr
                     <i className='tabler-chevron-left' />
                   </IconButton>
                 </Tooltip>
-                <CustomTextField
-                  type='date'
+                <LocalizedDateTimePicker
+                  locale={locale}
                   label={dictionary.date.date}
                   value={selectedDate}
                   className='is-full'
-                  slotProps={{ inputLabel: { shrink: true } }}
+                  slotProps={{ htmlInput: { max: initialDate }, inputLabel: { shrink: true } }}
                   onChange={event => changeDate(event.target.value)}
                 />
                 <Tooltip title={dictionary.date.next}>
-                  <IconButton aria-label={dictionary.date.next} onClick={() => changeDate(shiftDate(selectedDate, 1))}>
+                  <IconButton
+                    aria-label={dictionary.date.next}
+                    disabled={selectedDate >= initialDate}
+                    onClick={() => changeDate(shiftDate(selectedDate, 1))}
+                  >
                     <i className='tabler-chevron-right' />
                   </IconButton>
                 </Tooltip>
@@ -327,7 +341,12 @@ const TimesheetsView = ({ initialDate, canWrite, canDelete, defaultWorkHours, pr
             </Tooltip>
             {canWrite && (
               <Tooltip title={dictionary.actions.mark} arrow>
-                <Button variant='contained' startIcon={<i className='tabler-user-plus' />} onClick={openCreate}>
+                <Button
+                  variant='contained'
+                  startIcon={<i className='tabler-users' />}
+                  onClick={openCreate}
+                  disabled={attendanceBlocked || data.attendanceStaff.length === 0}
+                >
                   <span>{dictionary.actions.mark}</span>
                 </Button>
               </Tooltip>
@@ -335,6 +354,7 @@ const TimesheetsView = ({ initialDate, canWrite, canDelete, defaultWorkHours, pr
           </div>
         </CardContent>
         {error && <Alert severity='error'>{error}</Alert>}
+        {attendanceBlockedMessage && <Alert severity='warning'>{attendanceBlockedMessage}</Alert>}
         <ResponsiveDataTable
           mobileRows={data.records}
           loading={loading}
@@ -379,8 +399,8 @@ const TimesheetsView = ({ initialDate, canWrite, canDelete, defaultWorkHours, pr
             icon: 'tabler-calendar-time',
             title: dictionary.table.emptyTitle,
             description: dictionary.table.emptyDescription,
-            actionLabel: canWrite && data.unmarkedStaff.length > 0 ? dictionary.actions.mark : undefined,
-            onAction: canWrite && data.unmarkedStaff.length > 0 ? openCreate : undefined
+            actionLabel: canWrite && !attendanceBlocked && data.attendanceStaff.length > 0 ? dictionary.actions.mark : undefined,
+            onAction: canWrite && !attendanceBlocked && data.attendanceStaff.length > 0 ? openCreate : undefined
           }}
           onRowClick={record => setViewingRecord(record)}
         >
@@ -407,8 +427,8 @@ const TimesheetsView = ({ initialDate, canWrite, canDelete, defaultWorkHours, pr
                     icon='tabler-calendar-time'
                     title={dictionary.table.emptyTitle}
                     description={dictionary.table.emptyDescription}
-                    actionLabel={canWrite && data.unmarkedStaff.length > 0 ? dictionary.actions.mark : undefined}
-                    onAction={canWrite && data.unmarkedStaff.length > 0 ? openCreate : undefined}
+                    actionLabel={canWrite && !attendanceBlocked && data.attendanceStaff.length > 0 ? dictionary.actions.mark : undefined}
+                    onAction={canWrite && !attendanceBlocked && data.attendanceStaff.length > 0 ? openCreate : undefined}
                   />
                 ) : (
                   data.records.map(record => (
@@ -493,11 +513,10 @@ const TimesheetsView = ({ initialDate, canWrite, canDelete, defaultWorkHours, pr
 
       <AttendanceDrawer
         open={drawerOpen}
-        record={editingRecord}
         date={selectedDate}
-        staff={data.unmarkedStaff}
         attendanceStaff={data.attendanceStaff}
         defaultWorkHours={defaultWorkHours}
+        guard={data.guard}
         locale={locale}
         dictionary={dictionary}
         onClose={() => setDrawerOpen(false)}

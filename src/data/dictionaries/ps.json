@@ -113,7 +113,9 @@
     "contractManagement": "د قرارداد اداره",
     "financeManagement": "مالي مدیریت",
     "contractOptions": "پېرېدونکي / مراجعین",
+    "contractCountries": "هېوادونه",
     "contractList": "د پېرېدونکو قراردادونه",
+    "financeContracts": "مالي قراردادونه",
     "contractInvoices": "صورتحسابونه",
     "crmLeads": "احتمالي پېرېدونکي",
     "crmClients": "مراجعین",
@@ -144,6 +146,7 @@
     "contractTypes": "Contract Types",
     "contractTemplates": "Contract Templates",
     "incomeCategories": "Income Categories",
+    "expenseCategories": "Expense Categories",
     "crmVisitorOptions": "Visitor Purposes"
   },
   "notifications": {
@@ -160,6 +163,8 @@
     "rowsPerPage": "په هره پاڼه کې کتارونه:",
     "of": "له",
     "deleteAction": "ثبت ړنګول",
+    "deleteSelected": "ټاکل شوي ړنګول",
+    "selectAll": "د دې پاڼې ټول ثبتونه ټاکل",
     "deleteTitle": "د پلټنې ثبت ړنګول",
     "deleteDescription": "دا د پلټنې ثبت ړنګ شي؟ دا کړنه بېرته نه راګرځي.",
     "deleteSuccess": "د پلټنې ثبت په بریالیتوب ړنګ شو.",
@@ -483,8 +488,9 @@
       "edit": "سمول",
       "delete": "ړنګول",
       "save": "حاضري خوندي کول",
-      "saveNext": "خوندي او بل کس",
+      "saveAll": "ټوله حاضري خوندي کول",
       "saveChanges": "بدلونونه خوندي کول",
+      "addNote": "یادښت / دلیل زیاتول",
       "saving": "خوندي کېږي...",
       "cancel": "لغوه کول"
     },
@@ -500,7 +506,9 @@
     "drawer": {
       "title": "ورځنۍ حاضري ثبتول",
       "editTitle": "حاضري سمول",
-      "description": "یوازې د دې نېټې ناثبت شوي کارکوونکي ښودل کېږي."
+      "description": "ټول فعال کارکوونکي په یوه لید کې وڅېړئ او تازه یې کړئ.",
+      "noStaffFound": "سمون لرونکی کارکوونکی ونه موندل شو",
+      "readyToSave": "د حاضرۍ ریکارډونه خوندي کېدو ته چمتو دي"
     },
     "placeholders": {
       "selectStaff": "پاتې کارکوونکی وټاکئ",
@@ -564,6 +572,8 @@
       "notFound": "د حاضرۍ ریکارډ ونه موندل شو.",
       "loadFailed": "د حاضرۍ ریکارډونه پورته نه شول.",
       "operationFailed": "کړنه بشپړه نه شوه. بیا هڅه وکړئ.",
+      "futureDateBlocked": "د راتلونکو نېټو حاضري نه ثبتېږي. د پلان شوې رخصتۍ لپاره د رخصتۍ غوښتنه وکاروئ.",
+      "payrollLocked": "حاضري تړل شوې ځکه چې د دې میاشتې معاش نهایي شوی.",
       "unauthenticated": "حاضرۍ ته د لاسرسي لپاره ننوځئ.",
       "forbidden": "تاسو حاضرۍ ته د لاسرسي اجازه نه لرئ.",
       "deleteTitle": "د حاضرۍ ریکارډ ړنګول",
@@ -1560,7 +1570,12 @@
     },
     "actions": {
       "exportCsv": "CSV صادرول",
-      "print": "راپور چاپول"
+      "print": "راپور چاپول",
+      "assignCustomPolicy": "ځانګړې تګلاره وټاکئ",
+      "renewContract": "قرارداد نوي کړئ",
+      "archiveStaff": "کارکوونکی آرشیف کړئ",
+      "cancel": "لغوه",
+      "confirmArchive": "آرشیف تایید کړئ"
     },
     "kpis": {
       "baseSalary": "ټول بنسټیز معاش",
@@ -1611,7 +1626,9 @@
       "contractType": "د قرارداد ډول",
       "endDate": "د پای نېټه",
       "daysRemaining": "پاتې ورځې",
-      "renewalStatus": "د نوي کولو حالت"
+      "renewalStatus": "د نوي کولو حالت",
+      "policy": "تګلاره",
+      "actions": "کړنې"
     },
     "status": {
       "DRAFT": "مسوده",
@@ -1628,7 +1645,11 @@
     },
     "common": {
       "records": "{count} راپور ریکارډونه",
-      "notConfigured": "نه دی تنظیم شوی"
+      "notConfigured": "نه دی تنظیم شوی",
+      "systemDefault": "د سیسټم اصلي تګلاره",
+      "daysOverdue": "{count} ورځې له مودې تېرې",
+      "daysRemaining": "{count} ورځې پاتې",
+      "archiveConfirmation": "ایا {name} آرشیف شي؟ دا به کارکوونکی غیرفعال، د معاش لاسرسی قلف او تړلې کارن ناستې لغوه کړي."
     },
     "pagination": {
       "rowsPerPage": "په هر مخ کې کتارونه:",
@@ -1658,7 +1679,9 @@
       "invalidReport": "د راپور یو سم ډول وټاکئ.",
       "invalidDates": "د پیل او پای سمې نېټې وټاکئ.",
       "dateRangeTooLarge": "ټاکل شوې نېټې موده ډېره لویه ده.",
-      "staffNotFound": "ټاکل شوی کارکوونکی ونه موندل شو."
+      "staffNotFound": "ټاکل شوی کارکوونکی ونه موندل شو.",
+      "staffArchived": "کارکوونکی په بریالیتوب آرشیف شو.",
+      "actionFailed": "غوښتل شوی د بشري سرچینو عمل بشپړ نه شو."
     }
   },
   "financeReports": {
@@ -1754,18 +1777,24 @@
       "grossIncome": "ټول ناخالص عاید",
       "totalTransactions": "ټولې راکړې ورکړې",
       "averageTransaction": "د راکړې ورکړې منځنی ارزښت",
+      "incomeSources": "د عاید سرچینې",
       "operationalExpense": "ټول عملیاتي لګښت",
       "topExpenseCategory": "د لګښت لوړه کټګوري",
       "approvedPending": "ثبت شوي / پاتې",
+      "recordedExpenses": "ثبت شوي لګښتونه",
+      "pendingExpenses": "پاتې لګښتونه",
       "payrollDisbursed": "ټول ورکړل شوي معاشونه",
       "totalDeductions": "ټولې کسرونه",
       "activeStaffPaid": "معاش اخیستونکي فعال کارکوونکي",
+      "payrollRecords": "د معاش ریکارډونه",
       "stockValuation": "د موجودۍ ټول ارزښت",
       "skuCount": "د توکو ټول شمېر",
       "lowStockCount": "د کمې موجودۍ / بیا فرمایش خبرتیا",
+      "totalUnits": "د موجودو واحدونو ټول شمېر",
       "activeLoanBalance": "د فعال پور ټول پاتې شونی",
       "totalRepaid": "تر اوسه ټول بېرته ورکړل شوي",
-      "monthlyRecovery": "د میاشتني وصول اټکل"
+      "monthlyRecovery": "د میاشتني وصول اټکل",
+      "totalIssued": "ټول ورکړل شوي پورونه"
     },
     "table": {
       "date": "نېټه",
@@ -1858,6 +1887,22 @@
         "description": "Description"
       }
     },
+    "contractCountries": {
+      "title": "د قرارداد هېوادونه",
+      "description": "د پلورونکو او بهرنیو قراردادي اړخونو لپاره هېوادونه اداره کړئ.",
+      "add": "هېواد زیات کړئ",
+      "addTitle": "هېواد جوړ کړئ",
+      "editTitle": "هېواد سم کړئ",
+      "searchPlaceholder": "هېواد یا تشریح ولټوئ",
+      "emptyTitle": "هېواد ونه موندل شو",
+      "emptyDescription": "د بهرني قرارداد لپاره لومړی هېواد زیات کړئ.",
+      "deleteTitle": "هېواد ړنګ کړئ",
+      "deleteDescription": "دا هېواد ړنګ شي؟ په قرارداد کې کارول شوي هېوادونه نه ړنګېږي.",
+      "fields": {
+        "name": "د هېواد نوم",
+        "description": "تشریح"
+      }
+    },
     "incomeCategories": {
       "title": "Income Categories",
       "description": "Maintain the active categories available for finance income records.",
@@ -1869,6 +1914,22 @@
       "emptyDescription": "Add the first category used to classify income records.",
       "deleteTitle": "Delete Income Category",
       "deleteDescription": "Delete this income category? Categories linked to income records cannot be deleted.",
+      "fields": {
+        "name": "Title / Name",
+        "description": "Description"
+      }
+    },
+    "expenseCategories": {
+      "title": "Expense Categories",
+      "description": "Maintain the active categories available for corporate expense records.",
+      "add": "Add Expense Category",
+      "addTitle": "Create Expense Category",
+      "editTitle": "Edit Expense Category",
+      "searchPlaceholder": "Search expense categories or descriptions",
+      "emptyTitle": "No Expense Categories Found",
+      "emptyDescription": "Add the first category used to classify expense records.",
+      "deleteTitle": "Delete Expense Category",
+      "deleteDescription": "Delete this expense category? Categories linked to expense records cannot be deleted.",
       "fields": {
         "name": "Title / Name",
         "description": "Description"
@@ -2498,7 +2559,8 @@
     "reminders": {
       "30_DAY": "د ۳۰ ورځو د پای یادونه",
       "15_DAY": "د ۱۵ ورځو د پای یادونه",
-      "3_DAY": "د ۳ ورځو د پای یادونه"
+      "3_DAY": "د ۳ ورځو د پای یادونه",
+      "RENEWAL_REVIEW": "د نوي کولو د بیاکتنې خبرتیا"
     },
     "empty": {
       "title": "قرارداد ونه موندل شو",
@@ -2543,7 +2605,9 @@
       "titleTooLong": "د قرارداد سرلیک باید تر ۱۹۱ تورو زیات نه وي.",
       "invalidOption": "د قرارداد سم انتخابونه وټاکئ.",
       "invalidManager": "سم د حساب مدیر وټاکئ.",
-      "durationInvalid": "ټاکل شوې موده باید شمېره او د ورځې، اونۍ، میاشتې یا کال واحد ولري."
+      "durationInvalid": "ټاکل شوې موده باید شمېره او د ورځې، اونۍ، میاشتې یا کال واحد ولري.",
+      "activeEndDateRequired": "له فعالولو مخکې د قرارداد د پای نېټه راتلونکي ته وغځوئ.",
+      "terminationReasonRequired": "د قرارداد له ختمولو مخکې دلیل ولیکئ."
     }
   },
   "contractOptions": {
@@ -2655,7 +2719,8 @@
       "create": "بل جوړ کړئ",
       "save": "بدلونونه وساتئ",
       "saving": "ساتل کېږي…",
-      "viewPrint": "کتل / چاپ",
+      "viewDetails": "جزیات وګورئ",
+      "viewPrint": "بل چاپ کړئ",
       "recordPayment": "ورکړه ثبت کړئ",
       "edit": "سمون",
       "delete": "ړنګول",
@@ -2664,6 +2729,10 @@
       "close": "تړل",
       "confirmPayment": "ورکړه تایید کړئ",
       "printDownload": "چاپ / PDF ښکته کول"
+    },
+    "details": {
+      "title": "د بل جزیات",
+      "overview": "د بل لنډیز"
     },
     "form": {
       "createTitle": "بل جوړ کړئ",
@@ -2681,7 +2750,10 @@
       "issueDate": "د جوړېدو نېټه",
       "dueDate": "د ورکړې نېټه",
       "status": "حالت",
-      "invoiceNumber": "د بل شمېره"
+      "invoiceNumber": "د بل شمېره",
+      "totalInvoiceAmount": "د بل ټوله اندازه",
+      "totalAmountPaid": "ټوله ورکړل شوې اندازه",
+      "remainingBalance": "پاتې ورکړه"
     },
     "placeholders": {
       "contract": "قرارداد ولټوئ او وټاکئ"
@@ -2692,7 +2764,10 @@
       "amount": "د ورکړې اندازه",
       "method": "د ورکړې لاره",
       "notes": "د ورکړې یادښت",
-      "ledgerNotice": "په تایید سره بل ورکړل شوی کېږي او په FinanceIncome کې تړلې لیکنه جوړېږي.",
+      "ledgerNotice": "په تایید سره د بل پاتې اندازه تازه کېږي او په FinanceIncome کې تړلې لیکنه جوړېږي.",
+      "history": "ثبت شوې ورکړې",
+      "entries": "ورکړې",
+      "noPayments": "تر اوسه کومه ورکړه نه ده ثبت شوې.",
       "recording": "ثبتېږي…"
     },
     "print": {
@@ -2750,10 +2825,11 @@
       "dateInvalid": "سمه نېټه ولیکئ.",
       "notesTooLong": "یادښت باید تر ۱۰۰۰ تورو زیات نه وي.",
       "invalidContract": "سم قرارداد او تړلی پېرودونکی وټاکئ.",
+      "contractInactive": "نوی صورتحساب یوازې د فعال او نه ختم شوي قرارداد لپاره جوړېدای شي.",
       "invalidStatus": "سم حالت وټاکئ.",
       "paidViaPaymentOnly": "د ورکړل شوي حالت لپاره ورکړه ثبت کړئ.",
       "dateRangeInvalid": "د ورکړې نېټه باید د جوړېدو له نېټې سره برابره یا وروسته وي.",
-      "fullPaymentRequired": "د ورکړې اندازه باید د ټول بل سره برابره وي."
+      "fullPaymentRequired": "د ورکړې اندازه د بل له پاتې اندازې زیاته نه شي کېدای."
     }
   },
   "inventoryManagement": {
@@ -3052,7 +3128,14 @@
     "pay": {
       "title": "معاش ورکړل شوی نښه کول",
       "description": "د {name} ورکړه تایید کړئ. ټاکل شوی د پور کسر به په پور کې ثبت شي.",
-      "confirm": "ورکړه تاییدول"
+      "confirm": "ورکړه تاییدول",
+      "earlyTitle": "⚠️ د معاش د وختي اجرا خبرداری",
+      "earlyDescription": "تاسو هڅه کوئ چې د {month} معاش په {date} د ورکړل شوي په توګه نښه کړئ. د میاشتې تر پای مخکې د معاش اجرا به محاسبې وروستۍ کړي، د حاضري ټول اړوند ریکارډونه به قلف کړي او د مالي لګښتونو په دفتر کې به دایمي ثبت جوړ کړي.",
+      "netPayout": "د خالصې ورکړې اندازه",
+      "targetLedger": "د هدف دفتر حساب",
+      "payrollExpensesLedger": "د معاش لګښتونه",
+      "workingDaysToDate": "تر اوسنۍ نېټې کاري ورځې",
+      "confirmEarly": "تایید او ورکړه اجرا کړئ"
     },
     "validation": {
       "required": "دا ډګر اړین دی.",
@@ -3079,6 +3162,7 @@
       "created": "د معاش ریکارډ جوړ شو.",
       "paid": "معاش ورکړل او د پور بېرته ورکړه ثبت شوه.",
       "alreadyPaid": "دا معاش مخکې ورکړل شوی.",
+      "earlyConfirmationRequired": "د معاش وختي اجرا څرګند تایید ته اړتیا لري.",
       "paidLocked": "ورکړل شوی معاش نه بدلېږي او نه ړنګېږي.",
       "deleted": "د معاش مسوده ړنګه شوه.",
       "processorMissing": "ستاسو حساب له فعال کارکوونکي سره نه دی تړلی.",

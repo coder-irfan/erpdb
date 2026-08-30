@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 import Button from '@mui/material/Button'
 import Dialog from '@mui/material/Dialog'
@@ -10,6 +10,7 @@ import DialogTitle from '@mui/material/DialogTitle'
 import Divider from '@mui/material/Divider'
 import FormControlLabel from '@mui/material/FormControlLabel'
 import IconButton from '@mui/material/IconButton'
+import ListSubheader from '@mui/material/ListSubheader'
 import MenuItem from '@mui/material/MenuItem'
 import Switch from '@mui/material/Switch'
 import Tooltip from '@mui/material/Tooltip'
@@ -27,7 +28,9 @@ import { toast } from 'sonner'
 import CustomTextField from '@core/components/mui/TextField'
 import { createOption, updateOption } from '@/actions/options'
 import LoadingButtonContent from '@/components/LoadingButtonContent'
+import ColorPickerField from '@/components/inputs/ColorPickerField'
 import { createOptionSchema } from '@/schemas/options'
+import { CONTRACT_TEMPLATE_TOKEN_GROUPS, contractTemplateToken } from '@/utils/contractTemplateTokens'
 
 import '@/libs/styles/tiptapEditor.css'
 
@@ -35,7 +38,6 @@ const DEFAULT_VALUES = { name: '', category: 'CONTRACT_POLICY', description: '',
 const FONT_FAMILIES = ['Public Sans', 'Peyda', 'Vazirmatn', 'Arial', 'Georgia', 'Times New Roman', 'monospace']
 const FONT_SIZES = ['12px', '14px', '16px', '18px', '20px', '24px', '28px', '32px']
 const LINE_HEIGHTS = ['1', '1.25', '1.5', '1.75', '2']
-const TEMPLATE_TAGS = ['{{name}}', '{{amount}}', '{{start_date}}', '{{end_date}}', '{{position}}', '{{company_name}}', '{{tazkira_no}}']
 
 const Indent = Extension.create({
   name: 'indent',
@@ -88,13 +90,12 @@ const EditorButton = ({ active = false, label, icon, onClick, disabled = false }
 const ColorControl = ({ label, value, onChange, disabled }) => (
   <Tooltip title={label}>
     <span className='flex size-8 items-center justify-center'>
-      <input
-        type='color'
+      <ColorPickerField
+        compact
         value={value}
         onChange={onChange}
         disabled={disabled}
-        aria-label={label}
-        className='size-6 cursor-pointer border-0 bg-transparent p-0 disabled:cursor-default'
+        label={label}
       />
     </span>
   </Tooltip>
@@ -103,6 +104,7 @@ const ColorControl = ({ label, value, onChange, disabled }) => (
 const ContractPolicyForm = ({ open, option, locale, dictionary, onClose, onSaved }) => {
   const [sourceMode, setSourceMode] = useState(false)
   const [sourceHtml, setSourceHtml] = useState('')
+  const sourceTextareaRef = useRef(null)
 
   const {
     register,
@@ -162,8 +164,18 @@ const ContractPolicyForm = ({ open, option, locale, dictionary, onClose, onSaved
     editor?.commands.setContent(values.description, { emitUpdate: false })
   }, [editor, open, option, reset])
 
+  const resetForm = () => {
+    reset(DEFAULT_VALUES)
+    setSourceHtml('')
+    setSourceMode(false)
+    editor?.commands.setContent('', { emitUpdate: false })
+  }
+
   const closeForm = () => {
-    if (!isSubmitting) onClose()
+    if (isSubmitting) return
+
+    resetForm()
+    onClose()
   }
 
   const submitForm = async values => {
@@ -179,6 +191,7 @@ const ContractPolicyForm = ({ open, option, locale, dictionary, onClose, onSaved
 
       toast.success(result.message)
       onSaved(result.data)
+      resetForm()
       onClose()
     } catch {
       toast.error(dictionary.messages.operationFailed)
@@ -228,6 +241,29 @@ const ContractPolicyForm = ({ open, option, locale, dictionary, onClose, onSaved
     setSourceMode(current => !current)
   }
 
+  const insertTemplateToken = key => {
+    const token = contractTemplateToken(key)
+
+    if (!sourceMode) {
+      editor?.chain().focus().insertContent(token).run()
+
+      return
+    }
+
+    const textarea = sourceTextareaRef.current
+    const start = textarea?.selectionStart ?? sourceHtml.length
+    const end = textarea?.selectionEnd ?? start
+    const nextValue = `${sourceHtml.slice(0, start)}${token}${sourceHtml.slice(end)}`
+
+    setSourceHtml(nextValue)
+    setValue('description', nextValue, { shouldDirty: true, shouldValidate: true })
+
+    requestAnimationFrame(() => {
+      textarea?.focus()
+      textarea?.setSelectionRange(start + token.length, start + token.length)
+    })
+  }
+
   const editorDisabled = isSubmitting || !editor || sourceMode
   const textColor = editor?.getAttributes('textStyle').color || '#022483'
   const highlightColor = editor?.getAttributes('textStyle').backgroundColor || '#fff3cd'
@@ -236,8 +272,16 @@ const ContractPolicyForm = ({ open, option, locale, dictionary, onClose, onSaved
     <Dialog open={open} onClose={closeForm} fullWidth maxWidth='xl'>
       <form onSubmit={handleSubmit(submitForm)} noValidate>
         <input type='hidden' {...register('category')} />
-        <DialogTitle>
-          {option ? dictionary.contractPolicies.editTitle : dictionary.contractPolicies.addTitle}
+        <DialogTitle className='flex items-center justify-between gap-4'>
+          <span>{option ? dictionary.contractPolicies.editTitle : dictionary.contractPolicies.addTitle}</span>
+          <IconButton
+            type='button'
+            onClick={closeForm}
+            disabled={isSubmitting}
+            aria-label={dictionary.common.close}
+          >
+            <i className='tabler-x' />
+          </IconButton>
         </DialogTitle>
         <DialogContent dividers className='flex flex-col gap-5'>
           <CustomTextField
@@ -254,19 +298,35 @@ const ContractPolicyForm = ({ open, option, locale, dictionary, onClose, onSaved
             <div className='mb-2 text-sm font-medium text-textPrimary'>
               {dictionary.contractPolicies.fields.description}
             </div>
-            <div className='mb-2 flex flex-wrap gap-2'>
-              {TEMPLATE_TAGS.map(tag => (
-                <Button
-                  key={tag}
-                  type='button'
-                  size='small'
-                  variant='tonal'
-                  disabled={editorDisabled}
-                  onClick={() => editor?.chain().focus().insertContent(tag).run()}
-                >
-                  {tag}
-                </Button>
-              ))}
+            <div className='mb-2 flex items-center gap-2'>
+              <CustomTextField
+                select
+                value=''
+                label='Insert template field'
+                disabled={isSubmitting || !editor}
+                onChange={event => insertTemplateToken(event.target.value)}
+                className='is-full sm:is-[300px]'
+                slotProps={{
+                  select: {
+                    displayEmpty: true,
+                    renderValue: () => 'Choose a field to insert…'
+                  }
+                }}
+              >
+                {CONTRACT_TEMPLATE_TOKEN_GROUPS.flatMap(group => [
+                  <ListSubheader key={`${group.id}-heading`}>{group.label}</ListSubheader>,
+                  ...group.tokens.map(token => (
+                    <MenuItem key={token.key} value={token.key}>
+                      <Tooltip title={token.description} placement='right' arrow>
+                        <span className='flex is-full items-center justify-between gap-4'>
+                          <span>{token.label}</span>
+                          <span className='font-mono text-xs text-textSecondary'>{contractTemplateToken(token.key)}</span>
+                        </span>
+                      </Tooltip>
+                    </MenuItem>
+                  ))
+                ])}
+              </CustomTextField>
             </div>
             <div className='overflow-hidden rounded border border-divider transition-colors focus-within:border-primary focus-within:shadow-[0_0_0_3px_rgb(var(--mui-palette-primary-mainChannel)/0.16)]'>
               <div className='flex flex-wrap items-center gap-1 border-be border-divider bg-actionHover p-2'>
@@ -491,6 +551,7 @@ const ContractPolicyForm = ({ open, option, locale, dictionary, onClose, onSaved
 
               {sourceMode ? (
                 <textarea
+                  ref={sourceTextareaRef}
                   value={sourceHtml}
                   onChange={event => {
                     setSourceHtml(event.target.value)

@@ -1,10 +1,16 @@
 import { authorizeAction } from '@/libs/actionAuthorization'
-import { getCompanySetupRecord } from '@/libs/companySetup'
+import {
+  HRM_REPORT_BASE_CURRENCY,
+  calculateReportPresenceRate,
+  getContractExpirationClassification,
+  normalizePayrollReportAmounts
+} from '@/libs/hrmReports'
 import { prisma } from '@/libs/prisma'
 import { getDictionary } from '@/utils/getDictionary'
-import { convertToBaseCurrency, toFiniteNumber } from '@/utils/formatCurrency'
+import { toFiniteNumber } from '@/utils/formatCurrency'
 import { hasAnyPermission } from '@/utils/rbac'
 import { parseUtcDate, utcDateKey, utcMonthKey } from '@/utils/utcDate'
+import { countAfghanistanWorkingDays } from '@/utils/payrollCalendar'
 
 const REPORT_TYPES = ['payroll', 'attendance', 'leaves', 'contracts']
 const REPORT_PERMISSIONS = ['hrm_reports:read', 'hrm:read']
@@ -45,8 +51,7 @@ const getStaffOptions = () =>
   })
 
 const getPayrollReport = async ({ start, end, staffId, months }) => {
-  const [records, setup] = await Promise.all([
-    prisma.financesalary.findMany({
+  const records = await prisma.financesalary.findMany({
       where: { ...(staffId && { staff_id: staffId }), timesheet_month: { in: months } },
       select: {
         id: true,
@@ -58,17 +63,12 @@ const getPayrollReport = async ({ start, end, staffId, months }) => {
         payable_amount: true,
         currency: true,
         exchange_rate: true,
-        amount_base: true,
         payment_date: true,
         staff: { select: { id: true, first_name: true, last_name: true, position: true } },
         status: true
       },
       orderBy: [{ timesheet_month: 'desc' }, { staff: { first_name: 'asc' } }]
-    }),
-    getCompanySetupRecord()
-  ])
-
-  const baseCurrency = setup.currency_code || 'AFN'
+    })
 
   const trendMap = new Map(
     months.map(period => [
@@ -79,24 +79,19 @@ const getPayrollReport = async ({ start, end, staffId, months }) => {
 
   const summary = records.reduce(
     (totals, record) => {
-      const unpaidDeduction = Math.max(0, toFiniteNumber(record.base_salary) - toFiniteNumber(record.earned_salary))
-      const deductions = unpaidDeduction + toFiniteNumber(record.loan_deduction)
-      const netPayout = toFiniteNumber(record.amount_base)
-      const baseSalary = convertToBaseCurrency(record.base_salary, record.currency, record.exchange_rate, baseCurrency)
-      const allowances = convertToBaseCurrency(record.bonus_amount, record.currency, record.exchange_rate, baseCurrency)
-      const baseDeductions = convertToBaseCurrency(deductions, record.currency, record.exchange_rate, baseCurrency)
+      const amounts = normalizePayrollReportAmounts(record)
       const trend = trendMap.get(record.timesheet_month)
 
-      totals.total_base_salary += baseSalary
-      totals.total_allowances += allowances
-      totals.total_deductions += baseDeductions
-      totals.total_net_payout += netPayout
+      totals.total_base_salary += amounts.baseSalary
+      totals.total_allowances += amounts.allowances
+      totals.total_deductions += amounts.deductions
+      totals.total_net_payout += amounts.netPayout
 
       if (trend) {
-        trend.base_salary += baseSalary
-        trend.allowances += allowances
-        trend.deductions += baseDeductions
-        trend.net_payout += netPayout
+        trend.base_salary += amounts.baseSalary
+        trend.allowances += amounts.allowances
+        trend.deductions += amounts.deductions
+        trend.net_payout += amounts.netPayout
       }
 
       return totals
@@ -113,44 +108,78 @@ const getPayrollReport = async ({ start, end, staffId, months }) => {
       deductions: Number(money(item.deductions)),
       net_payout: Number(money(item.net_payout))
     })),
-    rows: records.map(record => ({
-      id: record.id,
-      period: record.timesheet_month,
-      staff_id: record.staff.id,
-      staff_name: staffName(record.staff),
-      position: record.staff.position,
-      base_salary: record.base_salary.toFixed(2),
-      allowances: record.bonus_amount.toFixed(2),
-      deductions: money(Math.max(0, toFiniteNumber(record.base_salary) - toFiniteNumber(record.earned_salary)) + toFiniteNumber(record.loan_deduction)),
-      net_payout: record.payable_amount.toFixed(2),
-      currency: record.currency,
-      exchange_rate: record.exchange_rate.toFixed(4),
-      amount_base: record.amount_base.toFixed(2),
-      status: record.status,
-      status_label: record.status === 'PAID' ? 'Paid' : 'Draft',
-      payment_method: null,
-      payment_date: record.payment_date?.toISOString() || null
-    }))
+    base_currency: HRM_REPORT_BASE_CURRENCY,
+    rows: records.map(record => {
+      const amounts = normalizePayrollReportAmounts(record)
+
+      return {
+        id: record.id,
+        period: record.timesheet_month,
+        staff_id: record.staff.id,
+        staff_name: staffName(record.staff),
+        position: record.staff.position,
+        base_salary: money(amounts.baseSalary),
+        allowances: money(amounts.allowances),
+        deductions: money(amounts.deductions),
+        net_payout: money(amounts.netPayout),
+        currency: HRM_REPORT_BASE_CURRENCY,
+        original_base_salary: money(amounts.original.baseSalary),
+        original_allowances: money(amounts.original.allowances),
+        original_deductions: money(amounts.original.deductions),
+        original_net_payout: money(amounts.original.netPayout),
+        original_currency: amounts.original.currency,
+        exchange_rate: amounts.original.exchangeRate.toFixed(4),
+        status: record.status,
+        status_label: record.status === 'PAID' ? 'Paid' : 'Draft',
+        payment_method: null,
+        payment_date: record.payment_date?.toISOString() || null
+      }
+    })
   }
 }
 
 const getAttendanceReport = async ({ start, end, staffId, months }) => {
-  const records = await prisma.hrmstafftimesheet.findMany({
-    where: { date: { gte: start, lte: end }, ...(staffId && { staff_id: staffId }) },
-    select: {
-      id: true,
-      date: true,
-      status: true,
-      hours_worked: true,
-      staff: { select: { id: true, first_name: true, last_name: true, position: true } }
-    },
-    orderBy: [{ date: 'desc' }, { staff: { first_name: 'asc' } }]
-  })
+  const [records, holidays, reportStaff] = await Promise.all([
+    prisma.hrmstafftimesheet.findMany({
+      where: { date: { gte: start, lte: end }, ...(staffId && { staff_id: staffId }) },
+      select: {
+        id: true,
+        date: true,
+        status: true,
+        hours_worked: true,
+        staff: { select: { id: true, first_name: true, last_name: true, position: true } }
+      },
+      orderBy: [{ date: 'desc' }, { staff: { first_name: 'asc' } }]
+    }),
+    prisma.companyholiday.findMany({
+      where: { is_active: true, date: { gte: start, lte: end } },
+      select: { date: true }
+    }),
+    prisma.hrmstaff.findMany({
+      where: staffId ? { id: staffId } : { status: 'ACTIVE' },
+      select: { id: true, first_name: true, last_name: true, position: true }
+    })
+  ])
 
-  const workingDays = new Set(records.map(record => toDateKey(record.date))).size
+  const workingDays = countAfghanistanWorkingDays(start, end, holidays.map(item => item.date))
   const presentCount = records.filter(record => record.status === 'PRESENT').length
   const totalHours = records.reduce((total, record) => total + Number(record.hours_worked || 0), 0)
-  const staffMap = new Map()
+
+  const staffMap = new Map(
+    reportStaff.map(staff => [
+      staff.id,
+      {
+        id: staff.id,
+        staff_name: staffName(staff),
+        position: staff.position,
+        total_records: 0,
+        present: 0,
+        absent: 0,
+        leave: 0,
+        total_hours: 0
+      }
+    ])
+  )
 
   const trendMap = new Map(
     months.map(period => [period, { period, present: 0, absent: 0, leave: 0, hours: 0 }])
@@ -168,7 +197,7 @@ const getAttendanceReport = async ({ start, end, staffId, months }) => {
       total_hours: 0
     }
 
-    const statusKey = record.status.toLowerCase()
+    const statusKey = record.status.toUpperCase().startsWith('LEAVE') ? 'leave' : record.status.toLowerCase()
     const trend = trendMap.get(toMonthKey(record.date))
 
     current.total_records += 1
@@ -186,55 +215,80 @@ const getAttendanceReport = async ({ start, end, staffId, months }) => {
   return {
     summary: {
       total_working_days: workingDays,
-      presence_rate: records.length ? Number(((presentCount / records.length) * 100).toFixed(2)) : 0,
+      presence_rate: calculateReportPresenceRate(presentCount, workingDays * staffMap.size),
       total_hours_logged: Number(totalHours.toFixed(2)),
       total_absences: records.filter(record => record.status === 'ABSENT').length
     },
     trend: [...trendMap.values()].map(item => ({ ...item, hours: Number(item.hours.toFixed(2)) })),
     rows: [...staffMap.values()].map(item => ({
       ...item,
+      working_days: workingDays,
       total_hours: item.total_hours.toFixed(2),
-      presence_rate: item.total_records ? Number(((item.present / item.total_records) * 100).toFixed(2)) : 0
+      presence_rate: calculateReportPresenceRate(item.present, workingDays)
     }))
   }
 }
 
 const getLeaveReport = async ({ start, end, staffId }) => {
-  const records = await prisma.hrmstaffleave.findMany({
-    where: {
-      start_date: { lte: end },
-      end_date: { gte: start },
-      ...(staffId && { staff_id: staffId })
-    },
-    select: {
-      id: true,
-      staff_id: true,
-      total_days: true,
-      start_date: true,
-      end_date: true,
-      status: { select: { label: true, value: true } },
-      leave_type: { select: { id: true, label: true, value: true } }
-    },
-    orderBy: { start_date: 'desc' }
-  })
-
-  const staffIds = [
-    ...new Set(
-      records
-        .map(record => record.staff_id)
-        .filter(id => typeof id === 'string' && id.trim().length > 0)
-    )
-  ]
-
-  const staffRecords = staffIds.length
-    ? await prisma.hrmstaff.findMany({
-        where: { id: { in: staffIds } },
-        select: { id: true, first_name: true, last_name: true, position: true }
-      })
-    : []
+  const [records, holidays, staffRecords, leaveTypes] = await Promise.all([
+    prisma.hrmstaffleave.findMany({
+      where: {
+        start_date: { lte: end },
+        end_date: { gte: start },
+        ...(staffId && { staff_id: staffId })
+      },
+      select: {
+        id: true,
+        staff_id: true,
+        total_days: true,
+        start_date: true,
+        end_date: true,
+        status: { select: { label: true, value: true } },
+        leave_type: { select: { id: true, label: true, value: true } }
+      },
+      orderBy: { start_date: 'desc' }
+    }),
+    prisma.companyholiday.findMany({
+      where: { is_active: true, date: { gte: start, lte: end } },
+      select: { date: true }
+    }),
+    prisma.hrmstaff.findMany({
+      where: staffId ? { id: staffId } : { status: 'ACTIVE' },
+      select: { id: true, first_name: true, last_name: true, position: true },
+      orderBy: [{ first_name: 'asc' }, { last_name: 'asc' }]
+    }),
+    prisma.option.findMany({
+      where: { category: 'LEAVE_TYPE', is_active: true },
+      select: { id: true, label: true, value: true, allowed_days_per_year: true },
+      orderBy: [{ sort_order: 'asc' }, { label: 'asc' }]
+    })
+  ])
 
   const staffById = new Map(staffRecords.map(staff => [staff.id, staff]))
-  const staffMap = new Map()
+
+  const defaultAllowance = leaveTypes.reduce(
+    (total, type) => total + toFiniteNumber(type.allowed_days_per_year),
+    0
+  )
+
+  const holidayDates = holidays.map(item => item.date)
+
+  const staffMap = new Map(
+    staffRecords.map(staff => [
+      staff.id,
+      {
+        id: staff.id,
+        staff_name: staffName(staff),
+        position: staff.position,
+        approved_days: 0,
+        pending_days: 0,
+        pending_requests: 0,
+        rejected_requests: 0,
+        leave_types: new Map()
+      }
+    ])
+  )
+
   const typeMap = new Map()
   let totalApprovedDays = 0
   let pendingRequests = 0
@@ -244,36 +298,29 @@ const getLeaveReport = async ({ start, end, staffId }) => {
 
     if (!staff) return
 
-    const current = staffMap.get(staff.id) || {
-      id: staff.id,
-      staff_name: staffName(staff),
-      position: staff.position,
-      approved_days: 0,
-      pending_requests: 0,
-      rejected_requests: 0,
-      leave_types: new Map()
-    }
+    const current = staffMap.get(staff.id)
+
+    if (!current) return
+
+    const clippedStart = record.start_date < start ? start : record.start_date
+    const clippedEnd = record.end_date > end ? end : record.end_date
+    const recordDays = countAfghanistanWorkingDays(clippedStart, clippedEnd, holidayDates)
 
     if (record.status.value === 'APPROVED') {
-      const clippedStart = record.start_date < start ? start : record.start_date
-      const clippedEnd = record.end_date > end ? end : record.end_date
-      const overlapDays = Math.floor((clippedEnd.getTime() - clippedStart.getTime()) / DAY_IN_MS) + 1
-      const fullRangeDays = Math.floor((record.end_date.getTime() - record.start_date.getTime()) / DAY_IN_MS) + 1
-      const approvedDays = Number(record.total_days) * (overlapDays / fullRangeDays)
-
-      totalApprovedDays += approvedDays
-      current.approved_days += approvedDays
+      totalApprovedDays += recordDays
+      current.approved_days += recordDays
       current.leave_types.set(
         record.leave_type.label,
-        (current.leave_types.get(record.leave_type.label) || 0) + approvedDays
+        (current.leave_types.get(record.leave_type.label) || 0) + recordDays
       )
       typeMap.set(record.leave_type.value, {
         name: record.leave_type.label,
-        value: (typeMap.get(record.leave_type.value)?.value || 0) + approvedDays
+        value: (typeMap.get(record.leave_type.value)?.value || 0) + recordDays
       })
     } else if (record.status.value === 'PENDING') {
       pendingRequests += 1
       current.pending_requests += 1
+      current.pending_days += recordDays
     } else if (record.status.value === 'REJECTED') {
       current.rejected_requests += 1
     }
@@ -291,8 +338,16 @@ const getLeaveReport = async ({ start, end, staffId }) => {
     rows: [...staffMap.values()].map(item => ({
       ...item,
       leave_types: [...item.leave_types.entries()].map(([name, days]) => ({ name, days })),
-      allowance_days: null,
-      remaining_days: null
+      allowance_days: Number(defaultAllowance.toFixed(1)),
+      remaining_days: Number(Math.max(0, defaultAllowance - item.approved_days - item.pending_days).toFixed(1)),
+      policy_source: 'SYSTEM_DEFAULT',
+      has_custom_policy: false,
+      policy_assignment_url: `/options/hrm/leave-types?staff_id=${encodeURIComponent(item.id)}`,
+      default_leave_types: leaveTypes.map(type => ({
+        id: type.id,
+        name: type.label,
+        allowance_days: toFiniteNumber(type.allowed_days_per_year)
+      }))
     }))
   }
 }
@@ -308,6 +363,10 @@ const getContractReport = async ({ start, end, staffId, months }) => {
     select: {
       id: true,
       contract_number: true,
+      contract_type_id: true,
+      template_id: true,
+      duration_id: true,
+      status_id: true,
       position_title: true,
       base_salary: true,
       currency: true,
@@ -315,9 +374,13 @@ const getContractReport = async ({ start, end, staffId, months }) => {
       amount_base: true,
       start_date: true,
       end_date: true,
-      staff: { select: { id: true, first_name: true, last_name: true, position: true } },
-      contract_type: { select: { label: true, value: true } },
-      status: { select: { label: true, value: true } }
+      probation_days: true,
+      notice_period_days: true,
+      staff: { select: { id: true, first_name: true, last_name: true, position: true, status: true } },
+      contract_type: { select: { id: true, label: true, value: true, category: true, is_active: true } },
+      template: { select: { id: true, label: true, value: true, description: true, is_active: true } },
+      duration: { select: { id: true, label: true, value: true, description: true, is_active: true } },
+      status: { select: { id: true, label: true, value: true, color_code: true, is_active: true } }
     },
     orderBy: [{ end_date: 'asc' }, { staff: { first_name: 'asc' } }]
   })
@@ -358,11 +421,13 @@ const getContractReport = async ({ start, end, staffId, months }) => {
     trend: [...trendMap.values()],
     rows: expiringContracts.map(contract => {
       const daysRemaining = Math.ceil((contract.end_date.getTime() - today.getTime()) / DAY_IN_MS)
+      const expiration = getContractExpirationClassification(daysRemaining)
 
       return {
         id: contract.id,
         contract_number: contract.contract_number,
         staff_id: contract.staff.id,
+        staff_status: contract.staff.status,
         staff_name: staffName(contract.staff),
         position: contract.position_title || contract.staff.position,
         contract_type: contract.contract_type.label,
@@ -370,10 +435,20 @@ const getContractReport = async ({ start, end, staffId, months }) => {
         currency: contract.currency,
         exchange_rate: contract.exchange_rate.toFixed(4),
         amount_base: contract.amount_base.toFixed(2),
+        contract_type_id: contract.contract_type_id,
+        template_id: contract.template_id,
+        duration_id: contract.duration_id,
+        status_id: contract.status_id,
+        probation_days: contract.probation_days,
+        notice_period_days: contract.notice_period_days,
+        contract_type_details: contract.contract_type,
+        template: contract.template,
+        duration: contract.duration,
         start_date: contract.start_date.toISOString(),
         end_date: contract.end_date.toISOString(),
         days_remaining: daysRemaining,
-        renewal_status: daysRemaining < 0 ? 'EXPIRED' : daysRemaining <= 30 ? 'DUE_SOON' : 'UPCOMING',
+        expiration_days: expiration.count,
+        renewal_status: expiration.status,
         status: contract.status.value,
         status_label: contract.status.label
       }

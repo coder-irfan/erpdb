@@ -7,6 +7,7 @@ import Autocomplete from '@mui/material/Autocomplete'
 import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
+import Chip from '@mui/material/Chip'
 import Drawer from '@mui/material/Drawer'
 import IconButton from '@mui/material/IconButton'
 import MenuItem from '@mui/material/MenuItem'
@@ -26,6 +27,7 @@ const defaultExpenseType = options =>
   options.expenseTypes.find(option => option.is_default)?.id || options.expenseTypes[0]?.id || ''
 
 const emptyValues = options => ({
+  vendor_payee: '',
   details: '',
   expense_type_id: defaultExpenseType(options),
   project_id: '',
@@ -69,6 +71,7 @@ const FinanceExpenseFormDrawer = ({ open, expense, options, locale, dictionary, 
     reset(
       expense
         ? {
+            vendor_payee: expense.vendor_payee || '',
             details: expense.details || '',
             expense_type_id: expense.expense_type_id || defaultExpenseType(options),
             project_id: expense.project_id || '',
@@ -154,6 +157,22 @@ const FinanceExpenseFormDrawer = ({ open, expense, options, locale, dictionary, 
         <IconButton onClick={onClose} disabled={isSubmitting} aria-label={dictionary.actions.close}><i className='tabler-x' /></IconButton>
       </div>
       <form className='flex flex-1 flex-col gap-5 overflow-y-auto p-5' onSubmit={handleSubmit(submit)} noValidate>
+        <div className='flex items-center justify-between gap-3 rounded border border-divider p-3'>
+          <div>
+            <Typography variant='caption' color='text.secondary'>{dictionary.fields.approvalStatus}</Typography>
+            <Typography variant='body2'>{dictionary.form.statusManagedHint}</Typography>
+          </div>
+          <Chip
+            size='small'
+            variant='tonal'
+            color={expense?.approval_status === 'REJECTED' ? 'error' : 'warning'}
+            label={dictionary.status[expense?.approval_status || 'PENDING_APPROVAL']}
+          />
+        </div>
+
+        {field('vendor_payee', dictionary.fields.vendorPayee, {
+          placeholder: dictionary.placeholders.vendorPayee
+        })}
         {field('details', dictionary.fields.details, {
           multiline: true,
           minRows: 3,
@@ -187,28 +206,6 @@ const FinanceExpenseFormDrawer = ({ open, expense, options, locale, dictionary, 
           {field('expense_date', dictionary.fields.expenseDate, { type: 'date', slotProps: { inputLabel: { shrink: true } } })}
           {relationField('project_id', dictionary.fields.project, options.projects, dictionary.placeholders.project, item => `${item.project_code} · ${item.title}`)}
           {relationField('spent_by_id', dictionary.fields.spentBy, options.staff, dictionary.placeholders.spentBy, item => `${item.full_name} · ${item.position}`)}
-          <Controller
-            name='payment_method_id'
-            control={control}
-            render={({ field: controllerField }) => (
-              <CustomTextField
-                {...controllerField}
-                select
-                value={controllerField.value || ''}
-                label={dictionary.fields.paymentMethod}
-                slotProps={{
-                  select: {
-                    displayEmpty: true,
-                    renderValue: selected =>
-                      options.paymentMethods.find(item => item.id === selected)?.label || dictionary.placeholders.paymentMethod
-                  }
-                }}
-              >
-                <MenuItem value=''>{dictionary.placeholders.paymentMethod}</MenuItem>
-                {options.paymentMethods.map(item => <MenuItem key={item.id} value={item.id}>{item.label}</MenuItem>)}
-              </CustomTextField>
-            )}
-          />
           {field('quantity', dictionary.fields.quantity, { type: 'number', inputProps: { min: 1, step: 1 } })}
           {field('unit_price', dictionary.fields.unitPrice, { type: 'number', inputProps: { min: 0, step: '0.01' } })}
           <Controller
@@ -221,7 +218,7 @@ const FinanceExpenseFormDrawer = ({ open, expense, options, locale, dictionary, 
               </CustomTextField>
             )}
           />
-          {field('exchange_rate', dictionary.fields.exchangeRate, { type: 'number', inputProps: { min: 0, step: '0.0001' } })}
+          {field('exchange_rate', dictionary.fields.exchangeRate, { type: 'number', inputProps: { min: 0, step: '0.0001', readOnly: true } })}
         </div>
 
         <Card variant='outlined'>
@@ -245,7 +242,13 @@ const FinanceExpenseFormDrawer = ({ open, expense, options, locale, dictionary, 
               onChange={value => controllerField.onChange(value || '')}
               label={dictionary.fields.receipt}
               maxSizeMB={4}
-              uploadType='image'
+              uploadType='expenseReceipt'
+              accept={{
+                'application/pdf': ['.pdf'],
+                'image/jpeg': ['.jpg', '.jpeg'],
+                'image/png': ['.png'],
+                'image/webp': ['.webp']
+              }}
               translations={dictionary.upload}
             />
           )}

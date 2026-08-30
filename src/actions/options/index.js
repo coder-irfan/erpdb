@@ -20,6 +20,9 @@ const MAX_PAGE_SIZE = 100
 
 const CATEGORY_PATHS = {
   CONTRACT_POLICY: '/[lang]/options/contract-management/contract-templates',
+  CONTRACT_CLAUSE: '/[lang]/options/contract-management/contracts',
+  CONTRACT_DURATION: '/[lang]/options/contract-management/contracts',
+  COUNTRY: '/[lang]/options/contract-management/countries',
   CONTRACT_TYPE_HRM: '/[lang]/options/contract-management/contract-types',
   CONTRACT_TYPE_CUSTOMER: '/[lang]/options/contract-management/contract-types',
   CONTRACT_TYPE_FINANCE: '/[lang]/options/contract-management/contract-types',
@@ -32,6 +35,7 @@ const CATEGORY_PATHS = {
   LEAD_SOURCE: '/[lang]/options/crm/leads',
   VISITOR_PURPOSE: '/[lang]/options/crm/visitors',
   INCOME_TYPE: '/[lang]/options/finance/income-categories',
+  EXPENSE_TYPE: '/[lang]/options/finance-management/expense-categories',
   INVOICE_STATUS: '/[lang]/options/contract-management/invoices',
   PAYMENT_METHOD: '/[lang]/options/contract-management/invoices'
 }
@@ -49,7 +53,7 @@ const getReadPermissions = category => [
   ...(category === 'VISITOR_PURPOSE'
     ? ['crm:read', 'crm:write', 'crm_visitor:read', 'crm_visitor:write']
     : []),
-  ...(category === 'INCOME_TYPE' ? ['finance:read', 'finance:write'] : []),
+  ...(['INCOME_TYPE', 'EXPENSE_TYPE'].includes(category) ? ['finance:read', 'finance:write'] : []),
   ...(category.startsWith('CONTRACT_') ? ['contracts:read', 'contracts:write', 'hrm:read'] : [])
 ]
 
@@ -79,6 +83,9 @@ const normalizeOption = option => ({
   description: option.description,
   is_active: option.is_active,
   is_default: option.is_default,
+  requires_invoice: option.requires_invoice,
+  is_paid_leave: option.is_paid_leave,
+  allowed_days_per_year: option.allowed_days_per_year?.toFixed(1) ?? null,
   sort_order: option.sort_order,
   created_at: option.created_at.toISOString(),
   updated_at: option.updated_at.toISOString()
@@ -91,6 +98,7 @@ const optionDependencyCountSelect = {
   leave_statuses: true,
   payroll_statuses: true,
   payment_methods: true,
+  income_payment_methods: true,
   lead_sources: true,
   lead_statuses: true,
   project_statuses: true,
@@ -99,6 +107,9 @@ const optionDependencyCountSelect = {
   task_priorities: true,
   contract_statuses_ref: true,
   contract_types_ref: true,
+  contract_templates_ref: true,
+  staff_contract_templates: true,
+  staff_contract_durations: true,
   contract_countries: true,
   contract_levels: true,
   invoice_statuses: true,
@@ -199,6 +210,10 @@ const revalidateOptionPaths = category => {
     revalidatePath('/[lang]/finance/incomes', 'page')
   }
 
+  if (category === 'EXPENSE_TYPE') {
+    revalidatePath('/[lang]/finance/expenses', 'page')
+  }
+
   if (category.startsWith('CONTRACT_')) revalidatePath('/[lang]/contracts', 'page')
 
   if (category === 'INVOICE_STATUS' || category === 'PAYMENT_METHOD') {
@@ -293,7 +308,10 @@ export const createOption = async (payload = {}) => {
     name: payload.name,
     category: payload.category,
     description: payload.description ?? '',
-    is_active: payload.is_active ?? true
+    is_active: payload.is_active ?? true,
+    requires_invoice: payload.requires_invoice ?? false,
+    is_paid_leave: payload.is_paid_leave ?? true,
+    allowed_days_per_year: String(payload.allowed_days_per_year ?? '0')
   })
 
   if (!validation.success) {
@@ -323,7 +341,12 @@ export const createOption = async (payload = {}) => {
           label: validation.output.name,
           value,
           description: sanitizeDescription(validation.output.description, validation.output.category),
-          is_active: validation.output.is_active
+          is_active: validation.output.is_active,
+          requires_invoice:
+            validation.output.category === 'INCOME_TYPE' ? validation.output.requires_invoice : false,
+          is_paid_leave: validation.output.category === 'LEAVE_TYPE' ? validation.output.is_paid_leave : true,
+          allowed_days_per_year:
+            validation.output.category === 'LEAVE_TYPE' ? validation.output.allowed_days_per_year : undefined
         }
       })
 
@@ -362,7 +385,10 @@ export const updateOption = async (id, payload = {}) => {
     name: payload.name,
     category: payload.category,
     description: payload.description ?? '',
-    is_active: payload.is_active ?? true
+    is_active: payload.is_active ?? true,
+    requires_invoice: payload.requires_invoice ?? false,
+    is_paid_leave: payload.is_paid_leave ?? true,
+    allowed_days_per_year: String(payload.allowed_days_per_year ?? '0')
   })
 
   if (!optionId || !validation.success) {
@@ -403,7 +429,12 @@ export const updateOption = async (id, payload = {}) => {
           label: validation.output.name,
           value,
           description: sanitizeDescription(validation.output.description, validation.output.category),
-          is_active: validation.output.is_active
+          is_active: validation.output.is_active,
+          requires_invoice:
+            validation.output.category === 'INCOME_TYPE' ? validation.output.requires_invoice : false,
+          is_paid_leave: validation.output.category === 'LEAVE_TYPE' ? validation.output.is_paid_leave : true,
+          allowed_days_per_year:
+            validation.output.category === 'LEAVE_TYPE' ? validation.output.allowed_days_per_year : undefined
         }
       })
 

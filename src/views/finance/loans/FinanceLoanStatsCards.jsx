@@ -9,32 +9,32 @@ import { formatCurrency } from '@/utils/formatCurrency'
 const FinanceLoanStatsCards = ({ summary, locale, dictionary }) => {
   const cards = [
     {
-      label: dictionary.metrics.active,
-      value: summary.active,
-      hint: dictionary.metrics.activeHint,
+      label: 'Staff Receivables Total',
+      value: summary.staffReceivables,
+      hint: 'Outstanding balances owed by staff',
+      icon: 'tabler-user-dollar',
+      tone: 'bg-primaryLighter text-primary'
+    },
+    {
+      label: 'Corporate Debt Total',
+      value: summary.corporateDebt,
+      hint: 'Outstanding principal owed to lenders',
       icon: 'tabler-building-bank',
-      tone: 'bg-secondaryLighter text-warning'
+      tone: 'bg-warningLighter text-warning'
     },
     {
-      label: dictionary.metrics.repaid,
-      value: summary.repaid,
-      hint: dictionary.metrics.repaidHint,
-      icon: 'tabler-cash-banknote',
-      tone: 'bg-successLighter text-success'
-    },
-    {
-      label: dictionary.metrics.recovery,
-      value: summary.recovery,
-      hint: dictionary.metrics.recoveryHint,
+      label: 'Monthly Payroll Recovery',
+      value: summary.payrollRecovery,
+      hint: 'Auto-deductions scheduled this month',
       icon: 'tabler-calendar-dollar',
       tone: 'bg-infoLighter text-info'
     },
     {
-      label: dictionary.metrics.portfolio,
-      value: summary.portfolio,
-      hint: dictionary.metrics.portfolioHint,
-      icon: 'tabler-report-money',
-      tone: 'bg-primaryLighter text-primary'
+      label: 'Monthly Debt Disbursement',
+      value: summary.debtDisbursement,
+      hint: 'Principal and interest due this month',
+      icon: 'tabler-calendar-dollar',
+      tone: 'bg-errorLighter text-error'
     }
   ]
 
@@ -48,7 +48,7 @@ const FinanceLoanStatsCards = ({ summary, locale, dictionary }) => {
                 {card.label}
               </Typography>
               <Typography variant='h5' className='mt-1 truncate'>
-                {formatCurrency(card.value, locale, 'USD')}
+                {formatCurrency(card.value, locale, 'AFN')}
               </Typography>
               <Typography variant='caption' color='text.secondary' className='block truncate'>
                 {card.hint}

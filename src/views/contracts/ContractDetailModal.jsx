@@ -7,7 +7,6 @@ import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import Chip from '@mui/material/Chip'
-import CircularProgress from '@mui/material/CircularProgress'
 import Dialog from '@mui/material/Dialog'
 import DialogContent from '@mui/material/DialogContent'
 import DialogTitle from '@mui/material/DialogTitle'
@@ -20,7 +19,9 @@ import Typography from '@mui/material/Typography'
 import { getContractDetail } from '@/actions/contracts'
 import QuickContact from '@/components/common/QuickContact'
 import UserAvatar from '@/components/common/UserAvatar'
-import { toDateInputValue } from '@/utils/contractDuration'
+import DetailSkeleton from '@/components/dialogs/DetailSkeleton'
+import { formatAfghanDateTime } from '@/utils/afghanDate'
+import { formatContractDuration, toDateInputValue } from '@/utils/contractDuration'
 import { formatCurrency } from '@/utils/formatCurrency'
 
 const STATUS_COLORS = {
@@ -53,7 +54,8 @@ const ContractDetailModal = ({
   canWrite,
   onClose,
   onEdit,
-  refreshKey
+  refreshKey,
+  contractContext = 'CUSTOMER'
 }) => {
   const [activeTab, setActiveTab] = useState(0)
   const [loading, setLoading] = useState(false)
@@ -88,11 +90,14 @@ const ContractDetailModal = ({
       ? dictionary.remaining.expired.replace('{days}', Math.abs(contract?.remaining_days || 0))
       : dictionary.remaining.days.replace('{days}', contract?.remaining_days || 0)
 
+  const isOther = contractContext === 'OTHERS' || contract?.contract_type?.category === 'CONTRACT_TYPE_OTHER'
+  const partyName = isOther ? contract?.vendor?.company_name : contract?.client?.company_name
+
   return (
-    <Dialog open={open} onClose={loading ? undefined : onClose} fullWidth maxWidth='md'>
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth='md'>
       <DialogTitle className='flex items-start justify-between gap-4'>
         <div className='flex min-is-0 items-center gap-3'>
-          {contract && <UserAvatar user={{ name: contract.client.company_name }} size={48} />}
+          {contract && <UserAvatar user={{ name: partyName || contract.title }} size={48} />}
           <div className='min-is-0'>
             <div className='flex flex-wrap items-center gap-2'>
               <Typography variant='h5' className='truncate'>
@@ -108,7 +113,7 @@ const ContractDetailModal = ({
               )}
             </div>
             <Typography color='text.secondary'>
-              {contract ? `${contract.contract_number} · ${contract.client.company_name}` : dictionary.common.loading}
+              {contract ? `${contract.contract_number} · ${partyName || contract.title}` : dictionary.common.loading}
             </Typography>
           </div>
         </div>
@@ -123,16 +128,14 @@ const ContractDetailModal = ({
               {dictionary.actions.edit}
             </Button>
           )}
-          <IconButton onClick={onClose} disabled={loading}>
+          <IconButton onClick={onClose}>
             <i className='tabler-x' />
           </IconButton>
         </div>
       </DialogTitle>
       <DialogContent dividers className='min-bs-[520px]'>
         {loading ? (
-          <div className='flex min-bs-[440px] items-center justify-center'>
-            <CircularProgress />
-          </div>
+          <DetailSkeleton />
         ) : error ? (
           <Alert severity='error'>{error}</Alert>
         ) : contract ? (
@@ -142,6 +145,11 @@ const ContractDetailModal = ({
                 icon={<i className='tabler-file-description' />}
                 iconPosition='start'
                 label={dictionary.detail.overview}
+              />
+              <Tab
+                icon={<i className='tabler-file-certificate' />}
+                iconPosition='start'
+                label='Agreement'
               />
               <Tab
                 icon={<i className='tabler-bell' />}
@@ -175,8 +183,9 @@ const ContractDetailModal = ({
                       <DetailItem label={dictionary.fields.startDate} value={toDateInputValue(contract.start_date)} />
                       <DetailItem label={dictionary.fields.endDate} value={toDateInputValue(contract.end_date)} />
                       <DetailItem label={dictionary.table.remaining} value={remainingText} />
-                      <DetailItem label={dictionary.fields.duration} value={contract.duration_option?.label} />
-                      <DetailItem label={dictionary.fields.manager} value={contract.account_manager?.full_name} />
+                      {!isOther && <DetailItem label={dictionary.fields.duration} value={formatContractDuration(contract.duration_option, contract.contract_duration)} />}
+                      <DetailItem label={isOther ? 'Internal Owner / Responsible Lead' : dictionary.fields.manager} value={contract.account_manager?.full_name} />
+                      {isOther && <DetailItem label='Internal Owner Position' value={contract.account_manager?.position} />}
                     </div>
                   </CardContent>
                 </Card>
@@ -189,24 +198,26 @@ const ContractDetailModal = ({
                       <Typography variant='h6'>{dictionary.detail.contacts}</Typography>
                     </div>
                     <div className='grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3'>
-                      <DetailItem label={dictionary.fields.client} value={contract.client.company_name} />
+                      <DetailItem label={isOther ? 'Third-Party Company / Vendor Name' : dictionary.fields.client} value={isOther ? contract.vendor?.company_name : contract.client?.company_name} />
                       <DetailItem
-                        label={dictionary.detail.clientContact}
-                        value={contract.client.primary_contact_name}
+                        label={isOther ? 'Vendor Representative / Contact Person' : dictionary.detail.clientContact}
+                        value={isOther ? contract.vendor?.contact_name : contract.client?.primary_contact_name}
                       />
                       <DetailItem
-                        label={dictionary.fields.email}
-                        value={<QuickContact email={contract.client.email}>{contract.client.email}</QuickContact>}
+                        label={isOther ? 'Vendor Contact Email' : dictionary.fields.email}
+                        value={<QuickContact email={isOther ? contract.vendor?.email : contract.client?.email}>{isOther ? contract.vendor?.email : contract.client?.email}</QuickContact>}
                       />
+                      {isOther && <DetailItem label='Vendor Contact Phone' value={<QuickContact phone={contract.vendor?.phone}>{contract.vendor?.phone}</QuickContact>} />}
+                      {isOther && <DetailItem label='Vendor Address' value={contract.vendor?.address} />}
                       <DetailItem label={dictionary.fields.serviceType} value={contract.contract_type.label} />
                       <DetailItem label={dictionary.fields.country} value={contract.country?.label} />
-                      <DetailItem label={dictionary.fields.level} value={contract.level?.label} />
+                      {!isOther && <DetailItem label={dictionary.fields.level} value={contract.level?.label} />}
                       <DetailItem
                         label={dictionary.fields.autoRenew}
                         value={contract.auto_renew ? dictionary.common.yes : dictionary.common.no}
                       />
                       <DetailItem
-                        label={dictionary.detail.managerContact}
+                        label={isOther ? 'Internal Owner Contact' : dictionary.detail.managerContact}
                         value={
                           contract.account_manager?.email ? (
                             <QuickContact email={contract.account_manager.email}>
@@ -224,6 +235,31 @@ const ContractDetailModal = ({
                   </CardContent>
                 </Card>
               </div>
+            ) : activeTab === 1 ? (
+              <Card variant='outlined'>
+                <CardContent>
+                  <div className='mb-4 flex flex-wrap items-center justify-between gap-3'>
+                    <div className='flex items-center gap-3'>
+                      <span className='flex size-10 items-center justify-center rounded bg-primaryLighter text-primary'>
+                        <i className='tabler-file-certificate text-xl' />
+                      </span>
+                      <div>
+                        <Typography variant='h6'>Agreement Terms & Clauses</Typography>
+                        <Typography variant='body2' color='text.secondary'>
+                          {contract.template?.label || 'Saved contract snapshot'}
+                        </Typography>
+                      </div>
+                    </div>
+                    {contract.template && <Chip size='small' variant='tonal' color='primary' label={contract.template.label} />}
+                  </div>
+                  <div
+                    className='policy-document-preview rounded border border-divider bg-backgroundPaper p-6'
+                    dangerouslySetInnerHTML={{
+                      __html: contract.content_html || '<p>No agreement template was saved with this contract.</p>'
+                    }}
+                  />
+                </CardContent>
+              </Card>
             ) : contract.notifications.length === 0 ? (
               <div className='flex min-bs-[300px] flex-col items-center justify-center text-center'>
                 <i className='tabler-mail-off mb-3 text-4xl text-textDisabled' />
@@ -258,9 +294,7 @@ const ContractDetailModal = ({
                         {notification.recipient_email}
                       </Typography>
                       <Typography variant='caption' color='text.secondary'>
-                        {new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short' }).format(
-                          new Date(notification.sent_at)
-                        )}
+                        {formatAfghanDateTime(notification.sent_at, locale, { dateStyle: 'medium' })}
                       </Typography>
                     </div>
                   </div>

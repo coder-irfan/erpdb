@@ -8,6 +8,7 @@ export const createFinanceExpenseSchema = customMessages => {
   const messages = {
     required: 'This field is required.',
     detailsTooLong: 'Expense details must not exceed 5,000 characters.',
+    vendorTooLong: 'Vendor / Payee must not exceed 191 characters.',
     quantityInvalid: 'Enter a whole quantity greater than zero.',
     numberInvalid: 'Enter a valid non-negative number.',
     positiveInvalid: 'Enter a value greater than zero.',
@@ -16,6 +17,7 @@ export const createFinanceExpenseSchema = customMessages => {
   }
 
   return object({
+    vendor_payee: pipe(string(messages.required), trim(), nonEmpty(messages.required), maxLength(191, messages.vendorTooLong)),
     details: pipe(string(messages.required), trim(), nonEmpty(messages.required), maxLength(5000, messages.detailsTooLong)),
     expense_type_id: pipe(string(messages.required), trim(), nonEmpty(messages.required)),
     project_id: optional(pipe(string(), trim()), ''),

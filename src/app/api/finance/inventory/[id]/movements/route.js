@@ -78,6 +78,9 @@ export async function POST(request, routeContext) {
     occurred_at: payload?.occurred_at || '',
     reference_id: payload?.reference_id || '',
     related_inventory_id: payload?.destination_inventory_id || payload?.related_inventory_id || '',
+    source_vendor: payload?.source_vendor || '',
+    reason: payload?.reason || '',
+    assigned_staff_id: payload?.assigned_staff_id || '',
     notes: payload?.notes || ''
   })
 
@@ -110,6 +113,9 @@ export async function POST(request, routeContext) {
         occurredAt,
         referenceId,
         relatedInventoryId: validation.output.related_inventory_id || null,
+        sourceVendor: validation.output.source_vendor || null,
+        reason: validation.output.reason || null,
+        assignedStaffId: validation.output.assigned_staff_id || null,
         notes: validation.output.notes,
         createdByUserId: authorization.session.user.id
       })
@@ -168,7 +174,7 @@ export async function POST(request, routeContext) {
     if (error?.message === 'INVENTORY_NOT_FOUND') return errorResponse(dictionary.messages.notFound, 404, 'INVENTORY_NOT_FOUND')
     if (error?.message === 'INSUFFICIENT_STOCK') return errorResponse(dictionary.messages.insufficientStock, 409, 'INSUFFICIENT_STOCK')
     if (error?.message === 'STATUS_NOT_CONFIGURED') return errorResponse(dictionary.validation.statusMissing, 409, 'STATUS_NOT_CONFIGURED')
-    if (['INVALID_INVENTORY_MOVEMENT', 'INVALID_INVENTORY_QUANTITY', 'INVALID_INVENTORY_MOVEMENT_DATE', 'BACKDATED_INVENTORY_MOVEMENT'].includes(error?.message)) return errorResponse(dictionary.validation.adjustmentInvalid, 400, error.message)
+    if (['INVALID_INVENTORY_MOVEMENT', 'INVALID_INVENTORY_QUANTITY', 'INVALID_INVENTORY_MOVEMENT_DATE', 'BACKDATED_INVENTORY_MOVEMENT', 'INVALID_INVENTORY_REASON', 'INVALID_INVENTORY_ASSIGNEE'].includes(error?.message)) return errorResponse(dictionary.validation.adjustmentInvalid, 400, error.message)
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2003') return errorResponse(dictionary.validation.invalidRelation, 409, 'INVALID_RELATION')
 
     return errorResponse(dictionary.messages.operationFailed, 500, 'INVENTORY_MOVEMENT_FAILED')

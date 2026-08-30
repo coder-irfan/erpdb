@@ -85,13 +85,15 @@ const translations = {
       status: 'Select status',
       priority: 'Select priority',
       member: 'Select staff',
-      role: 'e.g. Lead Developer'
+      role: 'e.g. Lead Developer',
+      task: 'Select task'
     },
     detail: {
       overview: 'Overview & Info',
       team: 'Team Members',
       contract: 'Contract',
       timesheets: 'Hours & Timesheets',
+      tasks: 'Tasks',
       finances: 'Finances',
       scope: 'Project Scope',
       financial: 'Financial Breakdown',
@@ -112,7 +114,8 @@ const translations = {
       hours: 'Hours',
       note: 'Description',
       type: 'Type',
-      amount: 'Amount'
+      amount: 'Amount',
+      task: 'Task'
     },
     common: {
       notAvailable: '—',

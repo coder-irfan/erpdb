@@ -56,6 +56,8 @@ const permissions = [
   { key: 'finance_income:delete', module: 'Finance', description: 'Delete income records' },
   { key: 'finance_expense:read', module: 'Finance', description: 'View expense records' },
   { key: 'finance_expense:write', module: 'Finance', description: 'Create and update expense records' },
+  { key: 'finance_expense:approve', module: 'Finance', description: 'Approve or reject expense requests' },
+  { key: 'finance_expense:pay', module: 'Finance', description: 'Execute approved expense disbursements' },
   { key: 'finance_expense:delete', module: 'Finance', description: 'Delete expense records' },
   { key: 'finance_salary:read', module: 'Finance', description: 'View salary and payroll records' },
   { key: 'finance_salary:write', module: 'Finance', description: 'Generate and pay salary records' },
@@ -130,6 +132,8 @@ const roles = [
       'finance_income:delete',
       'finance_expense:read',
       'finance_expense:write',
+      'finance_expense:approve',
+      'finance_expense:pay',
       'finance_expense:delete',
       'finance_salary:read',
       'finance_salary:write',
@@ -174,7 +178,7 @@ const roles = [
     display_name: 'Project Manager',
     description: 'Manage projects and their tasks',
     is_system: false,
-    permissions: ['projects:read', 'projects:write', 'projects:delete', 'tasks:read', 'tasks:write', 'tasks:delete']
+    permissions: ['projects:read', 'projects:write', 'projects:delete', 'tasks:read', 'tasks:write', 'tasks:delete', 'finance:read', 'finance_expense:read', 'finance_expense:approve']
   },
   {
     name: 'sales_manager',
@@ -276,7 +280,7 @@ const paymentMethods = [
 ]
 
 const incomeTypes = [
-  { label: 'Contract Payment', value: 'CONTRACT_PAYMENT', color_code: 'success', sort_order: 1, is_default: true },
+  { label: 'Contract Payment', value: 'CONTRACT_PAYMENT', color_code: 'success', sort_order: 1, is_default: true, requires_invoice: true },
   { label: 'Project Revenue', value: 'PROJECT_REVENUE', color_code: 'primary', sort_order: 2 },
   { label: 'Service Income', value: 'SERVICE_INCOME', color_code: 'info', sort_order: 3 },
   { label: 'Other Income', value: 'OTHER_INCOME', color_code: 'secondary', sort_order: 4 }
@@ -311,7 +315,7 @@ const loanStatuses = [
   { label: 'Requested', value: 'REQUESTED', color_code: 'secondary', sort_order: 1, is_default: true },
   { label: 'Approved', value: 'APPROVED', color_code: 'info', sort_order: 2 },
   { label: 'Active', value: 'ACTIVE', color_code: 'warning', sort_order: 3 },
-  { label: 'Repaid', value: 'REPAID', color_code: 'success', sort_order: 4 },
+  { label: 'Fully Paid', value: 'REPAID', color_code: 'success', sort_order: 4 },
   { label: 'Rejected', value: 'REJECTED', color_code: 'error', sort_order: 5 }
 ]
 
@@ -338,16 +342,16 @@ const expenseTypes = [
   { label: 'Rent', value: 'RENT', color_code: 'error', sort_order: 5 },
   { label: 'Marketing', value: 'MARKETING', color_code: 'success', sort_order: 6 },
   { label: 'Software Subscriptions', value: 'SOFTWARE_SUBSCRIPTIONS', color_code: 'info', sort_order: 7 },
-  { label: 'Other Expense', value: 'OTHER_EXPENSE', color_code: 'secondary', sort_order: 8 }
+  { label: 'Other Expense', value: 'OTHER_EXPENSE', color_code: 'secondary', sort_order: 8 },
+  { label: 'Payroll Expenses', value: 'PAYROLL_EXPENSES', color_code: 'info', sort_order: 9 }
 ]
 
 const projectStatuses = [
   { label: 'Planning', value: 'PLANNING', color_code: 'info', sort_order: 1, is_default: true },
   { label: 'In Progress', value: 'IN_PROGRESS', color_code: 'primary', sort_order: 2 },
-  { label: 'Active', value: 'ACTIVE', color_code: 'success', sort_order: 3 },
-  { label: 'On Hold', value: 'ON_HOLD', color_code: 'warning', sort_order: 4 },
-  { label: 'Completed', value: 'COMPLETED', color_code: 'success', sort_order: 5 },
-  { label: 'Cancelled', value: 'CANCELLED', color_code: 'secondary', sort_order: 6 }
+  { label: 'On Hold', value: 'ON_HOLD', color_code: 'warning', sort_order: 3 },
+  { label: 'Completed', value: 'COMPLETED', color_code: 'success', sort_order: 4 },
+  { label: 'Cancelled', value: 'CANCELLED', color_code: 'secondary', sort_order: 5 }
 ]
 
 const projectPriorities = [
@@ -374,10 +378,10 @@ const leadSources = [
 ]
 
 const taskStatuses = [
-  { label: 'To Do', value: 'TO_DO', color_code: 'secondary', sort_order: 1, is_default: true },
+  { label: 'To-Do', value: 'TO_DO', color_code: 'secondary', sort_order: 1, is_default: true },
   { label: 'In Progress', value: 'IN_PROGRESS', color_code: 'primary', sort_order: 2 },
   { label: 'Review', value: 'REVIEW', color_code: 'warning', sort_order: 3 },
-  { label: 'Completed', value: 'COMPLETED', color_code: 'success', sort_order: 4 }
+  { label: 'Done', value: 'COMPLETED', color_code: 'success', sort_order: 4 }
 ]
 
 const taskPriorities = [
@@ -436,6 +440,11 @@ const main = async () => {
           where: { category_value: { category: 'CONTRACT_COUNTRY', value: country.value } },
           update: { ...country, is_active: true },
           create: { category: 'CONTRACT_COUNTRY', ...country, is_active: true }
+        })
+        await transaction.option.upsert({
+          where: { category_value: { category: 'COUNTRY', value: country.value } },
+          update: { ...country, is_active: true },
+          create: { category: 'COUNTRY', ...country, is_active: true }
         })
       }
 
@@ -542,6 +551,11 @@ const main = async () => {
           create: { category: 'PROJECT_STATUS', ...projectStatus, is_active: true }
         })
       }
+
+      await transaction.option.updateMany({
+        where: { category: 'PROJECT_STATUS', value: 'ACTIVE' },
+        data: { is_active: false, is_default: false }
+      })
 
       for (const projectPriority of projectPriorities) {
         await transaction.option.upsert({

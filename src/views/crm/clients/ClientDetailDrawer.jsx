@@ -1,10 +1,9 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 import Button from '@mui/material/Button'
 import Chip from '@mui/material/Chip'
-import CircularProgress from '@mui/material/CircularProgress'
 import Dialog from '@mui/material/Dialog'
 import DialogContent from '@mui/material/DialogContent'
 import IconButton from '@mui/material/IconButton'
@@ -14,6 +13,7 @@ import Typography from '@mui/material/Typography'
 import { toast } from 'sonner'
 
 import UserAvatar from '@/components/common/UserAvatar'
+import DetailSkeleton from '@/components/dialogs/DetailSkeleton'
 import ResponsiveDataTable from '@/components/tables/ResponsiveDataTable'
 import PhoneNumber from '@/components/common/PhoneNumber'
 import QuickContact from '@/components/common/QuickContact'
@@ -60,21 +60,26 @@ const ClientProfileModal = ({
   const [tab, setTab] = useState(0)
   const [client, setClient] = useState(null)
   const [loading, setLoading] = useState(false)
+  const requestRef = useRef(null)
 
   const loadClient = useCallback(async () => {
     if (!clientId) return
+    requestRef.current?.abort()
+    const controller = new AbortController()
+
+    requestRef.current = controller
     setLoading(true)
 
     try {
-      const response = await fetch(`/api/crm/clients/${clientId}?locale=${locale}`, { cache: 'no-store' })
+      const response = await fetch(`/api/crm/clients/${clientId}?locale=${locale}`, { cache: 'no-store', signal: controller.signal })
       const result = await response.json()
 
       if (!response.ok || !result.success) return toast.error(result.error || dictionary.messages.loadFailed)
       setClient(result.data)
-    } catch {
-      toast.error(dictionary.messages.loadFailed)
+    } catch (error) {
+      if (error.name !== 'AbortError') toast.error(dictionary.messages.loadFailed)
     } finally {
-      setLoading(false)
+      if (!controller.signal.aborted) setLoading(false)
     }
   }, [clientId, dictionary.messages.loadFailed, locale])
 
@@ -83,7 +88,15 @@ const ClientProfileModal = ({
       setTab(0)
       loadClient()
     } else setClient(null)
+
+    return () => requestRef.current?.abort()
   }, [loadClient, open])
+
+  const closeModal = () => {
+    requestRef.current?.abort()
+    setLoading(false)
+    onClose()
+  }
 
   const invoicePaid =
     client?.invoices
@@ -98,7 +111,7 @@ const ClientProfileModal = ({
   return (
     <Dialog
       open={open}
-      onClose={onClose}
+      onClose={closeModal}
       fullWidth
       maxWidth='lg'
       scroll='paper'
@@ -138,16 +151,14 @@ const ClientProfileModal = ({
               </IconButton>
             </>
           )}
-          <IconButton onClick={onClose}>
+          <IconButton onClick={closeModal}>
             <i className='tabler-x' />
           </IconButton>
         </div>
       </div>
       <DialogContent dividers className='flex min-bs-0 flex-1 flex-col p-0'>
         {loading || !client ? (
-          <div className='flex flex-1 items-center justify-center p-12'>
-            <CircularProgress />
-          </div>
+          <div className='p-5'><DetailSkeleton rows={6} /></div>
         ) : (
           <>
             <Tabs value={tab} onChange={(_, value) => setTab(value)} variant='scrollable' className='px-3'>

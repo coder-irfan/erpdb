@@ -43,6 +43,7 @@ const ClientTableView = ({
 }) => {
   const renderActions = client => (
     <EntityActionsMenu
+      locale={locale}
       actions={[
         { label: dictionary.actions.view, icon: 'tabler-eye', onClick: () => onView(client) },
         canWrite && { label: dictionary.actions.activity, icon: 'tabler-activity', onClick: () => onActivity(client) },

@@ -24,7 +24,7 @@ const IndividualTimesheetPrintDocument = ({ staff, records, period, locale, dict
   const print = dictionary.print
   const totalHours = records.reduce((total, record) => total + Number(record.hours_worked || 0), 0)
   const presentDays = records.filter(record => record.status === 'PRESENT').length
-  const offLeaveDays = records.filter(record => record.status === 'ABSENT' || record.status === 'LEAVE').length
+  const offLeaveDays = records.filter(record => record.status === 'ABSENT' || record.status?.startsWith('LEAVE')).length
   const orderedRecords = [...records].sort((left, right) => left.date.localeCompare(right.date))
 
   const labels = {

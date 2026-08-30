@@ -6,7 +6,7 @@ import Alert from '@mui/material/Alert'
 import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
-import CircularProgress from '@mui/material/CircularProgress'
+import Chip from '@mui/material/Chip'
 import Dialog from '@mui/material/Dialog'
 import DialogContent from '@mui/material/DialogContent'
 import DialogTitle from '@mui/material/DialogTitle'
@@ -15,6 +15,8 @@ import Typography from '@mui/material/Typography'
 
 import { getFinanceExpenseDetail } from '@/actions/financeExpense'
 import UserAvatar from '@/components/common/UserAvatar'
+import DualCurrencyAmount from '@/components/currency/DualCurrencyAmount'
+import DetailSkeleton from '@/components/dialogs/DetailSkeleton'
 import { toDateInputValue } from '@/utils/contractDuration'
 import { formatCurrency } from '@/utils/formatCurrency'
 
@@ -27,7 +29,9 @@ const InfoItem = ({ label, value, accent = '' }) => (
   </div>
 )
 
-const FinanceExpenseDetailModal = ({ open, expenseId, locale, baseCurrency, dictionary, canWrite, refreshKey, onClose, onEdit }) => {
+const STATUS_COLORS = { DRAFT: 'secondary', PENDING_APPROVAL: 'warning', APPROVED: 'info', PAID: 'success', REJECTED: 'error' }
+
+const FinanceExpenseDetailModal = ({ open, expenseId, locale, baseCurrency, dictionary, canWrite, canApprove, canPay, refreshKey, onClose, onEdit, onApprove, onReject, onPay }) => {
   const [expense, setExpense] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -53,22 +57,26 @@ const FinanceExpenseDetailModal = ({ open, expenseId, locale, baseCurrency, dict
   }, [dictionary.messages.detailLoadFailed, expenseId, locale, open, refreshKey])
 
   return (
-    <Dialog open={open} onClose={loading ? undefined : onClose} fullWidth maxWidth='md'>
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth='md'>
       <DialogTitle className='flex items-start justify-between gap-4'>
         <div className='min-is-0'>
           <Typography variant='h5'>{dictionary.detail.title}</Typography>
           <Typography color='text.secondary' className='max-is-[560px] truncate'>{expense?.details || dictionary.common.loading}</Typography>
         </div>
         <div className='flex items-center gap-1'>
-          {canWrite && expense && (
+          {expense && <Chip size='small' variant='tonal' color={STATUS_COLORS[expense.approval_status]} label={dictionary.status[expense.approval_status]} />}
+          {canWrite && expense && !['APPROVED', 'PAID'].includes(expense.approval_status) && (
             <Button size='small' variant='tonal' startIcon={<i className='tabler-edit' />} onClick={() => onEdit(expense)}>{dictionary.actions.edit}</Button>
           )}
-          <IconButton onClick={onClose} disabled={loading} aria-label={dictionary.actions.close}><i className='tabler-x' /></IconButton>
+          {canApprove && expense?.approval_status === 'PENDING_APPROVAL' && <Button size='small' color='success' variant='tonal' onClick={() => onApprove(expense)}>{dictionary.actions.approve}</Button>}
+          {canApprove && expense?.approval_status === 'PENDING_APPROVAL' && <Button size='small' color='error' variant='tonal' onClick={() => onReject(expense)}>{dictionary.actions.reject}</Button>}
+          {canPay && expense?.approval_status === 'APPROVED' && <Button size='small' color='success' variant='contained' onClick={() => onPay(expense)}>{dictionary.actions.markPaid}</Button>}
+          <IconButton onClick={onClose} aria-label={dictionary.actions.close}><i className='tabler-x' /></IconButton>
         </div>
       </DialogTitle>
       <DialogContent dividers className='min-bs-[500px]'>
         {loading ? (
-          <div className='flex min-bs-[420px] items-center justify-center'><CircularProgress /></div>
+          <DetailSkeleton />
         ) : error ? (
           <Alert severity='error'>{error}</Alert>
         ) : expense ? (
@@ -78,14 +86,16 @@ const FinanceExpenseDetailModal = ({ open, expenseId, locale, baseCurrency, dict
                 <Typography variant='h6' className='mb-4'>{dictionary.detail.financial}</Typography>
                 <div className='grid grid-cols-2 gap-4 md:grid-cols-4'>
                   <InfoItem label={dictionary.fields.quantity} value={String(expense.quantity)} />
-                  <InfoItem label={dictionary.fields.unitPrice} value={formatCurrency(expense.unit_price, locale, expense.currency)} />
-                  <InfoItem label={dictionary.fields.subtotal} value={formatCurrency(expense.sub_total, locale, expense.currency)} accent='font-semibold text-error' />
+                  <InfoItem label={dictionary.fields.unitPrice} value={<DualCurrencyAmount amount={expense.unit_price} currency={expense.currency} exchangeRate={expense.exchange_rate} locale={locale} />} />
+                  <InfoItem label={dictionary.fields.subtotal} value={<DualCurrencyAmount amount={expense.sub_total} amountBase={expense.amount_base} currency={expense.currency} exchangeRate={expense.exchange_rate} locale={locale} primaryClassName='text-error' />} />
                   <InfoItem label={dictionary.fields.baseAmount} value={formatCurrency(expense.amount_base, locale, baseCurrency)} accent='font-semibold' />
                   <InfoItem label={dictionary.fields.currency} value={expense.currency} />
                   <InfoItem label={dictionary.detail.exchangeRate} value={expense.exchange_rate} />
                   <InfoItem label={dictionary.fields.totalUsd} value={formatCurrency(expense.total_usd, locale, 'USD')} />
                   <InfoItem label={dictionary.fields.expenseDate} value={toDateInputValue(expense.expense_date)} />
                   <InfoItem label={dictionary.fields.paymentMethod} value={expense.payment_method?.label || dictionary.common.notAvailable} />
+                  <InfoItem label={dictionary.fields.vendorPayee} value={expense.vendor_payee} />
+                  <InfoItem label={dictionary.fields.voucherNumber} value={expense.voucher_number} />
                 </div>
               </CardContent>
             </Card>
@@ -120,6 +130,18 @@ const FinanceExpenseDetailModal = ({ open, expenseId, locale, baseCurrency, dict
               <CardContent>
                 <Typography variant='h6' className='mb-3'>{dictionary.fields.details}</Typography>
                 <Typography className='whitespace-pre-wrap'>{expense.details}</Typography>
+              </CardContent>
+            </Card>
+
+            <Card variant='outlined'>
+              <CardContent>
+                <Typography variant='h6' className='mb-3'>{dictionary.detail.approval}</Typography>
+                <div className='grid grid-cols-1 gap-4 sm:grid-cols-3'>
+                  <InfoItem label={dictionary.fields.approvedBy} value={expense.approved_by?.full_name} />
+                  <InfoItem label={dictionary.fields.processedBy} value={expense.processed_by?.full_name} />
+                  <InfoItem label={dictionary.fields.paidAt} value={toDateInputValue(expense.paid_at)} />
+                </div>
+                {expense.rejection_reason && <Typography color='error' className='mt-3 whitespace-pre-wrap'>{expense.rejection_reason}</Typography>}
               </CardContent>
             </Card>
 

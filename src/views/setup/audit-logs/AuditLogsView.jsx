@@ -3,8 +3,10 @@
 import { useCallback, useEffect, useState } from 'react'
 
 import Alert from '@mui/material/Alert'
+import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
+import Checkbox from '@mui/material/Checkbox'
 import Chip from '@mui/material/Chip'
 import IconButton from '@mui/material/IconButton'
 import Tooltip from '@mui/material/Tooltip'
@@ -12,12 +14,13 @@ import Typography from '@mui/material/Typography'
 import { toast } from 'sonner'
 
 import CustomTextField from '@core/components/mui/TextField'
-import { deleteAuditLog, getAuditLogsPage } from '@/actions/notifications'
+import { deleteAuditLogs, getAuditLogsPage } from '@/actions/notifications'
 import ConfirmDeleteModal from '@/components/dialogs/ConfirmDeleteModal'
 import DashboardTablePagination from '@/components/table/DashboardTablePagination'
 import TableEmptyStateRow from '@/components/table/TableEmptyStateRow'
 import TableSkeletonRows from '@/components/table/TableSkeletonRows'
 import ResponsiveDataTable from '@/components/tables/ResponsiveDataTable'
+import { formatAfghanDateTime } from '@/utils/afghanDate'
 
 import tableStyles from '@core/styles/table.module.css'
 
@@ -34,6 +37,7 @@ const AuditLogsView = ({ initialResult, initialError, locale, dictionary }) => {
   const [loading, setLoading] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [deleting, setDeleting] = useState(false)
+  const [selectedIds, setSelectedIds] = useState(new Set())
 
   const loadLogs = useCallback(async () => {
     setLoading(true)
@@ -50,6 +54,7 @@ const AuditLogsView = ({ initialResult, initialError, locale, dictionary }) => {
       setLogs(result.data.logs)
       setTotalCount(result.data.totalCount)
       setCanDelete(result.data.canDelete)
+      setSelectedIds(new Set())
     } catch {
       toast.error(dictionary.loadFailed)
     } finally {
@@ -70,12 +75,13 @@ const AuditLogsView = ({ initialResult, initialError, locale, dictionary }) => {
     void loadLogs()
   }, [loadLogs])
 
-  const removeLog = async () => {
+  const removeLogs = async () => {
     if (!deleteTarget) return
     setDeleting(true)
 
     try {
-      const result = await deleteAuditLog(deleteTarget.id)
+      const ids = deleteTarget.ids || [deleteTarget.id]
+      const result = await deleteAuditLogs(ids)
 
       if (!result.success) {
         toast.error(result.error || dictionary.deleteFailed)
@@ -84,9 +90,10 @@ const AuditLogsView = ({ initialResult, initialError, locale, dictionary }) => {
       }
 
       setDeleteTarget(null)
+      setSelectedIds(new Set())
       toast.success(dictionary.deleteSuccess)
 
-      if (logs.length === 1 && page > 0) setPage(current => current - 1)
+      if (logs.length <= ids.length && page > 0) setPage(current => current - 1)
       else await loadLogs()
     } catch {
       toast.error(dictionary.deleteFailed)
@@ -95,8 +102,7 @@ const AuditLogsView = ({ initialResult, initialError, locale, dictionary }) => {
     }
   }
 
-  const formatDate = timestamp =>
-    new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(timestamp))
+  const formatDate = timestamp => formatAfghanDateTime(timestamp, locale, { dateStyle: 'medium' })
 
   const categoryBadge = item => (
     <Chip size='small' variant='tonal' color={CATEGORY_COLORS[item.category] || 'secondary'} label={item.category} />
@@ -116,11 +122,43 @@ const AuditLogsView = ({ initialResult, initialError, locale, dictionary }) => {
       </Tooltip>
     ) : null
 
+  const mobileActions = item => canDelete ? (
+    <div className='flex items-center gap-1'>
+      <Checkbox size='small' checked={selectedIds.has(item.id)} onChange={() => toggleOne(item.id)} inputProps={{ 'aria-label': `${dictionary.action}: ${item.action}` }} />
+      {deleteButton(item)}
+    </div>
+  ) : null
+
+  const allPageSelected = logs.length > 0 && logs.every(item => selectedIds.has(item.id))
+  const somePageSelected = logs.some(item => selectedIds.has(item.id)) && !allPageSelected
+
+  const toggleAll = () => {
+    setSelectedIds(current => {
+      const next = new Set(current)
+
+      if (allPageSelected) logs.forEach(item => next.delete(item.id))
+      else logs.forEach(item => next.add(item.id))
+
+      return next
+    })
+  }
+
+  const toggleOne = id => {
+    setSelectedIds(current => {
+      const next = new Set(current)
+
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+
+      return next
+    })
+  }
+
   return (
     <div className='flex flex-col gap-4'>
       {initialError && <Alert severity='error'>{initialError}</Alert>}
       <Card className='border border-divider/70 shadow-sm'>
-        <CardContent>
+        <CardContent className='flex flex-wrap items-center justify-between gap-3'>
           <CustomTextField
             value={searchInput}
             onChange={event => setSearchInput(event.target.value)}
@@ -128,6 +166,16 @@ const AuditLogsView = ({ initialResult, initialError, locale, dictionary }) => {
             className='is-full sm:is-[360px]'
             slotProps={{ input: { startAdornment: <i className='tabler-search text-textSecondary' /> } }}
           />
+          {canDelete && selectedIds.size > 0 && (
+            <Button
+              color='error'
+              variant='tonal'
+              startIcon={<i className='tabler-trash' />}
+              onClick={() => setDeleteTarget({ ids: [...selectedIds], action: `${selectedIds.size} audit logs` })}
+            >
+              {dictionary.deleteSelected || `Delete selected (${selectedIds.size})`}
+            </Button>
+          )}
         </CardContent>
         <ResponsiveDataTable
           mobileRows={logs}
@@ -142,7 +190,7 @@ const AuditLogsView = ({ initialResult, initialError, locale, dictionary }) => {
             </div>
           )}
           renderMobileStatus={categoryBadge}
-          renderMobileActions={deleteButton}
+          renderMobileActions={mobileActions}
           mobileMetadata={[
             { id: 'module', label: dictionary.module, render: item => item.module },
             { id: 'time', label: dictionary.time, render: item => formatDate(item.timestamp) }
@@ -153,6 +201,11 @@ const AuditLogsView = ({ initialResult, initialError, locale, dictionary }) => {
             <table className={tableStyles.table}>
               <thead>
                 <tr>
+                  {canDelete && (
+                    <th className='w-12'>
+                      <Checkbox size='small' checked={allPageSelected} indeterminate={somePageSelected} onChange={toggleAll} inputProps={{ 'aria-label': dictionary.selectAll || 'Select all audit logs on this page' }} />
+                    </th>
+                  )}
                   <th>{dictionary.action}</th>
                   <th>{dictionary.actor}</th>
                   <th>{dictionary.module}</th>
@@ -163,10 +216,10 @@ const AuditLogsView = ({ initialResult, initialError, locale, dictionary }) => {
               </thead>
               <tbody>
                 {loading ? (
-                  <TableSkeletonRows columns={canDelete ? 6 : 5} rows={rowsPerPage} />
+                  <TableSkeletonRows columns={canDelete ? 7 : 5} rows={rowsPerPage} />
                 ) : logs.length === 0 ? (
                   <TableEmptyStateRow
-                    colSpan={canDelete ? 6 : 5}
+                    colSpan={canDelete ? 7 : 5}
                     icon='tabler-history-off'
                     title={dictionary.emptyTitle}
                     description={dictionary.noActivity}
@@ -174,6 +227,11 @@ const AuditLogsView = ({ initialResult, initialError, locale, dictionary }) => {
                 ) : (
                   logs.map(item => (
                     <tr key={item.id}>
+                      {canDelete && (
+                        <td>
+                          <Checkbox size='small' checked={selectedIds.has(item.id)} onChange={() => toggleOne(item.id)} inputProps={{ 'aria-label': `${dictionary.action}: ${item.action}` }} />
+                        </td>
+                      )}
                       <td>
                         <Typography className='font-medium'>{item.action.replaceAll('_', ' ')}</Typography>
                       </td>
@@ -207,11 +265,11 @@ const AuditLogsView = ({ initialResult, initialError, locale, dictionary }) => {
         open={Boolean(deleteTarget)}
         title={dictionary.deleteTitle}
         description={dictionary.deleteDescription}
-        itemName={deleteTarget?.action.replaceAll('_', ' ')}
+        itemName={deleteTarget?.action?.replaceAll('_', ' ')}
         confirmText={dictionary.deleteAction}
         cancelText={dictionary.cancel}
         loading={deleting}
-        onConfirm={removeLog}
+        onConfirm={removeLogs}
         onClose={() => setDeleteTarget(null)}
       />
     </div>

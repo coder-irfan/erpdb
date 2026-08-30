@@ -205,6 +205,8 @@ const LeaveTypeTable = ({ initialResult, initialError, canCreate, canUpdate, can
           )}
           renderMobileActions={renderOptionActions}
           mobileMetadata={[
+            { id: 'allowance', label: 'Yearly allowance', render: option => `${option.allowed_days_per_year ?? 0} days` },
+            { id: 'paid', label: 'Default pay', render: option => option.is_paid_leave ? 'Paid' : 'Unpaid' },
             {
               id: 'created',
               label: dictionary.common.createdDate,
@@ -225,6 +227,8 @@ const LeaveTypeTable = ({ initialResult, initialError, canCreate, canUpdate, can
               <tr>
                 <th>{dictionary.leaveTypes.table.title}</th>
                 <th>{dictionary.leaveTypes.table.description}</th>
+                <th>Yearly allowance</th>
+                <th>Default pay</th>
                 <th>{dictionary.common.status}</th>
                 <th>{dictionary.common.createdDate}</th>
                 <th className='text-end'>{dictionary.common.actions}</th>
@@ -232,10 +236,10 @@ const LeaveTypeTable = ({ initialResult, initialError, canCreate, canUpdate, can
             </thead>
             <tbody>
               {loading ? (
-                <TableSkeletonRows columns={5} />
+                <TableSkeletonRows columns={7} />
               ) : options.length === 0 ? (
                 <TableEmptyStateRow
-                  colSpan={5}
+                  colSpan={7}
                   icon='tabler-calendar-off'
                   title={dictionary.leaveTypes.emptyTitle}
                   description={dictionary.leaveTypes.emptyDescription}
@@ -265,6 +269,10 @@ const LeaveTypeTable = ({ initialResult, initialError, canCreate, canUpdate, can
                       >
                         {option.description || dictionary.common.noDescription}
                       </Typography>
+                    </td>
+                    <td>{option.allowed_days_per_year ?? 0} days</td>
+                    <td>
+                      <Chip size='small' variant='tonal' color={option.is_paid_leave ? 'success' : 'warning'} label={option.is_paid_leave ? 'Paid' : 'Unpaid'} />
                     </td>
                     <td>
                       <Chip

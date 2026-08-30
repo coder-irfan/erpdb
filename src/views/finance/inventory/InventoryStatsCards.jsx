@@ -9,28 +9,21 @@ import { formatCurrency } from '@/utils/formatCurrency'
 const InventoryStatsCards = ({ summary, locale, dictionary }) => {
   const cards = [
     {
-      label: dictionary.metrics.totalValue,
-      value: formatCurrency(summary.totalValue, locale, 'USD'),
+      label: 'Total Inventory Value',
+      value: formatCurrency(summary.totalValue, locale, 'AFN'),
       hint: dictionary.metrics.usdHint,
       icon: 'tabler-report-money',
       tone: 'bg-primaryLighter text-primary'
     },
     {
-      label: dictionary.metrics.totalItems,
-      value: summary.totalItems,
-      hint: dictionary.metrics.itemsHint,
-      icon: 'tabler-packages',
-      tone: 'bg-infoLighter text-info'
-    },
-    {
-      label: dictionary.metrics.lowStock,
+      label: 'Low Stock Alerts Count',
       value: summary.lowStock,
       hint: dictionary.metrics.lowStockHint,
       icon: 'tabler-alert-triangle',
       tone: 'bg-secondaryLighter text-warning'
     },
     {
-      label: dictionary.metrics.outOfStock,
+      label: 'Out of Stock Count',
       value: summary.outOfStock,
       hint: dictionary.metrics.outOfStockHint,
       icon: 'tabler-package-off',
@@ -39,7 +32,7 @@ const InventoryStatsCards = ({ summary, locale, dictionary }) => {
   ]
 
   return (
-    <div className='no-scrollbar flex w-full snap-x items-center gap-4 overflow-x-auto xl:grid xl:grid-cols-4 xl:overflow-visible pb-3 md:pb-0'>
+    <div className='no-scrollbar flex w-full snap-x items-center gap-4 overflow-x-auto xl:grid xl:grid-cols-3 xl:overflow-visible pb-3 md:pb-0'>
       {cards.map(card => (
         <Card key={card.label} className='min-w-[265px] snap-start xl:min-w-0 border border-divider/70 shadow-sm'>
           <CardContent className='flex items-center justify-between gap-4'>

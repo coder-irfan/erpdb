@@ -24,10 +24,10 @@ const ProjectStatsCards = ({ summary, locale, currency, dictionary }) => {
     },
     {
       title: dictionary.metrics.hours,
-      value: `${summary.actualHours} / ${summary.estimatedHours}`,
+      value: `${Number(summary.actualHours || 0).toFixed(2)} / ${Number(summary.estimatedHours || 0).toFixed(2)}h`,
       hint: dictionary.metrics.hoursHint
-        .replace('{actual}', summary.actualHours)
-        .replace('{estimated}', summary.estimatedHours),
+        .replace('{actual}', Number(summary.actualHours || 0).toFixed(2))
+        .replace('{estimated}', Number(summary.estimatedHours || 0).toFixed(2)),
       icon: 'tabler-clock-hour-4',
       iconClass: 'bg-infoLighter text-info'
     },

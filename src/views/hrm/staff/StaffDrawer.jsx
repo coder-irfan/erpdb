@@ -16,6 +16,7 @@ import { toast } from 'sonner'
 
 import CustomTextField from '@core/components/mui/TextField'
 import LoadingButtonContent from '@/components/LoadingButtonContent'
+import LocalizedDateTimePicker from '@/components/inputs/LocalizedDateTimePicker'
 import { createStaff, updateStaff } from '@/actions/hrm/staff'
 import { getOptionsByCategory } from '@/actions/options'
 import { createStaffSchema, STAFF_STATUSES } from '@/schemas/hrm/staff'
@@ -264,7 +265,7 @@ const StaffDrawer = ({ open, staff, users, locale, dictionary, baseCurrency, onC
                 </CustomTextField>
               )}
             />
-            <CustomTextField fullWidth type='date' label={dictionary.fields.joinDate} {...fieldProps('join_date')} />
+            <LocalizedDateTimePicker fullWidth locale={locale} label={dictionary.fields.joinDate} {...fieldProps('join_date')} />
             <CustomTextField fullWidth label={dictionary.fields.contractPeriod} {...fieldProps('contract_period')} />
             <Controller
               name='status'

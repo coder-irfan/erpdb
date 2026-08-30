@@ -10,8 +10,8 @@ import CardContent from '@mui/material/CardContent'
 import Drawer from '@mui/material/Drawer'
 import IconButton from '@mui/material/IconButton'
 import MenuItem from '@mui/material/MenuItem'
-import ToggleButton from '@mui/material/ToggleButton'
-import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
+import FormControlLabel from '@mui/material/FormControlLabel'
+import Switch from '@mui/material/Switch'
 import Typography from '@mui/material/Typography'
 import { Controller, useForm, useWatch } from 'react-hook-form'
 import { toast } from 'sonner'
@@ -21,20 +21,28 @@ import LoadingButtonContent from '@/components/LoadingButtonContent'
 import { createFinanceLoanSchema } from '@/schemas/financeLoan'
 import { toDateInputValue } from '@/utils/contractDuration'
 import { convertToBaseCurrency, formatCurrency, toFiniteNumber } from '@/utils/formatCurrency'
+import { calculateAmortizationSchedule } from '@/utils/loanCalculations'
+import DualCurrencyAmount from '@/components/currency/DualCurrencyAmount'
 
-const emptyValues = options => ({
-  loan_type: 'STAFF',
+const emptyValues = (options, loanType = 'STAFF') => ({
+  loan_type: loanType,
   staff_id: '',
   entity_name: '',
+  lender_type: 'BANK',
   total_amount: '',
   monthly_deduction: '',
   currency: options.baseCurrency || 'AFN',
   exchange_rate: String(options.exchangeRate || '65'),
   issue_date: toDateInputValue(new Date()),
+  repayment_start_date: toDateInputValue(new Date()),
+  auto_deduct: true,
+  annual_interest_rate: '0',
+  tenure_months: '12',
+  disbursement_bank_account: '',
   reason: ''
 })
 
-const FinanceLoanFormDrawer = ({ open, options, locale, dictionary, onClose, onSaved }) => {
+const FinanceLoanFormDrawer = ({ open, initialLoanType = 'STAFF', options, locale, dictionary, onClose, onSaved }) => {
   const {
     control,
     handleSubmit,
@@ -42,22 +50,30 @@ const FinanceLoanFormDrawer = ({ open, options, locale, dictionary, onClose, onS
     formState: { errors, isSubmitting }
   } = useForm({
     resolver: valibotResolver(createFinanceLoanSchema(dictionary.validation)),
-    defaultValues: emptyValues(options)
+    defaultValues: emptyValues(options, initialLoanType)
   })
 
   const loanType = useWatch({ control, name: 'loan_type' })
   const totalAmount = useWatch({ control, name: 'total_amount' })
   const currency = useWatch({ control, name: 'currency' })
   const exchangeRate = useWatch({ control, name: 'exchange_rate' })
+  const interestRate = useWatch({ control, name: 'annual_interest_rate' })
+  const tenureMonths = useWatch({ control, name: 'tenure_months' })
+  const issueDate = useWatch({ control, name: 'issue_date' })
 
   const amountBase = useMemo(
-    () => convertToBaseCurrency(totalAmount, currency, exchangeRate, 'USD'),
+    () => convertToBaseCurrency(totalAmount, currency, exchangeRate, 'AFN'),
     [currency, exchangeRate, totalAmount]
   )
 
+  const amortization = useMemo(
+    () => calculateAmortizationSchedule({ principal: totalAmount, annualInterestRate: interestRate, tenureMonths, issueDate }),
+    [interestRate, issueDate, tenureMonths, totalAmount]
+  )
+
   useEffect(() => {
-    if (open) reset(emptyValues(options))
-  }, [open, options, reset])
+    if (open) reset(emptyValues(options, initialLoanType))
+  }, [initialLoanType, open, options, reset])
 
   const submit = async values => {
     const response = await fetch('/api/finance/loans', {
@@ -109,33 +125,10 @@ const FinanceLoanFormDrawer = ({ open, options, locale, dictionary, onClose, onS
         </IconButton>
       </div>
       <form className='flex flex-1 flex-col gap-5 overflow-y-auto p-5' onSubmit={handleSubmit(submit)} noValidate>
-        <Controller
-          name='loan_type'
-          control={control}
-          render={({ field }) => (
-            <ToggleButtonGroup
-              exclusive
-              fullWidth
-              value={field.value}
-              onChange={(_, value) => {
-                if (value) field.onChange(value)
-              }}
-            >
-              <ToggleButton value='STAFF'>
-                <i className='tabler-user mie-2' />
-                {dictionary.types.STAFF}
-              </ToggleButton>
-              <ToggleButton value='EXTERNAL'>
-                <i className='tabler-building mie-2' />
-                {dictionary.types.EXTERNAL}
-              </ToggleButton>
-              <ToggleButton value='BANK'>
-                <i className='tabler-building-bank mie-2' />
-                {dictionary.types.BANK}
-              </ToggleButton>
-            </ToggleButtonGroup>
-          )}
-        />
+        <div className='rounded border border-primary/30 bg-primaryLighter p-4'>
+          <Typography variant='h6'>{loanType === 'STAFF' ? 'Staff Loan & Salary Advance' : 'Corporate Debt & Liability'}</Typography>
+          <Typography variant='body2' color='text.secondary'>{loanType === 'STAFF' ? 'Company → employee receivable' : 'Lender → company payable'}</Typography>
+        </div>
         {loanType === 'STAFF' ? (
           <Controller
             name='staff_id'
@@ -159,14 +152,20 @@ const FinanceLoanFormDrawer = ({ open, options, locale, dictionary, onClose, onS
             )}
           />
         ) : (
-          field('entity_name', dictionary.fields.entity)
+          <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
+            {field('entity_name', 'Lender Name / Entity')}
+            <Controller name='lender_type' control={control} render={({ field }) => (
+              <CustomTextField {...field} select label='Lender Type'>
+                <MenuItem value='BANK'>Bank</MenuItem>
+                <MenuItem value='EXTERNAL_BUSINESS'>External Business</MenuItem>
+                <MenuItem value='OWNER'>Director / Owner Loan</MenuItem>
+              </CustomTextField>
+            )} />
+          </div>
         )}
         <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
           {field('total_amount', dictionary.fields.total, { type: 'number', inputProps: { min: 0.01, step: '0.01' } })}
-          {field('monthly_deduction', dictionary.fields.monthly, {
-            type: 'number',
-            inputProps: { min: 0.01, step: '0.01' }
-          })}
+          {loanType === 'STAFF' && field('monthly_deduction', dictionary.fields.monthly, { type: 'number', inputProps: { min: 0.01, step: '0.01' } })}
           <Controller
             name='currency'
             control={control}
@@ -185,7 +184,17 @@ const FinanceLoanFormDrawer = ({ open, options, locale, dictionary, onClose, onS
             type: 'date',
             slotProps: { inputLabel: { shrink: true } }
           })}
+          {loanType === 'STAFF' ? field('repayment_start_date', 'Repayment Start Date', { type: 'date', slotProps: { inputLabel: { shrink: true } } }) : (
+            <>
+              {field('annual_interest_rate', 'Annual Interest Rate (%)', { type: 'number', inputProps: { min: 0, step: '0.0001' } })}
+              {field('tenure_months', 'Tenure (Months)', { type: 'number', inputProps: { min: 1, step: 1 } })}
+              {field('disbursement_bank_account', 'Disbursement Bank Account')}
+            </>
+          )}
         </div>
+        {loanType === 'STAFF' && <Controller name='auto_deduct' control={control} render={({ field }) => (
+          <FormControlLabel control={<Switch checked={field.value} onChange={event => field.onChange(event.target.checked)} />} label='Auto-Deduct from Payslip' />
+        )} />}
         {field('reason', dictionary.fields.reason, { multiline: true, minRows: 3 })}
         <Card variant='outlined'>
           <CardContent>
@@ -203,15 +212,21 @@ const FinanceLoanFormDrawer = ({ open, options, locale, dictionary, onClose, onS
               </div>
               <div>
                 <Typography variant='caption' color='text.secondary'>
-                  {dictionary.fields.amountBase}
+                  AFN Base Amount / USD Equivalent
                 </Typography>
                 <Typography className='font-semibold text-primary'>
-                  {formatCurrency(amountBase, locale, 'USD')}
+                  <DualCurrencyAmount amount={totalAmount} amountBase={amountBase} currency={currency} exchangeRate={exchangeRate} locale={locale} />
                 </Typography>
               </div>
             </div>
           </CardContent>
         </Card>
+        {loanType === 'CORPORATE' && amortization.length > 0 && (
+          <Card variant='outlined'><CardContent>
+            <Typography variant='h6' className='mb-3'>Calculated Amortization Schedule</Typography>
+            <div className='max-h-72 overflow-auto'><table className='w-full text-sm'><thead><tr><th className='p-2 text-start'>#</th><th className='p-2 text-start'>Due</th><th className='p-2 text-end'>Principal</th><th className='p-2 text-end'>Interest</th><th className='p-2 text-end'>Payment</th><th className='p-2 text-end'>Balance</th></tr></thead><tbody>{amortization.map(row => <tr key={row.installment_number} className='border-bs border-divider'><td className='p-2'>{row.installment_number}</td><td className='p-2'>{toDateInputValue(row.due_date)}</td><td className='p-2 text-end'>{formatCurrency(row.principal_amount, locale, currency)}</td><td className='p-2 text-end'>{formatCurrency(row.interest_amount, locale, currency)}</td><td className='p-2 text-end font-semibold'>{formatCurrency(row.payment_amount, locale, currency)}</td><td className='p-2 text-end'>{formatCurrency(row.remaining_principal, locale, currency)}</td></tr>)}</tbody></table></div>
+          </CardContent></Card>
+        )}
         <div className='mt-auto flex justify-end gap-3'>
           <Button variant='tonal' color='secondary' disabled={isSubmitting} onClick={onClose}>
             {dictionary.actions.cancel}

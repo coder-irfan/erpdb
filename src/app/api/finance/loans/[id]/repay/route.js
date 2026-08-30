@@ -7,6 +7,7 @@ import { applyLoanRepayment, getLoanSetup, LoanLedgerError, LOAN_WRITE_PERMISSIO
 import { prisma } from '@/libs/prisma'
 import { repayFinanceLoanSchema } from '@/schemas/financeLoan'
 import { toUtcDateOnly } from '@/utils/contractDuration'
+import { SYSTEM_BASE_CURRENCY, effectiveAfnExchangeRate } from '@/utils/formatCurrency'
 
 const localeFrom = value => (['en', 'fa', 'ps'].includes(value) ? value : 'en')
 const errorResponse = (error, status, code) => Response.json({ success: false, error, code }, { status })
@@ -39,6 +40,7 @@ export async function PATCH(request, routeContext) {
 
   try {
     const setup = await getLoanSetup()
+    const executionTimestamp = new Date()
 
     const result = await prisma.$transaction(async transaction => {
       const source =
@@ -53,10 +55,12 @@ export async function PATCH(request, routeContext) {
         referenceId: validation.output.reference_id || null,
         createdByUserId: authorization.session.user.id,
         notes: validation.output.notes,
-        baseCurrency: setup.currency_code || 'AFN'
+        baseCurrency: SYSTEM_BASE_CURRENCY,
+        fxSnapshotRate: effectiveAfnExchangeRate('USD', setup.usd_afn_exchange_rate),
+        fxSnapshotAt: executionTimestamp
       })
 
-      await transaction.auditlog.create({ data: { user_id: authorization.session.user.id, action: 'FINANCE_LOAN_REPAYMENT_RECORDED', module: 'FINANCE', details: { loanId: id, repaymentId: applied.repayment.id, appliedAmount: applied.appliedAmount, source, referenceId: validation.output.reference_id || null, executedByUserId: authorization.session.user.id } } })
+      await transaction.auditlog.create({ data: { user_id: authorization.session.user.id, action: 'FINANCE_LOAN_REPAYMENT_RECORDED', module: 'FINANCE', details: { loanId: id, repaymentId: applied.repayment.id, appliedAmount: applied.appliedAmount, amountBaseAfn: applied.repayment.amount_base.toString(), fxRate: applied.repayment.exchange_rate.toString(), fxSnapshotAt: executionTimestamp.toISOString(), source, referenceId: validation.output.reference_id || null, executedByUserId: authorization.session.user.id } } })
 
       return applied
     }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable })

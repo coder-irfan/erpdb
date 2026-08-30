@@ -16,7 +16,9 @@ import { toast } from 'sonner'
 import CustomTextField from '@core/components/mui/TextField'
 import { logTaskHours } from '@/actions/tasks'
 import LoadingButtonContent from '@/components/LoadingButtonContent'
+import LocalizedDateTimePicker from '@/components/inputs/LocalizedDateTimePicker'
 import { logTaskHoursSchema } from '@/schemas/tasks'
+import { toDateInputValue } from '@/utils/contractDuration'
 
 const TaskHoursDialog = ({ open, task, locale, dictionary, onClose, onSaved }) => {
   const {
@@ -24,10 +26,10 @@ const TaskHoursDialog = ({ open, task, locale, dictionary, onClose, onSaved }) =
     handleSubmit,
     reset,
     formState: { errors, isSubmitting }
-  } = useForm({ resolver: valibotResolver(logTaskHoursSchema(dictionary.validation)), defaultValues: { hours: '' } })
+  } = useForm({ resolver: valibotResolver(logTaskHoursSchema(dictionary.validation)), defaultValues: { hours: '', work_date: toDateInputValue(new Date()), notes: '' } })
 
   useEffect(() => {
-    if (open) reset({ hours: '' })
+    if (open) reset({ hours: '', work_date: toDateInputValue(new Date()), notes: '' })
   }, [open, reset])
 
   const submit = async values => {
@@ -40,7 +42,7 @@ const TaskHoursDialog = ({ open, task, locale, dictionary, onClose, onSaved }) =
   }
 
   return (
-    <Dialog open={open} onClose={isSubmitting ? undefined : onClose} fullWidth maxWidth='xs'>
+    <Dialog open={open} onClose={isSubmitting ? undefined : onClose} fullWidth maxWidth='sm'>
       <DialogTitle className='flex items-start justify-between gap-3'>
         <div>
           <Typography variant='h5'>{dictionary.hours.title}</Typography>
@@ -65,6 +67,35 @@ const TaskHoursDialog = ({ open, task, locale, dictionary, onClose, onSaved }) =
               error={Boolean(errors.hours)}
               helperText={errors.hours?.message}
               inputProps={{ min: 0.01, step: '0.25' }}
+            />
+          )}
+        />
+        <Controller
+          name='work_date'
+          control={control}
+          render={({ field }) => (
+            <LocalizedDateTimePicker
+              {...field}
+              locale={locale}
+              label={dictionary.fields.workDate}
+              error={Boolean(errors.work_date)}
+              helperText={errors.work_date?.message}
+              inputProps={{ min: toDateInputValue(task?.created_at), max: toDateInputValue(new Date()) }}
+              slotProps={{ inputLabel: { shrink: true } }}
+            />
+          )}
+        />
+        <Controller
+          name='notes'
+          control={control}
+          render={({ field }) => (
+            <CustomTextField
+              {...field}
+              multiline
+              minRows={3}
+              label={dictionary.fields.workNotes}
+              error={Boolean(errors.notes)}
+              helperText={errors.notes?.message || dictionary.hours.notesOptional}
             />
           )}
         />

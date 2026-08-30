@@ -9,7 +9,6 @@ import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import Chip from '@mui/material/Chip'
-import CircularProgress from '@mui/material/CircularProgress'
 import Dialog from '@mui/material/Dialog'
 import DialogContent from '@mui/material/DialogContent'
 import DialogTitle from '@mui/material/DialogTitle'
@@ -21,7 +20,9 @@ import Typography from '@mui/material/Typography'
 
 import { getStaffById } from '@/actions/hrm/staff'
 import QuickContact from '@/components/common/QuickContact'
+import DualCurrencyAmount from '@/components/currency/DualCurrencyAmount'
 import UserAvatar from '@/components/common/UserAvatar'
+import DetailSkeleton from '@/components/dialogs/DetailSkeleton'
 import TableEmptyStateRow from '@/components/table/TableEmptyStateRow'
 import { formatCurrency } from '@/utils/formatCurrency'
 
@@ -87,9 +88,7 @@ const StaffDetailModal = ({ open, staffId, locale, dictionary, onClose }) => {
     }
   }, [dictionary.messages.loadFailed, locale, open, staffId])
 
-  const closeModal = () => {
-    if (!loading) onClose()
-  }
+  const closeModal = () => onClose()
 
   return (
     <Dialog open={open} onClose={closeModal} fullWidth maxWidth='md'>
@@ -98,15 +97,13 @@ const StaffDetailModal = ({ open, staffId, locale, dictionary, onClose }) => {
           <Typography variant='h5'>{dictionary.details.title}</Typography>
           <Typography color='text.secondary'>{dictionary.details.description}</Typography>
         </div>
-        <IconButton onClick={closeModal} disabled={loading} aria-label={dictionary.actions.close}>
+        <IconButton onClick={closeModal} aria-label={dictionary.actions.close}>
           <i className='tabler-x' />
         </IconButton>
       </DialogTitle>
       <DialogContent dividers>
         {loading ? (
-          <div className='flex min-bs-[320px] items-center justify-center'>
-            <CircularProgress />
-          </div>
+          <DetailSkeleton />
         ) : error ? (
           <Alert severity='error'>{error}</Alert>
         ) : staff ? (
@@ -175,7 +172,7 @@ const StaffDetailModal = ({ open, staffId, locale, dictionary, onClose }) => {
                     <DetailItem label={dictionary.fields.position} value={staff.position} />
                     <DetailItem
                       label={dictionary.fields.salary}
-                      value={formatCurrency(staff.salary, locale, staff.salary_currency)}
+                      value={<DualCurrencyAmount amount={staff.salary} amountBase={staff.amount_base} currency={staff.salary_currency} exchangeRate={staff.salary_exchange_rate} locale={locale} />}
                     />
                     <DetailItem label={dictionary.fields.joinDate} value={formatDate(staff.join_date, locale)} />
                     <DetailItem label={dictionary.fields.contractPeriod} value={staff.contract_period} />
@@ -230,7 +227,7 @@ const StaffDetailModal = ({ open, staffId, locale, dictionary, onClose }) => {
                         {`${formatDate(contract.start_date, locale)} — ${formatDate(contract.end_date, locale)}`}
                       </Typography>
                       <Typography className='font-medium'>
-                        {formatCurrency(contract.base_salary, locale, contract.currency)}
+                        <DualCurrencyAmount amount={contract.base_salary} amountBase={contract.amount_base} currency={contract.currency} exchangeRate={contract.exchange_rate} locale={locale} />
                       </Typography>
                       <Link
                         href={`/${locale}/hrm/contracts/${contract.id}/print`}

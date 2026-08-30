@@ -25,7 +25,8 @@ const FILE_EXTENSIONS = {
   'image/png': 'png',
   'image/svg+xml': 'svg',
   'image/x-icon': 'ico',
-  'image/webp': 'webp'
+  'image/webp': 'webp',
+  'application/pdf': 'pdf'
 }
 
 const MIME_ALIASES = {
@@ -44,6 +45,7 @@ const EXTENSION_MIME_TYPES = {
   '.jpeg': 'image/jpeg',
   '.jpg': 'image/jpeg',
   '.png': 'image/png',
+  '.pdf': 'application/pdf',
   '.svg': 'image/svg+xml',
   '.webp': 'image/webp'
 }
@@ -229,6 +231,12 @@ const UPLOAD_POLICIES = {
     maxSizeMB: MAX_GENERAL_UPLOAD_SIZE_MB,
     permissions: GENERAL_UPLOAD_PERMISSIONS
   },
+  expenseReceipt: {
+    allowedMimeTypes: [...IMAGE_MIME_TYPES, 'application/pdf'],
+    directory: 'expense-receipts',
+    maxSizeMB: 4,
+    permissions: ['finance:write', 'finance_expense:write']
+  },
   logo: {
     allowedMimeTypes: IMAGE_MIME_TYPES,
     directory: 'logos',
@@ -240,6 +248,12 @@ const UPLOAD_POLICIES = {
     directory: 'profiles',
     maxSizeMB: MAX_GENERAL_UPLOAD_SIZE_MB,
     permissions: []
+  },
+  taskAttachment: {
+    allowedMimeTypes: [...IMAGE_MIME_TYPES, 'application/pdf'],
+    directory: 'task-attachments',
+    maxSizeMB: 4,
+    permissions: ['tasks:write', 'tasks:read_assigned']
   }
 }
 
@@ -323,6 +337,7 @@ const prepareFileBuffer = (buffer, mimeTypeValue) => {
   if (mimeTypeValue === 'image/webp' && isWebp(buffer)) return buffer
   if (mimeTypeValue === 'image/x-icon' && isIcon(buffer)) return buffer
   if (mimeTypeValue === 'image/svg+xml') return sanitizeSvg(buffer)
+  if (mimeTypeValue === 'application/pdf' && buffer.length >= 5 && buffer.subarray(0, 5).toString('ascii') === '%PDF-') return buffer
 
   return null
 }

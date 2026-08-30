@@ -1,4 +1,8 @@
 const hasSuperAdminRole = session => session?.user?.roles?.includes('super_admin') === true
+const PAYROLL_PAYOUT_ROLES = new Set(['super_admin', 'admin', 'finance_manager'])
+
+export const hasPayrollPayoutRole = session =>
+  (session?.user?.roles || []).some(role => PAYROLL_PAYOUT_ROLES.has(String(role).toLowerCase()))
 
 const permissionAliases = {
   'finance_salary:read': ['hrm_payroll:read'],

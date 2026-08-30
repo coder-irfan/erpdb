@@ -2,15 +2,18 @@ import { Prisma } from '@prisma/client'
 import { safeParse } from 'valibot'
 
 import { authorizeAction } from '@/libs/actionAuthorization'
+import { activeStaffContractRelation } from '@/libs/hrmContractAccess'
 import {
   LEAVE_WRITE_PERMISSIONS,
-  calculateLeaveDays,
+  calculateLeaveWorkingDays,
   createLeaveAttendance,
+  getHolidayDateKeys,
   getCurrentStaff,
   hasOverlappingLeave,
   leaveSelect,
   normalizeLeave,
-  parseLeaveDate
+  parseLeaveDate,
+  validateLeaveEntitlement
 } from '@/libs/hrmLeaves'
 import { prisma } from '@/libs/prisma'
 import { createLeaveSchema } from '@/schemas/hrm/leaves'
@@ -87,7 +90,7 @@ export async function GET(request) {
   const scopeWhere = context.canManage ? {} : { staff_id: context.staff.id }
 
   try {
-    const [leaves, totalCount, statuses, leaveTypes, staffOptions, pendingCount, todayLeaves, approvedMonth] =
+    const [leaves, totalCount, statuses, leaveTypes, staffOptions, holidays, pendingCount, todayLeaves, approvedMonth] =
       await Promise.all([
         prisma.hrmstaffleave.findMany({
           where,
@@ -98,12 +101,15 @@ export async function GET(request) {
         }),
         prisma.hrmstaffleave.count({ where }),
         prisma.option.findMany({ where: { category: 'LEAVE_STATUS', is_active: true }, select: { id: true, label: true, value: true }, orderBy: { sort_order: 'asc' } }),
-        prisma.option.findMany({ where: { category: 'LEAVE_TYPE', is_active: true }, select: { id: true, label: true, value: true }, orderBy: { sort_order: 'asc' } }),
+        prisma.option.findMany({ where: { category: 'LEAVE_TYPE', is_active: true }, select: { id: true, label: true, value: true, is_paid_leave: true, allowed_days_per_year: true }, orderBy: { sort_order: 'asc' } }),
         prisma.hrmstaff.findMany({
-          where: context.canManage ? { status: { not: 'TERMINATED' } } : { id: context.staff.id },
+          where: context.canManage
+            ? { status: 'ACTIVE', contracts: activeStaffContractRelation({ startDate: todayDate }) }
+            : { id: context.staff.id },
           select: { id: true, first_name: true, last_name: true, position: true },
           orderBy: [{ first_name: 'asc' }, { last_name: 'asc' }]
         }),
+        prisma.companyholiday.findMany({ where: { is_active: true }, select: { date: true }, orderBy: { date: 'asc' } }),
         prisma.hrmstaffleave.count({ where: { ...scopeWhere, status: { is: { value: 'PENDING', category: 'LEAVE_STATUS' } } } }),
         prisma.hrmstaffleave.findMany({ where: { ...scopeWhere, status: { is: { value: 'APPROVED', category: 'LEAVE_STATUS' } }, start_date: { lte: todayDate }, end_date: { gte: todayDate } }, distinct: ['staff_id'], select: { staff_id: true } }),
         prisma.hrmstaffleave.findMany({ where: { ...scopeWhere, status: { is: { value: 'APPROVED', category: 'LEAVE_STATUS' } }, start_date: { lte: monthEnd }, end_date: { gte: monthStart } }, select: { start_date: true, end_date: true, total_days: true } })
@@ -112,11 +118,9 @@ export async function GET(request) {
     const monthlyDays = approvedMonth.reduce((total, leave) => {
       const clippedStart = leave.start_date < monthStart ? monthStart : leave.start_date
       const clippedEnd = leave.end_date > monthEnd ? monthEnd : leave.end_date
+      const holidayDates = holidays.map(item => item.date.toISOString().slice(0, 10))
 
-      const overlapDays = Math.floor((clippedEnd.getTime() - clippedStart.getTime()) / 86_400_000) + 1
-      const fullRangeDays = Math.floor((leave.end_date.getTime() - leave.start_date.getTime()) / 86_400_000) + 1
-
-      return total + Number(leave.total_days) * (overlapDays / fullRangeDays)
+      return total + calculateLeaveWorkingDays(clippedStart, clippedEnd, holidayDates)
     }, 0)
 
     return Response.json({
@@ -128,7 +132,8 @@ export async function GET(request) {
         totalPages: Math.max(1, Math.ceil(totalCount / limit)),
         options: {
           statuses,
-          leaveTypes,
+          leaveTypes: leaveTypes.map(type => ({ ...type, allowed_days_per_year: type.allowed_days_per_year == null ? null : Number(type.allowed_days_per_year) })),
+          holidays: holidays.map(item => item.date.toISOString().slice(0, 10)),
           staff: staffOptions.map(item => ({ ...item, full_name: `${item.first_name} ${item.last_name}`.trim() }))
         },
         summary: { pending: pendingCount, onLeaveToday: todayLeaves.length, monthlyDays },
@@ -163,20 +168,26 @@ export async function POST(request) {
     end_date: payload?.end_date,
     total_days: payload?.total_days == null ? '' : String(payload.total_days),
     status_id: payload?.status_id || '',
+    is_paid: payload?.is_paid ?? true,
     reason: payload?.reason || ''
   })
 
   if (!validation.success) return responseError(validation.issues[0]?.message, 400, 'VALIDATION_ERROR')
 
-  const calendarDays = calculateLeaveDays(validation.output.start_date, validation.output.end_date)
-  const totalDays = validation.output.total_days ? Number(validation.output.total_days) : calendarDays
-
-  if (totalDays < 0.5 || totalDays > calendarDays) return responseError(context.dictionary.validation.dateRangeInvalid, 400, 'INVALID_DATE_RANGE')
-
   try {
     const [staff, leaveType, pendingStatus, selectedStatus] = await Promise.all([
-      prisma.hrmstaff.findFirst({ where: { id: validation.output.staff_id, status: { not: 'TERMINATED' } }, select: { id: true } }),
-      prisma.option.findFirst({ where: { id: validation.output.leave_type_id, category: 'LEAVE_TYPE', is_active: true }, select: { id: true, is_paid_leave: true } }),
+      prisma.hrmstaff.findFirst({
+        where: {
+          id: validation.output.staff_id,
+          status: 'ACTIVE',
+          contracts: activeStaffContractRelation({
+            startDate: parseLeaveDate(validation.output.start_date),
+            endDate: parseLeaveDate(validation.output.end_date)
+          })
+        },
+        select: { id: true }
+      }),
+      prisma.option.findFirst({ where: { id: validation.output.leave_type_id, category: 'LEAVE_TYPE', is_active: true }, select: { id: true, is_paid_leave: true, allowed_days_per_year: true } }),
       prisma.option.findFirst({ where: { category: 'LEAVE_STATUS', value: 'PENDING', is_active: true }, select: { id: true, value: true } }),
       context.canManage && payload?.status_id
         ? prisma.option.findFirst({ where: { id: payload.status_id, category: 'LEAVE_STATUS', value: { in: ['PENDING', 'APPROVED'] }, is_active: true }, select: { id: true, value: true } })
@@ -190,12 +201,17 @@ export async function POST(request) {
     if (!leaveType) return responseError(context.dictionary.messages.leaveTypeNotFound, 404, 'LEAVE_TYPE_NOT_FOUND')
     if (context.canManage && payload?.status_id && !selectedStatus) return responseError(context.dictionary.validation.statusInvalid, 400, 'INVALID_STATUS')
     if (!status) return responseError(context.dictionary.messages.statusNotFound, 409, 'STATUS_NOT_CONFIGURED')
+
     if (isApproved && context.staff?.id === validation.output.staff_id) {
       return responseError(context.dictionary.messages.selfApprovalBlocked, 403, 'SELF_APPROVAL_BLOCKED')
     }
 
     const startDate = parseLeaveDate(validation.output.start_date)
     const endDate = parseLeaveDate(validation.output.end_date)
+    const holidayDates = await getHolidayDateKeys(prisma, startDate, endDate)
+    const totalDays = calculateLeaveWorkingDays(startDate, endDate, holidayDates)
+
+    if (totalDays < 1) return responseError(context.dictionary.validation.dateRangeInvalid, 400, 'INVALID_DATE_RANGE')
 
     const created = await prisma.$transaction(async transaction => {
       const overlap = await hasOverlappingLeave(transaction, {
@@ -211,6 +227,21 @@ export async function POST(request) {
         throw error
       }
 
+      const entitlement = await validateLeaveEntitlement(transaction, {
+        staffId: validation.output.staff_id,
+        leaveTypeId: validation.output.leave_type_id,
+        startDate,
+        endDate
+      })
+
+      if (!entitlement.valid) {
+        const error = new Error(entitlement.code)
+
+        error.code = entitlement.code
+        error.entitlement = entitlement
+        throw error
+      }
+
       const leave = await transaction.hrmstaffleave.create({
         data: {
           staff_id: validation.output.staff_id,
@@ -219,7 +250,7 @@ export async function POST(request) {
           start_date: startDate,
           end_date: endDate,
           total_days: new Prisma.Decimal(totalDays),
-          is_paid: leaveType.is_paid_leave,
+          is_paid: context.canManage ? validation.output.is_paid : leaveType.is_paid_leave,
           reason: validation.output.reason || null,
           approved_by_id: isApproved ? context.staff?.id || null : null,
           approved_by_user_id: isApproved ? context.authorization.session.user.id : null
@@ -239,6 +270,11 @@ export async function POST(request) {
     if (error?.code === 'OVERLAPPING_LEAVE') {
       return responseError(context.dictionary.messages.overlappingLeave, 409, 'OVERLAPPING_LEAVE')
     }
+
+    if (error?.code === 'LEAVE_BALANCE_EXCEEDED') {
+      return responseError(`Requested leave exceeds the remaining yearly balance (${error.entitlement.balance.remaining} days).`, 409, 'LEAVE_BALANCE_EXCEEDED')
+    }
+
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2003') return responseError(context.dictionary.messages.invalidRelations, 409, 'INVALID_RELATIONS')
 
     return responseError(context.dictionary.messages.operationFailed, 500, 'LEAVE_CREATE_FAILED')

@@ -1,5 +1,7 @@
 'use server'
 
+import { randomUUID } from 'node:crypto'
+
 import { revalidatePath } from 'next/cache'
 
 import { Prisma } from '@prisma/client'
@@ -17,7 +19,7 @@ import { prisma } from '@/libs/prisma'
 import { nextSequentialNumber, withSequentialNumberRetry } from '@/libs/sequentialNumbers'
 import { createInvoiceSchema, recordInvoicePaymentSchema } from '@/schemas/invoices'
 import { toUtcDateOnly } from '@/utils/contractDuration'
-import { convertToBaseCurrency, toFiniteNumber } from '@/utils/formatCurrency'
+import { SYSTEM_BASE_CURRENCY, convertToBaseCurrency, effectiveAfnExchangeRate, normalizeToAfn, toFiniteNumber } from '@/utils/formatCurrency'
 import { getDictionary } from '@/utils/getDictionary'
 
 const READ_PERMISSIONS = ['contracts:read', 'finance:read']
@@ -26,6 +28,8 @@ const DELETE_PERMISSIONS = ['contracts:delete', 'finance:delete']
 const DEFAULT_PAGE_SIZE = 10
 const MAX_PAGE_SIZE = 100
 const OUTSTANDING_STATUSES = ['UNPAID', 'PARTIALLY_PAID']
+const SYSTEM_SETTLEMENT_STATUSES = ['PAID', 'PARTIALLY_PAID']
+const MONEY_TOLERANCE = 0.005
 
 const normalizeLocale = locale => (i18n.locales.includes(locale) ? locale : i18n.defaultLocale)
 const normalizeId = value => (typeof value === 'string' ? value.trim() : '')
@@ -80,9 +84,45 @@ const invoiceSelect = {
   },
   status: { select: { id: true, label: true, value: true, color_code: true } },
   payment_incomes: {
-    select: { id: true, created_at: true, pay_details: true, total_amount: true, paid_amount: true, currency: true },
-    orderBy: { created_at: 'desc' }
+    select: {
+      id: true,
+      created_at: true,
+      payment_date: true,
+      payment_method_id: true,
+      notes: true,
+      pay_details: true,
+      total_amount: true,
+      paid_amount: true,
+      currency: true,
+      exchange_rate: true,
+      amount_base: true,
+      fx_snapshot_at: true,
+      payment_method: { select: { id: true, label: true, value: true } }
+    },
+    orderBy: [{ payment_date: 'desc' }, { created_at: 'desc' }]
   }
+}
+
+const parsePaymentDetails = value => {
+  if (!value) return {}
+
+  try {
+    return JSON.parse(value)
+  } catch {
+    return {}
+  }
+}
+
+const normalizePaymentDate = (paymentDate, legacyDate, fallbackDate) => {
+  if (paymentDate) return paymentDate.toISOString()
+
+  if (legacyDate) {
+    const parsed = new Date(`${legacyDate}T00:00:00.000Z`)
+
+    if (!Number.isNaN(parsed.getTime())) return parsed.toISOString()
+  }
+
+  return fallbackDate.toISOString()
 }
 
 const normalizeInvoice = invoice => {
@@ -107,17 +147,32 @@ const normalizeInvoice = invoice => {
       exchange_rate: invoice.contract.exchange_rate.toFixed(4),
       amount_base: invoice.contract.amount_base.toFixed(2)
     },
-    payment_incomes: invoice.payment_incomes.map(payment => ({
-      ...payment,
-      total_amount: payment.total_amount.toFixed(2),
-      paid_amount: payment.paid_amount.toFixed(2),
-      created_at: payment.created_at.toISOString()
-    })),
+    payment_incomes: invoice.payment_incomes.map(payment => {
+      const legacyDetails = parsePaymentDetails(payment.pay_details)
+
+      return {
+        ...payment,
+        total_amount: payment.total_amount.toFixed(2),
+        paid_amount: payment.paid_amount.toFixed(2),
+        exchange_rate: payment.exchange_rate.toFixed(4),
+        amount_base: payment.amount_base.toFixed(2),
+        fx_snapshot_at: payment.fx_snapshot_at?.toISOString() || null,
+        payment_date: normalizePaymentDate(payment.payment_date, legacyDetails.payment_date, payment.created_at),
+        notes: payment.notes || legacyDetails.notes || null,
+        payment_method:
+          payment.payment_method ||
+          (legacyDetails.payment_method
+            ? { id: legacyDetails.payment_method_id || '', label: legacyDetails.payment_method, value: '' }
+            : null),
+        created_at: payment.created_at.toISOString()
+      }
+    }),
     payment_income: invoice.payment_incomes[0]
       ? {
           ...invoice.payment_incomes[0],
           total_amount: invoice.payment_incomes[0].total_amount.toFixed(2),
           paid_amount: invoice.payment_incomes[0].paid_amount.toFixed(2),
+          payment_date: invoice.payment_incomes[0].payment_date?.toISOString() || null,
           created_at: invoice.payment_incomes[0].created_at.toISOString()
         }
       : null
@@ -154,7 +209,7 @@ const prepareInvoiceData = async (values, translations, currentInvoice = null) =
   const [contract, status, setup] = await Promise.all([
     prisma.contract.findUnique({
       where: { id: values.contract_id },
-      select: { id: true, client_id: true }
+      select: { id: true, client_id: true, status: { select: { value: true } } }
     }),
     prisma.option.findFirst({
       where: {
@@ -168,9 +223,14 @@ const prepareInvoiceData = async (values, translations, currentInvoice = null) =
   ])
 
   if (!contract || contract.client_id !== values.client_id) return { success: false, error: translations.validation.invalidContract }
+
+  if (contract.status.value !== 'ACTIVE' && currentInvoice?.contract_id !== contract.id) {
+    return { success: false, error: translations.validation.contractInactive }
+  }
+
   if (!status) return { success: false, error: translations.validation.invalidStatus }
 
-  if (['PAID', 'PARTIALLY_PAID'].includes(status.value)) {
+  if (SYSTEM_SETTLEMENT_STATUSES.includes(status.value) && currentInvoice?.status_id !== status.id) {
     return { success: false, error: translations.validation.paidViaPaymentOnly }
   }
 
@@ -182,10 +242,11 @@ const prepareInvoiceData = async (values, translations, currentInvoice = null) =
   if (amount <= 0 || exchangeRate <= 0) return { success: false, error: translations.validation.amountInvalid }
   if (!issuedDate || !dueDate || dueDate < issuedDate) return { success: false, error: translations.validation.dateRangeInvalid }
 
-  const amountBase = convertToBaseCurrency(amount, values.currency, exchangeRate, setup.currency_code || 'AFN')
+  const amountBase = convertToBaseCurrency(amount, values.currency, exchangeRate, SYSTEM_BASE_CURRENCY)
 
   return {
     success: true,
+    statusValue: status.value,
     data: {
       contract_id: contract.id,
       client_id: contract.client_id,
@@ -237,7 +298,6 @@ export const getInvoices = async (payload = {}) => {
     ]
   }
 
-  const paidWhere = { status: { is: { value: 'PAID' } } }
   const overdueWhere = { due_date: { lt: today }, status: { is: { value: { notIn: ['PAID', 'CANCELLED'] } } } }
   const outstandingWhere = { status: { is: { value: { in: OUTSTANDING_STATUSES } } } }
 
@@ -251,10 +311,22 @@ export const getInvoices = async (payload = {}) => {
         skip: (page - 1) * limit,
         take: limit
       }),
-      prisma.contractinvoice.aggregate({ _sum: { amount_base: true } }),
-      prisma.contractinvoice.aggregate({ where: paidWhere, _sum: { amount_base: true } }),
-      prisma.contractinvoice.aggregate({ where: overdueWhere, _count: { _all: true }, _sum: { amount_base: true } }),
-      prisma.contractinvoice.aggregate({ where: outstandingWhere, _sum: { amount_base: true } }),
+      prisma.contractinvoice.aggregate({
+        where: { status: { is: { value: { not: 'CANCELLED' } } } },
+        _sum: { amount_base: true }
+      }),
+      prisma.financeincome.aggregate({
+        where: { invoice_id: { not: null }, status: 'PAID', invoice: { is: { status: { is: { value: { not: 'CANCELLED' } } } } } },
+        _sum: { amount_base: true }
+      }),
+      prisma.contractinvoice.findMany({
+        where: overdueWhere,
+        select: { remaining_balance: true, currency: true, exchange_rate: true }
+      }),
+      prisma.contractinvoice.findMany({
+        where: outstandingWhere,
+        select: { remaining_balance: true, currency: true, exchange_rate: true }
+      }),
       prisma.setup.findUnique({ where: { scope: 'GLOBAL' }, select: { currency_code: true } }),
       prisma.option.findMany({
         where: { category: 'INVOICE_STATUS', is_active: true },
@@ -263,6 +335,15 @@ export const getInvoices = async (payload = {}) => {
       })
     ])
 
+    const baseCurrency = SYSTEM_BASE_CURRENCY
+
+    const sumRemainingBase = rows =>
+      rows.reduce(
+        (sum, row) =>
+          sum + convertToBaseCurrency(row.remaining_balance, row.currency, row.exchange_rate, baseCurrency),
+        0
+      )
+
     return {
       success: true,
       data: {
@@ -270,14 +351,14 @@ export const getInvoices = async (payload = {}) => {
         totalCount,
         page,
         totalPages: Math.max(1, Math.ceil(totalCount / limit)),
-        baseCurrency: setup?.currency_code || 'AFN',
+        baseCurrency: SYSTEM_BASE_CURRENCY,
         statuses,
         summary: {
           totalInvoiced: toFiniteNumber(totalInvoiced._sum.amount_base),
           paidRevenue: toFiniteNumber(paid._sum.amount_base),
-          overdueCount: overdue._count._all,
-          overdueAmount: toFiniteNumber(overdue._sum.amount_base),
-          outstandingBalance: toFiniteNumber(outstanding._sum.amount_base)
+          overdueCount: overdue.length,
+          overdueAmount: sumRemainingBase(overdue),
+          outstandingBalance: sumRemainingBase(outstanding)
         }
       }
     }
@@ -294,6 +375,11 @@ export const getInvoiceFormOptions = async (payload = {}) => {
   try {
     const [contracts, statuses, paymentMethods, setup] = await Promise.all([
       prisma.contract.findMany({
+        where: {
+          client_id: { not: null },
+          status: { is: { value: 'ACTIVE' } },
+          end_date: { gt: toUtcDateOnly(new Date()) }
+        },
         select: {
           id: true,
           contract_number: true,
@@ -327,7 +413,7 @@ export const getInvoiceFormOptions = async (payload = {}) => {
         clients: [...new Map(contracts.map(contract => [contract.client.id, contract.client])).values()],
         statuses,
         paymentMethods,
-        baseCurrency: setup.currency_code || 'AFN',
+        baseCurrency: SYSTEM_BASE_CURRENCY,
         exchangeRate: setup.usd_afn_exchange_rate || '65.0000'
       }
     }
@@ -412,14 +498,40 @@ export const updateInvoice = async (id, payload = {}) => {
     const current = await prisma.contractinvoice.findUnique({ where: { id: invoiceId }, select: invoiceSelect })
 
     if (!current) return { success: false, code: 'NOT_FOUND', error: context.translations.messages.notFound }
-    if (current.payment_incomes.length > 0 || current.status.value === 'PAID') return { success: false, code: 'PAID_LOCKED', error: context.translations.messages.paidLocked }
 
     const prepared = await prepareInvoiceData(validation.output, context.translations, current)
 
     if (!prepared.success) return { success: false, code: 'VALIDATION_ERROR', error: prepared.error }
 
+    const hasPayments = current.payment_incomes.length > 0
+    const accountingLocked = hasPayments || SYSTEM_SETTLEMENT_STATUSES.includes(current.status.value)
+
+    if (
+      accountingLocked &&
+      (prepared.data.contract_id !== current.contract_id ||
+        prepared.data.client_id !== current.client_id ||
+        prepared.data.currency !== current.currency ||
+        Math.abs(toFiniteNumber(prepared.data.amount) - toFiniteNumber(current.amount)) > MONEY_TOLERANCE ||
+        Math.abs(toFiniteNumber(prepared.data.exchange_rate) - toFiniteNumber(current.exchange_rate)) > 0.00005)
+    ) {
+      return { success: false, code: 'PAYMENT_FIELDS_LOCKED', error: context.translations.messages.paidLocked }
+    }
+
+    const updateData = accountingLocked
+      ? {
+          issued_date: prepared.data.issued_date,
+          due_date: prepared.data.due_date,
+          status_id: current.status_id
+        }
+      : {
+          ...prepared.data,
+          paid_amount: new Prisma.Decimal(0),
+          remaining_balance:
+            prepared.statusValue === 'CANCELLED' ? new Prisma.Decimal(0) : prepared.data.amount
+        }
+
     await prisma.$transaction(async transaction => {
-      await transaction.contractinvoice.update({ where: { id: invoiceId }, data: prepared.data })
+      await transaction.contractinvoice.update({ where: { id: invoiceId }, data: updateData })
       await transaction.auditlog.create({
         data: { user_id: context.session.user.id, action: 'INVOICE_UPDATED', module: 'CONTRACTS', details: { invoiceId, invoiceNumber: current.invoice_number } }
       })
@@ -452,6 +564,9 @@ export const updateInvoiceStatus = async (id, statusId, payload = {}) => {
           id: true,
           invoice_number: true,
           status_id: true,
+          amount: true,
+          paid_amount: true,
+          remaining_balance: true,
           status: { select: { value: true } },
           payment_incomes: { select: { id: true }, take: 1 }
         }
@@ -466,11 +581,17 @@ export const updateInvoiceStatus = async (id, statusId, payload = {}) => {
       return { success: false, code: 'NOT_FOUND', error: context.translations.messages.notFound }
     }
 
-    if (invoice.payment_incomes.length > 0 || invoice.status.value === 'PAID') {
+    const hasPayments = invoice.payment_incomes.length > 0
+
+    if (
+      (hasPayments || SYSTEM_SETTLEMENT_STATUSES.includes(invoice.status.value)) &&
+      nextStatus.value !== 'CANCELLED' &&
+      invoice.status_id !== nextStatus.id
+    ) {
       return { success: false, code: 'PAID_LOCKED', error: context.translations.messages.paidLocked }
     }
 
-    if (['PAID', 'PARTIALLY_PAID'].includes(nextStatus.value)) {
+    if (SYSTEM_SETTLEMENT_STATUSES.includes(nextStatus.value) && invoice.status_id !== nextStatus.id) {
       return { success: false, code: 'PAYMENT_REQUIRED', error: context.translations.messages.paymentRequired }
     }
 
@@ -478,8 +599,17 @@ export const updateInvoiceStatus = async (id, statusId, payload = {}) => {
       return { success: true, message: context.translations.messages.statusUpdated }
     }
 
+    const statusData =
+      nextStatus.value === 'CANCELLED'
+        ? { status_id: nextStatus.id, remaining_balance: new Prisma.Decimal(0) }
+        : {
+            status_id: nextStatus.id,
+            paid_amount: new Prisma.Decimal(0),
+            remaining_balance: invoice.amount
+          }
+
     await prisma.$transaction([
-      prisma.contractinvoice.update({ where: { id: invoice.id }, data: { status_id: nextStatus.id } }),
+      prisma.contractinvoice.update({ where: { id: invoice.id }, data: statusData }),
       prisma.auditlog.create({
         data: {
           user_id: context.session.user.id,
@@ -489,7 +619,10 @@ export const updateInvoiceStatus = async (id, statusId, payload = {}) => {
             invoiceId: invoice.id,
             invoiceNumber: invoice.invoice_number,
             fromStatus: invoice.status.value,
-            toStatus: nextStatus.value
+            toStatus: nextStatus.value,
+            paidAmount: invoice.paid_amount.toString(),
+            voidedOutstanding:
+              nextStatus.value === 'CANCELLED' ? invoice.remaining_balance.toString() : null
           }
         }
       })
@@ -548,15 +681,19 @@ export const recordInvoicePayment = async (id, payload = {}) => {
   if (!invoiceId || !validation.success) return { success: false, code: 'VALIDATION_ERROR', error: validation.issues?.[0]?.message || context.translations.messages.notFound }
 
   try {
-    const [invoice, paymentMethod, incomeType] = await Promise.all([
+    const [invoice, paymentMethod, incomeType, receiver] = await Promise.all([
       prisma.contractinvoice.findUnique({ where: { id: invoiceId }, select: invoiceSelect }),
       prisma.option.findFirst({ where: { id: validation.output.payment_method_id, category: 'PAYMENT_METHOD', is_active: true }, select: { id: true, label: true, value: true } }),
-      prisma.option.findFirst({ where: { category: 'INCOME_TYPE', value: 'CONTRACT_PAYMENT', is_active: true }, select: { id: true } })
+      prisma.option.findFirst({ where: { category: 'INCOME_TYPE', requires_invoice: true, is_active: true }, select: { id: true } }),
+      prisma.hrmstaff.findFirst({
+        where: { user_id: context.session.user.id, status: { not: 'TERMINATED' } },
+        select: { id: true }
+      })
     ])
 
     if (!invoice) return { success: false, code: 'NOT_FOUND', error: context.translations.messages.notFound }
     if (invoice.status.value === 'PAID' || toFiniteNumber(invoice.remaining_balance) <= 0.005) return { success: false, code: 'ALREADY_PAID', error: context.translations.messages.alreadyPaid }
-    if (!paymentMethod || !incomeType) return { success: false, code: 'PAYMENT_OPTIONS_MISSING', error: context.translations.messages.paymentOptionsMissing }
+    if (!paymentMethod || !incomeType || !receiver) return { success: false, code: 'PAYMENT_OPTIONS_MISSING', error: context.translations.messages.paymentOptionsMissing }
 
     const paymentAmount = toFiniteNumber(validation.output.amount)
 
@@ -565,26 +702,39 @@ export const recordInvoicePayment = async (id, payload = {}) => {
     }
 
     const paymentDate = toUtcDateOnly(validation.output.payment_date)
+    const executionTimestamp = new Date()
+    const snapshotRate = toFiniteNumber(invoice.exchange_rate)
+    const paymentBaseAfn = normalizeToAfn(paymentAmount, invoice.currency, snapshotRate)
+
+    const project = await prisma.project.findFirst({
+      where: { contract_id: invoice.contract_id, client_id: invoice.client_id },
+      select: { id: true },
+      orderBy: { created_at: 'desc' }
+    })
 
     const income = await prisma.$transaction(async transaction => {
       const createdIncome = await transaction.financeincome.create({
         data: {
+          receipt_voucher_number: `RCT-${executionTimestamp.getUTCFullYear()}-${randomUUID().replaceAll('-', '').slice(-8).toUpperCase()}`,
           invoice_id: invoice.id,
           client_id: invoice.client_id,
           contract_id: invoice.contract_id,
+          project_id: project?.id || null,
+          received_by_id: receiver.id,
           status: 'PAID',
           name: `${invoice.invoice_number} - ${invoice.contract.title}`,
           pay_details: JSON.stringify({ payment_method_id: paymentMethod.id, payment_method: paymentMethod.label, payment_date: validation.output.payment_date, notes: validation.output.notes || null }),
+          payment_method_id: paymentMethod.id,
+          payment_date: paymentDate,
+          notes: validation.output.notes || null,
           income_type_id: incomeType.id,
           total_amount: new Prisma.Decimal(paymentAmount),
           currency: invoice.currency,
           paid_amount: new Prisma.Decimal(paymentAmount),
           remind_amount: new Prisma.Decimal(0),
-          exchange_rate: invoice.exchange_rate,
-          amount_base: new Prisma.Decimal(
-            (toFiniteNumber(invoice.amount_base) / toFiniteNumber(invoice.amount)) * paymentAmount
-          ),
-          created_at: paymentDate
+          exchange_rate: new Prisma.Decimal(snapshotRate),
+          fx_snapshot_at: executionTimestamp,
+          amount_base: new Prisma.Decimal(paymentBaseAfn)
         }
       })
 
@@ -601,6 +751,9 @@ export const recordInvoicePayment = async (id, payload = {}) => {
             incomeId: createdIncome.id,
             paymentMethod: paymentMethod.value,
             paymentAmount: paymentAmount.toFixed(2),
+            paymentBaseAfn: paymentBaseAfn.toFixed(2),
+            fxRate: snapshotRate.toFixed(4),
+            fxSnapshotAt: executionTimestamp.toISOString(),
             invoiceStatus: settlement.status.value,
             remainingBalance: settlement.remaining_balance.toString()
           }

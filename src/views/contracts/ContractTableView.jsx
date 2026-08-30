@@ -5,13 +5,13 @@ import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
 
 import UserAvatar from '@/components/common/UserAvatar'
+import DualCurrencyAmount from '@/components/currency/DualCurrencyAmount'
 import DashboardTablePagination from '@/components/table/DashboardTablePagination'
 import EntityActionsMenu from '@/components/table/EntityActionsMenu'
 import TableEmptyStateRow from '@/components/table/TableEmptyStateRow'
 import TableSkeletonRows from '@/components/table/TableSkeletonRows'
 import ResponsiveDataTable from '@/components/tables/ResponsiveDataTable'
 import { toDateInputValue } from '@/utils/contractDuration'
-import { formatCurrency } from '@/utils/formatCurrency'
 
 import tableStyles from '@core/styles/table.module.css'
 
@@ -53,13 +53,14 @@ const ContractTableView = ({
 }) => {
   const renderActions = contract => (
     <EntityActionsMenu
+      locale={locale}
       actions={[
         { label: dictionary.actions.view, icon: 'tabler-eye', onClick: () => onView(contract) },
         { label: dictionary.actions.printDocument || 'Print Document', icon: 'tabler-printer', onClick: () => onPrint(contract) },
         canWrite && { label: dictionary.actions.edit, icon: 'tabler-edit', onClick: () => onEdit(contract) },
         canDelete && { label: dictionary.actions.delete, icon: 'tabler-trash', color: 'error', onClick: () => onDelete(contract) }
       ]}
-      statusOptions={canWrite ? data.statuses : []}
+      statusOptions={canWrite ? data.statuses.map(status => ({ ...status, skipConfirmation: status.value === 'TERMINATED' })) : []}
       currentStatus={contract.status_id}
       statusDisabled={statusUpdating === contract.id}
       changeStatusLabel={dictionary.actions.changeStatus}
@@ -122,7 +123,7 @@ const ContractTableView = ({
           {
             id: 'amount',
             label: dictionary.table.amount,
-            render: contract => formatCurrency(contract.total_amount, locale, contract.currency)
+            render: contract => <DualCurrencyAmount amount={contract.total_amount} amountBase={contract.amount_base} currency={contract.currency} exchangeRate={contract.exchange_rate} locale={locale} />
           }
         ]}
         emptyState={{
@@ -222,8 +223,8 @@ const ContractTableView = ({
                       />
                     </div>
                   </td>
-                  <td className='whitespace-nowrap text-end font-semibold'>
-                    {formatCurrency(contract.total_amount, locale, contract.currency)}
+                  <td className='whitespace-nowrap text-end'>
+                    <DualCurrencyAmount amount={contract.total_amount} amountBase={contract.amount_base} currency={contract.currency} exchangeRate={contract.exchange_rate} locale={locale} className='items-end' />
                   </td>
                   <td>
                     <Chip

@@ -7,8 +7,9 @@ import { Prisma } from '@prisma/client'
 import { getCompanySetupRecord } from '@/libs/companySetup'
 import { prisma } from '@/libs/prisma'
 import { nextSequentialNumber } from '@/libs/sequentialNumbers'
-import { convertToBaseCurrency, toFiniteNumber } from '@/utils/formatCurrency'
+import { SYSTEM_BASE_CURRENCY, convertAfnToUsd, convertToBaseCurrency, toFiniteNumber } from '@/utils/formatCurrency'
 import { formatLedgerText } from '@/utils/ledgerDisplay'
+import { calculateStockAfterMovement } from '@/utils/inventoryCalculations'
 
 export const INVENTORY_READ_PERMISSIONS = ['finance:read', 'finance_inventory:read']
 export const INVENTORY_WRITE_PERMISSIONS = ['finance:write', 'finance_inventory:write']
@@ -21,6 +22,12 @@ export const INVENTORY_MOVEMENT_TYPES = [
   'RETURN',
   'TRANSFER_IN',
   'TRANSFER_OUT'
+]
+export const INVENTORY_STOCK_OUT_REASONS = [
+  'ASSIGNED_TO_STAFF',
+  'CLIENT_PROJECT',
+  'INTERNAL_OFFICE_USE',
+  'DAMAGED_LOST_WRITTEN_OFF'
 ]
 
 const IN_MOVEMENT_TYPES = new Set(['OPENING_BALANCE', 'ADDITION', 'RETURN', 'TRANSFER_IN'])
@@ -57,10 +64,14 @@ export const inventoryMovementSelect = {
   occurred_at: true,
   reference_id: true,
   related_inventory_id: true,
+  source_vendor: true,
+  reason: true,
+  assigned_staff_id: true,
   notes: true,
   created_by_user_id: true,
   created_at: true,
-  created_by_user: { select: { id: true, name: true, email: true } }
+  created_by_user: { select: { id: true, name: true, email: true } },
+  assigned_staff: { select: { id: true, first_name: true, last_name: true, position: true } }
 }
 
 const numberString = (value, scale = 2) => value == null ? null : toFiniteNumber(value).toFixed(scale)
@@ -83,6 +94,10 @@ export const normalizeInventoryItem = item => ({
   exchange_rate: numberString(item.exchange_rate, 4),
   total_value: numberString(toFiniteNumber(item.unit_price) * item.quantity_in_stock),
   total_value_base: numberString(toFiniteNumber(item.amount_base) * item.quantity_in_stock),
+  unit_value_usd: numberString(item.currency === 'USD' ? item.unit_price : convertAfnToUsd(item.unit_price, item.exchange_rate)),
+  total_value_usd: numberString(
+    (item.currency === 'USD' ? toFiniteNumber(item.unit_price) : convertAfnToUsd(item.unit_price, item.exchange_rate)) * item.quantity_in_stock
+  ),
   stock_state: getStockState(item),
   created_at: iso(item.created_at),
   updated_at: iso(item.updated_at)
@@ -90,6 +105,11 @@ export const normalizeInventoryItem = item => ({
 
 export const normalizeInventoryMovement = movement => ({
   ...movement,
+  source_vendor: formatLedgerText(movement.source_vendor),
+  reason: formatLedgerText(movement.reason),
+  assigned_staff: movement.assigned_staff
+    ? { ...movement.assigned_staff, full_name: `${movement.assigned_staff.first_name} ${movement.assigned_staff.last_name}`.trim() }
+    : null,
   notes: formatLedgerText(movement.notes),
   occurred_at: iso(movement.occurred_at),
   created_at: iso(movement.created_at)
@@ -167,6 +187,9 @@ export const recordInventoryMovement = async (
     occurredAt = new Date(),
     referenceId = null,
     relatedInventoryId = null,
+    sourceVendor = null,
+    reason = null,
+    assignedStaffId = null,
     notes = null,
     createdByUserId = null
   }
@@ -195,6 +218,26 @@ export const recordInventoryMovement = async (
 
   if (!Number.isInteger(movementQuantity) || movementQuantity <= 0) {
     throw new Error('INVALID_INVENTORY_QUANTITY')
+  }
+
+  const normalizedReason = String(reason || '').toUpperCase()
+
+  if (normalizedDirection === 'OUT' && normalizedType !== 'TRANSFER_OUT' && !INVENTORY_STOCK_OUT_REASONS.includes(normalizedReason)) {
+    throw new Error('INVALID_INVENTORY_REASON')
+  }
+
+  if (normalizedDirection === 'IN' && (normalizedReason || assignedStaffId)) {
+    throw new Error('INVALID_INVENTORY_REASON')
+  }
+
+  if (normalizedReason === 'ASSIGNED_TO_STAFF') {
+    const staff = assignedStaffId
+      ? await transaction.hrmstaff.findFirst({ where: { id: assignedStaffId, status: 'ACTIVE' }, select: { id: true } })
+      : null
+
+    if (!staff) throw new Error('INVALID_INVENTORY_ASSIGNEE')
+  } else if (assignedStaffId) {
+    throw new Error('INVALID_INVENTORY_ASSIGNEE')
   }
 
   const existingMovements = await transaction.inventorymovement.findMany({
@@ -231,10 +274,7 @@ export const recordInventoryMovement = async (
     currentBalance = item.quantity_in_stock
   }
 
-  const nextBalance =
-    normalizedDirection === 'OUT' ? currentBalance - movementQuantity : currentBalance + movementQuantity
-
-  if (nextBalance < 0) throw new Error('INSUFFICIENT_STOCK')
+  const nextBalance = calculateStockAfterMovement(currentBalance, movementQuantity, normalizedDirection)
 
   const stockState = getStockState({ quantity_in_stock: nextBalance, reorder_level: item.reorder_level })
 
@@ -256,6 +296,9 @@ export const recordInventoryMovement = async (
       occurred_at: occurredAt,
       reference_id: referenceId,
       related_inventory_id: normalizedType.startsWith('TRANSFER_') ? relatedInventoryId : null,
+      source_vendor: normalizedDirection === 'IN' ? sanitizeHtml(sourceVendor || '', { allowedTags: [], allowedAttributes: {} }).trim() || null : null,
+      reason: normalizedDirection === 'OUT' ? normalizedReason || null : null,
+      assigned_staff_id: normalizedReason === 'ASSIGNED_TO_STAFF' ? assignedStaffId : null,
       notes: sanitizeHtml(notes || '', { allowedTags: [], allowedAttributes: {} }).trim() || null,
       created_by_user_id: createdByUserId
     },
@@ -278,26 +321,25 @@ export const inventoryPayload = (payload, setup) => ({
   quantity_in_stock: String(payload?.quantity_in_stock ?? '0'),
   unit_price: String(payload?.unit_price ?? ''),
   reorder_level: String(payload?.reorder_level ?? '5'),
-  status_id: payload?.status_id || '',
-  currency: payload?.currency || setup.currency_code || 'AFN',
+  currency: payload?.currency || SYSTEM_BASE_CURRENCY,
   exchange_rate: String(payload?.exchange_rate || setup.usd_afn_exchange_rate || '')
 })
 
 export const getInventoryOptions = async () => {
-  const [categories, statuses, setup] = await Promise.all([
+  const [categories, statuses, staff, setup] = await Promise.all([
     prisma.option.findMany({ where: { category: 'INVENTORY_CATEGORY', is_active: true }, select: optionSelect, orderBy: [{ sort_order: 'asc' }, { label: 'asc' }] }),
     prisma.option.findMany({ where: { category: 'INVENTORY_STATUS', is_active: true }, select: optionSelect, orderBy: [{ sort_order: 'asc' }, { label: 'asc' }] }),
+    prisma.hrmstaff.findMany({ where: { status: 'ACTIVE' }, select: { id: true, first_name: true, last_name: true, position: true }, orderBy: [{ first_name: 'asc' }, { last_name: 'asc' }], take: 1000 }),
     getCompanySetupRecord()
   ])
 
-  return { categories, statuses, setup }
+  return { categories, statuses, staff: staff.map(item => ({ ...item, full_name: `${item.first_name} ${item.last_name}`.trim() })), setup }
 }
 
 export const prepareInventoryData = async (values, messages, options, current = null) => {
   const category = options.categories.find(option => option.id === values.category_id)
-  const requestedStatus = options.statuses.find(option => option.id === values.status_id)
 
-  if (!category || !requestedStatus) return { success: false, error: messages.invalidRelation }
+  if (!category) return { success: false, error: messages.invalidRelation }
 
   const quantity = Number.parseInt(values.quantity_in_stock, 10)
   const reorderLevel = Number.parseInt(values.reorder_level, 10)
@@ -326,7 +368,7 @@ export const prepareInventoryData = async (values, messages, options, current = 
       status_id: automaticStatus.id,
       reorder_level: reorderLevel,
       amount_base: new Prisma.Decimal(
-        convertToBaseCurrency(unitPrice, values.currency, exchangeRate, options.setup.currency_code || 'AFN')
+        convertToBaseCurrency(unitPrice, values.currency, exchangeRate, SYSTEM_BASE_CURRENCY)
       ),
       currency: values.currency,
       exchange_rate: new Prisma.Decimal(exchangeRate),
@@ -336,5 +378,5 @@ export const prepareInventoryData = async (values, messages, options, current = 
 }
 
 export const nextInventorySku = async (client = prisma) => {
-  return nextSequentialNumber(client, 'inventory', { prefix: 'INV-', digits: 5 })
+  return nextSequentialNumber(client, 'inventory', { prefix: 'ITM-', digits: 3 })
 }

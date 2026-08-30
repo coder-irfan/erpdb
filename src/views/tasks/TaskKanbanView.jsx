@@ -1,5 +1,7 @@
 'use client'
 
+import { useState } from 'react'
+
 import AvatarGroup from '@mui/material/AvatarGroup'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
@@ -11,12 +13,14 @@ import Typography from '@mui/material/Typography'
 import UserAvatar from '@/components/common/UserAvatar'
 import KanbanCardSkeleton from '@/components/common/KanbanCardSkeleton'
 import EntityActionsMenu from '@/components/table/EntityActionsMenu'
+import ConfirmationComponent from '@/components/dialogs/ConfirmationComponent'
 import { toDateInputValue } from '@/utils/contractDuration'
 
 import { optionChipProps } from './taskUi'
 
 const TaskKanbanView = ({
   data,
+  locale,
   dictionary,
   canManage,
   canUpdate,
@@ -29,7 +33,24 @@ const TaskKanbanView = ({
   onDelete,
   onStatusChange
 }) => {
+  const [draggingId, setDraggingId] = useState(null)
+  const [dropStatusId, setDropStatusId] = useState(null)
+  const [pendingMove, setPendingMove] = useState(null)
+
   if (loading) return <KanbanCardSkeleton />
+
+  const dropTask = (event, destination) => {
+    event.preventDefault()
+    const task = data.tasks.find(item => item.id === draggingId)
+
+    setDraggingId(null)
+    setDropStatusId(null)
+    if (!task || task.status_id === destination.id) return
+
+    const guardedMove = ['TO_DO', 'TODO'].includes(task.status.value) && ['REVIEW', 'COMPLETED', 'DONE'].includes(destination.value) && Number(task.actual_hours || 0) === 0
+
+    setPendingMove({ task, destination, guardedMove })
+  }
 
   return (
     <div className='no-scrollbar flex items-start gap-4 overflow-x-auto py-3'>
@@ -37,7 +58,13 @@ const TaskKanbanView = ({
         const tasks = data.tasks.filter(task => task.status_id === status.id)
 
         return (
-          <div key={status.id} className='min-w-[290px] max-w-[320px] flex-1 rounded bg-actionHover p-3'>
+          <div
+            key={status.id}
+            className={`min-w-[290px] max-w-[320px] flex-1 rounded p-3 transition-colors ${dropStatusId === status.id ? 'bg-primaryLighter ring-2 ring-primary' : 'bg-actionHover'}`}
+            onDragOver={event => { if (canUpdate) { event.preventDefault(); setDropStatusId(status.id) } }}
+            onDragLeave={() => setDropStatusId(current => current === status.id ? null : current)}
+            onDrop={event => dropTask(event, status)}
+          >
             <div className='mb-3 flex items-center justify-between gap-3'>
               <Chip size='small' variant='tonal' label={status.label} {...optionChipProps(status)} />
               <Typography variant='caption' color='text.secondary'>
@@ -53,7 +80,15 @@ const TaskKanbanView = ({
                 </div>
               ) : (
                 tasks.map(task => (
-                  <Card key={task.id} variant='outlined' className='cursor-pointer' onClick={() => onView(task)}>
+                  <Card
+                    key={task.id}
+                    variant='outlined'
+                    draggable={canUpdate && statusUpdating !== task.id}
+                    className={`cursor-pointer transition-opacity ${draggingId === task.id ? 'opacity-40' : ''}`}
+                    onDragStart={event => { event.dataTransfer.effectAllowed = 'move'; setDraggingId(task.id) }}
+                    onDragEnd={() => { setDraggingId(null); setDropStatusId(null) }}
+                    onClick={() => onView(task)}
+                  >
                     <CardContent className='flex flex-col gap-3'>
                       <div className='flex items-start justify-between gap-2'>
                         <div className='min-is-0'>
@@ -68,6 +103,7 @@ const TaskKanbanView = ({
                         </div>
                         <div onClick={event => event.stopPropagation()}>
                           <EntityActionsMenu
+                            locale={locale}
                             moreActionsLabel={dictionary.table.actions}
                             actions={[
                               { label: dictionary.actions.view, icon: 'tabler-eye', onClick: () => onView(task) },
@@ -126,8 +162,17 @@ const TaskKanbanView = ({
                             {task.progress}%
                           </Typography>
                         </div>
-                        <LinearProgress variant='determinate' value={task.progress} className='bs-1.5 rounded' />
+                        <LinearProgress variant='determinate' value={Math.min(100, task.progress)} color={task.progress > 100 ? 'error' : 'primary'} className='bs-1.5 rounded' />
                       </div>
+                      {task.subtask_summary.total > 0 && (
+                        <div>
+                          <div className='mb-1 flex justify-between gap-2'>
+                            <Typography variant='caption' color='text.secondary'>{dictionary.kanban.subtasks.replace('{completed}', task.subtask_summary.completed).replace('{total}', task.subtask_summary.total)}</Typography>
+                            <Typography variant='caption' color='text.secondary'>{task.subtask_summary.percentage}%</Typography>
+                          </div>
+                          <LinearProgress color='secondary' variant='determinate' value={task.subtask_summary.percentage} className='bs-1 rounded' />
+                        </div>
+                      )}
                       <div className='flex items-center justify-between'>
                         {task.assignees.length ? (
                           <AvatarGroup max={5} className='[&_.MuiAvatar-root]:size-7 [&_.MuiAvatar-root]:text-[10px]'>
@@ -154,6 +199,21 @@ const TaskKanbanView = ({
           </div>
         )
       })}
+      <ConfirmationComponent
+        open={Boolean(pendingMove)}
+        title={dictionary.actions.changeStatus}
+        message={pendingMove?.guardedMove ? dictionary.kanban.zeroHoursConfirm : `${dictionary.actions.changeStatus}: ${pendingMove?.destination?.label || ''}?`}
+        confirmText={dictionary.actions.changeStatus}
+        cancelText={dictionary.actions.cancel}
+        onClose={() => {
+          if (pendingMove?.guardedMove) onLogHours(pendingMove.task)
+          setPendingMove(null)
+        }}
+        onConfirm={async () => {
+          await onStatusChange(pendingMove.task, pendingMove.destination.id)
+          setPendingMove(null)
+        }}
+      />
     </div>
   )
 }

@@ -100,13 +100,15 @@ const CrmVisitorsView = ({ locale, dictionary, canWrite, canDelete }) => {
     }
   }
 
-  const convert = async () => {
+  const convert = async email => {
     if (!convertTarget) return
     setBusyId(convertTarget.id)
 
     try {
       const response = await fetch(`/api/crm/visitors/${convertTarget.id}/convert-lead?locale=${locale}`, {
-        method: 'POST'
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(email ? { email } : {})
       })
 
       const result = await response.json()
@@ -156,8 +158,9 @@ const CrmVisitorsView = ({ locale, dictionary, canWrite, canDelete }) => {
           />
           <div className='grid is-full grid-cols-2 gap-2 sm:flex sm:is-auto sm:flex-wrap sm:gap-3 sm:justify-end'>
             <TableFiltersPopover
-              activeCount={Number(Boolean(hostId)) + Number(Boolean(status)) + Number(dateRange !== 'TODAY')}
+              activeCount={Number(Boolean(searchInput.trim())) + Number(Boolean(hostId)) + Number(Boolean(status)) + Number(dateRange !== 'TODAY')}
               locale={locale}
+              onReset={() => { setSearchInput(''); setSearch(''); setHostId(''); setStatus(''); setDateRange('TODAY'); setPage(0) }}
             >
               <CustomTextField
                 select

@@ -1,6 +1,6 @@
 'use client'
 
-import { useId, useMemo, useState, useTransition } from 'react'
+import { useId, useMemo, useState } from 'react'
 
 import Link from 'next/link'
 
@@ -32,6 +32,9 @@ import {
 } from '@/libs/Recharts'
 import { getDashboardData } from '@/actions/dashboard'
 import UserAvatar from '@/components/common/UserAvatar'
+import DualCurrencyAmount from '@/components/currency/DualCurrencyAmount'
+import DashboardSkeleton from '@/views/dashboard/DashboardSkeleton'
+import { formatAfghanDate, formatAfghanTime, getAppLocale } from '@/utils/afghanDate'
 import { formatCurrency } from '@/utils/formatCurrency'
 
 const COLORS = {
@@ -52,6 +55,12 @@ const TONE_CLASSES = {
   secondary: 'bg-secondaryLighter text-secondary'
 }
 
+const DASHBOARD_STATUS_LABELS = {
+  en: { staff: 'Staff receivables', corporate: 'Corporate liabilities', low: 'Low stock', out: 'Out of stock' },
+  fa: { staff: 'مطالبات کارمندان', corporate: 'بدهی‌های شرکتی', low: 'موجودی کم', out: 'ناموجود' },
+  ps: { staff: 'د کارکوونکو ترلاسه کېدونکي پورونه', corporate: 'د شرکت پورونه', low: 'کمه زېرمه', out: 'له زېرمې وتلی' }
+}
+
 const resolveColor = color => {
   if (/^#[0-9a-f]{6}$/i.test(color || '')) return color
 
@@ -63,7 +72,7 @@ const replace = (text, values = {}) =>
 
 const useFormatters = locale =>
   useMemo(() => {
-    const resolvedLocale = locale === 'fa' ? 'fa-AF' : locale === 'ps' ? 'ps-AF' : 'en-US'
+    const resolvedLocale = getAppLocale(locale)
 
     return {
       number: value => new Intl.NumberFormat(resolvedLocale, { maximumFractionDigits: 1 }).format(Number(value || 0)),
@@ -71,16 +80,8 @@ const useFormatters = locale =>
         new Intl.NumberFormat(resolvedLocale, { notation: 'compact', maximumFractionDigits: 1 }).format(
           Number(value || 0)
         ),
-      date: value =>
-        value
-          ? new Intl.DateTimeFormat(resolvedLocale, { month: 'short', day: 'numeric', year: 'numeric' }).format(
-              new Date(value)
-            )
-          : '—',
-      time: value =>
-        value
-          ? new Intl.DateTimeFormat(resolvedLocale, { hour: 'numeric', minute: '2-digit' }).format(new Date(value))
-          : '—'
+      date: value => formatAfghanDate(value, locale, { dateStyle: 'medium' }),
+      time: value => formatAfghanTime(value, locale)
     }
   }, [locale])
 
@@ -493,7 +494,7 @@ const OutstandingCard = ({ items, dictionary, locale, currency, formatters }) =>
             color='warning'
             title={item.title}
             subtitle={`${item.reference} · ${replace(dictionary.urgent.due, { date: formatters.date(item.dueDate) })}`}
-            value={formatCurrency(item.amountBase, locale, currency)}
+            value={<DualCurrencyAmount amount={item.amount} amountBase={item.amountBase} currency={item.currency} exchangeRate={item.exchangeRate} locale={locale} className='items-end' />}
             action={
               <Button
                 component={Link}
@@ -540,10 +541,7 @@ const LoanCard = ({ urgent, dictionary, locale, currency }) => (
   <Card className='border border-divider/70 shadow-sm'>
     <PanelHeader
       title={dictionary.urgent.loans}
-      subtitle={replace(dictionary.urgent.loanSummary, {
-        count: urgent.loanTotals.count,
-        amount: formatCurrency(urgent.loanTotals.remaining, locale, currency)
-      })}
+      subtitle={`${DASHBOARD_STATUS_LABELS[locale]?.staff || DASHBOARD_STATUS_LABELS.en.staff}: ${formatCurrency(urgent.loanTotals.staffReceivables, locale, currency)} · ${DASHBOARD_STATUS_LABELS[locale]?.corporate || DASHBOARD_STATUS_LABELS.en.corporate}: ${formatCurrency(urgent.loanTotals.corporateLiabilities, locale, currency)}`}
     />
     {urgent.loans.length ? (
       <div className='divide-y divide-divider px-4 pb-2'>
@@ -553,8 +551,8 @@ const LoanCard = ({ urgent, dictionary, locale, currency }) => (
             icon='tabler-coins'
             color='info'
             title={item.borrower}
-            subtitle={`${item.loan_number} · ${replace(dictionary.urgent.monthly, { amount: formatCurrency(item.monthlyDeduction, locale, item.currency) })}`}
-            value={formatCurrency(item.remainingBalance, locale, item.currency)}
+            subtitle={`${item.loan_number} · ${item.loanType === 'CORPORATE' ? (DASHBOARD_STATUS_LABELS[locale]?.corporate || DASHBOARD_STATUS_LABELS.en.corporate) : (DASHBOARD_STATUS_LABELS[locale]?.staff || DASHBOARD_STATUS_LABELS.en.staff)}`}
+            value={<DualCurrencyAmount amount={item.remainingBalance} amountBase={item.amountBase} currency={item.currency} exchangeRate={item.exchangeRate} locale={locale} className='items-end' />}
           />
         ))}
       </div>
@@ -564,7 +562,7 @@ const LoanCard = ({ urgent, dictionary, locale, currency }) => (
   </Card>
 )
 
-const InventoryCard = ({ items, dictionary }) => (
+const InventoryCard = ({ items, dictionary, locale }) => (
   <Card className='border border-divider/70 shadow-sm'>
     <PanelHeader title={dictionary.urgent.inventory} subtitle={dictionary.urgent.inventoryHint} />
     {items.length ? (
@@ -573,9 +571,9 @@ const InventoryCard = ({ items, dictionary }) => (
           <DenseRow
             key={item.id}
             icon='tabler-package-off'
-            color='warning'
+            color={item.stockState === 'OUT_OF_STOCK' ? 'error' : 'warning'}
             title={item.name}
-            subtitle={`${item.sku_code} · ${item.category.label}`}
+            subtitle={`${item.sku_code} · ${item.category.label} · ${item.stockState === 'OUT_OF_STOCK' ? (DASHBOARD_STATUS_LABELS[locale]?.out || DASHBOARD_STATUS_LABELS.en.out) : (DASHBOARD_STATUS_LABELS[locale]?.low || DASHBOARD_STATUS_LABELS.en.low)}`}
             value={`${item.quantity_in_stock} / ${item.reorder_level}`}
           />
         ))}
@@ -588,7 +586,7 @@ const InventoryCard = ({ items, dictionary }) => (
 
 const DashboardHome = ({ initialData, dictionary }) => {
   const [data, setData] = useState(initialData)
-  const [isPending, startTransition] = useTransition()
+  const [isPending, setIsPending] = useState(false)
   const formatters = useFormatters(data.locale)
   const currency = data.company.currency
   const finance = data.finance
@@ -597,13 +595,19 @@ const DashboardHome = ({ initialData, dictionary }) => {
   const workforce = data.workforce
   const personal = data.personal
 
-  const refresh = months => {
-    startTransition(async () => {
+  const refresh = async months => {
+    setIsPending(true)
+
+    try {
       const result = await getDashboardData({ locale: data.locale, months })
 
       if (result.success) setData(result.data)
-    })
+    } finally {
+      setIsPending(false)
+    }
   }
+
+  if (isPending) return <DashboardSkeleton label={dictionary.common.refreshing || dictionary.common.refresh} />
 
   const periodControl = (
     <Select
@@ -810,7 +814,7 @@ const DashboardHome = ({ initialData, dictionary }) => {
             {data.capabilities.loans && (
               <LoanCard urgent={data.urgent} dictionary={dictionary} locale={data.locale} currency={currency} />
             )}
-            {data.capabilities.inventory && <InventoryCard items={data.urgent.inventory} dictionary={dictionary} />}
+            {data.capabilities.inventory && <InventoryCard items={data.urgent.inventory} dictionary={dictionary} locale={data.locale} />}
           </div>
         </section>
       ) : null}

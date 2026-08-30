@@ -6,6 +6,7 @@ import Typography from '@mui/material/Typography'
 
 import DashboardTablePagination from '@/components/table/DashboardTablePagination'
 import UserAvatar from '@/components/common/UserAvatar'
+import DualCurrencyAmount from '@/components/currency/DualCurrencyAmount'
 import EntityActionsMenu from '@/components/table/EntityActionsMenu'
 import TableEmptyStateRow from '@/components/table/TableEmptyStateRow'
 import TableSkeletonRows from '@/components/table/TableSkeletonRows'
@@ -32,6 +33,7 @@ const FinanceSalaryTable = ({
   dictionary,
   canWrite,
   canDelete,
+  canExecutePayout,
   onPageChange,
   onRowsPerPageChange,
   onView,
@@ -44,7 +46,7 @@ const FinanceSalaryTable = ({
       moreActionsLabel={dictionary.table.actions}
       actions={[
         { label: dictionary.actions.view, icon: 'tabler-receipt', onClick: () => onView(salary) },
-        canWrite &&
+        canExecutePayout &&
           salary.status === 'DRAFT' && {
             label: dictionary.actions.edit,
             icon: 'tabler-edit',
@@ -105,25 +107,25 @@ const FinanceSalaryTable = ({
           {
             id: 'base',
             label: dictionary.table.baseSalary,
-            render: salary => formatCurrency(salary.base_salary, locale, salary.currency)
+            render: salary => <DualCurrencyAmount amount={salary.base_salary} currency={salary.currency} exchangeRate={salary.exchange_rate} locale={locale} />
           },
           {
             id: 'earned',
             label: dictionary.table.earnedBonus,
-            render: salary => formatCurrency(salary.earned_salary, locale, salary.currency)
+            render: salary => <DualCurrencyAmount amount={salary.earned_salary} currency={salary.currency} exchangeRate={salary.exchange_rate} locale={locale} />
           },
           {
             id: 'deduction',
             label: dictionary.table.loanDeduction,
             render: salary =>
               toFiniteNumber(salary.loan_deduction) > 0
-                ? formatCurrency(salary.loan_deduction, locale, salary.currency)
+                ? <DualCurrencyAmount amount={salary.loan_deduction} currency={salary.currency} exchangeRate={salary.exchange_rate} locale={locale} />
                 : dictionary.common.noLoan
           },
           {
             id: 'payable',
             label: dictionary.table.payable,
-            render: salary => formatCurrency(salary.payable_amount, locale, salary.currency)
+            render: salary => <DualCurrencyAmount amount={salary.payable_amount} amountBase={salary.amount_base} currency={salary.currency} exchangeRate={salary.exchange_rate} locale={locale} />
           }
         ]}
         emptyState={{
@@ -190,16 +192,12 @@ const FinanceSalaryTable = ({
                       <Tooltip
                         title={`${dictionary.fields.dailyRate}: ${formatCurrency(salary.base_daily_rate, locale, salary.currency)}`}
                       >
-                        <Typography className='min-is-[140px] whitespace-nowrap font-medium'>
-                          {formatCurrency(salary.base_salary, locale, salary.currency)}
-                        </Typography>
+                        <DualCurrencyAmount amount={salary.base_salary} currency={salary.currency} exchangeRate={salary.exchange_rate} locale={locale} className='min-is-[140px]' />
                       </Tooltip>
                     </td>
                     <td>
                       <div className='min-is-[160px]'>
-                        <Typography variant='body2' className='whitespace-nowrap font-medium'>
-                          {formatCurrency(salary.earned_salary, locale, salary.currency)}
-                        </Typography>
+                        <DualCurrencyAmount amount={salary.earned_salary} currency={salary.currency} exchangeRate={salary.exchange_rate} locale={locale} />
                         <Typography variant='caption' color='text.secondary' className='whitespace-nowrap'>
                           {dictionary.common.bonus.replace(
                             '{amount}',
@@ -210,9 +208,7 @@ const FinanceSalaryTable = ({
                     </td>
                     <td>
                       {toFiniteNumber(salary.loan_deduction) > 0 ? (
-                        <Typography className='min-is-[130px] whitespace-nowrap font-semibold text-error'>
-                          − {formatCurrency(salary.loan_deduction, locale, salary.currency)}
-                        </Typography>
+                        <DualCurrencyAmount amount={salary.loan_deduction} currency={salary.currency} exchangeRate={salary.exchange_rate} locale={locale} className='min-is-[130px]' primaryClassName='text-error' />
                       ) : (
                         <Typography variant='body2' color='text.secondary'>
                           {dictionary.common.noLoan}
@@ -223,14 +219,7 @@ const FinanceSalaryTable = ({
                       <Tooltip
                         title={`${dictionary.fields.baseAmount}: ${formatCurrency(salary.amount_base, locale, data.baseCurrency)}`}
                       >
-                        <div className='min-is-[155px]'>
-                          <Typography className='whitespace-nowrap font-semibold text-primary'>
-                            {formatCurrency(salary.payable_amount, locale, salary.currency)}
-                          </Typography>
-                          <Typography variant='caption' color='text.secondary'>
-                            {salary.currency}
-                          </Typography>
-                        </div>
+                        <DualCurrencyAmount amount={salary.payable_amount} amountBase={salary.amount_base} currency={salary.currency} exchangeRate={salary.exchange_rate} locale={locale} className='min-is-[155px]' primaryClassName='text-primary' />
                       </Tooltip>
                     </td>
                     <td>

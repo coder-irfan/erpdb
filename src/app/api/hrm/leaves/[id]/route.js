@@ -2,17 +2,20 @@ import { Prisma } from '@prisma/client'
 import { safeParse } from 'valibot'
 
 import { authorizeAction } from '@/libs/actionAuthorization'
+import { activeStaffContractRelation } from '@/libs/hrmContractAccess'
 import {
   LEAVE_DELETE_PERMISSIONS,
   LEAVE_WRITE_PERMISSIONS,
-  calculateLeaveDays,
+  calculateLeaveWorkingDays,
   createLeaveAttendance,
   getCurrentStaff,
+  getHolidayDateKeys,
   hasOverlappingLeave,
   leaveSelect,
   normalizeLeave,
   parseLeaveDate,
-  removeLeaveAttendance
+  removeLeaveAttendance,
+  validateLeaveEntitlement
 } from '@/libs/hrmLeaves'
 import { prisma } from '@/libs/prisma'
 import { createLeaveSchema } from '@/schemas/hrm/leaves'
@@ -54,19 +57,25 @@ export async function PUT(request, routeContext) {
     end_date: payload?.end_date,
     total_days: payload?.total_days == null ? String(Number(existing.total_days)) : String(payload.total_days),
     status_id: payload?.status_id || '',
+    is_paid: payload?.is_paid ?? existing.is_paid,
     reason: payload?.reason || ''
   })
 
   if (!validation.success) return responseError(validation.issues[0]?.message, 400, 'VALIDATION_ERROR')
 
-  const calendarDays = calculateLeaveDays(validation.output.start_date, validation.output.end_date)
-  const totalDays = validation.output.total_days ? Number(validation.output.total_days) : calendarDays
-
-  if (totalDays < 0.5 || totalDays > calendarDays) return responseError(dictionary.validation.dateRangeInvalid, 400, 'INVALID_DATE_RANGE')
-
   try {
     const [staff, leaveType] = await Promise.all([
-      prisma.hrmstaff.findFirst({ where: { id: validation.output.staff_id, status: { not: 'TERMINATED' } }, select: { id: true } }),
+      prisma.hrmstaff.findFirst({
+        where: {
+          id: validation.output.staff_id,
+          status: 'ACTIVE',
+          contracts: activeStaffContractRelation({
+            startDate: parseLeaveDate(validation.output.start_date),
+            endDate: parseLeaveDate(validation.output.end_date)
+          })
+        },
+        select: { id: true }
+      }),
       prisma.option.findFirst({ where: { id: validation.output.leave_type_id, category: 'LEAVE_TYPE', is_active: true }, select: { id: true, is_paid_leave: true } })
     ])
 
@@ -75,6 +84,10 @@ export async function PUT(request, routeContext) {
 
     const startDate = parseLeaveDate(validation.output.start_date)
     const endDate = parseLeaveDate(validation.output.end_date)
+    const holidays = await getHolidayDateKeys(prisma, startDate, endDate)
+    const totalDays = calculateLeaveWorkingDays(startDate, endDate, holidays)
+
+    if (totalDays < 1) return responseError(dictionary.validation.dateRangeInvalid, 400, 'INVALID_DATE_RANGE')
 
     const updated = await prisma.$transaction(async transaction => {
       const overlap = await hasOverlappingLeave(transaction, {
@@ -91,6 +104,22 @@ export async function PUT(request, routeContext) {
         throw error
       }
 
+      const entitlement = await validateLeaveEntitlement(transaction, {
+        staffId: validation.output.staff_id,
+        leaveTypeId: validation.output.leave_type_id,
+        startDate,
+        endDate,
+        excludeLeaveId: id
+      })
+
+      if (!entitlement.valid) {
+        const error = new Error(entitlement.code)
+
+        error.code = entitlement.code
+        error.entitlement = entitlement
+        throw error
+      }
+
       if (existing.status.value === 'APPROVED') {
         await removeLeaveAttendance(transaction, id)
       }
@@ -103,7 +132,7 @@ export async function PUT(request, routeContext) {
           start_date: startDate,
           end_date: endDate,
           total_days: new Prisma.Decimal(totalDays),
-          is_paid: leaveType?.is_paid_leave ?? existing.is_paid,
+          is_paid: canManage ? validation.output.is_paid : leaveType?.is_paid_leave ?? existing.is_paid,
           reason: validation.output.reason || null
         },
         select: leaveSelect
@@ -121,6 +150,11 @@ export async function PUT(request, routeContext) {
     if (error?.code === 'OVERLAPPING_LEAVE') {
       return responseError(dictionary.messages.overlappingLeave, 409, 'OVERLAPPING_LEAVE')
     }
+
+    if (error?.code === 'LEAVE_BALANCE_EXCEEDED') {
+      return responseError(`Requested leave exceeds the remaining yearly balance (${error.entitlement.balance.remaining} days).`, 409, 'LEAVE_BALANCE_EXCEEDED')
+    }
+
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') return responseError(dictionary.messages.notFound, 404, 'LEAVE_NOT_FOUND')
 
     return responseError(dictionary.messages.operationFailed, 500, 'LEAVE_UPDATE_FAILED')

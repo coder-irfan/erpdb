@@ -6,15 +6,15 @@ import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import MenuItem from '@mui/material/MenuItem'
+import Tab from '@mui/material/Tab'
+import Tabs from '@mui/material/Tabs'
 import { toast } from 'sonner'
 
 import CustomTextField from '@core/components/mui/TextField'
 import TableFiltersPopover from '@/components/table/TableFiltersPopover'
-import FinancePrintDialog from '@/views/finance/FinancePrintDialog'
 
 import FinanceLoanDetailModal from './FinanceLoanDetailModal'
 import FinanceLoanFormDrawer from './FinanceLoanFormDrawer'
-import FinanceLoanPrint from './FinanceLoanPrint'
 import FinanceLoanRepaymentDialog from './FinanceLoanRepaymentDialog'
 import FinanceLoanStatsCards from './FinanceLoanStatsCards'
 import FinanceLoanTable from './FinanceLoanTable'
@@ -22,15 +22,15 @@ import FinanceLoanTable from './FinanceLoanTable'
 const EMPTY_DATA = {
   loans: [],
   totalCount: 0,
-  summary: { active: 0, repaid: 0, recovery: 0, portfolio: 0 },
+  summary: { staffReceivables: 0, corporateDebt: 0, payrollRecovery: 0, debtDisbursement: 0 },
   options: { statuses: [], staff: [], baseCurrency: 'AFN', exchangeRate: '65.0000' }
 }
 
-const FinanceLoansView = ({ locale, dictionary, canWrite, setup }) => {
+const FinanceLoansView = ({ locale, dictionary, canWrite }) => {
   const [searchInput, setSearchInput] = useState('')
   const [search, setSearch] = useState('')
   const [statusId, setStatusId] = useState('')
-  const [loanType, setLoanType] = useState('')
+  const [loanType, setLoanType] = useState('STAFF')
   const [page, setPage] = useState(0)
   const [rowsPerPage, setRowsPerPage] = useState(10)
   const [data, setData] = useState(EMPTY_DATA)
@@ -39,7 +39,6 @@ const FinanceLoansView = ({ locale, dictionary, canWrite, setup }) => {
   const [repayTarget, setRepayTarget] = useState(null)
   const [detailTarget, setDetailTarget] = useState(null)
   const [autoPrint, setAutoPrint] = useState(false)
-  const [printTarget, setPrintTarget] = useState(null)
 
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -56,7 +55,7 @@ const FinanceLoansView = ({ locale, dictionary, canWrite, setup }) => {
 
     if (search) params.set('search', search)
     if (statusId) params.set('status_id', statusId)
-    if (loanType) params.set('loan_type', loanType)
+    params.set('loan_type', loanType)
     const response = await fetch(`/api/finance/loans?${params}`, { cache: 'no-store' })
     const result = await response.json()
 
@@ -74,12 +73,16 @@ const FinanceLoansView = ({ locale, dictionary, canWrite, setup }) => {
     setDetailTarget(loan)
   }
 
-  const activeFilters = [statusId, loanType].filter(Boolean).length
+  const activeFilters = [searchInput.trim(), statusId].filter(Boolean).length
 
   return (
     <div className='flex flex-col gap-4'>
       <FinanceLoanStatsCards summary={data.summary} locale={locale} dictionary={dictionary} />
       <Card className='border border-divider/70 shadow-sm'>
+        <Tabs value={loanType} onChange={(_, value) => { setLoanType(value); setPage(0) }} variant='scrollable' className='border-be border-divider px-4'>
+          <Tab value='STAFF' icon={<i className='tabler-users' />} iconPosition='start' label='Staff Loans & Salary Advances' />
+          <Tab value='CORPORATE' icon={<i className='tabler-building-bank' />} iconPosition='start' label='Corporate Debt & Liabilities' />
+        </Tabs>
         <CardContent className='flex flex-wrap items-center justify-between gap-4'>
           <CustomTextField
             label={dictionary.filters.search}
@@ -107,29 +110,14 @@ const FinanceLoansView = ({ locale, dictionary, canWrite, setup }) => {
                   </MenuItem>
                 ))}
               </CustomTextField>
-              <CustomTextField
-                select
-                label={dictionary.filters.type}
-                value={loanType}
-                onChange={event => {
-                  setLoanType(event.target.value)
-                  setPage(0)
-                }}
-              >
-                <MenuItem value=''>{dictionary.filters.allTypes}</MenuItem>
-                {Object.entries(dictionary.types).map(([value, label]) => (
-                  <MenuItem key={value} value={value}>
-                    {label}
-                  </MenuItem>
-                ))}
-              </CustomTextField>
               {activeFilters > 0 && (
                 <Button
                   variant='tonal'
                   color='secondary'
                   onClick={() => {
+                    setSearchInput('')
+                    setSearch('')
                     setStatusId('')
-                    setLoanType('')
                     setPage(0)
                   }}
                 >
@@ -139,7 +127,7 @@ const FinanceLoansView = ({ locale, dictionary, canWrite, setup }) => {
             </TableFiltersPopover>
             {canWrite && (
               <Button variant='contained' startIcon={<i className='tabler-plus' />} onClick={() => setFormOpen(true)}>
-                {dictionary.actions.add}
+                {loanType === 'STAFF' ? 'Create Staff Loan' : 'Create Corporate Debt'}
               </Button>
             )}
           </div>
@@ -158,12 +146,13 @@ const FinanceLoansView = ({ locale, dictionary, canWrite, setup }) => {
             setPage(0)
           }}
           onView={openDetail}
-          onPrint={setPrintTarget}
+          onPrint={loan => window.open(`/${locale}/finance/loans/${loan.id}/print`, '_blank', 'noopener,noreferrer')}
           onRepay={setRepayTarget}
         />
       </Card>
       <FinanceLoanFormDrawer
         open={formOpen}
+        initialLoanType={loanType}
         options={data.options}
         locale={locale}
         dictionary={dictionary}
@@ -189,9 +178,6 @@ const FinanceLoansView = ({ locale, dictionary, canWrite, setup }) => {
           setAutoPrint(false)
         }}
       />
-      <FinancePrintDialog open={Boolean(printTarget)} title='LOAN DISBURSEMENT & REPAYMENT VOUCHER' printLabel={dictionary.actions.printVoucher} closeLabel={dictionary.actions.close} onClose={() => setPrintTarget(null)}>
-        {printTarget && <FinanceLoanPrint loan={printTarget} setup={setup} locale={locale} />}
-      </FinancePrintDialog>
     </div>
   )
 }

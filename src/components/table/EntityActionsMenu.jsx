@@ -8,18 +8,30 @@ import Menu from '@mui/material/Menu'
 import MenuItem from '@mui/material/MenuItem'
 import Tooltip from '@mui/material/Tooltip'
 
+import ConfirmationComponent from '@/components/dialogs/ConfirmationComponent'
+
+const STATUS_COPY = {
+  en: { title: 'Confirm Status Change', message: status => `Change this record's status to “${status}”?`, confirm: 'Change Status', cancel: 'Cancel' },
+  fa: { title: 'تأیید تغییر وضعیت', message: status => `وضعیت این مورد به «${status}» تغییر کند؟`, confirm: 'تغییر وضعیت', cancel: 'لغو' },
+  ps: { title: 'د حالت بدلون تایید', message: status => `د دې ریکارډ حالت «${status}» ته بدل شي؟`, confirm: 'حالت بدلول', cancel: 'لغوه' }
+}
+
 const EntityActionsMenu = ({
   actions = [],
   statusOptions = [],
   currentStatus,
   onStatusChange,
   statusDisabled = false,
+  locale = 'en',
   changeStatusLabel = 'Change Status',
   moreActionsLabel = 'Actions'
 }) => {
   const menuId = useId()
   const [anchorEl, setAnchorEl] = useState(null)
   const [statusAnchorEl, setStatusAnchorEl] = useState(null)
+  const [pendingStatus, setPendingStatus] = useState(null)
+  const [pendingAction, setPendingAction] = useState(null)
+  const [confirming, setConfirming] = useState(false)
 
   const closeAll = () => {
     setStatusAnchorEl(null)
@@ -65,7 +77,12 @@ const EntityActionsMenu = ({
             className={action.color === 'error' ? 'text-error' : undefined}
             onClick={() => {
               closeAll()
-              action.onClick()
+
+              const requiresConfirmation = action.requiresConfirmation ??
+                /tabler-(toggle|check|x|cash)/.test(action.icon || '')
+
+              if (requiresConfirmation && !action.skipConfirmation) setPendingAction(action)
+              else action.onClick()
             }}
           >
             <i className={`${action.icon} mie-2 text-xl`} />
@@ -101,7 +118,8 @@ const EntityActionsMenu = ({
             disabled={(status.id || status.value) === currentStatus}
             onClick={() => {
               closeAll()
-              onStatusChange(status.id || status.value)
+              if (status.skipConfirmation) onStatusChange(status.id || status.value)
+              else setPendingStatus(status)
             }}
           >
             <i
@@ -111,6 +129,31 @@ const EntityActionsMenu = ({
           </MenuItem>
         ))}
       </Menu>
+      <ConfirmationComponent
+        open={Boolean(pendingStatus || pendingAction)}
+        title={(STATUS_COPY[locale] || STATUS_COPY.en).title}
+        message={(STATUS_COPY[locale] || STATUS_COPY.en).message(pendingStatus?.label || pendingAction?.label || '')}
+        confirmText={(STATUS_COPY[locale] || STATUS_COPY.en).confirm}
+        cancelText={(STATUS_COPY[locale] || STATUS_COPY.en).cancel}
+        loading={confirming}
+        onClose={() => {
+          setPendingStatus(null)
+          setPendingAction(null)
+        }}
+        onConfirm={async () => {
+          if (!pendingStatus && !pendingAction) return
+          setConfirming(true)
+
+          try {
+            if (pendingStatus) await onStatusChange(pendingStatus.id || pendingStatus.value)
+            else await pendingAction.onClick()
+            setPendingStatus(null)
+            setPendingAction(null)
+          } finally {
+            setConfirming(false)
+          }
+        }}
+      />
     </>
   )
 }

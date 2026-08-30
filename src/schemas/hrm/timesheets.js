@@ -23,6 +23,8 @@ export const createTimesheetSchema = customMessages => {
 
   return object({
     staff_id: pipe(string(messages.required), trim(), nonEmpty(messages.required)),
+    project_id: optional(pipe(string(), trim()), ''),
+    task_id: optional(pipe(string(), trim()), ''),
     status: picklist(ATTENDANCE_STATUSES, messages.statusInvalid),
     date: pipe(string(messages.dateInvalid), trim(), regex(DATE_PATTERN, messages.dateInvalid)),
     check_in_time: optionalTime(messages),

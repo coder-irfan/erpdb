@@ -14,7 +14,6 @@ export const inventoryItemSchema = messages => object({
   quantity_in_stock: pipe(string(messages.quantityInvalid), trim(), regex(INTEGER_PATTERN, messages.quantityInvalid)),
   unit_price: pipe(string(messages.priceInvalid), trim(), regex(POSITIVE_MONEY_PATTERN, messages.priceInvalid)),
   reorder_level: pipe(string(messages.quantityInvalid), trim(), regex(INTEGER_PATTERN, messages.quantityInvalid)),
-  status_id: pipe(string(messages.required), trim()),
   currency: picklist(['AFN', 'USD'], messages.currencyInvalid),
   exchange_rate: pipe(string(messages.rateInvalid), trim(), regex(POSITIVE_MONEY_PATTERN, messages.rateInvalid))
 })
@@ -29,6 +28,9 @@ export const inventoryAdjustmentSchema = messages => object({
   occurred_at: optional(pipe(string(), trim()), ''),
   reference_id: optional(pipe(string(), trim(), maxLength(191, messages.descriptionTooLong)), ''),
   related_inventory_id: optional(pipe(string(), trim()), ''),
+  source_vendor: optional(pipe(string(), trim(), maxLength(191, messages.descriptionTooLong)), ''),
+  reason: optional(union([literal(''), picklist(['ASSIGNED_TO_STAFF', 'CLIENT_PROJECT', 'INTERNAL_OFFICE_USE', 'DAMAGED_LOST_WRITTEN_OFF'], messages.required)]), ''),
+  assigned_staff_id: optional(pipe(string(), trim()), ''),
   notes: optional(pipe(string(), trim(), maxLength(2000, messages.descriptionTooLong)), '')
 })
 

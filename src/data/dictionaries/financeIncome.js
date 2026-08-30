@@ -69,6 +69,9 @@ const translations = {
       currency: 'Currency',
       exchangeRate: 'USD / AFN Exchange Rate',
       receivedBy: 'Received By',
+      paymentMethod: 'Payment Method',
+      paymentDate: 'Payment Date',
+      notes: 'Notes',
       paymentDetails: 'Payment Details',
       reminderDate: 'Reminder Date',
       baseAmount: 'Base Amount',
@@ -82,6 +85,8 @@ const translations = {
       invoice: 'No linked invoice',
       incomeType: 'Select income type',
       receivedBy: 'Select receiving staff',
+      paymentMethod: 'Select payment method',
+      notes: 'Optional receipt note',
       paymentDetails: 'Payment method, reference, or internal note'
     },
     detail: {
@@ -123,7 +128,9 @@ const translations = {
       positiveInvalid: 'Enter a value greater than zero.',
       dateInvalid: 'Enter a valid reminder date.',
       detailsTooLong: 'Payment details must not exceed 2,000 characters.',
-      invalidRelation: 'One or more selected linked records are invalid or inconsistent.'
+      invalidRelation: 'One or more selected linked records are invalid or inconsistent.',
+      invoiceRequired: 'Select an invoice for this income category.',
+      invoiceRelationsRequired: 'The selected invoice must be linked to a client, contract, and project.'
     },
     messages: {
       unauthenticated: 'Authentication is required.',

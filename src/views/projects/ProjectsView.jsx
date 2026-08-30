@@ -21,7 +21,7 @@ import ProjectTableView from './ProjectTableView'
 const EMPTY_DATA = { projects: [], totalCount: 0, baseCurrency: 'AFN', statuses: [], priorities: [], summary: { activeCount: 0, budget: 0, amountBase: 0, actualHours: 0, estimatedHours: 0, overdueCount: 0 } }
 const EMPTY_OPTIONS = { clients: [], staff: [], contracts: [], statuses: [], priorities: [], baseCurrency: 'AFN', exchangeRate: '65.0000' }
 
-const ProjectsView = ({ locale, dictionary, canWrite, canDelete }) => {
+const ProjectsView = ({ locale, dictionary, taskDictionary, canWrite, canDelete, canTaskManage, canTaskUpdate, canTaskDelete }) => {
   const [searchInput, setSearchInput] = useState('')
   const [search, setSearch] = useState('')
   const [clientId, setClientId] = useState('')
@@ -129,8 +129,8 @@ const ProjectsView = ({ locale, dictionary, canWrite, canDelete }) => {
     }
   }
 
-  const activeFilters = [clientId, managerId, statusId, priorityId].filter(Boolean).length
-  const resetFilters = () => { setClientId(''); setManagerId(''); setStatusId(''); setPriorityId(''); setPage(0) }
+  const activeFilters = [searchInput.trim(), clientId, managerId, statusId, priorityId].filter(Boolean).length
+  const resetFilters = () => { setSearchInput(''); setSearch(''); setClientId(''); setManagerId(''); setStatusId(''); setPriorityId(''); setPage(0) }
   const selectFilter = (label, value, setter, items, emptyLabel) => <CustomTextField select label={label} value={value} onChange={event => { setter(event.target.value); setPage(0) }} className='is-full'><MenuItem value=''>{emptyLabel}</MenuItem>{items.map(item => <MenuItem key={item.id} value={item.id}>{item.label || item.full_name || item.company_name}</MenuItem>)}</CustomTextField>
 
   return (
@@ -153,7 +153,7 @@ const ProjectsView = ({ locale, dictionary, canWrite, canDelete }) => {
         <ProjectTableView data={data} loading={loading} statusUpdating={statusUpdating} page={page} rowsPerPage={rowsPerPage} locale={locale} dictionary={dictionary} canWrite={canWrite} canDelete={canDelete} statusOptions={options.statuses} onPageChange={(_, value) => setPage(value)} onRowsPerPageChange={event => { setRowsPerPage(Number(event.target.value)); setPage(0) }} onView={project => openDetail(project, 0)} onEdit={openEdit} onMembers={project => openDetail(project, 1)} onDelete={setDeleteTarget} onStatusChange={changeStatus} onAdd={openCreate} />
       </Card>
       <ProjectFormDrawer open={formOpen} project={editing} options={options} locale={locale} dictionary={dictionary} onClose={() => setFormOpen(false)} onSaved={refresh} />
-      <ProjectDetailModal open={Boolean(detailId)} projectId={detailId} initialTab={detailTab} locale={locale} baseCurrency={data.baseCurrency} dictionary={dictionary} options={options} canWrite={canWrite} refreshKey={refreshKey} onClose={() => setDetailId(null)} onEdit={project => { setDetailId(null); openEdit(project) }} onChanged={refresh} />
+      <ProjectDetailModal open={Boolean(detailId)} projectId={detailId} initialTab={detailTab} locale={locale} baseCurrency={data.baseCurrency} dictionary={dictionary} taskDictionary={taskDictionary} options={options} canWrite={canWrite} canTaskManage={canTaskManage} canTaskUpdate={canTaskUpdate} canTaskDelete={canTaskDelete} refreshKey={refreshKey} onClose={() => setDetailId(null)} onEdit={project => { setDetailId(null); openEdit(project) }} onChanged={refresh} />
       <ConfirmDeleteModal open={Boolean(deleteTarget)} title={dictionary.delete.title} description={dictionary.delete.description} itemName={deleteTarget?.project_code} confirmText={dictionary.actions.delete} cancelText={dictionary.actions.cancel} loading={deleting} onConfirm={remove} onClose={() => setDeleteTarget(null)} />
     </div>
   )

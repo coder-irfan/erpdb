@@ -59,6 +59,11 @@ const horizontalMenuData = dictionary => [
         permission: 'contracts:read'
       },
       {
+        label: dictionary.navigation.financeContracts,
+        href: '/contracts/finance',
+        permission: 'contracts:read'
+      },
+      {
         label: dictionary.navigation.contractInvoices,
         href: '/contracts/invoices',
         permission: 'contracts:read'
@@ -76,6 +81,11 @@ const horizontalMenuData = dictionary => [
     permission: 'crm:read',
     children: [
       {
+        label: dictionary.navigation.visitors,
+        href: '/crm/visitors',
+        permission: 'crm_visitor:read'
+      },
+      {
         label: dictionary.navigation.crmLeads,
         href: '/crm/leads',
         permission: 'crm_lead:read'
@@ -84,11 +94,6 @@ const horizontalMenuData = dictionary => [
         label: dictionary.navigation.crmClients,
         href: '/crm/clients',
         permission: 'crm_client:read'
-      },
-      {
-        label: dictionary.navigation.visitors,
-        href: '/crm/visitors',
-        permission: 'crm_visitor:read'
       }
     ]
   },
@@ -200,6 +205,11 @@ const horizontalMenuData = dictionary => [
             permission: 'options:read'
           },
           {
+            label: dictionary.navigation.contractCountries,
+            href: '/options/contract-management/countries',
+            permission: 'options:read'
+          },
+          {
             label: dictionary.navigation.invoiceOptions,
             href: '/options/contract-management/invoices',
             permission: 'options:read'
@@ -219,6 +229,11 @@ const horizontalMenuData = dictionary => [
           {
             label: dictionary.navigation.incomeCategories,
             href: '/options/finance/income-categories',
+            permission: 'options:read'
+          },
+          {
+            label: dictionary.navigation.expenseCategories,
+            href: '/options/finance-management/expense-categories',
             permission: 'options:read'
           }
         ]
@@ -243,7 +258,8 @@ const horizontalMenuData = dictionary => [
       {
         label: dictionary.navigation.systemAuditLogs,
         href: '/setup/audit-logs',
-        permission: 'audit:read'
+        permission: 'audit:read',
+        roles: ['super_admin']
       }
     ]
   }

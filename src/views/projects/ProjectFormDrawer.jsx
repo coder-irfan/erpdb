@@ -15,6 +15,7 @@ import { toast } from 'sonner'
 import CustomTextField from '@core/components/mui/TextField'
 import { createProject, updateProject } from '@/actions/projects'
 import LoadingButtonContent from '@/components/LoadingButtonContent'
+import RichTextEditor from '@/components/forms/RichTextEditor'
 import { createProjectSchema } from '@/schemas/projects'
 import { toDateInputValue } from '@/utils/contractDuration'
 import { convertToBaseCurrency, formatCurrency } from '@/utils/formatCurrency'
@@ -62,7 +63,19 @@ const ProjectFormDrawer = ({ open, project, options, locale, dictionary, onClose
       <div className='flex items-start justify-between gap-4 border-be border-divider p-5'><div><Typography variant='h5'>{project ? dictionary.form.editTitle : dictionary.form.addTitle}</Typography><Typography color='text.secondary'>{dictionary.form.description}</Typography></div><IconButton onClick={onClose} disabled={isSubmitting}><i className='tabler-x' /></IconButton></div>
       <form className='flex flex-1 flex-col gap-5 overflow-y-auto p-5' onSubmit={handleSubmit(submit)} noValidate>
         {field('title', dictionary.fields.title)}
-        {field('description', dictionary.fields.description, { multiline: true, minRows: 3 })}
+        <Controller
+          name='description'
+          control={control}
+          render={({ field: input }) => (
+            <RichTextEditor
+              {...input}
+              value={input.value || ''}
+              label={dictionary.fields.description}
+              error={Boolean(errors.description)}
+              helperText={errors.description?.message}
+            />
+          )}
+        />
         <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
           <Controller name='client_id' control={control} render={({ field: input }) => <Autocomplete options={options.clients} value={options.clients.find(client => client.id === input.value) || null} onChange={(_, value) => input.onChange(value?.id || '')} getOptionLabel={option => option.company_name} isOptionEqualToValue={(option, value) => option.id === value.id} renderInput={params => <CustomTextField {...params} label={dictionary.fields.client} placeholder={dictionary.placeholders.client} error={Boolean(errors.client_id)} helperText={errors.client_id?.message} />} />} />
           <Controller name='contract_id' control={control} render={({ field: input }) => <Autocomplete options={contracts} value={contracts.find(contract => contract.id === input.value) || null} onChange={(_, value) => input.onChange(value?.id || '')} getOptionLabel={option => `${option.contract_number} · ${option.title}`} isOptionEqualToValue={(option, value) => option.id === value.id} renderInput={params => <CustomTextField {...params} label={dictionary.fields.contract} placeholder={dictionary.placeholders.contract} error={Boolean(errors.contract_id)} helperText={errors.contract_id?.message} />} />} />
@@ -74,7 +87,7 @@ const ProjectFormDrawer = ({ open, project, options, locale, dictionary, onClose
           {field('project_sponsor', dictionary.fields.sponsor)}
         </div>
         <div className='rounded border border-divider p-4'><div className='grid grid-cols-1 gap-4 sm:grid-cols-3'>{field('budget', dictionary.fields.budget, { type: 'number', inputProps: { min: 0, step: '0.01' } })}<Controller name='currency' control={control} render={({ field: input }) => <CustomTextField {...input} select label={dictionary.fields.currency}><MenuItem value='AFN'>AFN</MenuItem><MenuItem value='USD'>USD</MenuItem></CustomTextField>} />{field('exchange_rate', dictionary.fields.exchangeRate, { type: 'number', inputProps: { min: 0.0001, step: '0.0001' } })}</div><div className='mt-3 flex items-center justify-between rounded bg-actionHover px-4 py-3'><Typography variant='body2' color='text.secondary'>{dictionary.form.basePreview.replace('{currency}', options.baseCurrency)}</Typography><Typography className='font-semibold text-primary'>{formatCurrency(baseAmount, locale, options.baseCurrency)}</Typography></div></div>
-        <div className='grid grid-cols-1 gap-4 sm:grid-cols-3'>{field('start_date', dictionary.fields.startDate, { type: 'date', slotProps: { inputLabel: { shrink: true } } })}{field('end_date', dictionary.fields.endDate, { type: 'date', slotProps: { inputLabel: { shrink: true } } })}{field('actual_end_date', dictionary.fields.actualEndDate, { type: 'date', slotProps: { inputLabel: { shrink: true } } })}</div>
+        <div className={`grid grid-cols-1 gap-4 ${project ? 'sm:grid-cols-3' : 'sm:grid-cols-2'}`}>{field('start_date', dictionary.fields.startDate, { type: 'date', slotProps: { inputLabel: { shrink: true } } })}{field('end_date', dictionary.fields.endDate, { type: 'date', slotProps: { inputLabel: { shrink: true } } })}{project && field('actual_end_date', dictionary.fields.actualEndDate, { type: 'date', disabled: true, slotProps: { inputLabel: { shrink: true } } })}</div>
         <div className='mt-auto flex justify-end gap-3 pt-4'><Button variant='tonal' color='secondary' onClick={onClose} disabled={isSubmitting}>{dictionary.actions.cancel}</Button><Button type='submit' variant='contained' disabled={isSubmitting}><LoadingButtonContent loading={isSubmitting} loadingLabel={dictionary.actions.saving}>{project ? dictionary.actions.save : dictionary.actions.create}</LoadingButtonContent></Button></div>
       </form>
     </Drawer>
@@ -82,4 +95,3 @@ const ProjectFormDrawer = ({ open, project, options, locale, dictionary, onClose
 }
 
 export default ProjectFormDrawer
-

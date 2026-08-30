@@ -45,7 +45,10 @@ const translations = {
       saving: 'Saving...',
       changeStatus: 'Change Status',
       close: 'Close',
-      log: 'Add Hours'
+      log: 'Add Hours',
+      addItem: 'Add',
+      browse: 'Browse Files',
+      comment: 'Comment'
     },
     fields: {
       title: 'Title',
@@ -59,7 +62,9 @@ const translations = {
       dueDate: 'Due Date',
       completedAt: 'Completed At',
       createdBy: 'Created By',
-      hoursToAdd: 'Hours to Add'
+      hoursToAdd: 'Hours to Add',
+      workDate: 'Work Date',
+      workNotes: 'Work Notes'
     },
     placeholders: {
       project: 'Select project',
@@ -70,7 +75,8 @@ const translations = {
     form: {
       addTitle: 'Create Task',
       editTitle: 'Edit Task',
-      description: 'Define ownership, priority, schedule, and working-hour estimates.'
+      description: 'Define ownership, priority, schedule, and working-hour estimates.',
+      actualHoursLocked: 'Actual hours are read-only and can only increase through time logs.'
     },
     detail: {
       title: 'Task Details',
@@ -79,12 +85,35 @@ const translations = {
       people: 'People',
       legacyAssignee: 'Legacy Assignee',
       created: 'Created',
-      updated: 'Updated'
+      updated: 'Updated',
+      timeAudit: 'Timesheet Audit Trail',
+      noTimeLogs: 'No task time has been logged yet.'
     },
     hours: {
       title: 'Log Task Hours',
       description: 'Add worked hours to the current actual-hours total.',
-      current: 'Current logged hours: {hours}'
+      current: 'Current logged hours: {hours}',
+      notesOptional: 'Optional notes describing the work performed.'
+    },
+    kanban: {
+      zeroHoursConfirm: 'This task has no logged hours. Move it anyway? Choose Cancel to log initial hours first.',
+      subtasks: '{completed}/{total} sub-tasks completed'
+    },
+    collaboration: {
+      subtasks: 'Sub-tasks',
+      newSubtask: 'New sub-task',
+      childSubtask: 'Nested sub-task',
+      addChild: 'Add nested sub-task',
+      attachments: 'Attachments & Links',
+      dropFiles: 'Drop screenshots or PDFs here',
+      noAttachments: 'No attachments yet.',
+      linkName: 'Link name',
+      linkUrl: 'Figma or external URL',
+      comments: 'Discussion',
+      noComments: 'No comments yet.',
+      commentPlaceholder: 'Write a comment; type @ to mention a team member',
+      uploadFailed: 'The attachment could not be uploaded.',
+      uploadInvalid: 'Use an image or PDF up to 4 MB.'
     },
     common: {
       unassigned: 'Unassigned',
@@ -94,6 +123,10 @@ const translations = {
       of: 'of',
       rowsPerPage: 'Rows per page:',
       loading: 'Loading...',
+      scopeCompleted: '100% Scope Completed',
+      hoursSaved: 'Saved {hours}h',
+      hoursOver: 'Over by {hours}h',
+      noNotes: 'No notes',
       notAvailable: '—'
     },
     empty: {
@@ -108,7 +141,13 @@ const translations = {
       numberInvalid: 'Enter a valid non-negative number.',
       positiveInvalid: 'Enter a number greater than zero.',
       dateInvalid: 'Enter a valid date.',
-      invalidRelation: 'One or more selected records are invalid.'
+      invalidRelation: 'One or more selected records are invalid.',
+      dueDateBeforeCreated: 'Due date cannot be earlier than today or the task creation date.',
+      workDateInvalid: 'Work date must be between the task creation date and today.',
+      notesTooLong: 'Notes must not exceed 2,000 characters.',
+      subtaskInvalid: 'Enter a valid sub-task title.',
+      attachmentInvalid: 'Enter a valid attachment or HTTPS link.',
+      commentInvalid: 'Comments are required and must not exceed 5,000 characters.'
     },
     messages: {
       unauthenticated: 'Authentication is required.',
@@ -124,6 +163,14 @@ const translations = {
       statusUpdated: 'Task status updated successfully.',
       assigneesUpdated: 'Task assignees updated successfully.',
       hoursLogged: 'Hours logged successfully.',
+      timesheetAttached: 'Timesheet entry attached to the task.',
+      timesheetApprovalRequired: 'Only approved timesheet entries can be attached to tasks.',
+      projectCompleted: 'This project is completed and its timesheets are locked.',
+      taskCompleted: 'Completed tasks do not accept additional time logs.',
+      subtaskAdded: 'Sub-task added.',
+      subtaskUpdated: 'Sub-task updated.',
+      attachmentAdded: 'Attachment added.',
+      commentAdded: 'Comment posted.',
       operationFailed: 'The operation could not be completed.'
     }
   }

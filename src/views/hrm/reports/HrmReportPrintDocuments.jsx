@@ -96,7 +96,7 @@ export const TimesheetSummaryPrint = props => {
     <ReportLayout {...props} reportType='attendance'>
       <Table>
         <thead><tr><Head>{dictionary.table.staff}</Head><Head>{dictionary.table.position}</Head><Head>{dictionary.table.present}</Head><Head>{dictionary.table.absent}</Head><Head>{dictionary.table.leave}</Head><Head>{dictionary.table.hours}</Head><Head>{dictionary.table.presenceRate}</Head></tr></thead>
-        <tbody>{rows.length ? rows.map((row, index) => <tr key={row.id} className={index % 2 ? 'bg-gray-50' : ''}><Cell>{row.staff_name}</Cell><Cell>{row.position}</Cell><Cell>{row.present}</Cell><Cell>{row.absent}</Cell><Cell>{row.leave}</Cell><Cell>{row.total_hours}</Cell><Cell>{row.presence_rate}%</Cell></tr>) : <Empty colSpan={7} message={dictionary.empty.description} />}</tbody>
+        <tbody>{rows.length ? rows.map((row, index) => <tr key={row.id} className={index % 2 ? 'bg-gray-50' : ''}><Cell>{row.staff_name}</Cell><Cell>{row.position}</Cell><Cell>{row.present}</Cell><Cell>{row.absent}</Cell><Cell>{row.leave}</Cell><Cell>{row.total_hours}</Cell><Cell className={row.presence_rate < 80 ? 'font-bold text-red-700' : ''}>{row.presence_rate}%</Cell></tr>) : <Empty colSpan={7} message={dictionary.empty.description} />}</tbody>
       </Table>
     </ReportLayout>
   )
@@ -109,7 +109,7 @@ export const LeaveBalanceReportPrint = props => {
     <ReportLayout {...props} reportType='leaves'>
       <Table>
         <thead><tr><Head>{dictionary.table.staff}</Head><Head>{dictionary.table.position}</Head><Head>{dictionary.table.approvedDays}</Head><Head>{dictionary.table.pending}</Head><Head>{dictionary.table.leaveBreakdown}</Head><Head>{dictionary.table.allowance}</Head><Head>{dictionary.table.remaining}</Head></tr></thead>
-        <tbody>{rows.length ? rows.map((row, index) => <tr key={row.id} className={index % 2 ? 'bg-gray-50' : ''}><Cell>{row.staff_name}</Cell><Cell>{row.position}</Cell><Cell>{row.approved_days}</Cell><Cell>{row.pending_requests}</Cell><Cell>{row.leave_types.length ? row.leave_types.map(item => `${item.name}: ${item.days}`).join(', ') : '—'}</Cell><Cell>{row.allowance_days ?? dictionary.common.notConfigured}</Cell><Cell>{row.remaining_days ?? dictionary.common.notConfigured}</Cell></tr>) : <Empty colSpan={7} message={dictionary.empty.description} />}</tbody>
+        <tbody>{rows.length ? rows.map((row, index) => <tr key={row.id} className={index % 2 ? 'bg-gray-50' : ''}><Cell>{row.staff_name}</Cell><Cell>{row.position}</Cell><Cell>{row.approved_days}</Cell><Cell>{row.pending_requests}</Cell><Cell>{row.leave_types.length ? row.leave_types.map(item => `${item.name}: ${item.days}`).join(', ') : '—'}</Cell><Cell>{row.allowance_days}</Cell><Cell>{row.remaining_days}</Cell></tr>) : <Empty colSpan={7} message={dictionary.empty.description} />}</tbody>
       </Table>
     </ReportLayout>
   )
@@ -118,11 +118,16 @@ export const LeaveBalanceReportPrint = props => {
 export const ContractExpirationReportPrint = props => {
   const { rows, locale, dictionary } = props
 
+  const expirationLabel = row =>
+    row.days_remaining < 0
+      ? dictionary.common.daysOverdue.replace('{count}', String(row.expiration_days))
+      : dictionary.common.daysRemaining.replace('{count}', String(row.expiration_days))
+
   return (
     <ReportLayout {...props} reportType='contracts'>
       <Table>
         <thead><tr><Head>{dictionary.table.contractNumber}</Head><Head>{dictionary.table.staff}</Head><Head>{dictionary.table.position}</Head><Head>{dictionary.table.contractType}</Head><Head>{dictionary.table.endDate}</Head><Head>{dictionary.table.daysRemaining}</Head><Head>{dictionary.table.renewalStatus}</Head></tr></thead>
-        <tbody>{rows.length ? rows.map((row, index) => <tr key={row.id} className={index % 2 ? 'bg-gray-50' : ''}><Cell>{row.contract_number}</Cell><Cell>{row.staff_name}</Cell><Cell>{row.position}</Cell><Cell>{row.contract_type}</Cell><Cell>{formatDate(row.end_date, locale)}</Cell><Cell>{row.days_remaining}</Cell><Cell>{dictionary.status[row.renewal_status] || row.renewal_status}</Cell></tr>) : <Empty colSpan={7} message={dictionary.empty.description} />}</tbody>
+        <tbody>{rows.length ? rows.map((row, index) => <tr key={row.id} className={index % 2 ? 'bg-gray-50' : ''}><Cell>{row.contract_number}</Cell><Cell>{row.staff_name}</Cell><Cell>{row.position}</Cell><Cell>{row.contract_type}</Cell><Cell>{formatDate(row.end_date, locale)}</Cell><Cell className={row.days_remaining < 0 ? 'font-bold text-red-700' : row.days_remaining <= 30 ? 'font-bold text-amber-700' : ''}>{expirationLabel(row)}</Cell><Cell>{dictionary.status[row.renewal_status] || row.renewal_status}</Cell></tr>) : <Empty colSpan={7} message={dictionary.empty.description} />}</tbody>
       </Table>
     </ReportLayout>
   )
@@ -137,4 +142,3 @@ const ActiveHrmReportPrint = props => {
 }
 
 export default ActiveHrmReportPrint
- 

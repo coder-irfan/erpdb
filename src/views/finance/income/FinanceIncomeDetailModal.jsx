@@ -7,7 +7,6 @@ import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import Chip from '@mui/material/Chip'
-import CircularProgress from '@mui/material/CircularProgress'
 import Dialog from '@mui/material/Dialog'
 import DialogContent from '@mui/material/DialogContent'
 import DialogTitle from '@mui/material/DialogTitle'
@@ -16,6 +15,8 @@ import Typography from '@mui/material/Typography'
 
 import { getFinanceIncomeDetail } from '@/actions/financeIncome'
 import UserAvatar from '@/components/common/UserAvatar'
+import DualCurrencyAmount from '@/components/currency/DualCurrencyAmount'
+import DetailSkeleton from '@/components/dialogs/DetailSkeleton'
 import { toDateInputValue } from '@/utils/contractDuration'
 import { formatCurrency } from '@/utils/formatCurrency'
 import { formatLedgerText } from '@/utils/ledgerDisplay'
@@ -73,7 +74,7 @@ const FinanceIncomeDetailModal = ({ open, incomeId, locale, baseCurrency, dictio
   }, [dictionary.messages.detailLoadFailed, incomeId, locale, open, refreshKey])
 
   return (
-    <Dialog open={open} onClose={loading ? undefined : onClose} fullWidth maxWidth='md'>
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth='md'>
       <DialogTitle className='flex items-start justify-between gap-4'>
         <div className='min-is-0'>
           <div className='flex flex-wrap items-center gap-2'>
@@ -90,12 +91,12 @@ const FinanceIncomeDetailModal = ({ open, incomeId, locale, baseCurrency, dictio
               {dictionary.actions.edit}
             </Button>
           )}
-          <IconButton onClick={onClose} disabled={loading} aria-label={dictionary.actions.close}><i className='tabler-x' /></IconButton>
+          <IconButton onClick={onClose} aria-label={dictionary.actions.close}><i className='tabler-x' /></IconButton>
         </div>
       </DialogTitle>
       <DialogContent dividers className='min-bs-[520px]'>
         {loading ? (
-          <div className='flex min-bs-[430px] items-center justify-center'><CircularProgress /></div>
+          <DetailSkeleton />
         ) : error ? (
           <Alert severity='error'>{error}</Alert>
         ) : income ? (
@@ -104,9 +105,9 @@ const FinanceIncomeDetailModal = ({ open, incomeId, locale, baseCurrency, dictio
               <CardContent>
                 <Typography variant='h6' className='mb-4'>{dictionary.detail.financial}</Typography>
                 <div className='grid grid-cols-2 gap-4 md:grid-cols-4'>
-                  <InfoItem label={dictionary.fields.totalAmount} value={formatCurrency(income.total_amount, locale, income.currency)} accent='font-semibold text-primary' />
-                  <InfoItem label={dictionary.fields.paidAmount} value={formatCurrency(income.paid_amount, locale, income.currency)} accent='font-semibold text-success' />
-                  <InfoItem label={dictionary.fields.remainingAmount} value={formatCurrency(income.remind_amount, locale, income.currency)} accent='font-semibold text-error' />
+                  <InfoItem label={dictionary.fields.totalAmount} value={<DualCurrencyAmount amount={income.total_amount} amountBase={income.amount_base} currency={income.currency} exchangeRate={income.exchange_rate} locale={locale} primaryClassName='text-primary' />} />
+                  <InfoItem label={dictionary.fields.paidAmount} value={<DualCurrencyAmount amount={income.paid_amount} currency={income.currency} exchangeRate={income.exchange_rate} locale={locale} primaryClassName='text-success' />} />
+                  <InfoItem label={dictionary.fields.remainingAmount} value={<DualCurrencyAmount amount={income.remind_amount} currency={income.currency} exchangeRate={income.exchange_rate} locale={locale} primaryClassName='text-error' />} />
                   <InfoItem label={dictionary.fields.baseAmount} value={formatCurrency(income.amount_base, locale, baseCurrency)} accent='font-semibold' />
                   <InfoItem label={dictionary.fields.currency} value={income.currency} />
                   <InfoItem label={dictionary.detail.exchangeRate} value={income.exchange_rate} />

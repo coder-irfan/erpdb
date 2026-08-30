@@ -1,7 +1,16 @@
 import { safeParse } from 'valibot'
 
 import { authorizeAction } from '@/libs/actionAuthorization'
-import { ATTENDANCE_WRITE_PERMISSIONS, calculateHours, normalizeAttendanceInput, parseDate } from '@/libs/hrmTimesheets'
+import { activeStaffContractRelation } from '@/libs/hrmContractAccess'
+import { getCurrentStaff } from '@/libs/hrmLeaves'
+import {
+  ATTENDANCE_WRITE_PERMISSIONS,
+  calculateHours,
+  getAttendanceDateGuard,
+  normalizeAttendanceInput,
+  parseDate,
+  resolveOpenProjectTimeTarget
+} from '@/libs/hrmTimesheets'
 import { prisma } from '@/libs/prisma'
 import { createTimesheetSchema, DATE_PATTERN } from '@/schemas/hrm/timesheets'
 import { getDictionary } from '@/utils/getDictionary'
@@ -32,14 +41,27 @@ export async function POST(request) {
     )
   }
 
-  if (!hasAnyPermission(authorization.session, ['hrm:write'])) {
-    return responseError(dictionary.messages.forbidden, 403, 'FORBIDDEN')
+  const canManage = hasAnyPermission(authorization.session, ['hrm:write'])
+  const currentStaff = canManage ? null : await getCurrentStaff(authorization.session.user.id)
+
+  if (!canManage && !currentStaff) {
+    return responseError(dictionary.messages.forbidden, 403, 'STAFF_PROFILE_REQUIRED')
   }
 
   const date = payload?.date
 
   if (!DATE_PATTERN.test(date || '') || !parseDate(date)) {
     return responseError(dictionary.validation.dateInvalid, 400, 'INVALID_DATE')
+  }
+
+  const guard = await getAttendanceDateGuard(date)
+
+  if (guard.isFuture) {
+    return responseError(dictionary.messages.futureDateBlocked, 409, guard.code)
+  }
+
+  if (guard.payrollLocked) {
+    return responseError(dictionary.messages.payrollLocked, 409, guard.code)
   }
 
   if (!Array.isArray(payload?.records) || payload.records.length === 0 || payload.records.length > MAX_BULK_RECORDS) {
@@ -56,6 +78,8 @@ export async function POST(request) {
       date,
       check_in_time: item?.check_in_time || '',
       check_out_time: item?.check_out_time || '',
+      project_id: item?.project_id || '',
+      task_id: item?.task_id || '',
       notes: item?.notes || ''
     })
 
@@ -81,12 +105,25 @@ export async function POST(request) {
     records.push(validation.output)
   }
 
+  if (!canManage && records.some(record => record.staff_id !== currentStaff.id)) {
+    return responseError(dictionary.messages.forbidden, 403, 'FORBIDDEN')
+  }
+
   try {
     const day = parseDate(date)
     const ids = [...staffIds]
+    const timeTargets = await Promise.all(records.map(record => resolveOpenProjectTimeTarget({ projectId: record.project_id, taskId: record.task_id })))
+    const invalidTarget = timeTargets.find(target => !target.valid)
+
+    if (invalidTarget) {
+      return responseError(invalidTarget.code === 'PROJECT_TIMESHEETS_LOCKED' ? 'This project is completed and no longer accepts timesheets.' : 'Select a valid project and task.', 409, invalidTarget.code)
+    }
 
     const [activeStaff, existing] = await Promise.all([
-      prisma.hrmstaff.findMany({ where: { id: { in: ids }, status: 'ACTIVE' }, select: { id: true } }),
+      prisma.hrmstaff.findMany({
+        where: { id: { in: ids }, status: 'ACTIVE', contracts: activeStaffContractRelation({ startDate: day }) },
+        select: { id: true }
+      }),
       prisma.hrmstafftimesheet.findMany({
         where: { date: day, staff_id: { in: ids } },
         select: { staff_id: true, leave_id: true }
@@ -101,15 +138,25 @@ export async function POST(request) {
     const editableRecords = records.filter(item => !existingByStaffId.get(item.staff_id)?.leave_id)
     const createdCount = editableRecords.filter(item => !existingByStaffId.has(item.staff_id)).length
 
+    const targetByStaff = new Map(records.map((record, index) => [record.staff_id, timeTargets[index]]))
+
     const operations = editableRecords.map(item =>
       prisma.hrmstafftimesheet.upsert({
         where: { staff_id_date: { staff_id: item.staff_id, date: day } },
         create: {
           staff_id: item.staff_id,
           date: day,
+          project_id: targetByStaff.get(item.staff_id).project_id,
+          task_id: targetByStaff.get(item.staff_id).task_id,
           ...normalizeAttendanceInput(item, date)
         },
-        update: normalizeAttendanceInput(item, date)
+        update: {
+          ...((item.project_id || item.task_id) && {
+            project_id: targetByStaff.get(item.staff_id).project_id,
+            task_id: targetByStaff.get(item.staff_id).task_id
+          }),
+          ...normalizeAttendanceInput(item, date)
+        }
       })
     )
 

@@ -113,7 +113,9 @@
     "contractManagement": "مدیریت قرارداد",
     "financeManagement": "مدیریت مالی",
     "contractOptions": "مشتریان / مراجعین",
+    "contractCountries": "کشورها",
     "contractList": "قراردادهای مشتریان",
+    "financeContracts": "قراردادهای مالی",
     "contractInvoices": "صورت‌حساب‌ها",
     "crmLeads": "سرنخ‌ها",
     "crmClients": "مشتریان",
@@ -144,6 +146,7 @@
     "contractTypes": "Contract Types",
     "contractTemplates": "Contract Templates",
     "incomeCategories": "Income Categories",
+    "expenseCategories": "Expense Categories",
     "crmVisitorOptions": "Visitor Purposes"
   },
   "notifications": {
@@ -160,6 +163,8 @@
     "rowsPerPage": "ردیف در هر صفحه:",
     "of": "از",
     "deleteAction": "حذف ثبت",
+    "deleteSelected": "حذف موارد انتخاب‌شده",
+    "selectAll": "انتخاب تمام ثبت‌های این صفحه",
     "deleteTitle": "حذف ثبت تفتیش",
     "deleteDescription": "این ثبت تفتیش حذف شود؟ این عمل قابل بازگشت نیست.",
     "deleteSuccess": "ثبت تفتیش با موفقیت حذف شد.",
@@ -483,8 +488,9 @@
       "edit": "ویرایش",
       "delete": "حذف",
       "save": "ذخیره حاضری",
-      "saveNext": "ذخیره و نفر بعد",
+      "saveAll": "ذخیره همه حاضری‌ها",
       "saveChanges": "ذخیره تغییرات",
+      "addNote": "افزودن یادداشت / دلیل",
       "saving": "در حال ذخیره...",
       "cancel": "لغو"
     },
@@ -500,7 +506,9 @@
     "drawer": {
       "title": "ثبت حاضری روزانه",
       "editTitle": "ویرایش حاضری",
-      "description": "فقط کارمندان ثبت‌نشده این تاریخ نمایش داده می‌شوند."
+      "description": "همه کارمندان فعال را در یک نما بررسی و به‌روزرسانی کنید.",
+      "noStaffFound": "کارمند مطابق یافت نشد",
+      "readyToSave": "رکورد حاضری آماده ذخیره"
     },
     "placeholders": {
       "selectStaff": "کارمند باقی‌مانده را انتخاب کنید",
@@ -564,6 +572,8 @@
       "notFound": "سابقه حاضری یافت نشد.",
       "loadFailed": "سوابق حاضری بارگذاری نشد.",
       "operationFailed": "عملیات انجام نشد. دوباره تلاش کنید.",
+      "futureDateBlocked": "حاضری برای تاریخ آینده ثبت نمی‌شود. برای غیبت برنامه‌ریزی‌شده از درخواست رخصتی استفاده کنید.",
+      "payrollLocked": "حاضری قفل است زیرا معاش این ماه نهایی شده است.",
       "unauthenticated": "برای دسترسی به حاضری وارد شوید.",
       "forbidden": "اجازه دسترسی به حاضری را ندارید.",
       "deleteTitle": "حذف سابقه حاضری",
@@ -1560,7 +1570,12 @@
     },
     "actions": {
       "exportCsv": "صدور CSV",
-      "print": "چاپ گزارش"
+      "print": "چاپ گزارش",
+      "assignCustomPolicy": "تعیین پالیسی اختصاصی",
+      "renewContract": "تمدید قرارداد",
+      "archiveStaff": "آرشیف کارمند",
+      "cancel": "لغو",
+      "confirmArchive": "تأیید آرشیف"
     },
     "kpis": {
       "baseSalary": "مجموع معاش پایه",
@@ -1611,7 +1626,9 @@
       "contractType": "نوع قرارداد",
       "endDate": "تاریخ پایان",
       "daysRemaining": "روزهای باقی‌مانده",
-      "renewalStatus": "وضعیت تمدید"
+      "renewalStatus": "وضعیت تمدید",
+      "policy": "پالیسی",
+      "actions": "عملیات"
     },
     "status": {
       "DRAFT": "پیش‌نویس",
@@ -1628,7 +1645,11 @@
     },
     "common": {
       "records": "{count} مورد گزارش",
-      "notConfigured": "تنظیم نشده"
+      "notConfigured": "تنظیم نشده",
+      "systemDefault": "پالیسی پیش‌فرض سیستم",
+      "daysOverdue": "{count} روز از موعد گذشته",
+      "daysRemaining": "{count} روز باقی‌مانده",
+      "archiveConfirmation": "آیا {name} آرشیف شود؟ این کار وضعیت کارمند را غیرفعال، دسترسی معاش را مسدود و نشست‌های کاربری مرتبط را لغو می‌کند."
     },
     "pagination": {
       "rowsPerPage": "تعداد در هر صفحه:",
@@ -1658,7 +1679,9 @@
       "invalidReport": "یک نوع گزارش معتبر انتخاب کنید.",
       "invalidDates": "تاریخ شروع و پایان معتبر انتخاب کنید.",
       "dateRangeTooLarge": "محدوده تاریخ انتخاب‌شده بسیار بزرگ است.",
-      "staffNotFound": "کارمند انتخاب‌شده یافت نشد."
+      "staffNotFound": "کارمند انتخاب‌شده یافت نشد.",
+      "staffArchived": "کارمند با موفقیت آرشیف شد.",
+      "actionFailed": "عملیات درخواستی منابع بشری تکمیل نشد."
     }
   },
   "financeReports": {
@@ -1754,18 +1777,24 @@
       "grossIncome": "مجموع درآمد ناخالص",
       "totalTransactions": "مجموع معاملات",
       "averageTransaction": "میانگین ارزش معامله",
+      "incomeSources": "منابع درآمد",
       "operationalExpense": "مجموع مصارف عملیاتی",
       "topExpenseCategory": "بزرگ‌ترین دسته مصرف",
       "approvedPending": "ثبت‌شده / در انتظار",
+      "recordedExpenses": "مصارف ثبت‌شده",
+      "pendingExpenses": "مصارف در انتظار",
       "payrollDisbursed": "مجموع معاش پرداخت‌شده",
       "totalDeductions": "مجموع کسورات",
       "activeStaffPaid": "کارمندان فعال پرداخت‌شده",
+      "payrollRecords": "سوابق معاش",
       "stockValuation": "مجموع ارزش موجودی",
       "skuCount": "مجموع اقلام",
       "lowStockCount": "هشدار موجودی کم / سفارش مجدد",
+      "totalUnits": "مجموع واحدهای موجود",
       "activeLoanBalance": "مجموع مانده قرضه فعال",
       "totalRepaid": "مجموع بازپرداخت تا امروز",
-      "monthlyRecovery": "پیش‌بینی وصول ماهانه"
+      "monthlyRecovery": "پیش‌بینی وصول ماهانه",
+      "totalIssued": "مجموع قرضه‌های صادرشده"
     },
     "table": {
       "date": "تاریخ",
@@ -1858,6 +1887,22 @@
         "description": "Description"
       }
     },
+    "contractCountries": {
+      "title": "کشورهای قرارداد",
+      "description": "کشورهای قابل استفاده برای فروشندگان و طرف‌های خارجی را مدیریت کنید.",
+      "add": "افزودن کشور",
+      "addTitle": "ایجاد کشور",
+      "editTitle": "ویرایش کشور",
+      "searchPlaceholder": "جستجوی کشور یا توضیحات",
+      "emptyTitle": "کشوری یافت نشد",
+      "emptyDescription": "اولین کشور قرارداد خارجی را اضافه کنید.",
+      "deleteTitle": "حذف کشور",
+      "deleteDescription": "این کشور حذف شود؟ کشورهای استفاده‌شده در قرارداد قابل حذف نیستند.",
+      "fields": {
+        "name": "نام کشور",
+        "description": "توضیحات"
+      }
+    },
     "incomeCategories": {
       "title": "Income Categories",
       "description": "Maintain the active categories available for finance income records.",
@@ -1869,6 +1914,22 @@
       "emptyDescription": "Add the first category used to classify income records.",
       "deleteTitle": "Delete Income Category",
       "deleteDescription": "Delete this income category? Categories linked to income records cannot be deleted.",
+      "fields": {
+        "name": "Title / Name",
+        "description": "Description"
+      }
+    },
+    "expenseCategories": {
+      "title": "Expense Categories",
+      "description": "Maintain the active categories available for corporate expense records.",
+      "add": "Add Expense Category",
+      "addTitle": "Create Expense Category",
+      "editTitle": "Edit Expense Category",
+      "searchPlaceholder": "Search expense categories or descriptions",
+      "emptyTitle": "No Expense Categories Found",
+      "emptyDescription": "Add the first category used to classify expense records.",
+      "deleteTitle": "Delete Expense Category",
+      "deleteDescription": "Delete this expense category? Categories linked to expense records cannot be deleted.",
       "fields": {
         "name": "Title / Name",
         "description": "Description"
@@ -2498,7 +2559,8 @@
     "reminders": {
       "30_DAY": "یادآوری انقضای ۳۰ روزه",
       "15_DAY": "یادآوری انقضای ۱۵ روزه",
-      "3_DAY": "یادآوری انقضای ۳ روزه"
+      "3_DAY": "یادآوری انقضای ۳ روزه",
+      "RENEWAL_REVIEW": "اعلان بررسی تمدید"
     },
     "empty": {
       "title": "قراردادی یافت نشد",
@@ -2543,7 +2605,9 @@
       "titleTooLong": "عنوان قرارداد نباید بیشتر از ۱۹۱ نویسه باشد.",
       "invalidOption": "گزینه‌های معتبر قرارداد را انتخاب کنید.",
       "invalidManager": "یک مدیر حساب معتبر انتخاب کنید.",
-      "durationInvalid": "مدت انتخاب‌شده باید شامل عدد و واحد روز، هفته، ماه یا سال باشد."
+      "durationInvalid": "مدت انتخاب‌شده باید شامل عدد و واحد روز، هفته، ماه یا سال باشد.",
+      "activeEndDateRequired": "پیش از فعال‌سازی، تاریخ پایان قرارداد را به آینده تمدید کنید.",
+      "terminationReasonRequired": "پیش از فسخ قرارداد، دلیل فسخ را وارد کنید."
     }
   },
   "contractOptions": {
@@ -2655,7 +2719,8 @@
       "create": "ایجاد صورتحساب",
       "save": "ذخیره تغییرات",
       "saving": "در حال ذخیره…",
-      "viewPrint": "مشاهده / چاپ",
+      "viewDetails": "مشاهده جزئیات",
+      "viewPrint": "چاپ صورتحساب",
       "recordPayment": "ثبت پرداخت",
       "edit": "ویرایش",
       "delete": "حذف",
@@ -2664,6 +2729,10 @@
       "close": "بستن",
       "confirmPayment": "تأیید پرداخت",
       "printDownload": "چاپ / دانلود PDF"
+    },
+    "details": {
+      "title": "جزئیات صورتحساب",
+      "overview": "مرور صورتحساب"
     },
     "form": {
       "createTitle": "ایجاد صورتحساب",
@@ -2681,7 +2750,10 @@
       "issueDate": "تاریخ صدور",
       "dueDate": "تاریخ سررسید",
       "status": "وضعیت",
-      "invoiceNumber": "شماره صورتحساب"
+      "invoiceNumber": "شماره صورتحساب",
+      "totalInvoiceAmount": "مبلغ کل صورتحساب",
+      "totalAmountPaid": "مبلغ کل پرداخت‌شده",
+      "remainingBalance": "مبلغ باقی‌مانده"
     },
     "placeholders": {
       "contract": "قرارداد را جستجو و انتخاب کنید"
@@ -2692,7 +2764,10 @@
       "amount": "مبلغ پرداخت",
       "method": "روش پرداخت",
       "notes": "یادداشت پرداخت",
-      "ledgerNotice": "با تأیید، صورتحساب پرداخت‌شده می‌شود و سند مرتبط در FinanceIncome ایجاد می‌گردد.",
+      "ledgerNotice": "با تأیید، مانده صورتحساب به‌روزرسانی و سند مرتبط در FinanceIncome ایجاد می‌گردد.",
+      "history": "پرداخت‌های ثبت‌شده",
+      "entries": "پرداخت",
+      "noPayments": "هنوز پرداختی ثبت نشده است.",
       "recording": "در حال ثبت…"
     },
     "print": {
@@ -2750,10 +2825,11 @@
       "dateInvalid": "تاریخ معتبر وارد کنید.",
       "notesTooLong": "یادداشت نباید بیشتر از ۱۰۰۰ نویسه باشد.",
       "invalidContract": "قرارداد و مشتری مرتبط معتبر انتخاب کنید.",
+      "contractInactive": "فاکتور جدید فقط برای قرارداد فعال و منقضی‌نشده ساخته می‌شود.",
       "invalidStatus": "وضعیت معتبر انتخاب کنید.",
       "paidViaPaymentOnly": "برای پرداخت‌شده‌کردن از ثبت پرداخت استفاده کنید.",
       "dateRangeInvalid": "سررسید باید بعد یا برابر تاریخ صدور باشد.",
-      "fullPaymentRequired": "مبلغ پرداخت باید برابر کل صورتحساب باشد."
+      "fullPaymentRequired": "مبلغ پرداخت نمی‌تواند بیشتر از مانده صورتحساب باشد."
     }
   },
   "inventoryManagement": {
@@ -3052,7 +3128,14 @@
     "pay": {
       "title": "پرداخت معاش",
       "description": "پرداخت {name} را تأیید کنید. کسر برنامه‌ریزی‌شده قرضه در مانده قرضه ثبت می‌شود.",
-      "confirm": "تأیید پرداخت"
+      "confirm": "تأیید پرداخت",
+      "earlyTitle": "⚠️ هشدار اجرای زودهنگام معاش",
+      "earlyDescription": "شما در تلاش هستید معاش {month} را در تاریخ {date} به‌عنوان پرداخت‌شده علامت‌گذاری کنید. اجرای معاش پیش از پایان ماه، محاسبات را نهایی می‌کند، تمام سوابق مرتبط حاضری را قفل می‌کند و یک ثبت دایمی در دفتر مصارف مالی ایجاد می‌کند.",
+      "netPayout": "مبلغ خالص پرداخت",
+      "targetLedger": "حساب دفتر هدف",
+      "payrollExpensesLedger": "مصارف معاشات",
+      "workingDaysToDate": "روزهای کاری تا تاریخ فعلی",
+      "confirmEarly": "تأیید و اجرای پرداخت"
     },
     "validation": {
       "required": "این فیلد الزامی است.",
@@ -3079,6 +3162,7 @@
       "created": "رکورد معاش ایجاد شد.",
       "paid": "معاش پرداخت و بازپرداخت قرضه ثبت شد.",
       "alreadyPaid": "این معاش قبلاً پرداخت شده است.",
+      "earlyConfirmationRequired": "اجرای زودهنگام معاش نیازمند تأیید صریح است.",
       "paidLocked": "معاش پرداخت‌شده قابل تغییر یا حذف نیست.",
       "deleted": "رکورد پیش‌نویس معاش حذف شد.",
       "processorMissing": "حساب شما به پروفایل فعال کارمند وصل نیست.",

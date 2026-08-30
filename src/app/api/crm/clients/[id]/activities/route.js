@@ -3,7 +3,7 @@ import { safeParse } from 'valibot'
 
 import { authorizeAction } from '@/libs/actionAuthorization'
 import { CRM_CLIENT_WRITE_PERMISSIONS } from '@/libs/crmClients'
-import { CRM_ACTIVITY_TYPES, getCurrentStaffId, parseOptionalDate } from '@/libs/crmLeads'
+import { CRM_ACTIVITY_TYPES, parseOptionalDate, resolveActivityStaffId } from '@/libs/crmLeads'
 import { prisma } from '@/libs/prisma'
 import { createActivitySchema } from '@/schemas/crm/leads'
 import { getDictionary } from '@/utils/getDictionary'
@@ -27,12 +27,15 @@ export async function POST(request, context) {
     if (!parsed.success) return errorResponse(parsed.issues[0]?.message || dictionary.validation.invalid, 400, 'VALIDATION_ERROR')
     if (!CRM_ACTIVITY_TYPES.includes(parsed.output.activity_type)) return errorResponse(dictionary.validation.activityTypeInvalid, 400, 'INVALID_ACTIVITY_TYPE')
 
-    const [client, staffId] = await Promise.all([
-      prisma.crmclient.findUnique({ where: { id }, select: { id: true } }),
-      getCurrentStaffId(authorization.session.user.id)
-    ])
+    const client = await prisma.crmclient.findUnique({
+      where: { id },
+      select: { id: true, account_manager_id: true, lead: { select: { assigned_to_id: true } } }
+    })
 
     if (!client) return errorResponse(dictionary.messages.notFound, 404, 'CLIENT_NOT_FOUND')
+
+    const staffId = await resolveActivityStaffId(authorization.session.user.id, [client.account_manager_id, client.lead?.assigned_to_id])
+
     if (!staffId) return errorResponse(dictionary.messages.staffProfileRequired, 409, 'STAFF_PROFILE_REQUIRED')
 
     await prisma.$transaction([

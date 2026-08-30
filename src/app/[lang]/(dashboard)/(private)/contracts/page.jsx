@@ -19,6 +19,8 @@ const ContractsPage = async props => {
       canWrite={hasAnyPermission(session, ['contracts:write'])}
       canDelete={hasAnyPermission(session, ['contracts:delete'])}
       canRunAudit={process.env.NODE_ENV !== 'production' && hasAnyPermission(session, ['contracts:write'])}
+      scope='CUSTOMER'
+      contractContext='CUSTOMER'
     />
   )
 }

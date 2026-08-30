@@ -13,8 +13,10 @@ import CustomTextField from '@core/components/mui/TextField'
 import { deleteInvoice, getInvoiceFormOptions, getInvoices, updateInvoiceStatus } from '@/actions/invoices'
 import ConfirmDeleteModal from '@/components/dialogs/ConfirmDeleteModal'
 import TableFiltersPopover from '@/components/table/TableFiltersPopover'
+import LocalizedDateTimePicker from '@/components/inputs/LocalizedDateTimePicker'
 
 import InvoiceFormDrawer from './InvoiceFormDrawer'
+import InvoiceDetailModal from './InvoiceDetailModal'
 import InvoicePaymentDialog from './InvoicePaymentDialog'
 import InvoicePrintModal from './InvoicePrintModal'
 import InvoiceStatsCards from './InvoiceStatsCards'
@@ -42,6 +44,8 @@ const InvoicesView = ({ locale, dictionary, setup, canWrite, canDelete }) => {
   const [loading, setLoading] = useState(true)
   const [formOpen, setFormOpen] = useState(false)
   const [editingInvoice, setEditingInvoice] = useState(null)
+  const [detailInvoiceId, setDetailInvoiceId] = useState(null)
+  const [detailRefreshKey, setDetailRefreshKey] = useState(0)
   const [printInvoice, setPrintInvoice] = useState(null)
   const [paymentInvoice, setPaymentInvoice] = useState(null)
   const [deleteTarget, setDeleteTarget] = useState(null)
@@ -73,7 +77,7 @@ const InvoicesView = ({ locale, dictionary, setup, canWrite, canDelete }) => {
   useEffect(() => { loadData() }, [loadData])
   useEffect(() => { loadOptions() }, [loadOptions])
 
-  const refresh = async () => { await Promise.all([loadData(), loadOptions()]) }
+  const refresh = async () => { await Promise.all([loadData(), loadOptions()]); setDetailRefreshKey(value => value + 1) }
   const openCreate = () => { setEditingInvoice(null); setFormOpen(true) }
   const edit = invoice => { setEditingInvoice(invoice); setFormOpen(true) }
 
@@ -103,7 +107,7 @@ const InvoicesView = ({ locale, dictionary, setup, canWrite, canDelete }) => {
     setStatusUpdating(null)
   }
 
-  const activeFilterCount = Number(Boolean(statusId)) + Number(Boolean(clientId)) + Number(Boolean(contractId)) + Number(Boolean(fromDate || toDate))
+  const activeFilterCount = Number(Boolean(searchInput.trim())) + Number(Boolean(statusId)) + Number(Boolean(clientId)) + Number(Boolean(contractId)) + Number(Boolean(fromDate || toDate))
 
   return (
     <div className='flex flex-col gap-4'>
@@ -119,18 +123,19 @@ const InvoicesView = ({ locale, dictionary, setup, canWrite, canDelete }) => {
               <Autocomplete options={options.clients} value={options.clients.find(client => client.id === clientId) || null} onChange={(_, value) => { setClientId(value?.id || ''); setPage(0) }} getOptionLabel={option => option.company_name} isOptionEqualToValue={(option, value) => option.id === value.id} renderInput={params => <CustomTextField {...params} label={dictionary.filters.client} placeholder={dictionary.filters.allClients} />} />
               <Autocomplete options={options.contracts} value={options.contracts.find(contract => contract.id === contractId) || null} onChange={(_, value) => { setContractId(value?.id || ''); setPage(0) }} getOptionLabel={option => `${option.contract_number} — ${option.title}`} isOptionEqualToValue={(option, value) => option.id === value.id} renderInput={params => <CustomTextField {...params} label={dictionary.filters.contract} placeholder={dictionary.filters.allContracts} />} />
               <div className='grid grid-cols-1 gap-3 sm:grid-cols-2'>
-                <CustomTextField type='date' label={dictionary.filters.fromDate} value={fromDate} onChange={event => { setFromDate(event.target.value); setPage(0) }} slotProps={{ inputLabel: { shrink: true } }} />
-                <CustomTextField type='date' label={dictionary.filters.toDate} value={toDate} onChange={event => { setToDate(event.target.value); setPage(0) }} slotProps={{ inputLabel: { shrink: true } }} />
+                <LocalizedDateTimePicker locale={locale} label={dictionary.filters.fromDate} value={fromDate} onChange={event => { setFromDate(event.target.value); setPage(0) }} />
+                <LocalizedDateTimePicker locale={locale} label={dictionary.filters.toDate} value={toDate} onChange={event => { setToDate(event.target.value); setPage(0) }} />
               </div>
-              {activeFilterCount > 0 && <Button variant='tonal' color='secondary' onClick={() => { setStatusId(''); setClientId(''); setContractId(''); setFromDate(''); setToDate(''); setPage(0) }}>{dictionary.filters.clear}</Button>}
+              {activeFilterCount > 0 && <Button variant='tonal' color='secondary' onClick={() => { setSearchInput(''); setSearch(''); setStatusId(''); setClientId(''); setContractId(''); setFromDate(''); setToDate(''); setPage(0) }}>{dictionary.filters.clear}</Button>}
             </TableFiltersPopover>
             {canWrite && <Button variant='contained' startIcon={<i className='tabler-plus' />} onClick={openCreate}>{dictionary.actions.create}</Button>}
           </div>
         </CardContent>
-        <InvoiceTableView data={data} loading={loading} statusUpdating={statusUpdating} page={page} rowsPerPage={rowsPerPage} locale={locale} dictionary={dictionary} canWrite={canWrite} canDelete={canDelete} onPageChange={(_, value) => setPage(value)} onRowsPerPageChange={event => { setRowsPerPage(Number(event.target.value)); setPage(0) }} onView={setPrintInvoice} onPay={setPaymentInvoice} onEdit={edit} onDelete={setDeleteTarget} onStatusChange={changeStatus} onAdd={openCreate} />
+        <InvoiceTableView data={data} loading={loading} statusUpdating={statusUpdating} page={page} rowsPerPage={rowsPerPage} locale={locale} dictionary={dictionary} canWrite={canWrite} canDelete={canDelete} onPageChange={(_, value) => setPage(value)} onRowsPerPageChange={event => { setRowsPerPage(Number(event.target.value)); setPage(0) }} onView={setDetailInvoiceId} onPrint={setPrintInvoice} onPay={setPaymentInvoice} onEdit={edit} onDelete={setDeleteTarget} onStatusChange={changeStatus} onAdd={openCreate} />
       </Card>
       <InvoiceFormDrawer open={formOpen} invoice={editingInvoice} options={options} locale={locale} dictionary={dictionary} onClose={() => setFormOpen(false)} onSaved={refresh} />
       <InvoicePaymentDialog open={Boolean(paymentInvoice)} invoice={paymentInvoice} paymentMethods={options.paymentMethods} locale={locale} dictionary={dictionary} onClose={() => setPaymentInvoice(null)} onSaved={refresh} />
+      <InvoiceDetailModal open={Boolean(detailInvoiceId)} invoiceId={detailInvoiceId} refreshKey={detailRefreshKey} locale={locale} dictionary={dictionary} canWrite={canWrite} onClose={() => setDetailInvoiceId(null)} onPrint={invoice => { setDetailInvoiceId(null); setPrintInvoice(invoice) }} onPay={setPaymentInvoice} />
       <InvoicePrintModal open={Boolean(printInvoice)} invoice={printInvoice} setup={setup} locale={locale} dictionary={dictionary} onClose={() => setPrintInvoice(null)} />
       <ConfirmDeleteModal open={Boolean(deleteTarget)} title={dictionary.delete.title} description={dictionary.delete.description} itemName={deleteTarget?.invoice_number} confirmText={dictionary.actions.delete} cancelText={dictionary.actions.cancel} loading={deleting} onConfirm={remove} onClose={() => setDeleteTarget(null)} />
     </div>

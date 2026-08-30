@@ -16,14 +16,15 @@ import { toast } from 'sonner'
 import CustomTextField from '@core/components/mui/TextField'
 import { createTask, updateTask } from '@/actions/tasks'
 import LoadingButtonContent from '@/components/LoadingButtonContent'
+import RichTextEditor from '@/components/forms/RichTextEditor'
 import { createTaskSchema } from '@/schemas/tasks'
 import { toDateInputValue } from '@/utils/contractDuration'
 
 const defaultOption = options => options.find(option => option.is_default)?.id || options[0]?.id || ''
 
-const emptyValues = options => ({
+const emptyValues = (options, defaultProjectId = '') => ({
   title: '',
-  project_id: '',
+  project_id: defaultProjectId,
   description: '',
   assignee_ids: [],
   status_id: defaultOption(options.statuses),
@@ -33,7 +34,7 @@ const emptyValues = options => ({
   due_date: ''
 })
 
-const TaskFormDrawer = ({ open, task, options, locale, dictionary, onClose, onSaved }) => {
+const TaskFormDrawer = ({ open, task, options, defaultProjectId = '', locale, dictionary, onClose, onSaved }) => {
   const {
     control,
     handleSubmit,
@@ -41,8 +42,12 @@ const TaskFormDrawer = ({ open, task, options, locale, dictionary, onClose, onSa
     formState: { errors, isSubmitting }
   } = useForm({
     resolver: valibotResolver(createTaskSchema(dictionary.validation)),
-    defaultValues: emptyValues(options)
+    defaultValues: emptyValues(options, defaultProjectId)
   })
+
+  const today = toDateInputValue(new Date())
+  const createdDate = task?.created_at ? toDateInputValue(task.created_at) : today
+  const earliestDueDate = createdDate > today ? createdDate : today
 
   useEffect(() => {
     if (!open) return
@@ -59,9 +64,9 @@ const TaskFormDrawer = ({ open, task, options, locale, dictionary, onClose, onSa
             actual_hours: String(task.actual_hours || '0'),
             due_date: toDateInputValue(task.due_date)
           }
-        : emptyValues(options)
+        : emptyValues(options, defaultProjectId)
     )
-  }, [open, options, reset, task])
+  }, [defaultProjectId, open, options, reset, task])
 
   const submit = async values => {
     const result = task ? await updateTask(task.id, { ...values, locale }) : await createTask({ ...values, locale })
@@ -83,7 +88,7 @@ const TaskFormDrawer = ({ open, task, options, locale, dictionary, onClose, onSa
           value={input.value ?? ''}
           label={label}
           error={Boolean(errors[name])}
-          helperText={errors[name]?.message}
+          helperText={errors[name]?.message || props.helperText}
         />
       )}
     />
@@ -161,7 +166,13 @@ const TaskFormDrawer = ({ open, task, options, locale, dictionary, onClose, onSa
             />
           )}
         />
-        {field('description', dictionary.fields.description, { multiline: true, minRows: 3 })}
+        <Controller
+          name='description'
+          control={control}
+          render={({ field: input }) => (
+            <RichTextEditor {...input} value={input.value || ''} label={dictionary.fields.description} error={Boolean(errors.description)} helperText={errors.description?.message} />
+          )}
+        />
         <Controller
           name='assignee_ids'
           control={control}
@@ -199,11 +210,13 @@ const TaskFormDrawer = ({ open, task, options, locale, dictionary, onClose, onSa
             type: 'number',
             inputProps: { min: 0, step: '0.25' }
           })}
-          {field('actual_hours', dictionary.fields.actualHours, {
+          {task && field('actual_hours', dictionary.fields.actualHours, {
             type: 'number',
+            disabled: true,
+            helperText: dictionary.form.actualHoursLocked,
             inputProps: { min: 0, step: '0.25' }
           })}
-          {field('due_date', dictionary.fields.dueDate, { type: 'date', slotProps: { inputLabel: { shrink: true } } })}
+          {field('due_date', dictionary.fields.dueDate, { type: 'date', inputProps: { min: earliestDueDate }, slotProps: { inputLabel: { shrink: true } } })}
         </div>
         <div className='mt-auto flex justify-end gap-3 pt-4'>
           <Button variant='tonal' color='secondary' onClick={onClose} disabled={isSubmitting}>

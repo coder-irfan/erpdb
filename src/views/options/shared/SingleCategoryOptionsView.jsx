@@ -10,6 +10,8 @@ import Dialog from '@mui/material/Dialog'
 import DialogActions from '@mui/material/DialogActions'
 import DialogContent from '@mui/material/DialogContent'
 import DialogTitle from '@mui/material/DialogTitle'
+import FormControlLabel from '@mui/material/FormControlLabel'
+import Switch from '@mui/material/Switch'
 import Typography from '@mui/material/Typography'
 import { toast } from 'sonner'
 
@@ -48,6 +50,7 @@ const SingleCategoryOptionsView = ({
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
+  const [requiresInvoice, setRequiresInvoice] = useState(false)
   const [nameError, setNameError] = useState('')
   const [saving, setSaving] = useState(false)
   const [busyId, setBusyId] = useState(null)
@@ -73,6 +76,7 @@ const SingleCategoryOptionsView = ({
     setEditingOption(option || null)
     setName(option?.name || '')
     setDescription(option?.description || '')
+    setRequiresInvoice(Boolean(option?.requires_invoice))
     setNameError('')
     setFormOpen(true)
   }
@@ -93,6 +97,7 @@ const SingleCategoryOptionsView = ({
         name,
         description,
         is_active: editingOption?.is_active ?? true,
+        requires_invoice: category === 'INCOME_TYPE' && requiresInvoice,
         locale
       }
 
@@ -272,6 +277,18 @@ const SingleCategoryOptionsView = ({
             helperText={nameError}
             disabled={saving}
           />
+          {category === 'INCOME_TYPE' && (
+            <FormControlLabel
+              control={(
+                <Switch
+                  checked={requiresInvoice}
+                  onChange={event => setRequiresInvoice(event.target.checked)}
+                  disabled={saving}
+                />
+              )}
+              label='Require invoice, client, contract, and project'
+            />
+          )}
           <CustomTextField
             fullWidth
             multiline

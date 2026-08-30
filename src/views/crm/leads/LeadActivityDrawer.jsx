@@ -14,6 +14,7 @@ import { toast } from 'sonner'
 
 import CustomTextField from '@core/components/mui/TextField'
 import LoadingButtonContent from '@/components/LoadingButtonContent'
+import LocalizedDateTimePicker from '@/components/inputs/LocalizedDateTimePicker'
 import { createActivitySchema } from '@/schemas/crm/leads'
 
 const TYPES = ['CALL', 'MEETING', 'EMAIL', 'NOTE', 'FOLLOW_UP']
@@ -141,12 +142,12 @@ const LeadActivityDrawer = ({ open, lead, locale, dictionary, onClose, onSaved }
             name='due_date'
             control={control}
             render={({ field }) => (
-              <CustomTextField
+              <LocalizedDateTimePicker
                 {...field}
                 value={field.value || ''}
-                type='datetime-local'
+                mode='datetime'
+                locale={locale}
                 label={dictionary.activity.dueDate}
-                slotProps={{ inputLabel: { shrink: true } }}
                 error={Boolean(errors.due_date)}
                 helperText={errors.due_date?.message}
               />

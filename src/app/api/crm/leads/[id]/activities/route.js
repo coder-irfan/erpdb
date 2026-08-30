@@ -2,7 +2,7 @@ import sanitizeHtml from 'sanitize-html'
 import { safeParse } from 'valibot'
 
 import { authorizeAction } from '@/libs/actionAuthorization'
-import { CRM_ACTIVITY_TYPES, CRM_WRITE_PERMISSIONS, getCurrentStaffId } from '@/libs/crmLeads'
+import { CRM_ACTIVITY_TYPES, CRM_WRITE_PERMISSIONS, resolveActivityStaffId } from '@/libs/crmLeads'
 import { prisma } from '@/libs/prisma'
 import { createActivitySchema } from '@/schemas/crm/leads'
 import { getDictionary } from '@/utils/getDictionary'
@@ -24,12 +24,12 @@ export async function POST(request, context) {
   if (!CRM_ACTIVITY_TYPES.includes(parsed.output.activity_type)) return Response.json({ success: false, error: dictionary.validation.activityTypeInvalid }, { status: 400 })
 
   try {
-    const [lead, staffId] = await Promise.all([
-      prisma.crmlead.findUnique({ where: { id }, select: { id: true } }),
-      getCurrentStaffId(authorization.session.user.id)
-    ])
+    const lead = await prisma.crmlead.findUnique({ where: { id }, select: { id: true, assigned_to_id: true } })
 
     if (!lead) return Response.json({ success: false, error: dictionary.messages.notFound }, { status: 404 })
+
+    const staffId = await resolveActivityStaffId(authorization.session.user.id, [lead.assigned_to_id])
+
     if (!staffId) return Response.json({ success: false, error: dictionary.messages.staffProfileRequired }, { status: 409 })
 
     const activity = await prisma.$transaction(async transaction => {

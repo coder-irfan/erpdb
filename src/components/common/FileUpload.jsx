@@ -79,7 +79,9 @@ const FileUpload = ({
   const normalizedAccept = useMemo(() => normalizeAccept(accept), [accept])
   const [isUploading, setIsUploading] = useState(false)
   const [localPreviewUrl, setLocalPreviewUrl] = useState(null)
+  const [localPreviewMimeType, setLocalPreviewMimeType] = useState('')
   const previewUrl = localPreviewUrl || value
+  const isPdfPreview = localPreviewMimeType === 'application/pdf' || /\.pdf(?:$|[?#])/i.test(previewUrl || '')
 
   useEffect(
     () => () => {
@@ -110,6 +112,7 @@ const FileUpload = ({
     const objectUrl = URL.createObjectURL(selectedFile)
 
     setLocalPreviewUrl(objectUrl)
+    setLocalPreviewMimeType(selectedFile.type)
     setIsUploading(true)
 
     const formData = new FormData()
@@ -129,6 +132,7 @@ const FileUpload = ({
 
     if (!result.success) {
       setLocalPreviewUrl(null)
+      setLocalPreviewMimeType('')
       toast.error(getErrorMessage(result.code))
 
       return
@@ -136,6 +140,7 @@ const FileUpload = ({
 
     onChange?.(result.url)
     setLocalPreviewUrl(null)
+    setLocalPreviewMimeType('')
   }
 
   const handleRejectedFiles = rejectedFiles => {
@@ -171,8 +176,10 @@ const FileUpload = ({
         >
           <input {...getInputProps()} />
           <div className='relative flex size-20 shrink-0 items-center justify-center overflow-hidden rounded border border-divider bg-actionHover'>
-            {previewUrl ? (
+            {previewUrl && !isPdfPreview ? (
               <img src={previewUrl} alt={copy.previewAlt} className='size-full object-contain p-1' />
+            ) : previewUrl ? (
+              <i className='tabler-file-type-pdf text-4xl text-error' />
             ) : (
               <i className='tabler-photo-plus text-3xl text-textSecondary' />
             )}
@@ -226,13 +233,18 @@ const FileUpload = ({
         style={{ minHeight: previewHeight }}
       >
         <input {...getInputProps()} />
-        {previewUrl ? (
+        {previewUrl && !isPdfPreview ? (
           <img
             src={previewUrl}
             alt={copy.previewAlt}
             className='max-is-full object-contain'
             style={{ maxHeight: previewHeight - 32 }}
           />
+        ) : previewUrl ? (
+          <div className='flex flex-col items-center gap-2'>
+            <i className='tabler-file-type-pdf text-5xl text-error' />
+            <Typography variant='body2'>{String(value || '').split('/').pop()}</Typography>
+          </div>
         ) : (
           <div className='flex flex-col items-center gap-2'>
             <i className='tabler-cloud-upload text-4xl text-primary' />

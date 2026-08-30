@@ -73,6 +73,9 @@ const translations = {
     },
     common: {
       refresh: 'Refresh dashboard',
+      refreshing: 'Refreshing dashboard',
+      retry: 'Try again',
+      loadError: 'Dashboard could not be loaded',
       viewAll: 'View all',
       noData: 'No data is available for the selected period.'
     }
@@ -149,7 +152,7 @@ const translations = {
       loanHint: '{count} قرضه فعال',
       noStaff: 'حساب کاربری شما به پروفایل کارمند وصل نیست.'
     },
-    common: { refresh: 'تازه‌سازی داشبورد', viewAll: 'مشاهده همه', noData: 'برای دوره انتخاب‌شده داده‌ای موجود نیست.' }
+    common: { refresh: 'تازه‌سازی داشبورد', refreshing: 'داشبورد در حال تازه‌سازی است', retry: 'دوباره کوشش کنید', loadError: 'داشبورد بارگیری نشد', viewAll: 'مشاهده همه', noData: 'برای دوره انتخاب‌شده داده‌ای موجود نیست.' }
   },
   ps: {
     title: 'د ادارې عمومي لید',
@@ -223,7 +226,7 @@ const translations = {
       loanHint: '{count} فعال پورونه',
       noStaff: 'ستاسو حساب د کارکوونکي له پروفایل سره نه دی تړلی.'
     },
-    common: { refresh: 'ډشبورډ تازه کول', viewAll: 'ټول کتل', noData: 'د ټاکلې مودې لپاره معلومات نشته.' }
+    common: { refresh: 'ډشبورډ تازه کول', refreshing: 'ډشبورډ تازه کېږي', retry: 'بیا هڅه وکړئ', loadError: 'ډشبورډ پورته نه شو', viewAll: 'ټول کتل', noData: 'د ټاکلې مودې لپاره معلومات نشته.' }
   }
 }
 

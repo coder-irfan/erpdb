@@ -34,6 +34,7 @@ const SalaryPayslipPrintDocument = ({ salary, company, locale, dictionary }) => 
     [print.baseSalary, print.base, salary.base_salary],
     [print.earnedSalary, print.earning, salary.earned_salary],
     [print.bonus, print.earning, salary.bonus_amount],
+    ['Unpaid leave deduction', print.deduction, salary.unpaid_leave_deduction],
     [print.loanDeduction, print.deduction, salary.loan_deduction]
   ]
 

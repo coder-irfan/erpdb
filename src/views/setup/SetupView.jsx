@@ -17,6 +17,8 @@ import CustomTextField from '@core/components/mui/TextField'
 import { useSettings } from '@core/hooks/useSettings'
 import FileUpload from '@/components/common/FileUpload'
 import LoadingButtonContent from '@/components/LoadingButtonContent'
+import ColorPickerField from '@/components/inputs/ColorPickerField'
+import LocalizedDateTimePicker from '@/components/inputs/LocalizedDateTimePicker'
 import themeConfig from '@/configs/themeConfig'
 
 const LOGO_ACCEPT =
@@ -42,7 +44,7 @@ const getInitialForm = (settings, themeSettings = {}) => ({
   currency_code: settings.currency_code || 'AFN',
   usd_afn_exchange_rate: settings.usd_afn_exchange_rate || '65.0000',
   default_work_start: settings.default_work_start || '08:30',
-  weekend_days: settings.weekend_days || '5',
+  weekend_days: '5',
   default_work_end: settings.default_work_end || '17:30',
   primary_color_light: themeSettings.primaryColorLight || themeSettings.primaryColor || themeConfig.primaryColorLight,
   secondary_color_light:
@@ -86,12 +88,12 @@ const ThemeColorControl = ({ name, label, description, value, fallback, onChange
         </div>
       </div>
       <div className='flex items-start gap-3'>
-        <input
-          type='color'
+        <ColorPickerField
+          compact
+          name={name}
+          label={dictionary.pickColor.replace('{color}', label)}
           value={pickerValue}
-          onChange={event => onChange({ target: { name, value: event.target.value } })}
-          className='h-10 w-12 cursor-pointer rounded border border-divider bg-transparent p-1'
-          aria-label={dictionary.pickColor.replace('{color}', label)}
+          onChange={onChange}
         />
         <CustomTextField
           fullWidth
@@ -334,18 +336,20 @@ const SetupView = ({ dictionary, initialSettings, locale }) => {
               onChange={updateField}
               sx={{ '& .MuiInputBase-root': { backgroundColor: 'transparent' } }}
             />
-            <CustomTextField
+            <LocalizedDateTimePicker
               fullWidth
-              type='time'
+              mode='time'
+              locale={locale}
               name='default_work_start'
               label={dictionary.fields.workStart}
               value={form.default_work_start}
               slotProps={{ inputLabel: { shrink: true } }}
               onChange={updateField}
             />
-            <CustomTextField
+            <LocalizedDateTimePicker
               fullWidth
-              type='time'
+              mode='time'
+              locale={locale}
               name='default_work_end'
               label={dictionary.fields.workEnd}
               value={form.default_work_end}

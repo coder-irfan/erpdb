@@ -13,12 +13,15 @@ import CustomTextField from '@core/components/mui/TextField'
 import { deleteContract, getContractFormOptions, getContracts, runContractExpirationAudit, updateContractStatus } from '@/actions/contracts'
 import ConfirmDeleteModal from '@/components/dialogs/ConfirmDeleteModal'
 import TableFiltersPopover from '@/components/table/TableFiltersPopover'
+import LocalizedDateTimePicker from '@/components/inputs/LocalizedDateTimePicker'
+import { CONTRACT_TYPE_DOMAINS } from '@/data/contractTypes'
 
 import ContractDetailModal from './ContractDetailModal'
 import ContractPrintModal from './ContractPrintModal'
 import ContractFormDrawer from './ContractFormDrawer'
 import ContractStatsCards from './ContractStatsCards'
 import ContractTableView from './ContractTableView'
+import ContractTerminationDialog from './ContractTerminationDialog'
 import OthersContractTableView from './OthersContractTableView'
 
 const EMPTY_DATA = {
@@ -27,13 +30,13 @@ const EMPTY_DATA = {
 }
 
 const EMPTY_OPTIONS = {
-  clients: [], staff: [],
+  clients: [], vendors: [], staff: [],
   leads: [], invoices: [], templates: [],
-  options: { CONTRACT_TYPE: [], CONTRACT_TYPES: [], CONTRACT_DURATION: [], CONTRACT_COUNTRY: [], CONTRACT_LEVEL: [], CONTRACT_STATUS: [] },
+  options: { CONTRACT_TYPE: [], CONTRACT_TYPES: [], CONTRACT_DURATION: [], CONTRACT_COUNTRY: [], COUNTRY: [], CONTRACT_LEVEL: [], CONTRACT_STATUS: [] },
   baseCurrency: 'AFN', exchangeRate: '65.0000'
 }
 
-const ContractsView = ({ locale, dictionary, setup, canWrite, canDelete, canRunAudit, scope = 'ALL', defaultTarget = 'CUSTOMER' }) => {
+const ContractsView = ({ locale, dictionary, setup, canWrite, canDelete, canRunAudit, scope = 'CUSTOMER', contractContext = scope }) => {
   const [searchInput, setSearchInput] = useState('')
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('ALL')
@@ -55,6 +58,7 @@ const ContractsView = ({ locale, dictionary, setup, canWrite, canDelete, canRunA
   const [deleting, setDeleting] = useState(false)
   const [statusUpdating, setStatusUpdating] = useState(null)
   const [auditRunning, setAuditRunning] = useState(false)
+  const [terminationTarget, setTerminationTarget] = useState(null)
 
   useEffect(() => {
     const timeout = setTimeout(() => { setSearch(searchInput.trim()); setPage(0) }, 350)
@@ -89,15 +93,31 @@ const ContractsView = ({ locale, dictionary, setup, canWrite, canDelete, canRunA
   const openCreate = () => { setEditingContract(null); setFormOpen(true) }
   const edit = contract => { setEditingContract(contract); setFormOpen(true) }
 
-  const changeStatus = async (contract, statusId) => {
+  const performStatusChange = async (contract, statusId, reason = '') => {
     if (statusId === contract.status_id) return
     setStatusUpdating(contract.id)
-    const result = await updateContractStatus(contract.id, statusId, { locale })
+    const result = await updateContractStatus(contract.id, statusId, { locale, reason })
 
     if (!result.success) toast.error(result.error || dictionary.messages.operationFailed)
-    else { toast.success(result.message); await refresh() }
+    else {
+      toast.success(result.message)
+      setTerminationTarget(null)
+      await refresh()
+    }
 
     setStatusUpdating(null)
+  }
+
+  const changeStatus = async (contract, statusId) => {
+    const nextStatus = data.statuses.find(status => status.id === statusId)
+
+    if (nextStatus?.value === 'TERMINATED') {
+      setTerminationTarget({ contract, statusId })
+
+      return
+    }
+
+    await performStatusChange(contract, statusId)
   }
 
   const remove = async () => {
@@ -126,11 +146,13 @@ const ContractsView = ({ locale, dictionary, setup, canWrite, canDelete, canRunA
 
   const statusFilters = [['ALL', dictionary.filters.allStatuses], ['ACTIVE', dictionary.tabs.active], ['EXPIRING', dictionary.tabs.expiring], ['DRAFT', dictionary.tabs.draft], ['EXPIRED', dictionary.tabs.expired]]
 
-  const filterTypeOptions = scope === 'OTHERS'
-    ? (formOptions.options.CONTRACT_TYPES || []).filter(option => option.category === 'CONTRACT_TYPE_OTHER')
-    : (formOptions.options.CONTRACT_TYPES || [])
+  const filterTypeOptions = (formOptions.options.CONTRACT_TYPES || []).filter(option => {
+    const expectedCategory = CONTRACT_TYPE_DOMAINS[contractContext]
 
-  const activeFilterCount = Number(statusFilter !== 'ALL') + Number(Boolean(serviceTypeId)) + Number(Boolean(clientId)) + Number(Boolean(fromDate || toDate))
+    return option.category === expectedCategory || (contractContext === 'CUSTOMER' && option.category === 'CONTRACT_TYPE')
+  })
+
+  const activeFilterCount = Number(Boolean(searchInput.trim())) + Number(statusFilter !== 'ALL') + Number(Boolean(serviceTypeId)) + Number(Boolean(clientId)) + Number(Boolean(fromDate || toDate))
   const TableView = scope === 'OTHERS' ? OthersContractTableView : ContractTableView
 
   return (
@@ -150,10 +172,10 @@ const ContractsView = ({ locale, dictionary, setup, canWrite, canDelete, canRunA
               </CustomTextField>
               {scope !== 'OTHERS' && <Autocomplete options={formOptions.clients} value={formOptions.clients.find(client => client.id === clientId) || null} onChange={(_, value) => { setClientId(value?.id || ''); setPage(0) }} getOptionLabel={option => option.company_name} isOptionEqualToValue={(option, value) => option.id === value.id} renderInput={params => <CustomTextField {...params} label={dictionary.filters.client} placeholder={dictionary.filters.allClients} />} />}
               <div className='grid grid-cols-1 gap-3 sm:grid-cols-2'>
-                <CustomTextField type='date' label={dictionary.filters.fromDate} value={fromDate} onChange={event => { setFromDate(event.target.value); setPage(0) }} slotProps={{ inputLabel: { shrink: true } }} />
-                <CustomTextField type='date' label={dictionary.filters.toDate} value={toDate} onChange={event => { setToDate(event.target.value); setPage(0) }} slotProps={{ inputLabel: { shrink: true } }} />
+                <LocalizedDateTimePicker locale={locale} label={dictionary.filters.fromDate} value={fromDate} onChange={event => { setFromDate(event.target.value); setPage(0) }} />
+                <LocalizedDateTimePicker locale={locale} label={dictionary.filters.toDate} value={toDate} onChange={event => { setToDate(event.target.value); setPage(0) }} />
               </div>
-              {activeFilterCount > 0 && <Button variant='tonal' color='secondary' onClick={() => { setStatusFilter('ALL'); setServiceTypeId(''); setClientId(''); setFromDate(''); setToDate(''); setPage(0) }}>{dictionary.filters.clear}</Button>}
+              {activeFilterCount > 0 && <Button variant='tonal' color='secondary' onClick={() => { setSearchInput(''); setSearch(''); setStatusFilter('ALL'); setServiceTypeId(''); setClientId(''); setFromDate(''); setToDate(''); setPage(0) }}>{dictionary.filters.clear}</Button>}
             </TableFiltersPopover>
             {canRunAudit && <Button variant='tonal' color='secondary' startIcon={<i className='tabler-mail-cog' />} disabled={auditRunning} onClick={runAudit}>{auditRunning ? dictionary.actions.runningAudit : dictionary.actions.runAudit}</Button>}
             {canWrite && <Button variant='contained' startIcon={<i className='tabler-plus' />} onClick={openCreate}>{dictionary.actions.add}</Button>}
@@ -161,10 +183,17 @@ const ContractsView = ({ locale, dictionary, setup, canWrite, canDelete, canRunA
         </CardContent>
         <TableView data={data} loading={loading} statusUpdating={statusUpdating} page={page} rowsPerPage={rowsPerPage} locale={locale} dictionary={dictionary} canWrite={canWrite} canDelete={canDelete} onPageChange={(_, value) => setPage(value)} onRowsPerPageChange={event => { setRowsPerPage(Number(event.target.value)); setPage(0) }} onView={contract => setDetailId(contract.id)} onPrint={contract => setPrintId(contract.id)} onEdit={edit} onDelete={setDeleteTarget} onStatusChange={changeStatus} onAdd={openCreate} />
       </Card>
-      <ContractFormDrawer open={formOpen} contract={editingContract} formOptions={formOptions} locale={locale} dictionary={dictionary} defaultTarget={defaultTarget} onClose={() => setFormOpen(false)} onSaved={refresh} />
-      <ContractDetailModal open={Boolean(detailId)} contractId={detailId} locale={locale} baseCurrency={data.baseCurrency} dictionary={dictionary} canWrite={canWrite} refreshKey={detailRefresh} onClose={() => setDetailId(null)} onEdit={edit} />
+      <ContractFormDrawer open={formOpen} contract={editingContract} formOptions={formOptions} locale={locale} dictionary={dictionary} contractContext={contractContext} onClose={() => setFormOpen(false)} onSaved={refresh} />
+      <ContractDetailModal open={Boolean(detailId)} contractId={detailId} locale={locale} baseCurrency={data.baseCurrency} dictionary={dictionary} canWrite={canWrite} refreshKey={detailRefresh} contractContext={contractContext} onClose={() => setDetailId(null)} onEdit={edit} />
       <ContractPrintModal open={Boolean(printId)} contractId={printId} setup={setup} locale={locale} dictionary={dictionary} other={scope === 'OTHERS'} onClose={() => setPrintId(null)} />
       <ConfirmDeleteModal open={Boolean(deleteTarget)} title={dictionary.delete.title} description={dictionary.delete.description} itemName={deleteTarget?.contract_number} confirmText={dictionary.actions.delete} cancelText={dictionary.actions.cancel} loading={deleting} onConfirm={remove} onClose={() => setDeleteTarget(null)} />
+      <ContractTerminationDialog
+        open={Boolean(terminationTarget)}
+        contract={terminationTarget?.contract}
+        loading={Boolean(terminationTarget && statusUpdating === terminationTarget.contract.id)}
+        onClose={() => setTerminationTarget(null)}
+        onConfirm={reason => performStatusChange(terminationTarget.contract, terminationTarget.statusId, reason)}
+      />
     </div>
   )
 }

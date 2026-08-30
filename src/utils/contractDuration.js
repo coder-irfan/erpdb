@@ -5,7 +5,12 @@ export { toUtcDateOnly } from '@/utils/utcDate'
 const DAY_IN_MS = 24 * 60 * 60 * 1000
 
 export const parseDurationOption = option => {
-  const source = [option?.label, option?.value, option?.description].filter(Boolean).join(' ')
+  const source = [option?.label, option?.value, option?.description]
+    .filter(Boolean)
+    .join(' ')
+    .replaceAll('_', ' ')
+    .replaceAll('-', ' ')
+
   const match = source.match(/(\d+(?:\.\d+)?)\s*(years?|yrs?|months?|mos?|weeks?|wks?|days?)/i)
 
   if (!match) return null
@@ -19,6 +24,25 @@ export const parseDurationOption = option => {
   if (unit.startsWith('week') || unit.startsWith('wk')) return { amount, unit: 'WEEK' }
 
   return { amount, unit: 'DAY' }
+}
+
+export const formatContractDuration = (option, fallback = '') => {
+  const parsed = parseDurationOption(option || { value: fallback })
+
+  if (parsed) {
+    const unit = `${parsed.unit[0]}${parsed.unit.slice(1).toLowerCase()}`
+    const plural = parsed.amount === 1 ? '' : 's'
+
+    return `${parsed.amount} ${unit}${plural}`
+  }
+
+  const source = option?.label || option?.value || fallback
+
+  return String(source || '')
+    .replaceAll('_', ' ')
+    .replaceAll('-', ' ')
+    .toLowerCase()
+    .replace(/\b\w/g, character => character.toUpperCase())
 }
 
 export const calculateContractEndDate = (startDate, durationOption) => {
@@ -55,6 +79,36 @@ export const getRemainingDays = (endDate, now = new Date()) => {
   if (!end || !today) return 0
 
   return Math.ceil((end.getTime() - today.getTime()) / DAY_IN_MS)
+}
+
+export const formatDateRangeDuration = (startDate, endDate) => {
+  const start = toUtcDateOnly(startDate)
+  const end = toUtcDateOnly(endDate)
+
+  if (!start || !end || end < start) return ''
+
+  let years = end.getUTCFullYear() - start.getUTCFullYear()
+  let months = end.getUTCMonth() - start.getUTCMonth()
+
+  if (end.getUTCDate() < start.getUTCDate()) months -= 1
+
+  if (months < 0) {
+    years -= 1
+    months += 12
+  }
+
+  const parts = []
+
+  if (years) parts.push(`${years} Year${years === 1 ? '' : 's'}`)
+  if (months) parts.push(`${months} Month${months === 1 ? '' : 's'}`)
+
+  if (parts.length === 0) {
+    const days = Math.max(0, Math.ceil((end.getTime() - start.getTime()) / DAY_IN_MS))
+
+    return `${days} Day${days === 1 ? '' : 's'}`
+  }
+
+  return parts.join(', ')
 }
 
 export const toDateInputValue = value => {

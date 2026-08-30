@@ -1,214 +1,97 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
+import Alert from '@mui/material/Alert'
 import Button from '@mui/material/Button'
 import Divider from '@mui/material/Divider'
 import Drawer from '@mui/material/Drawer'
 import IconButton from '@mui/material/IconButton'
-import MenuItem from '@mui/material/MenuItem'
 import ToggleButton from '@mui/material/ToggleButton'
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
 import Typography from '@mui/material/Typography'
-import { valibotResolver } from '@hookform/resolvers/valibot'
-import { Controller, useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 
 import CustomTextField from '@core/components/mui/TextField'
 import LoadingButtonContent from '@/components/LoadingButtonContent'
-import { createTimesheetSchema } from '@/schemas/hrm/timesheets'
+import LocalizedDateTimePicker from '@/components/inputs/LocalizedDateTimePicker'
 
-const LOCALIZED_COPY = {
-  en: {
-    markAll: 'Mark All Present',
-    saveAll: 'Save All Attendance',
-    complete: 'Attendance is complete for this date',
-    completeDescription: 'Every active staff member has already been marked.'
-  },
-  ps: {
-    markAll: 'ټول کارکوونکي حاضر ثبتول',
-    saveAll: 'ټوله حاضري خوندي کول',
-    complete: 'د دې نېټې حاضري بشپړه شوې ده',
-    completeDescription: 'د ټولو فعالو کارکوونکو حاضري ثبت شوې ده.'
-  },
-  fa: {
-    markAll: 'ثبت حضور همه',
-    saveAll: 'ذخیره همه حاضری‌ها',
-    complete: 'حاضری این تاریخ کامل است',
-    completeDescription: 'حاضری تمام کارکنان فعال ثبت شده است.'
-  }
-}
-
-const getDefaults = (record, date, defaultWorkHours, defaultStaffId = '') => ({
-  staff_id: record?.staff_id || defaultStaffId,
-  status: record?.status || 'PRESENT',
-  date,
-  check_in_time: record?.check_in_time || defaultWorkHours.start,
-  check_out_time: record?.check_out_time || defaultWorkHours.end,
-  notes: record?.notes || ''
-})
-
-const getBulkEntries = attendanceStaff =>
-  attendanceStaff
-    .filter(staff => !staff.record)
-    .map(staff => ({
-      staff_id: staff.id,
-      full_name: staff.full_name,
-      position: staff.position,
-      locked: Boolean(staff.record?.leave_request_id),
-      status: staff.record?.status || '',
-      check_in_time: staff.record?.check_in_time || '',
-      check_out_time: staff.record?.check_out_time || '',
-      notes: staff.record?.notes || ''
-    }))
+const getEntries = (attendanceStaff, defaultWorkHours) =>
+  attendanceStaff.map(staff => ({
+    staff_id: staff.id,
+    full_name: staff.full_name,
+    position: staff.position,
+    locked: Boolean(staff.record?.leave_request_id),
+    status: staff.record?.status || 'PRESENT',
+    check_in_time: staff.record?.check_in_time || defaultWorkHours.start,
+    check_out_time: staff.record?.check_out_time || defaultWorkHours.end,
+    notes: staff.record?.notes || '',
+    noteOpen: Boolean(staff.record?.notes)
+  }))
 
 const AttendanceDrawer = ({
   open,
-  record,
   date,
-  staff,
   attendanceStaff = [],
   defaultWorkHours,
+  guard = {},
   locale,
   dictionary,
   onClose,
   onSaved
 }) => {
-  const [staffQueue, setStaffQueue] = useState(staff)
-  const [savingMode, setSavingMode] = useState(null)
-  const [bulkMode, setBulkMode] = useState(false)
-  const [bulkEntries, setBulkEntries] = useState([])
-  const [bulkSaving, setBulkSaving] = useState(false)
-  const savingRequestRef = useRef(false)
-  const initialDataRef = useRef({ staff, attendanceStaff })
-
-  const {
-    control,
-    register,
-    handleSubmit,
-    reset,
-    setValue,
-    watch,
-    formState: { errors }
-  } = useForm({
-    resolver: valibotResolver(createTimesheetSchema(dictionary.validation)),
-    defaultValues: getDefaults(record, date, defaultWorkHours)
-  })
-
-  const status = watch('status')
-  const isSavingSingle = savingMode !== null
-  const isSaving = isSavingSingle || bulkSaving
-  const isAttendanceComplete = !record && attendanceStaff.length > 0 && attendanceStaff.every(item => item.record)
-
-  useEffect(() => {
-    initialDataRef.current = { staff, attendanceStaff }
-  }, [attendanceStaff, staff])
+  const [entries, setEntries] = useState([])
+  const [search, setSearch] = useState('')
+  const [saving, setSaving] = useState(false)
+  const blockedMessage = guard.isFuture ? dictionary.messages.futureDateBlocked : guard.payrollLocked ? dictionary.messages.payrollLocked : ''
 
   useEffect(() => {
     if (!open) return
 
-    const { staff: initialStaff, attendanceStaff: initialAttendanceStaff } = initialDataRef.current
+    setEntries(getEntries(attendanceStaff, defaultWorkHours))
+    setSearch('')
+    setSaving(false)
+  }, [attendanceStaff, defaultWorkHours, open])
 
-    setStaffQueue(initialStaff)
-    setSavingMode(null)
-    setBulkMode(false)
-    setBulkSaving(false)
-    setBulkEntries(getBulkEntries(initialAttendanceStaff))
-    reset(getDefaults(record, date, defaultWorkHours, record ? '' : initialStaff[0]?.id || ''))
-  }, [date, defaultWorkHours, open, record, reset])
+  const visibleEntries = useMemo(() => {
+    const query = search.trim().toLocaleLowerCase()
 
-  const setStatus = nextStatus => {
-    if (!nextStatus) return
+    if (!query) return entries
 
-    setValue('status', nextStatus, { shouldDirty: true, shouldValidate: true })
+    return entries.filter(entry => `${entry.full_name} ${entry.position || ''}`.toLocaleLowerCase().includes(query))
+  }, [entries, search])
 
-    if (nextStatus === 'PRESENT') {
-      setValue('check_in_time', defaultWorkHours.start)
-      setValue('check_out_time', defaultWorkHours.end)
-    } else {
-      setValue('check_in_time', '')
-      setValue('check_out_time', '')
+  const editableEntries = entries.filter(entry => !entry.locked)
+  const controlsDisabled = saving || guard.blocked
+
+  const updateEntry = (staffId, changes) => {
+    setEntries(current => current.map(entry => (entry.staff_id === staffId ? { ...entry, ...changes } : entry)))
+  }
+
+  const changeStatus = (entry, status) => {
+    if (!status) return
+
+    updateEntry(entry.staff_id, {
+      status,
+      check_in_time: status === 'PRESENT' ? entry.check_in_time || defaultWorkHours.start : '',
+      check_out_time: status === 'PRESENT' ? entry.check_out_time || defaultWorkHours.end : ''
+    })
+  }
+
+  const saveAttendance = async () => {
+    if (guard.blocked) {
+      toast.error(blockedMessage)
+
+      return
     }
-  }
 
-  const submit = mode =>
-    handleSubmit(async values => {
-      if (savingRequestRef.current) return
-
-      const isNext = mode === 'NEXT' && !record
-      let nextQueue = staffQueue
-
-      savingRequestRef.current = true
-      setSavingMode(mode)
-
-      // Move immediately so the next employee can be edited while this save finishes in the background.
-      if (isNext) {
-        nextQueue = staffQueue.filter(item => item.id !== values.staff_id)
-        setStaffQueue(nextQueue)
-
-        if (nextQueue.length > 0) reset(getDefaults(null, date, defaultWorkHours, nextQueue[0].id))
-        else onClose()
-      }
-
-      try {
-        const response = await fetch(record ? `/api/hrm/timesheets/${record.id}` : '/api/hrm/timesheets', {
-          method: record ? 'PUT' : 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            ...values,
-            notes: record?.leave_request_id ? `Approved leave request ${record.leave_request_id}` : values.notes,
-            locale
-          })
-        })
-
-        const result = await response.json()
-
-        if (!response.ok || !result.success) {
-          toast.error(result.error || dictionary.messages.operationFailed)
-
-          return
-        }
-
-        toast.success(result.message)
-        void onSaved(result.data)
-
-        if (!isNext) onClose()
-      } catch {
-        toast.error(dictionary.messages.operationFailed)
-      } finally {
-        savingRequestRef.current = false
-        setSavingMode(null)
-      }
-    })()
-
-  const markAllPresent = () => {
-    setBulkMode(true)
-    setBulkEntries(entries =>
-      entries.map(entry =>
-        entry.locked
-          ? entry
-          : {
-              ...entry,
-              status: 'PRESENT',
-              check_in_time: defaultWorkHours.start,
-              check_out_time: defaultWorkHours.end
-            }
-      )
-    )
-  }
-
-  const updateBulkEntry = (staffId, changes) => {
-    setBulkEntries(entries => entries.map(entry => (entry.staff_id === staffId ? { ...entry, ...changes } : entry)))
-  }
-
-  const saveBulkAttendance = async () => {
-    if (bulkEntries.some(entry => !entry.status)) {
+    if (editableEntries.some(entry => entry.status === 'PRESENT' && (!entry.check_in_time || !entry.check_out_time))) {
       toast.error(dictionary.validation.required)
 
       return
     }
 
-    setBulkSaving(true)
+    setSaving(true)
 
     try {
       const response = await fetch('/api/hrm/timesheets/bulk', {
@@ -217,7 +100,7 @@ const AttendanceDrawer = ({
         body: JSON.stringify({
           date,
           locale,
-          records: bulkEntries.map(({ staff_id, status, check_in_time, check_out_time, notes }) => ({
+          records: editableEntries.map(({ staff_id, status, check_in_time, check_out_time, notes }) => ({
             staff_id,
             status,
             check_in_time,
@@ -241,77 +124,59 @@ const AttendanceDrawer = ({
     } catch {
       toast.error(dictionary.messages.operationFailed)
     } finally {
-      setBulkSaving(false)
+      setSaving(false)
     }
   }
-
-  const localizedCopy = LOCALIZED_COPY[locale] || LOCALIZED_COPY.en
-  const markAllPresentLabel = dictionary.actions.markAllPresent || localizedCopy.markAll || dictionary.actions.mark
-  const saveAllLabel = dictionary.actions.saveAll || localizedCopy.saveAll || dictionary.actions.save
 
   return (
     <Drawer
       anchor='right'
       open={open}
-      onClose={isSaving ? undefined : onClose}
-      PaperProps={{ className: 'is-full sm:is-[680px]' }}
+      onClose={saving ? undefined : onClose}
+      PaperProps={{ className: 'is-full sm:is-[840px]' }}
     >
-      <div className='flex items-start justify-between gap-4 p-6'>
+      <div className='flex items-start justify-between gap-4 px-6 py-5'>
         <div>
-          <Typography variant='h5'>
-            {bulkMode ? dictionary.drawer.title : record ? dictionary.drawer.editTitle : dictionary.drawer.title}
+          <Typography variant='h5'>{dictionary.actions.mark}</Typography>
+          <Typography color='text.secondary'>
+            {date} · {dictionary.drawer.description}
           </Typography>
-          <Typography color='text.secondary'>{dictionary.drawer.description}</Typography>
         </div>
-        <div className='flex items-center gap-1'>
-          {!record && !bulkMode && !isAttendanceComplete && attendanceStaff.some(item => !item.record) && (
-            <Button variant='tonal' size='small' startIcon={<i className='tabler-users' />} onClick={markAllPresent}>
-              {markAllPresentLabel}
-            </Button>
-          )}
-          <IconButton onClick={onClose} disabled={isSaving}>
-            <i className='tabler-x' />
-          </IconButton>
-        </div>
+        <IconButton onClick={onClose} disabled={saving} aria-label={dictionary.actions.cancel}>
+          <i className='tabler-x' />
+        </IconButton>
       </div>
       <Divider />
-      {isAttendanceComplete ? (
-        <div className='flex flex-1 flex-col items-center justify-center gap-4 px-6 text-center'>
-          <div className='flex size-16 items-center justify-center rounded-full bg-success/15 text-success'>
-            <i className='tabler-circle-check text-4xl' />
-          </div>
-          <div>
-            <Typography variant='h6'>
-              {dictionary.drawer.completeTitle || localizedCopy.complete || dictionary.table.emptyTitle}
-            </Typography>
-            <Typography color='text.secondary' className='mt-1'>
-              {dictionary.drawer.completeDescription ||
-                localizedCopy.completeDescription ||
-                dictionary.table.description}
-            </Typography>
-          </div>
-          <Button variant='tonal' onClick={onClose}>
-            {dictionary.actions.cancel}
-          </Button>
+
+      <div className='flex flex-1 flex-col overflow-hidden'>
+        <div className='space-y-4 px-6 py-5'>
+          {blockedMessage && <Alert severity='warning'>{blockedMessage}</Alert>}
+          <CustomTextField
+            fullWidth
+            size='small'
+            label={dictionary.filters.search}
+            placeholder={dictionary.filters.searchPlaceholder}
+            value={search}
+            onChange={event => setSearch(event.target.value)}
+            slotProps={{ input: { startAdornment: <i className='tabler-search me-2 text-textSecondary' /> } }}
+          />
+          <Typography variant='body2' color='text.secondary'>
+            {visibleEntries.length} {dictionary.fields.staff}
+          </Typography>
         </div>
-      ) : bulkMode ? (
-        <div className='flex flex-1 flex-col overflow-hidden'>
-          <div className='flex flex-wrap items-center justify-between gap-3 px-6 pb-3 pt-5'>
-            <Typography variant='body2' color='text.secondary'>
-              {bulkEntries.length} {dictionary.fields.staff}
-            </Typography>
-            <Button variant='text' size='small' onClick={markAllPresent} disabled={bulkSaving}>
-              {markAllPresentLabel}
-            </Button>
-          </div>
-          <div className='flex flex-1 flex-col gap-3 overflow-y-auto px-6 pb-6'>
-            {bulkEntries.map(entry => (
-              <div key={entry.staff_id} className='rounded border border-divider p-3'>
-                <div className='mb-3 flex flex-wrap items-center justify-between gap-2'>
-                  <div>
-                    <Typography className='font-medium'>{entry.full_name}</Typography>
-                    <Typography variant='caption' color='text.secondary'>
-                      {entry.position}
+
+        <div className='flex flex-1 flex-col gap-4 overflow-y-auto px-6 pb-6'>
+          {visibleEntries.map(entry => {
+            const rowDisabled = controlsDisabled || entry.locked
+            const showTimes = entry.status === 'PRESENT'
+
+            return (
+              <div key={entry.staff_id} className='rounded-lg border border-divider bg-paper p-4 shadow-sm'>
+                <div className='flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between'>
+                  <div className='min-is-0 lg:is-[210px]'>
+                    <Typography className='truncate font-medium'>{entry.full_name}</Typography>
+                    <Typography variant='body2' color='text.secondary' className='truncate'>
+                      {entry.position || '—'}
                       {entry.locked ? ` · ${dictionary.status.LEAVE}` : ''}
                     </Typography>
                   </div>
@@ -319,172 +184,100 @@ const AttendanceDrawer = ({
                     exclusive
                     size='small'
                     value={entry.status}
-                    disabled={entry.locked || bulkSaving}
-                    onChange={(_, nextStatus) => {
-                      if (!nextStatus) return
-
-                      updateBulkEntry(entry.staff_id, {
-                        status: nextStatus,
-                        check_in_time: nextStatus === 'PRESENT' ? defaultWorkHours.start : '',
-                        check_out_time: nextStatus === 'PRESENT' ? defaultWorkHours.end : ''
-                      })
-                    }}
+                    disabled={rowDisabled}
+                    onChange={(_, status) => changeStatus(entry, status)}
+                    className='self-start lg:self-auto'
                   >
-                    <ToggleButton color='success' value='PRESENT'>
-                      {dictionary.status.PRESENT}
-                    </ToggleButton>
-                    <ToggleButton color='error' value='ABSENT'>
-                      {dictionary.status.ABSENT}
-                    </ToggleButton>
-                    <ToggleButton color='info' value='LEAVE'>
-                      {dictionary.status.LEAVE}
-                    </ToggleButton>
+                    <ToggleButton color='success' value='PRESENT'>{dictionary.status.PRESENT}</ToggleButton>
+                    <ToggleButton color='error' value='ABSENT'>{dictionary.status.ABSENT}</ToggleButton>
+                    <ToggleButton color='info' value='LEAVE'>{dictionary.status.LEAVE}</ToggleButton>
                   </ToggleButtonGroup>
+                  <div className='grid min-is-0 grid-cols-2 gap-3 lg:is-[270px]'>
+                    <LocalizedDateTimePicker
+                      mode='time'
+                      locale={locale}
+                      size='small'
+                      label={dictionary.fields.checkIn}
+                      value={showTimes ? entry.check_in_time : ''}
+                      disabled={rowDisabled || !showTimes}
+                      slotProps={{ inputLabel: { shrink: true } }}
+                      onChange={event => updateEntry(entry.staff_id, { check_in_time: event.target.value })}
+                    />
+                    <LocalizedDateTimePicker
+                      mode='time'
+                      locale={locale}
+                      size='small'
+                      label={dictionary.fields.checkOut}
+                      value={showTimes ? entry.check_out_time : ''}
+                      disabled={rowDisabled || !showTimes}
+                      slotProps={{ inputLabel: { shrink: true } }}
+                      onChange={event => updateEntry(entry.staff_id, { check_out_time: event.target.value })}
+                    />
+                  </div>
                 </div>
-                <CustomTextField
-                  fullWidth
-                  size='small'
-                  label={dictionary.fields.notes}
-                  value={entry.notes}
-                  disabled={entry.locked || bulkSaving}
-                  onChange={event => updateBulkEntry(entry.staff_id, { notes: event.target.value })}
-                />
+
+                <div className='mt-3'>
+                  {entry.noteOpen ? (
+                    <div className='flex items-start gap-2'>
+                      <CustomTextField
+                        fullWidth
+                        size='small'
+                        label={dictionary.fields.notes}
+                        value={entry.notes}
+                        disabled={rowDisabled}
+                        onChange={event => updateEntry(entry.staff_id, { notes: event.target.value })}
+                      />
+                      {!entry.notes && !rowDisabled && (
+                        <IconButton size='small' onClick={() => updateEntry(entry.staff_id, { noteOpen: false })}>
+                          <i className='tabler-x' />
+                        </IconButton>
+                      )}
+                    </div>
+                  ) : (
+                    <Button
+                      variant='text'
+                      size='small'
+                      startIcon={<i className='tabler-note' />}
+                      disabled={rowDisabled}
+                      onClick={() => updateEntry(entry.staff_id, { noteOpen: true })}
+                    >
+                      {dictionary.actions.addNote}
+                    </Button>
+                  )}
+                </div>
               </div>
-            ))}
-          </div>
-          <Divider />
-          <div className='flex flex-wrap justify-end gap-3 p-6'>
-            <Button variant='tonal' color='secondary' onClick={onClose} disabled={bulkSaving}>
-              {dictionary.actions.cancel}
-            </Button>
-            <Button variant='contained' onClick={saveBulkAttendance} disabled={bulkSaving || bulkEntries.length === 0}>
-              <LoadingButtonContent loading={bulkSaving} loadingLabel={dictionary.actions.saving}>
-                {saveAllLabel}
-              </LoadingButtonContent>
-            </Button>
-          </div>
-        </div>
-      ) : (
-        <div className='flex flex-1 flex-col gap-5 overflow-y-auto p-6'>
-          <CustomTextField fullWidth disabled label={dictionary.fields.date} value={date} />
-          <input type='hidden' {...register('date')} />
-          {record ? (
-            <>
-              <CustomTextField fullWidth disabled label={dictionary.fields.staff} value={record.staff.full_name} />
-              <input type='hidden' {...register('staff_id')} />
-            </>
-          ) : (
-            <Controller
-              name='staff_id'
-              control={control}
-              render={({ field }) => (
-                <CustomTextField
-                  {...field}
-                  select
-                  fullWidth
-                  label={dictionary.fields.staff}
-                  value={field.value || ''}
-                  error={Boolean(errors.staff_id)}
-                  helperText={errors.staff_id?.message}
-                >
-                  <MenuItem value='' disabled>
-                    {dictionary.placeholders.selectStaff}
-                  </MenuItem>
-                  {staffQueue.map(item => (
-                    <MenuItem key={item.id} value={item.id}>
-                      {item.full_name} — {item.position}
-                    </MenuItem>
-                  ))}
-                </CustomTextField>
-              )}
-            />
-          )}
-          <div>
-            <Typography variant='body2' color='text.primary' className='mb-2'>
-              {dictionary.fields.status}
-            </Typography>
-            <Controller
-              name='status'
-              control={control}
-              render={() => (
-                <ToggleButtonGroup exclusive fullWidth value={status} onChange={(_, value) => setStatus(value)}>
-                  <ToggleButton color='success' value='PRESENT'>
-                    {dictionary.status.PRESENT}
-                  </ToggleButton>
-                  <ToggleButton color='error' value='ABSENT'>
-                    {dictionary.status.ABSENT}
-                  </ToggleButton>
-                  <ToggleButton color='info' value='LEAVE'>
-                    {dictionary.status.LEAVE}
-                  </ToggleButton>
-                </ToggleButtonGroup>
-              )}
-            />
-            {errors.status && (
-              <Typography variant='caption' color='error'>
-                {errors.status.message}
-              </Typography>
-            )}
-          </div>
-          {status === 'PRESENT' && (
-            <div className='grid grid-cols-1 gap-5 sm:grid-cols-2'>
-              <CustomTextField
-                fullWidth
-                type='time'
-                label={dictionary.fields.checkIn}
-                slotProps={{ inputLabel: { shrink: true } }}
-                error={Boolean(errors.check_in_time)}
-                helperText={errors.check_in_time?.message}
-                {...register('check_in_time')}
-              />
-              <CustomTextField
-                fullWidth
-                type='time'
-                label={dictionary.fields.checkOut}
-                slotProps={{ inputLabel: { shrink: true } }}
-                error={Boolean(errors.check_out_time)}
-                helperText={errors.check_out_time?.message}
-                {...register('check_out_time')}
-              />
+            )
+          })}
+
+          {visibleEntries.length === 0 && (
+            <div className='flex flex-1 flex-col items-center justify-center gap-2 py-12 text-center'>
+              <i className='tabler-user-search text-4xl text-textSecondary' />
+              <Typography variant='h6'>{dictionary.drawer.noStaffFound}</Typography>
             </div>
           )}
-          <CustomTextField
-            fullWidth
-            multiline
-            minRows={3}
-            label={dictionary.fields.notes}
-            disabled={Boolean(record?.leave_request_id)}
-            error={Boolean(errors.notes)}
-            helperText={errors.notes?.message}
-            {...register('notes')}
-          />
-          <div className='mt-auto flex flex-wrap justify-end gap-3 pt-4'>
-            <Button variant='tonal' color='secondary' onClick={onClose} disabled={isSavingSingle}>
+        </div>
+
+        <Divider />
+        <div className='flex flex-wrap items-center justify-between gap-3 p-6'>
+          <Typography variant='body2' color='text.secondary'>
+            {editableEntries.length} {dictionary.drawer.readyToSave}
+          </Typography>
+          <div className='flex gap-3'>
+            <Button variant='tonal' color='secondary' onClick={onClose} disabled={saving}>
               {dictionary.actions.cancel}
             </Button>
-            {!record && (
-              <Button
-                variant='tonal'
-                onClick={() => submit('NEXT')}
-                disabled={savingMode === 'NEXT' || staffQueue.length === 0}
-              >
-                <LoadingButtonContent loading={savingMode === 'NEXT'} loadingLabel={dictionary.actions.saving}>
-                  {dictionary.actions.saveNext}
-                </LoadingButtonContent>
-              </Button>
-            )}
             <Button
               variant='contained'
-              onClick={() => submit('SAVE')}
-              disabled={savingMode === 'SAVE' || (!record && staffQueue.length === 0)}
+              onClick={saveAttendance}
+              disabled={controlsDisabled || editableEntries.length === 0}
             >
-              <LoadingButtonContent loading={savingMode === 'SAVE'} loadingLabel={dictionary.actions.saving}>
-                {record ? dictionary.actions.saveChanges : dictionary.actions.save}
+              <LoadingButtonContent loading={saving} loadingLabel={dictionary.actions.saving}>
+                {dictionary.actions.saveAll}
               </LoadingButtonContent>
             </Button>
           </div>
         </div>
-      )}
+      </div>
     </Drawer>
   )
 }

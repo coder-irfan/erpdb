@@ -1,7 +1,7 @@
 'use client'
 
 // React Imports
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 // Next Imports
 import Link from 'next/link'
@@ -29,6 +29,7 @@ import CustomTextField from '@core/components/mui/TextField'
 
 // Server Action Imports
 import { loginAction } from '@/app/actions/authActions'
+import { USER_DEACTIVATED_CODE, USER_DEACTIVATED_MESSAGE } from '@/libs/authDeactivation'
 
 // Util Imports
 import { getLocalizedUrl } from '@/utils/i18n'
@@ -44,6 +45,12 @@ const LoginV1 = ({ dictionary, locale }) => {
 
   const router = useRouter()
   const searchParams = useSearchParams()
+
+  useEffect(() => {
+    if (searchParams.get('error') === USER_DEACTIVATED_CODE) {
+      toast.error(USER_DEACTIVATED_MESSAGE, { id: USER_DEACTIVATED_CODE })
+    }
+  }, [searchParams])
 
   const {
     control,

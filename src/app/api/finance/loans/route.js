@@ -19,7 +19,7 @@ import {
 import { prisma } from '@/libs/prisma'
 import { withSequentialNumberRetry } from '@/libs/sequentialNumbers'
 import { createFinanceLoanSchema } from '@/schemas/financeLoan'
-import { convertToBaseCurrency, toFiniteNumber } from '@/utils/formatCurrency'
+import { SYSTEM_BASE_CURRENCY, convertToBaseCurrency, toFiniteNumber } from '@/utils/formatCurrency'
 
 const MAX_PAGE_SIZE = 100
 const localeFrom = value => (['en', 'fa', 'ps'].includes(value) ? value : 'en')
@@ -40,7 +40,7 @@ export async function GET(request) {
 
   const search = (params.get('search') || '').trim()
   const statusId = params.get('status_id') || ''
-  const loanType = ['STAFF', 'EXTERNAL', 'BANK'].includes(params.get('loan_type')) ? params.get('loan_type') : ''
+  const loanType = ['STAFF', 'CORPORATE'].includes(params.get('loan_type')) ? params.get('loan_type') : ''
   const page = Math.max(1, Number.parseInt(params.get('page') || '1', 10) || 1)
   const limit = Math.min(MAX_PAGE_SIZE, Math.max(1, Number.parseInt(params.get('limit') || '10', 10) || 10))
 
@@ -51,10 +51,18 @@ export async function GET(request) {
   }
 
   try {
-    const [loans, totalCount, summaryRows, statuses, staff, setup] = await Promise.all([
+    const now = new Date()
+    const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1))
+    const monthEnd = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1))
+
+    const [loans, totalCount, summaryRows, debtSchedule, statuses, staff, setup] = await Promise.all([
       prisma.financeloan.findMany({ where, select: loanSelect, orderBy: [{ issue_date: 'desc' }, { created_at: 'desc' }], skip: (page - 1) * limit, take: limit }),
       prisma.financeloan.count({ where }),
-      prisma.financeloan.findMany({ select: { total_amount: true, monthly_deduction: true, repaid_amount: true, remaining_balance: true, amount_base: true, currency: true, exchange_rate: true, status: { select: { value: true } } } }),
+      prisma.financeloan.findMany({ select: { loan_type: true, auto_deduct: true, repayment_start_date: true, total_amount: true, monthly_deduction: true, repaid_amount: true, remaining_balance: true, amount_base: true, currency: true, exchange_rate: true, status: { select: { value: true } } } }),
+      prisma.loanrepaymentschedule.findMany({
+        where: { due_date: { gte: monthStart, lt: monthEnd }, status: 'SCHEDULED', loan: { is: { loan_type: 'CORPORATE', status: { is: { value: { in: ACTIVE_LOAN_VALUES } } } } } },
+        select: { payment_amount: true, loan: { select: { currency: true, exchange_rate: true } } }
+      }),
       prisma.option.findMany({ where: { category: 'LOAN_STATUS', is_active: true }, select: optionSelect, orderBy: [{ sort_order: 'asc' }, { label: 'asc' }] }),
       prisma.hrmstaff.findMany({ where: { status: { not: 'TERMINATED' } }, select: staffSelect, orderBy: [{ first_name: 'asc' }, { last_name: 'asc' }], take: 500 }),
       getLoanSetup()
@@ -62,20 +70,29 @@ export async function GET(request) {
 
     const summary = summaryRows.reduce((totals, loan) => {
       const toBase = amount =>
-        convertToBaseCurrency(amount, loan.currency, loan.exchange_rate, setup.currency_code || 'AFN')
-
-      totals.portfolio += toBase(loan.total_amount)
-      totals.repaid += toBase(loan.repaid_amount)
+        convertToBaseCurrency(amount, loan.currency, loan.exchange_rate, SYSTEM_BASE_CURRENCY)
 
       if (ACTIVE_LOAN_VALUES.includes(loan.status.value)) {
-        totals.active += toBase(loan.remaining_balance)
-        totals.recovery += toBase(Math.min(toFiniteNumber(loan.monthly_deduction), toFiniteNumber(loan.remaining_balance)))
+        if (loan.loan_type === 'STAFF') {
+          totals.staffReceivables += toBase(loan.remaining_balance)
+
+          if (loan.auto_deduct && (!loan.repayment_start_date || loan.repayment_start_date < monthEnd)) {
+            totals.payrollRecovery += toBase(Math.min(toFiniteNumber(loan.monthly_deduction), toFiniteNumber(loan.remaining_balance)))
+          }
+        } else {
+          totals.corporateDebt += toBase(loan.remaining_balance)
+        }
       }
 
       return totals
-    }, { active: 0, repaid: 0, recovery: 0, portfolio: 0 })
+    }, {
+      staffReceivables: 0,
+      corporateDebt: 0,
+      payrollRecovery: 0,
+      debtDisbursement: debtSchedule.reduce((total, item) => total + convertToBaseCurrency(item.payment_amount, item.loan.currency, item.loan.exchange_rate, SYSTEM_BASE_CURRENCY), 0)
+    })
 
-    return Response.json({ success: true, data: { loans: loans.map(normalizeLoan), totalCount, page, summary, options: { statuses, staff: staff.map(item => ({ ...item, full_name: `${item.first_name} ${item.last_name}`.trim() })), baseCurrency: setup.currency_code || 'AFN', exchangeRate: setup.usd_afn_exchange_rate || '65.0000' } } })
+    return Response.json({ success: true, data: { loans: loans.map(normalizeLoan), totalCount, page, summary, options: { statuses, staff: staff.map(item => ({ ...item, full_name: `${item.first_name} ${item.last_name}`.trim() })), baseCurrency: SYSTEM_BASE_CURRENCY, exchangeRate: setup.usd_afn_exchange_rate || '65.0000' } } })
   } catch {
     return errorResponse(dictionary.messages.loadFailed, 500, 'LOANS_LOAD_FAILED')
   }
@@ -110,10 +127,26 @@ export async function POST(request) {
 
     const created = await withSequentialNumberRetry(() =>
       prisma.$transaction(async transaction => {
-          const loanNumber = await nextLoanNumber(transaction)
+          const loanNumber = await nextLoanNumber(transaction, validation.output.loan_type)
 
           const loan = await transaction.financeloan.create({
-            data: { ...prepared.data, loan_number: loanNumber, status_id: status.id },
+            data: {
+              ...prepared.data,
+              loan_number: loanNumber,
+              status_id: status.id,
+              ...(prepared.schedule.length && {
+                repayment_schedule: {
+                  create: prepared.schedule.map(item => ({
+                    ...item,
+                    opening_principal: new Prisma.Decimal(item.opening_principal),
+                    principal_amount: new Prisma.Decimal(item.principal_amount),
+                    interest_amount: new Prisma.Decimal(item.interest_amount),
+                    payment_amount: new Prisma.Decimal(item.payment_amount),
+                    remaining_principal: new Prisma.Decimal(item.remaining_principal)
+                  }))
+                }
+              })
+            },
             select: loanSelect
           })
 

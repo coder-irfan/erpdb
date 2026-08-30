@@ -10,7 +10,7 @@ import { authorizeAction } from '@/libs/actionAuthorization'
 import { getCompanySetupRecord } from '@/libs/companySetup'
 import { prisma } from '@/libs/prisma'
 import { createStaffSchema, STAFF_STATUSES } from '@/schemas/hrm/staff'
-import { convertToBaseCurrency } from '@/utils/formatCurrency'
+import { SYSTEM_BASE_CURRENCY, convertToBaseCurrency } from '@/utils/formatCurrency'
 import { getDictionary } from '@/utils/getDictionary'
 import { toUtcDateOnly } from '@/utils/utcDate'
 
@@ -242,7 +242,15 @@ const applyStaffOffboarding = async (transaction, { staffId, userIds, effectiveD
         : { count: 0 },
       transaction.hrmstaffcontract.updateMany({
         where: { staff_id: staffId, status: { is: { value: 'ACTIVE' } } },
-        data: { status_id: expiredContractStatus.id, end_date: effectiveDate }
+        data: {
+          status_id: expiredContractStatus.id,
+          end_date: effectiveDate,
+          termination_date: effectiveDate,
+          termination_reason: 'Staff member was offboarded from the HRM staff record.',
+          payroll_frozen: true,
+          renewal_review_required: false,
+          final_settlement_required: true
+        }
       }),
       transaction.hrmstaffleave.updateMany({
         where: { staff_id: staffId, status: { is: { value: 'PENDING' } } },
@@ -401,10 +409,24 @@ export const createStaff = async payload => {
     }
 
     const createdStaff = await prisma.$transaction(async transaction => {
+      const isOffboarding = OFFBOARDING_STATUSES.has(validation.output.status)
+      const effectiveDate = toUtcDateOnly(new Date())
+
       const staff = await transaction.hrmstaff.create({
-        data: toStaffData(validation.output, setup.usd_afn_exchange_rate, setup.currency_code),
+        data: {
+          ...toStaffData(validation.output, setup.usd_afn_exchange_rate, SYSTEM_BASE_CURRENCY),
+          termination_date: isOffboarding ? effectiveDate : null
+        },
         select: staffListSelect
       })
+
+      const offboarding = isOffboarding
+        ? await applyStaffOffboarding(transaction, {
+            staffId: staff.id,
+            userIds: [staff.user_id],
+            effectiveDate
+          })
+        : null
 
       await transaction.auditlog.create({
         data: {
@@ -414,7 +436,9 @@ export const createStaff = async payload => {
           details: {
             staffId: staff.id,
             staffName: `${staff.first_name} ${staff.last_name}`.trim(),
-            email: staff.email
+            email: staff.email,
+            status: staff.status,
+            offboarding
           }
         }
       })
@@ -498,7 +522,7 @@ export const updateStaff = async (id, payload = {}) => {
       const staff = await transaction.hrmstaff.update({
         where: { id: staffId },
         data: {
-          ...toStaffData(validation.output, setup.usd_afn_exchange_rate, setup.currency_code),
+          ...toStaffData(validation.output, setup.usd_afn_exchange_rate, SYSTEM_BASE_CURRENCY),
           termination_date: isOffboarding ? effectiveDate : null
         },
         select: staffListSelect

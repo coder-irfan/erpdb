@@ -4,6 +4,7 @@ import Chip from '@mui/material/Chip'
 import Typography from '@mui/material/Typography'
 
 import UserAvatar from '@/components/common/UserAvatar'
+import DualCurrencyAmount from '@/components/currency/DualCurrencyAmount'
 import DashboardTablePagination from '@/components/table/DashboardTablePagination'
 import EntityActionsMenu from '@/components/table/EntityActionsMenu'
 import TableEmptyStateRow from '@/components/table/TableEmptyStateRow'
@@ -16,17 +17,19 @@ import tableStyles from '@core/styles/table.module.css'
 
 const STATUS_COLORS = { PAID: 'success', UNPAID: 'warning', PARTIALLY_PAID: 'info', CANCELLED: 'secondary', OVERDUE: 'error' }
 
-const InvoiceTableView = ({ data, loading, statusUpdating, page, rowsPerPage, locale, dictionary, canWrite, canDelete, onPageChange, onRowsPerPageChange, onView, onPay, onEdit, onDelete, onStatusChange, onAdd }) => {
+const InvoiceTableView = ({ data, loading, statusUpdating, page, rowsPerPage, locale, dictionary, canWrite, canDelete, onPageChange, onRowsPerPageChange, onView, onPrint, onPay, onEdit, onDelete, onStatusChange, onAdd }) => {
   const renderActions = invoice => (
     <EntityActionsMenu
+      locale={locale}
       actions={[
-        { label: dictionary.actions.viewPrint, icon: 'tabler-printer', onClick: () => onView(invoice) },
+        { label: dictionary.actions.viewDetails || 'View details', icon: 'tabler-eye', onClick: () => onView(invoice.id) },
+        { label: dictionary.actions.viewPrint, icon: 'tabler-printer', onClick: () => onPrint(invoice) },
         canWrite && Number(invoice.remaining_balance) > 0.005 && !['PAID', 'CANCELLED'].includes(invoice.status.value) && {
           label: dictionary.actions.recordPayment,
           icon: 'tabler-cash',
           onClick: () => onPay(invoice)
         },
-        canWrite && !invoice.payment_income && invoice.status.value !== 'PAID' && {
+        canWrite && {
           label: dictionary.actions.edit,
           icon: 'tabler-edit',
           onClick: () => onEdit(invoice)
@@ -39,8 +42,14 @@ const InvoiceTableView = ({ data, loading, statusUpdating, page, rowsPerPage, lo
         }
       ]}
       statusOptions={
-        canWrite && !invoice.payment_income && invoice.status.value !== 'PAID'
-          ? data.statuses.filter(status => !['PAID', 'PARTIALLY_PAID'].includes(status.value))
+        canWrite
+          ? data.statuses.filter(status => {
+              if (['PAID', 'PARTIALLY_PAID'].includes(status.value)) return false
+              if (invoice.status.value === 'CANCELLED') return false
+              if (invoice.payment_income || ['PAID', 'PARTIALLY_PAID'].includes(invoice.status.value)) return status.value === 'CANCELLED'
+
+              return true
+            })
           : []
       }
       currentStatus={invoice.status_id}
@@ -71,14 +80,7 @@ const InvoiceTableView = ({ data, loading, statusUpdating, page, rowsPerPage, lo
         renderMobileStatus={invoice => {
           const displayStatus = invoice.is_overdue ? 'OVERDUE' : invoice.status.value
 
-          return (
-            <Chip
-              size='small'
-              variant='tonal'
-              color={STATUS_COLORS[displayStatus] || 'default'}
-              label={invoice.is_overdue ? dictionary.status.OVERDUE : invoice.status.label}
-            />
-          )
+          return <div className='flex flex-col items-end gap-1'><Chip size='small' variant='tonal' color={STATUS_COLORS[displayStatus] || 'default'} label={invoice.is_overdue ? dictionary.status.OVERDUE : invoice.status.label} />{invoice.status.value === 'PARTIALLY_PAID' && <Typography variant='caption' color='text.secondary'>{dictionary.fields.remainingBalance || 'Remaining'}: {formatCurrency(invoice.remaining_balance, locale, invoice.currency)}</Typography>}</div>
         }}
         renderMobileActions={renderActions}
         mobileMetadata={[
@@ -101,7 +103,7 @@ const InvoiceTableView = ({ data, loading, statusUpdating, page, rowsPerPage, lo
           {
             id: 'amount',
             label: dictionary.table.amountCurrency,
-            render: invoice => formatCurrency(invoice.amount, locale, invoice.currency)
+            render: invoice => <DualCurrencyAmount amount={invoice.amount} amountBase={invoice.amount_base} currency={invoice.currency} exchangeRate={invoice.exchange_rate} locale={locale} />
           },
           {
             id: 'base-amount',
@@ -116,7 +118,7 @@ const InvoiceTableView = ({ data, loading, statusUpdating, page, rowsPerPage, lo
           actionLabel: canWrite ? dictionary.actions.create : undefined,
           onAction: canWrite ? onAdd : undefined
         }}
-        onRowClick={onView}
+        onRowClick={invoice => onView(invoice.id)}
       >
         <div className='no-scrollbar overflow-x-auto scroll-smooth'>
       <table className={tableStyles.table}>
@@ -136,7 +138,7 @@ const InvoiceTableView = ({ data, loading, statusUpdating, page, rowsPerPage, lo
             const displayStatus = invoice.is_overdue ? 'OVERDUE' : invoice.status.value
 
             return (
-              <tr key={invoice.id} className='cursor-pointer' onClick={() => onView(invoice)}>
+              <tr key={invoice.id} className='cursor-pointer' onClick={() => onView(invoice.id)}>
                 <td>
                   <div className='flex min-is-[205px] items-center gap-3'>
                     <span className='flex size-9 shrink-0 items-center justify-center rounded bg-primaryLighter text-primary'><i className='tabler-receipt' /></span>
@@ -154,11 +156,10 @@ const InvoiceTableView = ({ data, loading, statusUpdating, page, rowsPerPage, lo
                   </div>
                 </td>
                 <td className='text-end'>
-                  <Typography variant='body2' className='whitespace-nowrap font-semibold'>{formatCurrency(invoice.amount, locale, invoice.currency)}</Typography>
-                  <Typography variant='caption' color='text.secondary'>{invoice.currency}</Typography>
+                  <DualCurrencyAmount amount={invoice.amount} amountBase={invoice.amount_base} currency={invoice.currency} exchangeRate={invoice.exchange_rate} locale={locale} className='items-end' />
                 </td>
                 <td className='whitespace-nowrap text-end font-semibold'>{formatCurrency(invoice.amount_base, locale, data.baseCurrency)}</td>
-                <td><Chip size='small' variant='tonal' color={STATUS_COLORS[displayStatus] || 'default'} label={invoice.is_overdue ? dictionary.status.OVERDUE : invoice.status.label} /></td>
+                <td><div className='flex min-is-[150px] flex-col items-start gap-1'><Chip size='small' variant='tonal' color={STATUS_COLORS[displayStatus] || 'default'} label={invoice.is_overdue ? dictionary.status.OVERDUE : invoice.status.label} />{invoice.status.value === 'PARTIALLY_PAID' && <Typography variant='caption' color='text.secondary'>{dictionary.fields.remainingBalance || 'Remaining'}: {formatCurrency(invoice.remaining_balance, locale, invoice.currency)}</Typography>}</div></td>
                 <td className='text-end' onClick={event => event.stopPropagation()}>
                   {renderActions(invoice)}
                 </td>

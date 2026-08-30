@@ -71,13 +71,19 @@ export const createStaffContractSchema = customMessages => {
     staff_id: requiredText(messages),
     contract_type_id: requiredText(messages),
     template_id: requiredText(messages),
+    contract_duration: requiredText(messages),
     position_title: requiredText(messages),
     base_salary: salaryValue(messages),
     currency: picklist(['AFN', 'USD'], messages.required),
+    exchange_rate: salaryValue(messages),
     start_date: dateValue(messages),
     end_date: optionalDateValue(messages),
     document_url: optionalText(messages),
-    status_id: requiredText(messages)
+    status_id: requiredText(messages),
+    probation_days: optional(salaryValue(messages), 90),
+    notice_period_days: optional(salaryValue(messages), 30),
+    termination_date: optionalDateValue(messages),
+    termination_reason: optionalText(messages)
   })
 }
 

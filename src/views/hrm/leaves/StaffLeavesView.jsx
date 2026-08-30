@@ -32,7 +32,7 @@ const EMPTY_DATA = {
   totalCount: 0,
   page: 1,
   totalPages: 1,
-  options: { statuses: [], leaveTypes: [], staff: [] },
+  options: { statuses: [], leaveTypes: [], staff: [], holidays: [] },
   summary: { pending: 0, onLeaveToday: 0, monthlyDays: 0 },
   currentStaffId: null,
   canManage: false
@@ -229,8 +229,9 @@ const StaffLeavesView = ({ locale, dictionary }) => {
           />
           <div className='grid is-full grid-cols-2 gap-2 sm:flex sm:is-auto sm:flex-wrap sm:gap-3 sm:justify-end'>
             <TableFiltersPopover
-              activeCount={Number(Boolean(staffId)) + Number(Boolean(leaveTypeId)) + Number(Boolean(statusId))}
+              activeCount={Number(Boolean(searchInput.trim())) + Number(Boolean(staffId)) + Number(Boolean(leaveTypeId)) + Number(Boolean(statusId))}
               locale={locale}
+              onReset={() => { setSearchInput(''); setSearch(''); setStaffId(''); setLeaveTypeId(''); setStatusId(''); setPage(0) }}
             >
               {data.canManage && (
                 <CustomTextField

@@ -39,6 +39,12 @@ export const filterNavByPermissions = (menuData, userPermissions, userRole) => {
       return filteredItems
     }
 
+    if (Array.isArray(item.roles)) {
+      const roles = Array.isArray(userRole) ? userRole : [userRole]
+
+      if (!item.roles.some(role => roles.includes(role))) return filteredItems
+    }
+
     if (hasNavigationPermission(permissions, item.permission)) filteredItems.push(item)
 
     return filteredItems

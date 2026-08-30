@@ -17,6 +17,7 @@ import { toast } from 'sonner'
 import CustomTextField from '@core/components/mui/TextField'
 import { createStaffContract, updateStaffContract } from '@/actions/hrm/contracts'
 import LoadingButtonContent from '@/components/LoadingButtonContent'
+import LocalizedDateTimePicker from '@/components/inputs/LocalizedDateTimePicker'
 import { createStaffContractSchema } from '@/schemas/hrm/contracts'
 
 const toInputDate = value => (value ? new Date(value).toISOString().slice(0, 10) : '')
@@ -251,19 +252,19 @@ const StaffContractDrawer = ({ open, contract, options, locale, dictionary, onCl
               </CustomTextField>
             )}
           />
-          <CustomTextField
+          <LocalizedDateTimePicker
             fullWidth
             required
-            type='date'
+            locale={locale}
             label={dictionary.fields.startDate}
             slotProps={{ inputLabel: { shrink: true } }}
             error={Boolean(errors.start_date)}
             helperText={errors.start_date?.message}
             {...register('start_date')}
           />
-          <CustomTextField
+          <LocalizedDateTimePicker
             fullWidth
-            type='date'
+            locale={locale}
             label={dictionary.fields.endDate}
             slotProps={{ inputLabel: { shrink: true } }}
             error={Boolean(errors.end_date)}

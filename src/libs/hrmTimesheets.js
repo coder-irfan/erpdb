@@ -2,8 +2,10 @@ import 'server-only'
 
 import { Prisma } from '@prisma/client'
 
+import { activeStaffContractRelation } from '@/libs/hrmContractAccess'
 import { prisma } from '@/libs/prisma'
 import { combineUtcDateTime, getDateKeyInTimeZone, toUtcDateOnly, utcDateKey } from '@/utils/utcDate'
+import { isAfghanistanWorkingDay } from '@/utils/payrollCalendar'
 
 export const ATTENDANCE_READ_PERMISSIONS = ['hrm:read', 'hrm_timesheet:read']
 export const ATTENDANCE_WRITE_PERMISSIONS = ['hrm:write', 'hrm_timesheet:write']
@@ -12,6 +14,8 @@ export const ATTENDANCE_DELETE_PERMISSIONS = ['hrm:delete', 'hrm_timesheet:delet
 const attendanceSelect = {
   id: true,
   staff_id: true,
+  project_id: true,
+  task_id: true,
   leave_id: true,
   status: true,
   date: true,
@@ -22,7 +26,8 @@ const attendanceSelect = {
   created_at: true,
   updated_at: true,
   staff: { select: { id: true, first_name: true, last_name: true, position: true, email: true } },
-  project: { select: { id: true, title: true } }
+  project: { select: { id: true, title: true, status: { select: { value: true } } } },
+  task: { select: { id: true, title: true } }
 }
 
 export const getKabulToday = () => getDateKeyInTimeZone('Asia/Kabul')
@@ -30,6 +35,68 @@ export const parseDate = toUtcDateOnly
 export const dateToString = utcDateKey
 export const timeToString = value => value?.toISOString().slice(11, 16) ?? null
 export const combineDateTime = (date, time) => (time ? combineUtcDateTime(date, time) : null)
+
+export const resolveOpenProjectTimeTarget = async ({ projectId, taskId }) => {
+  const normalizedProjectId = typeof projectId === 'string' ? projectId.trim() : ''
+  const normalizedTaskId = typeof taskId === 'string' ? taskId.trim() : ''
+
+  if (!normalizedProjectId && !normalizedTaskId) return { valid: true, project_id: null, task_id: null }
+
+  const task = normalizedTaskId
+    ? await prisma.task.findUnique({ where: { id: normalizedTaskId }, select: { id: true, project_id: true } })
+    : null
+
+  const effectiveProjectId = normalizedProjectId || task?.project_id || ''
+
+  if (!effectiveProjectId || (normalizedTaskId && (!task || task.project_id !== effectiveProjectId))) {
+    return { valid: false, code: 'INVALID_PROJECT_TASK' }
+  }
+
+  const project = await prisma.project.findUnique({
+    where: { id: effectiveProjectId },
+    select: { id: true, status: { select: { value: true } } }
+  })
+
+  if (!project) return { valid: false, code: 'INVALID_PROJECT_TASK' }
+  if (project.status.value === 'COMPLETED') return { valid: false, code: 'PROJECT_TIMESHEETS_LOCKED' }
+
+  return { valid: true, project_id: project.id, task_id: task?.id || null }
+}
+
+export const getAttendanceDateGuard = async date => {
+  const today = getKabulToday()
+  const isFuture = date > today
+  const attendanceDate = toUtcDateOnly(date)
+
+  const [paidPayroll, holiday] = await Promise.all([
+    isFuture
+      ? null
+      : prisma.financesalary.findFirst({
+          where: { timesheet_month: date.slice(0, 7), status: 'PAID' },
+          select: { id: true }
+        }),
+    attendanceDate
+      ? prisma.companyholiday.findFirst({
+          where: { is_active: true, date: attendanceDate },
+          select: { date: true, name: true }
+        })
+      : null
+  ])
+
+  const payrollLocked = Boolean(paidPayroll)
+  const isWorkingDay = isAfghanistanWorkingDay(attendanceDate, holiday ? [holiday.date] : [])
+
+  return {
+    today,
+    isFuture,
+    payrollLocked,
+    isWorkingDay,
+    nonWorkingReason: holiday ? 'PUBLIC_HOLIDAY' : isWorkingDay ? null : 'FRIDAY',
+    holidayName: holiday?.name || null,
+    blocked: isFuture || payrollLocked,
+    code: isFuture ? 'FUTURE_ATTENDANCE_BLOCKED' : payrollLocked ? 'PAYROLL_PERIOD_LOCKED' : null
+  }
+}
 
 export const calculateHours = (date, checkIn, checkOut) => {
   if (!checkIn || !checkOut) return null
@@ -124,7 +191,7 @@ export const getAttendanceDashboard = async ({
 
   const dailyWhere = { date: dayStart, ...(scopeStaffId && { staff_id: scopeStaffId }) }
 
-  const [records, totalCount, dailyRecords, activeStaff] = await Promise.all([
+  const [records, totalCount, dailyRecords, activeStaff, guard] = await Promise.all([
     prisma.hrmstafftimesheet.findMany({
       where: recordWhere,
       select: attendanceSelect,
@@ -135,10 +202,15 @@ export const getAttendanceDashboard = async ({
     prisma.hrmstafftimesheet.count({ where: recordWhere }),
     prisma.hrmstafftimesheet.findMany({ where: dailyWhere, select: attendanceSelect }),
     prisma.hrmstaff.findMany({
-      where: { status: 'ACTIVE', ...(scopeStaffId && { id: scopeStaffId }) },
+      where: {
+        status: 'ACTIVE',
+        contracts: activeStaffContractRelation({ startDate: dayStart }),
+        ...(scopeStaffId && { id: scopeStaffId })
+      },
       select: { id: true, first_name: true, last_name: true, position: true },
       orderBy: [{ first_name: 'asc' }, { last_name: 'asc' }]
-    })
+    }),
+    getAttendanceDateGuard(selectedDate)
   ])
 
   const markedIds = new Set(dailyRecords.map(record => record.staff_id))
@@ -161,13 +233,15 @@ export const getAttendanceDashboard = async ({
     ])
   )
 
-  const unmarkedStaff = activeStaff
+  const expectedStaff = guard.isWorkingDay ? activeStaff : []
+
+  const unmarkedStaff = expectedStaff
     .filter(staff => !markedIds.has(staff.id))
     .map(staff => ({ ...staff, full_name: `${staff.first_name} ${staff.last_name}`.trim() }))
 
   const dailyRecordByStaffId = new Map(dailyRecords.map(record => [record.staff_id, normalizeAttendance(record, leaveLabels)]))
 
-  const attendanceStaff = activeStaff.map(staff => ({
+  const attendanceStaff = expectedStaff.map(staff => ({
     ...staff,
     full_name: `${staff.first_name} ${staff.last_name}`.trim(),
     record: dailyRecordByStaffId.get(staff.id) || null
@@ -180,10 +254,11 @@ export const getAttendanceDashboard = async ({
     totalPages: Math.max(1, Math.ceil(totalCount / limit)),
     unmarkedStaff,
     attendanceStaff,
+    guard,
     summary: {
       total_present: dailyRecords.filter(record => record.status === 'PRESENT').length,
       total_absent: dailyRecords.filter(record => record.status === 'ABSENT').length,
-      total_leave: dailyRecords.filter(record => record.status === 'LEAVE').length,
+      total_leave: dailyRecords.filter(record => record.status?.startsWith('LEAVE')).length,
       unmarked_count: unmarkedStaff.length
     }
   }

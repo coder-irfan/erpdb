@@ -1,15 +1,14 @@
 'use client'
 
 import Chip from '@mui/material/Chip'
-import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
 
 import DashboardTablePagination from '@/components/table/DashboardTablePagination'
+import DualCurrencyAmount from '@/components/currency/DualCurrencyAmount'
 import EntityActionsMenu from '@/components/table/EntityActionsMenu'
 import TableEmptyStateRow from '@/components/table/TableEmptyStateRow'
 import TableSkeletonRows from '@/components/table/TableSkeletonRows'
 import ResponsiveDataTable from '@/components/tables/ResponsiveDataTable'
-import { formatCurrency } from '@/utils/formatCurrency'
 
 import tableStyles from '@core/styles/table.module.css'
 
@@ -84,13 +83,13 @@ const InventoryTable = ({
           { id: 'quantity', label: dictionary.table.quantity, render: item => item.quantity_in_stock },
           {
             id: 'unit-price',
-            label: dictionary.table.unitPrice,
-            render: item => formatCurrency(item.unit_price, locale, item.currency)
+            label: 'Purchase Unit Cost',
+            render: item => <DualCurrencyAmount amount={item.unit_price} amountBase={item.amount_base} currency={item.currency} exchangeRate={item.exchange_rate} locale={locale} />
           },
           {
             id: 'total-value',
-            label: dictionary.table.totalValue,
-            render: item => formatCurrency(item.total_value, locale, item.currency)
+            label: 'Asset Inventory Value',
+            render: item => <DualCurrencyAmount amount={item.total_value} amountBase={item.total_value_base} currency={item.currency} exchangeRate={item.exchange_rate} locale={locale} />
           },
           { id: 'reorder', label: dictionary.table.reorderLevel, render: item => item.reorder_level },
           { id: 'stock', label: dictionary.table.status, render: item => dictionary.stockStatus[item.stock_state] }
@@ -112,8 +111,8 @@ const InventoryTable = ({
                 <th>{dictionary.table.item}</th>
                 <th>{dictionary.table.category}</th>
                 <th className='text-end'>{dictionary.table.quantity}</th>
-                <th className='text-end'>{dictionary.table.unitPrice}</th>
-                <th className='text-end'>{dictionary.table.totalValue}</th>
+                <th className='text-end'>Purchase Unit Cost</th>
+                <th className='text-end'>Asset Inventory Value</th>
                 <th className='text-end'>{dictionary.table.reorderLevel}</th>
                 <th>{dictionary.table.status}</th>
                 <th className='text-end'>{dictionary.table.actions}</th>
@@ -171,18 +170,10 @@ const InventoryTable = ({
                         <Chip size='small' variant='tonal' color={stockColor} label={item.quantity_in_stock} />
                       </td>
                       <td className='text-end'>
-                        <Tooltip
-                          title={`${dictionary.fields.baseAmount}: ${formatCurrency(item.amount_base, locale, 'USD')}`}
-                        >
-                          <Typography className='min-is-[120px] whitespace-nowrap'>
-                            {formatCurrency(item.unit_price, locale, item.currency)}
-                          </Typography>
-                        </Tooltip>
+                        <DualCurrencyAmount amount={item.unit_price} amountBase={item.amount_base} currency={item.currency} exchangeRate={item.exchange_rate} locale={locale} className='min-is-[120px] items-end' />
                       </td>
                       <td className='text-end'>
-                        <Typography className='min-is-[130px] whitespace-nowrap font-semibold'>
-                          {formatCurrency(item.total_value, locale, item.currency)}
-                        </Typography>
+                        <DualCurrencyAmount amount={item.total_value} amountBase={item.total_value_base} currency={item.currency} exchangeRate={item.exchange_rate} locale={locale} className='min-is-[130px] items-end' />
                       </td>
                       <td className='text-end'>
                         <Typography>{item.reorder_level}</Typography>

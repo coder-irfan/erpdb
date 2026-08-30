@@ -6,8 +6,9 @@ import Alert from '@mui/material/Alert'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import Chip from '@mui/material/Chip'
-import CircularProgress from '@mui/material/CircularProgress'
 import Typography from '@mui/material/Typography'
+
+import DetailSkeleton from '@/components/dialogs/DetailSkeleton'
 
 import CustomTextField from '@core/components/mui/TextField'
 import TableEmptyStateRow from '@/components/table/TableEmptyStateRow'
@@ -77,7 +78,7 @@ const StaffAttendanceHistory = ({ active, staffId, locale, dictionary }) => {
         <Card variant='outlined'><CardContent><Typography variant='body2' color='text.secondary'>{attendanceDictionary.totalHours}</Typography><Typography variant='h5'>{summary.hours}</Typography></CardContent></Card>
       </div>
       {loading ? (
-        <div className='flex min-h-40 items-center justify-center'><CircularProgress /></div>
+        <DetailSkeleton rows={2} />
       ) : error ? <Alert severity='error'>{error}</Alert> : (
         <div className='no-scrollbar overflow-x-auto scroll-smooth rounded'>
           <table className={tableStyles.table}>

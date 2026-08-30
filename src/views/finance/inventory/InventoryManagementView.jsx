@@ -22,7 +22,7 @@ const EMPTY_DATA = {
   items: [],
   totalCount: 0,
   summary: { totalItems: 0, totalValue: 0, lowStock: 0, outOfStock: 0 },
-  options: { categories: [], statuses: [], baseCurrency: 'AFN', exchangeRate: '65.0000' }
+  options: { categories: [], statuses: [], staff: [], baseCurrency: 'AFN', exchangeRate: '65.0000' }
 }
 
 const InventoryManagementView = ({ locale, dictionary, canWrite, canDelete }) => {
@@ -94,7 +94,7 @@ const InventoryManagementView = ({ locale, dictionary, canWrite, canDelete }) =>
     }
   }
 
-  const activeFilters = [categoryId, statusId, stockState].filter(Boolean).length
+  const activeFilters = [searchInput.trim(), categoryId, statusId, stockState].filter(Boolean).length
 
   const openCreate = () => {
     setEditingItem(null)
@@ -169,6 +169,8 @@ const InventoryManagementView = ({ locale, dictionary, canWrite, canDelete }) =>
                   variant='tonal'
                   color='secondary'
                   onClick={() => {
+                    setSearchInput('')
+                    setSearch('')
                     setCategoryId('')
                     setStatusId('')
                     setStockState('')
@@ -237,6 +239,7 @@ const InventoryManagementView = ({ locale, dictionary, canWrite, canDelete }) =>
       <InventoryAdjustmentDialog
         open={Boolean(adjustTarget)}
         item={adjustTarget}
+        options={data.options}
         locale={locale}
         dictionary={dictionary}
         onClose={() => setAdjustTarget(null)}

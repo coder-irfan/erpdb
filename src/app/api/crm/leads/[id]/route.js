@@ -7,7 +7,7 @@ import { getCompanySetupRecord } from '@/libs/companySetup'
 import { CRM_DELETE_PERMISSIONS, CRM_WRITE_PERMISSIONS, leadInclude, normalizeLead, parseOptionalDate } from '@/libs/crmLeads'
 import { prisma } from '@/libs/prisma'
 import { createLeadSchema } from '@/schemas/crm/leads'
-import { convertToBaseCurrency } from '@/utils/formatCurrency'
+import { SYSTEM_BASE_CURRENCY, convertToBaseCurrency } from '@/utils/formatCurrency'
 import { getDictionary } from '@/utils/getDictionary'
 
 const localeFrom = value => (['en', 'fa', 'ps'].includes(value) ? value : 'en')
@@ -65,7 +65,7 @@ export async function PUT(request, context) {
               values.estimated_value,
               values.currency,
               existing.exchange_rate,
-              setup.currency_code
+              SYSTEM_BASE_CURRENCY
             )
           ),
           next_follow_up_date: parseOptionalDate(values.next_follow_up_date),

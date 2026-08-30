@@ -8,6 +8,7 @@ import { getToken } from 'next-auth/jwt'
 
 // Config Imports
 import { i18n } from '@/configs/i18n'
+import { USER_DEACTIVATED_CODE, USER_DEACTIVATED_MESSAGE } from '@/libs/authDeactivation'
 
 const publicRoutes = new Set(['/login', '/forgot-password', '/reset-password', '/auth/accept-invite'])
 
@@ -19,7 +20,8 @@ const routePermissionRules = [
       routeMatches(routePath, '/setup/audit-logs') ||
       routeMatches(routePath, '/options/audit-logs') ||
       routeMatches(routePath, '/settings/audit-logs'),
-    permissions: ['audit:read']
+    permissions: ['audit:read'],
+    roles: ['super_admin']
   },
   {
     matches: routePath => routeMatches(routePath, '/setup/roles') || routeMatches(routePath, '/settings/roles'),
@@ -73,7 +75,10 @@ const hasPermission = (permissions, permission) => {
 export const isRouteAuthorized = (routePath, token) => {
   const rule = routePermissionRules.find(candidate => candidate.matches(routePath))
 
-  if (!rule || token?.roles?.includes('super_admin')) return true
+  if (!rule) return true
+
+  if (rule.roles && !rule.roles.some(role => token?.roles?.includes(role))) return false
+  if (token?.roles?.includes('super_admin')) return true
 
   const permissions = Array.isArray(token?.permissions) ? token.permissions : []
 
@@ -92,16 +97,23 @@ const getPreferredLocale = request => {
   }
 }
 
-const getActiveToken = async request => {
+const getTokenState = async request => {
   try {
     const token = await getToken({
       req: request,
       secret: process.env.NEXTAUTH_SECRET
     })
 
-    return token?.accountStatus === 'ACTIVE' ? token : null
+    if (!token) return { token: null, deactivated: false }
+
+    const deactivated =
+      token.error === USER_DEACTIVATED_CODE ||
+      token.accountStatus !== 'ACTIVE' ||
+      (token.staffStatus && token.staffStatus !== 'ACTIVE')
+
+    return { token: deactivated ? null : token, deactivated }
   } catch {
-    return null
+    return { token: null, deactivated: false }
   }
 }
 
@@ -113,9 +125,16 @@ export async function proxy(request) {
   }
 
   if (pathname.startsWith('/api/')) {
-    const token = await getActiveToken(request)
+    const { token, deactivated } = await getTokenState(request)
 
-    return token ? NextResponse.next() : NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    if (token) return NextResponse.next()
+
+    return NextResponse.json(
+      deactivated
+        ? { success: false, error: USER_DEACTIVATED_MESSAGE, code: USER_DEACTIVATED_CODE }
+        : { success: false, error: 'Unauthorized', code: 'UNAUTHENTICATED' },
+      { status: 401 }
+    )
   }
 
   const segments = pathname.split('/').filter(Boolean)
@@ -141,7 +160,7 @@ export async function proxy(request) {
       return NextResponse.next()
     }
 
-    const token = await getActiveToken(request)
+    const { token, deactivated } = await getTokenState(request)
 
     if (token) {
       if (!isRouteAuthorized(routePath, token)) {
@@ -160,7 +179,9 @@ export async function proxy(request) {
 
     loginUrl.pathname = `/${leadingLocales[0]}/login`
     loginUrl.search = ''
-    loginUrl.searchParams.set('callbackUrl', `${pathname}${request.nextUrl.search}`)
+
+    if (deactivated) loginUrl.searchParams.set('error', USER_DEACTIVATED_CODE)
+    else loginUrl.searchParams.set('callbackUrl', `${pathname}${request.nextUrl.search}`)
 
     return NextResponse.redirect(loginUrl)
   }

@@ -172,8 +172,9 @@ const CrmLeadsView = ({ locale, dictionary, currencyCode, canWrite, canDelete })
               </ToggleButton>
             </ToggleButtonGroup>
             <TableFiltersPopover
-              activeCount={Number(Boolean(sourceId)) + Number(Boolean(statusId)) + Number(Boolean(assignedId))}
+              activeCount={Number(Boolean(searchInput.trim())) + Number(Boolean(sourceId)) + Number(Boolean(statusId)) + Number(Boolean(assignedId))}
               locale={locale}
+              onReset={() => { setSearchInput(''); setSearch(''); setSourceId(''); setStatusId(''); setAssignedId(''); setPage(0) }}
             >
               <CustomTextField
                 select

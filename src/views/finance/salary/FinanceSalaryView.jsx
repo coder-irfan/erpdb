@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useState } from 'react'
 
+import Alert from '@mui/material/Alert'
+import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
@@ -24,6 +26,7 @@ import {
 import ConfirmDeleteModal from '@/components/dialogs/ConfirmDeleteModal'
 import LoadingButtonContent from '@/components/LoadingButtonContent'
 import TableFiltersPopover from '@/components/table/TableFiltersPopover'
+import { formatCurrency } from '@/utils/formatCurrency'
 
 import FinanceSalaryAdjustmentDrawer from './FinanceSalaryAdjustmentDrawer'
 import FinanceSalaryPayslipModal from './FinanceSalaryPayslipModal'
@@ -42,12 +45,18 @@ const EMPTY_DATA = {
   salaries: [],
   totalCount: 0,
   baseCurrency: 'AFN',
-  summary: { total: 0, paid: 0, pending: 0, loanDeductions: 0 }
+  summary: { total: 0, paid: 0, pending: 0, loanDeductions: 0 },
+  payoutContext: {
+    currentDate: null,
+    isEarlyExecution: false,
+    workingDaysToDate: 0,
+    targetLedgerAccount: 'Payroll Expenses'
+  }
 }
 
 const EMPTY_OPTIONS = { staff: [], baseCurrency: 'AFN', exchangeRate: '65.0000', company: null }
 
-const FinanceSalaryView = ({ locale, dictionary, canWrite, canDelete }) => {
+const FinanceSalaryView = ({ locale, dictionary, canWrite, canDelete, canExecutePayout }) => {
   const [month, setMonth] = useState(currentMonth)
   const [monthInput, setMonthInput] = useState(currentMonth)
   const [searchInput, setSearchInput] = useState('')
@@ -117,7 +126,12 @@ const FinanceSalaryView = ({ locale, dictionary, canWrite, canDelete }) => {
   const pay = async () => {
     if (!payTarget) return
     setBusyId(payTarget.id)
-    const result = await markSalaryPaid(payTarget.id, { locale })
+
+    const result = await markSalaryPaid(payTarget.id, {
+      locale,
+      confirmEarlyExecution:
+        data.payoutContext.isEarlyExecution && payTarget.timesheet_month === month
+    })
 
     if (result.success) {
       toast.success(result.message)
@@ -149,6 +163,26 @@ const FinanceSalaryView = ({ locale, dictionary, canWrite, canDelete }) => {
     setMonth(value)
     setPage(0)
   }
+
+  const isEarlyPayment = Boolean(
+    payTarget &&
+      data.payoutContext.isEarlyExecution &&
+      payTarget.timesheet_month === month
+  )
+
+  const localeTag = locale === 'fa' ? 'fa-AF' : locale === 'ps' ? 'ps-AF' : 'en-US'
+
+  const payrollMonthLabel = payTarget
+    ? new Intl.DateTimeFormat(localeTag, { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(
+        new Date(`${payTarget.timesheet_month}-01T00:00:00.000Z`)
+      )
+    : ''
+
+  const currentDateLabel = data.payoutContext.currentDate
+    ? new Intl.DateTimeFormat(localeTag, { dateStyle: 'long', timeZone: 'UTC' }).format(
+        new Date(`${data.payoutContext.currentDate}T00:00:00.000Z`)
+      )
+    : ''
 
   return (
     <div className='flex flex-col gap-4'>
@@ -182,7 +216,7 @@ const FinanceSalaryView = ({ locale, dictionary, canWrite, canDelete }) => {
             />
           </div>
           <div className='grid is-full grid-cols-2 gap-2 sm:flex sm:is-auto sm:flex-wrap sm:gap-3 sm:justify-end'>
-            <TableFiltersPopover activeCount={Number(Boolean(status))} locale={locale}>
+            <TableFiltersPopover activeCount={Number(Boolean(searchInput.trim())) + Number(Boolean(status))} locale={locale}>
               <CustomTextField
                 select
                 label={dictionary.filters.status}
@@ -202,6 +236,8 @@ const FinanceSalaryView = ({ locale, dictionary, canWrite, canDelete }) => {
                   variant='tonal'
                   color='secondary'
                   onClick={() => {
+                    setSearchInput('')
+                    setSearch('')
                     setStatus('')
                     setPage(0)
                   }}
@@ -234,6 +270,7 @@ const FinanceSalaryView = ({ locale, dictionary, canWrite, canDelete }) => {
           dictionary={dictionary}
           canWrite={canWrite}
           canDelete={canDelete}
+          canExecutePayout={canExecutePayout}
           onPageChange={(_, value) => setPage(value)}
           onRowsPerPageChange={event => {
             setRowsPerPage(Number(event.target.value))
@@ -263,12 +300,55 @@ const FinanceSalaryView = ({ locale, dictionary, canWrite, canDelete }) => {
         refreshKey={detailRefresh}
         onClose={() => setDetailId(null)}
       />
-      <Dialog open={Boolean(payTarget)} onClose={busyId ? undefined : () => setPayTarget(null)} fullWidth maxWidth='xs'>
-        <DialogTitle>{dictionary.pay.title}</DialogTitle>
+      <Dialog
+        open={Boolean(payTarget)}
+        onClose={busyId ? undefined : () => setPayTarget(null)}
+        fullWidth
+        maxWidth={isEarlyPayment ? 'sm' : 'xs'}
+      >
+        <DialogTitle>{isEarlyPayment ? dictionary.pay.earlyTitle : dictionary.pay.title}</DialogTitle>
         <DialogContent dividers>
-          <Typography color='text.secondary'>
-            {dictionary.pay.description.replace('{name}', payTarget?.staff?.full_name || '')}
-          </Typography>
+          {isEarlyPayment ? (
+            <div className='flex flex-col gap-4'>
+              <Alert severity='warning' variant='filled'>
+                {dictionary.pay.earlyDescription
+                  .replace('{month}', payrollMonthLabel)
+                  .replace('{date}', currentDateLabel)}
+              </Alert>
+              <Box className='rounded-lg border border-warning/40 bg-warningLight p-4'>
+                <div className='grid gap-3 sm:grid-cols-3'>
+                  <div>
+                    <Typography variant='caption' color='text.secondary'>
+                      {dictionary.pay.netPayout}
+                    </Typography>
+                    <Typography className='font-semibold'>
+                      {payTarget ? formatCurrency(payTarget.payable_amount, locale, payTarget.currency) : ''}
+                    </Typography>
+                  </div>
+                  <div>
+                    <Typography variant='caption' color='text.secondary'>
+                      {dictionary.pay.targetLedger}
+                    </Typography>
+                    <Typography className='font-semibold'>
+                      {data.payoutContext.targetLedgerAccount === 'Payroll Expenses'
+                        ? dictionary.pay.payrollExpensesLedger
+                        : data.payoutContext.targetLedgerAccount}
+                    </Typography>
+                  </div>
+                  <div>
+                    <Typography variant='caption' color='text.secondary'>
+                      {dictionary.pay.workingDaysToDate}
+                    </Typography>
+                    <Typography className='font-semibold'>{data.payoutContext.workingDaysToDate}</Typography>
+                  </div>
+                </div>
+              </Box>
+            </div>
+          ) : (
+            <Typography color='text.secondary'>
+              {dictionary.pay.description.replace('{name}', payTarget?.staff?.full_name || '')}
+            </Typography>
+          )}
         </DialogContent>
         <DialogActions className='gap-2 p-5'>
           <Button variant='tonal' color='secondary' disabled={Boolean(busyId)} onClick={() => setPayTarget(null)}>
@@ -276,7 +356,7 @@ const FinanceSalaryView = ({ locale, dictionary, canWrite, canDelete }) => {
           </Button>
           <Button variant='contained' color='success' disabled={Boolean(busyId)} onClick={pay}>
             <LoadingButtonContent loading={Boolean(busyId)} loadingLabel={dictionary.actions.saving}>
-              {dictionary.pay.confirm}
+              {isEarlyPayment ? dictionary.pay.confirmEarly : dictionary.pay.confirm}
             </LoadingButtonContent>
           </Button>
         </DialogActions>

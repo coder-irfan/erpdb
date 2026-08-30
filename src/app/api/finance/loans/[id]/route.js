@@ -71,11 +71,29 @@ export async function PUT(request, routeContext) {
     if (!prepared.success) return errorResponse(prepared.error, 400, 'VALIDATION_ERROR')
 
     const updated = await prisma.$transaction(async transaction => {
+      await transaction.loanrepaymentschedule.deleteMany({ where: { loan_id: id } })
+
       const loan = await transaction.financeloan.update({ where: { id }, data: prepared.data, select: loanSelect })
+
+      if (prepared.schedule.length > 0) {
+        await transaction.loanrepaymentschedule.createMany({
+          data: prepared.schedule.map(item => ({
+            ...item,
+            loan_id: id,
+            opening_principal: new Prisma.Decimal(item.opening_principal),
+            principal_amount: new Prisma.Decimal(item.principal_amount),
+            interest_amount: new Prisma.Decimal(item.interest_amount),
+            payment_amount: new Prisma.Decimal(item.payment_amount),
+            remaining_principal: new Prisma.Decimal(item.remaining_principal)
+          }))
+        })
+      }
+
+      const refreshed = await transaction.financeloan.findUnique({ where: { id }, select: loanSelect })
 
       await transaction.auditlog.create({ data: { user_id: authorization.session.user.id, action: 'FINANCE_LOAN_UPDATED', module: 'FINANCE', details: { loanId: id, executedByUserId: authorization.session.user.id } } })
 
-      return loan
+      return refreshed || loan
     })
 
     return Response.json({ success: true, data: normalizeLoan(updated), message: dictionary.messages.updated })

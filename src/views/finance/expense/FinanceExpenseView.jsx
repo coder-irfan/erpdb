@@ -6,11 +6,22 @@ import Autocomplete from '@mui/material/Autocomplete'
 import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
+import Dialog from '@mui/material/Dialog'
+import DialogActions from '@mui/material/DialogActions'
+import DialogContent from '@mui/material/DialogContent'
+import DialogTitle from '@mui/material/DialogTitle'
 import MenuItem from '@mui/material/MenuItem'
 import { toast } from 'sonner'
 
 import CustomTextField from '@core/components/mui/TextField'
-import { deleteFinanceExpense, getFinanceExpenseFormOptions, getFinanceExpenses } from '@/actions/financeExpense'
+import {
+  approveFinanceExpense,
+  deleteFinanceExpense,
+  getFinanceExpenseFormOptions,
+  getFinanceExpenses,
+  markFinanceExpensePaid,
+  rejectFinanceExpense
+} from '@/actions/financeExpense'
 import ConfirmDeleteModal from '@/components/dialogs/ConfirmDeleteModal'
 import TableFiltersPopover from '@/components/table/TableFiltersPopover'
 import FinancePrintDialog from '@/views/finance/FinancePrintDialog'
@@ -37,7 +48,7 @@ const EMPTY_OPTIONS = {
   exchangeRate: '65.0000'
 }
 
-const FinanceExpenseView = ({ locale, dictionary, canWrite, canDelete, setup }) => {
+const FinanceExpenseView = ({ locale, dictionary, canWrite, canDelete, canApprove, canPay, setup }) => {
   const [searchInput, setSearchInput] = useState('')
   const [search, setSearch] = useState('')
   const [typeId, setTypeId] = useState('')
@@ -55,6 +66,10 @@ const FinanceExpenseView = ({ locale, dictionary, canWrite, canDelete, setup }) 
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [deleting, setDeleting] = useState(false)
   const [printTarget, setPrintTarget] = useState(null)
+  const [transitionTarget, setTransitionTarget] = useState(null)
+  const [transitionType, setTransitionType] = useState('')
+  const [transitionValue, setTransitionValue] = useState('')
+  const [transitioning, setTransitioning] = useState(false)
 
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -84,10 +99,26 @@ const FinanceExpenseView = ({ locale, dictionary, canWrite, canDelete, setup }) 
   }, [dictionary.messages.loadFailed, locale, page, projectId, rowsPerPage, search, staffId, typeId])
 
   const loadOptions = useCallback(async () => {
-    const result = await getFinanceExpenseFormOptions({ locale })
+    const [result, categoryResponse] = await Promise.all([
+      getFinanceExpenseFormOptions({ locale }),
+      fetch('/api/options/expense-categories', { cache: 'no-store' }).catch(() => null)
+    ])
 
-    if (result.success) setOptions(result.data)
-    else toast.error(result.error || dictionary.messages.optionsLoadFailed)
+    if (!result.success) return toast.error(result.error || dictionary.messages.optionsLoadFailed)
+    if (!categoryResponse) return setOptions(result.data)
+
+    try {
+      const categoryResult = await categoryResponse.json()
+
+      setOptions({
+        ...result.data,
+        expenseTypes: categoryResponse.ok && categoryResult.success
+          ? categoryResult.data.options
+          : result.data.expenseTypes
+      })
+    } catch {
+      setOptions(result.data)
+    }
   }, [dictionary.messages.optionsLoadFailed, locale])
 
   useEffect(() => {
@@ -128,9 +159,36 @@ const FinanceExpenseView = ({ locale, dictionary, canWrite, canDelete, setup }) 
     setDeleting(false)
   }
 
-  const activeFilters = [typeId, projectId, staffId].filter(Boolean).length
+  const openTransition = (expense, type) => {
+    setTransitionTarget(expense)
+    setTransitionType(type)
+    setTransitionValue(type === 'PAY' ? options.paymentMethods.find(item => item.is_default)?.id || options.paymentMethods[0]?.id || '' : '')
+  }
+
+  const runTransition = async () => {
+    if (!transitionTarget) return
+    setTransitioning(true)
+
+    const result = transitionType === 'APPROVE'
+      ? await approveFinanceExpense(transitionTarget.id, { locale })
+      : transitionType === 'REJECT'
+        ? await rejectFinanceExpense(transitionTarget.id, { locale, reason: transitionValue })
+        : await markFinanceExpensePaid(transitionTarget.id, { locale, payment_method_id: transitionValue })
+
+    if (result.success) {
+      toast.success(result.message)
+      setTransitionTarget(null)
+      await refresh()
+    } else toast.error(result.error || dictionary.messages.operationFailed)
+
+    setTransitioning(false)
+  }
+
+  const activeFilters = [searchInput.trim(), typeId, projectId, staffId].filter(Boolean).length
 
   const resetFilters = () => {
+    setSearchInput('')
+    setSearch('')
     setTypeId('')
     setProjectId('')
     setStaffId('')
@@ -230,6 +288,8 @@ const FinanceExpenseView = ({ locale, dictionary, canWrite, canDelete, setup }) 
           dictionary={dictionary}
           canWrite={canWrite}
           canDelete={canDelete}
+          canApprove={canApprove}
+          canPay={canPay}
           onPageChange={(_, value) => setPage(value)}
           onRowsPerPageChange={event => {
             setRowsPerPage(Number(event.target.value))
@@ -239,6 +299,9 @@ const FinanceExpenseView = ({ locale, dictionary, canWrite, canDelete, setup }) 
           onPrint={setPrintTarget}
           onEdit={openEdit}
           onDelete={setDeleteTarget}
+          onApprove={expense => openTransition(expense, 'APPROVE')}
+          onReject={expense => openTransition(expense, 'REJECT')}
+          onPay={expense => openTransition(expense, 'PAY')}
           onAdd={openCreate}
         />
       </Card>
@@ -259,12 +322,17 @@ const FinanceExpenseView = ({ locale, dictionary, canWrite, canDelete, setup }) 
         baseCurrency={data.baseCurrency}
         dictionary={dictionary}
         canWrite={canWrite}
+        canApprove={canApprove}
+        canPay={canPay}
         refreshKey={detailRefresh}
         onClose={() => setDetailId(null)}
         onEdit={expense => {
           setDetailId(null)
           openEdit(expense)
         }}
+        onApprove={expense => openTransition(expense, 'APPROVE')}
+        onReject={expense => openTransition(expense, 'REJECT')}
+        onPay={expense => openTransition(expense, 'PAY')}
       />
       <FinancePrintDialog
         open={Boolean(printTarget)}
@@ -286,6 +354,39 @@ const FinanceExpenseView = ({ locale, dictionary, canWrite, canDelete, setup }) 
         onConfirm={remove}
         onClose={() => setDeleteTarget(null)}
       />
+      <Dialog open={Boolean(transitionTarget)} onClose={transitioning ? undefined : () => setTransitionTarget(null)} fullWidth maxWidth='xs'>
+        <DialogTitle>{dictionary.workflow[transitionType === 'APPROVE' ? 'approveTitle' : transitionType === 'REJECT' ? 'rejectTitle' : 'payTitle']}</DialogTitle>
+        <DialogContent dividers>
+          {transitionType === 'REJECT' && (
+            <CustomTextField
+              fullWidth
+              multiline
+              minRows={3}
+              label={dictionary.fields.rejectionReason}
+              value={transitionValue}
+              onChange={event => setTransitionValue(event.target.value)}
+            />
+          )}
+          {transitionType === 'PAY' && (
+            <CustomTextField
+              fullWidth
+              select
+              label={dictionary.fields.paymentMethod}
+              value={transitionValue}
+              onChange={event => setTransitionValue(event.target.value)}
+            >
+              {options.paymentMethods.map(method => <MenuItem key={method.id} value={method.id}>{method.label}</MenuItem>)}
+            </CustomTextField>
+          )}
+          {transitionType === 'APPROVE' && dictionary.workflow.approveDescription}
+        </DialogContent>
+        <DialogActions>
+          <Button variant='tonal' color='secondary' disabled={transitioning} onClick={() => setTransitionTarget(null)}>{dictionary.actions.cancel}</Button>
+          <Button variant='contained' color={transitionType === 'REJECT' ? 'error' : 'primary'} disabled={transitioning || (transitionType === 'PAY' && !transitionValue)} onClick={runTransition}>
+            {dictionary.actions[transitionType === 'APPROVE' ? 'approve' : transitionType === 'REJECT' ? 'reject' : 'markPaid']}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </div>
   )
 }

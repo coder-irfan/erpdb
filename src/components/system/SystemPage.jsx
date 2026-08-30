@@ -1,9 +1,11 @@
 'use client'
 
+import { useTransition } from 'react'
+
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 
-import { ArrowLeft, Home, LogOut, RotateCcw } from 'lucide-react'
+import { ArrowLeft, Home, LoaderCircle, LogOut, RotateCcw } from 'lucide-react'
 
 import { i18n } from '@/configs/i18n'
 import { getSystemPagesDictionary } from '@/data/dictionaries/systemPages'
@@ -67,14 +69,19 @@ export const GoBackButton = () => {
 
 export const RetryButton = ({ reset }) => {
   const dictionary = useSystemPagesDictionary()
+  const [isPending, startTransition] = useTransition()
+
+  const retry = () => startTransition(() => reset())
 
   return (
     <button
       type='button'
-      onClick={reset}
-      className={`${actionClassName} bg-primary text-white shadow-sm hover:opacity-90 cursor-pointer`}
+      onClick={retry}
+      disabled={isPending}
+      aria-busy={isPending}
+      className={`${actionClassName} bg-primary text-white shadow-sm hover:opacity-90 disabled:cursor-wait disabled:opacity-80`}
     >
-      <RotateCcw className='size-4' aria-hidden='true' />
+      {isPending ? <LoaderCircle className='size-4 animate-spin' aria-hidden='true' /> : <RotateCcw className='size-4' aria-hidden='true' />}
       {dictionary.actions.tryAgain}
     </button>
   )

@@ -20,7 +20,7 @@ const OtherContractsPage = async props => {
       canDelete={hasAnyPermission(session, ['contracts:delete'])}
       canRunAudit={false}
       scope='OTHERS'
-      defaultTarget='OTHERS'
+      contractContext='OTHERS'
     />
   )
 }

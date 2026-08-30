@@ -9,18 +9,22 @@ import { i18n } from '@/configs/i18n'
 import { getProjectsDictionary } from '@/data/dictionaries/projects'
 import { authorizeAction } from '@/libs/actionAuthorization'
 import { getCompanySetupRecord } from '@/libs/companySetup'
-import { ACTIVE_OPERATIONAL_STATUSES, isOverdue } from '@/libs/financialStatuses'
+import { isOverdue } from '@/libs/financialStatuses'
+import { activeStaffContractRelation } from '@/libs/hrmContractAccess'
 import { prisma } from '@/libs/prisma'
 import { nextSequentialNumber, withSequentialNumberRetry } from '@/libs/sequentialNumbers'
 import { createProjectSchema } from '@/schemas/projects'
 import { toUtcDateOnly } from '@/utils/contractDuration'
-import { convertToBaseCurrency, toFiniteNumber } from '@/utils/formatCurrency'
+import { SYSTEM_BASE_CURRENCY, convertToBaseCurrency, toFiniteNumber } from '@/utils/formatCurrency'
+import { sanitizeRichText } from '@/utils/richText'
 
 const READ_PERMISSIONS = ['projects:read', 'projects:write']
 const WRITE_PERMISSIONS = ['projects:write']
 const DELETE_PERMISSIONS = ['projects:delete']
-const ACTIVE_VALUES = ACTIVE_OPERATIONAL_STATUSES
+const PROJECT_STATUS_VALUES = Object.freeze(['PLANNING', 'IN_PROGRESS', 'ON_HOLD', 'COMPLETED', 'CANCELLED'])
+const ACTIVE_VALUES = Object.freeze(['PLANNING', 'IN_PROGRESS', 'ON_HOLD'])
 const CLOSED_VALUES = ['COMPLETED', 'CANCELLED']
+const APPROVED_TIMESHEET_STATUS = 'APPROVED'
 const DEFAULT_PAGE_SIZE = 10
 const MAX_PAGE_SIZE = 100
 
@@ -92,10 +96,11 @@ const projectSelect = {
 
 const withFullName = staff => staff ? { ...staff, full_name: `${staff.first_name} ${staff.last_name}`.trim() } : null
 
-const normalizeProject = project => ({
+const normalizeProject = (project, approvedHours = project.actual_hours) => ({
   ...project,
   estimated_hours: numberString(project.estimated_hours),
-  actual_hours: numberString(project.actual_hours),
+  actual_hours: numberString(approvedHours),
+  logged_hours: numberString(approvedHours),
   budget: numberString(project.budget),
   exchange_rate: numberString(project.exchange_rate, 4),
   amount_base: numberString(project.amount_base),
@@ -113,8 +118,10 @@ const normalizeProject = project => ({
     start_date: iso(project.contract.start_date),
     end_date: iso(project.contract.end_date)
   } : null,
-  is_overdue: isOverdue({ dueDate: project.end_date, completed: Boolean(project.actual_end_date), today: toUtcDateOnly(new Date()) }),
-  progress: Math.min(100, Math.round((toFiniteNumber(project.actual_hours) / Math.max(toFiniteNumber(project.estimated_hours), 1)) * 100))
+  is_overdue: isOverdue({ dueDate: project.end_date, completed: project.status?.value === 'COMPLETED', today: toUtcDateOnly(new Date()) }),
+  progress: project.status?.value === 'COMPLETED'
+    ? 100
+    : Math.min(100, Math.round((toFiniteNumber(approvedHours) / Math.max(toFiniteNumber(project.estimated_hours), 1)) * 100))
 })
 
 const revalidateProjects = () => {
@@ -146,8 +153,8 @@ const prepareProjectData = async (values, translations, current = null) => {
   const [client, contract, manager, status, priority, setup] = await Promise.all([
     prisma.crmclient.findUnique({ where: { id: values.client_id }, select: { id: true } }),
     values.contract_id ? prisma.contract.findUnique({ where: { id: values.contract_id }, select: { id: true, client_id: true } }) : null,
-    values.project_manager_id ? prisma.hrmstaff.findUnique({ where: { id: values.project_manager_id }, select: { id: true } }) : null,
-    prisma.option.findFirst({ where: { id: values.status_id, category: 'PROJECT_STATUS', ...(current?.status_id === values.status_id ? {} : { is_active: true }) }, select: { id: true } }),
+    values.project_manager_id ? prisma.hrmstaff.findFirst({ where: { id: values.project_manager_id, status: 'ACTIVE', contracts: activeStaffContractRelation({ startDate: new Date() }) }, select: { id: true } }) : null,
+    prisma.option.findFirst({ where: { id: values.status_id, category: 'PROJECT_STATUS', value: { in: PROJECT_STATUS_VALUES }, ...(current?.status_id === values.status_id ? {} : { is_active: true }) }, select: { id: true, value: true } }),
     prisma.option.findFirst({ where: { id: values.priority_id, category: 'PROJECT_PRIORITY', ...(current?.priority_id === values.priority_id ? {} : { is_active: true }) }, select: { id: true } }),
     getCompanySetupRecord()
   ])
@@ -158,7 +165,6 @@ const prepareProjectData = async (values, translations, current = null) => {
 
   const startDate = toUtcDateOnly(values.start_date)
   const endDate = toUtcDateOnly(values.end_date)
-  const actualEndDate = values.actual_end_date ? toUtcDateOnly(values.actual_end_date) : null
   const budget = toFiniteNumber(values.budget)
   const rate = toFiniteNumber(values.exchange_rate)
 
@@ -169,7 +175,7 @@ const prepareProjectData = async (values, translations, current = null) => {
     success: true,
     data: {
       title: values.title,
-      description: values.description || null,
+      description: sanitizeRichText(values.description) || null,
       client_id: values.client_id,
       contract_id: values.contract_id || null,
       project_manager_id: values.project_manager_id || null,
@@ -182,10 +188,12 @@ const prepareProjectData = async (values, translations, current = null) => {
       budget: new Prisma.Decimal(budget),
       currency: values.currency,
       exchange_rate: new Prisma.Decimal(rate),
-      amount_base: new Prisma.Decimal(convertToBaseCurrency(budget, values.currency, rate, setup.currency_code || 'AFN')),
+      amount_base: new Prisma.Decimal(convertToBaseCurrency(budget, values.currency, rate, SYSTEM_BASE_CURRENCY)),
       start_date: startDate,
       end_date: endDate,
-      actual_end_date: actualEndDate
+      actual_end_date: current && status.value === 'COMPLETED'
+        ? current.actual_end_date || toUtcDateOnly(new Date())
+        : current?.actual_end_date || null
     }
   }
 }
@@ -214,19 +222,23 @@ export const getProjects = async (payload = {}) => {
   const today = toUtcDateOnly(new Date())
 
   try {
-    const [totalCount, projects, active, totals, activeHours, overdueCount, setup, statuses, priorities] = await prisma.$transaction([
+    const [totalCount, projects, active, totals, approvedHours, activeApprovedHours, estimatedHours, overdueCount, setup, statuses, priorities] = await prisma.$transaction([
       prisma.project.count({ where }),
       prisma.project.findMany({ where, select: projectSelect, orderBy: [{ end_date: 'asc' }, { created_at: 'desc' }], skip: (page - 1) * limit, take: limit }),
       prisma.project.count({ where: activeWhere }),
       prisma.project.aggregate({ _sum: { budget: true, amount_base: true } }),
-      prisma.project.aggregate({ where: activeWhere, _sum: { actual_hours: true, estimated_hours: true } }),
-      prisma.project.count({ where: { end_date: { lt: today }, actual_end_date: null } }),
+      prisma.hrmstafftimesheet.groupBy({ by: ['project_id'], where: { project_id: { not: null }, status: APPROVED_TIMESHEET_STATUS }, _sum: { hours_worked: true } }),
+      prisma.hrmstafftimesheet.aggregate({ where: { status: APPROVED_TIMESHEET_STATUS, project: { is: { status: { is: { value: { in: ACTIVE_VALUES } } } } } }, _sum: { hours_worked: true } }),
+      prisma.project.aggregate({ where: activeWhere, _sum: { estimated_hours: true } }),
+      prisma.project.count({ where: { end_date: { lt: today }, status: { is: { value: { not: 'COMPLETED' } } } } }),
       prisma.setup.findUnique({ where: { scope: 'GLOBAL' }, select: { currency_code: true } }),
-      prisma.option.findMany({ where: { category: 'PROJECT_STATUS', is_active: true }, select: optionSelect, orderBy: [{ sort_order: 'asc' }, { label: 'asc' }] }),
+      prisma.option.findMany({ where: { category: 'PROJECT_STATUS', value: { in: PROJECT_STATUS_VALUES }, is_active: true }, select: optionSelect, orderBy: [{ sort_order: 'asc' }, { label: 'asc' }] }),
       prisma.option.findMany({ where: { category: 'PROJECT_PRIORITY', is_active: true }, select: optionSelect, orderBy: [{ sort_order: 'asc' }, { label: 'asc' }] })
     ])
 
-    return { success: true, data: { projects: projects.map(normalizeProject), totalCount, page, baseCurrency: setup?.currency_code || 'AFN', statuses, priorities, summary: { activeCount: active, budget: toFiniteNumber(totals._sum.budget), amountBase: toFiniteNumber(totals._sum.amount_base), actualHours: toFiniteNumber(activeHours._sum.actual_hours), estimatedHours: toFiniteNumber(activeHours._sum.estimated_hours), overdueCount } } }
+    const hoursByProject = new Map(approvedHours.map(row => [row.project_id, toFiniteNumber(row._sum.hours_worked)]))
+
+    return { success: true, data: { projects: projects.map(project => normalizeProject(project, hoursByProject.get(project.id) || 0)), totalCount, page, baseCurrency: SYSTEM_BASE_CURRENCY, statuses, priorities, summary: { activeCount: active, budget: toFiniteNumber(totals._sum.budget), amountBase: toFiniteNumber(totals._sum.amount_base), actualHours: toFiniteNumber(activeApprovedHours._sum.hours_worked), estimatedHours: toFiniteNumber(estimatedHours._sum.estimated_hours), overdueCount } } }
   } catch {
     return { success: false, code: 'PROJECTS_LOAD_FAILED', error: context.translations.messages.loadFailed }
   }
@@ -240,13 +252,13 @@ export const getProjectFormOptions = async (payload = {}) => {
   try {
     const [clients, staff, contracts, options, setup] = await Promise.all([
       prisma.crmclient.findMany({ where: { status: 'ACTIVE' }, select: { id: true, company_name: true, primary_contact_name: true }, orderBy: { company_name: 'asc' }, take: 500 }),
-      prisma.hrmstaff.findMany({ where: { status: { not: 'TERMINATED' } }, select: staffSelect, orderBy: [{ first_name: 'asc' }, { last_name: 'asc' }], take: 500 }),
-      prisma.contract.findMany({ select: { id: true, client_id: true, contract_number: true, title: true, total_amount: true, currency: true, exchange_rate: true, amount_base: true }, orderBy: { created_at: 'desc' }, take: 500 }),
-      prisma.option.findMany({ where: { category: { in: ['PROJECT_STATUS', 'PROJECT_PRIORITY'] }, is_active: true }, select: { ...optionSelect, category: true }, orderBy: [{ category: 'asc' }, { sort_order: 'asc' }, { label: 'asc' }] }),
+      prisma.hrmstaff.findMany({ where: { status: 'ACTIVE', contracts: activeStaffContractRelation({ startDate: new Date() }) }, select: staffSelect, orderBy: [{ first_name: 'asc' }, { last_name: 'asc' }], take: 500 }),
+      prisma.contract.findMany({ where: { client_id: { not: null } }, select: { id: true, client_id: true, contract_number: true, title: true, total_amount: true, currency: true, exchange_rate: true, amount_base: true }, orderBy: { created_at: 'desc' }, take: 500 }),
+      prisma.option.findMany({ where: { category: { in: ['PROJECT_STATUS', 'PROJECT_PRIORITY'] }, is_active: true, OR: [{ category: 'PROJECT_PRIORITY' }, { value: { in: PROJECT_STATUS_VALUES } }] }, select: { ...optionSelect, category: true }, orderBy: [{ category: 'asc' }, { sort_order: 'asc' }, { label: 'asc' }] }),
       getCompanySetupRecord()
     ])
 
-    return { success: true, data: { clients, staff: staff.map(withFullName), contracts: contracts.map(contract => ({ ...contract, total_amount: numberString(contract.total_amount), exchange_rate: numberString(contract.exchange_rate, 4), amount_base: numberString(contract.amount_base) })), statuses: options.filter(option => option.category === 'PROJECT_STATUS'), priorities: options.filter(option => option.category === 'PROJECT_PRIORITY'), baseCurrency: setup.currency_code || 'AFN', exchangeRate: setup.usd_afn_exchange_rate || '65.0000' } }
+    return { success: true, data: { clients, staff: staff.map(withFullName), contracts: contracts.map(contract => ({ ...contract, total_amount: numberString(contract.total_amount), exchange_rate: numberString(contract.exchange_rate, 4), amount_base: numberString(contract.amount_base) })), statuses: options.filter(option => option.category === 'PROJECT_STATUS'), priorities: options.filter(option => option.category === 'PROJECT_PRIORITY'), baseCurrency: SYSTEM_BASE_CURRENCY, exchangeRate: setup.usd_afn_exchange_rate || '65.0000' } }
   } catch {
     return { success: false, code: 'OPTIONS_LOAD_FAILED', error: context.translations.messages.optionsLoadFailed }
   }
@@ -263,14 +275,16 @@ export const getProjectDetail = async (id, payload = {}) => {
       where: { id: projectId },
       select: {
         ...projectSelect,
-        timesheets: { select: { id: true, date: true, status: true, hours_worked: true, notes: true, check_in_time: true, check_out_time: true, staff: { select: staffSelect } }, orderBy: { date: 'desc' } },
-        expenses: { select: { id: true, expense_date: true, details: true, sub_total: true, currency: true, amount_base: true, expense_type: { select: optionSelect }, spent_by: { select: staffSelect } }, orderBy: { expense_date: 'desc' } },
+        timesheets: { where: { status: APPROVED_TIMESHEET_STATUS }, select: { id: true, task_id: true, date: true, status: true, hours_worked: true, notes: true, check_in_time: true, check_out_time: true, staff: { select: staffSelect }, task: { select: { id: true, title: true } } }, orderBy: { date: 'desc' } },
+        tasks: { select: { id: true, title: true }, orderBy: { created_at: 'desc' } },
+        expenses: { where: { approval_status: 'PAID' }, select: { id: true, vendor_payee: true, approval_status: true, expense_date: true, details: true, sub_total: true, currency: true, amount_base: true, expense_type: { select: optionSelect }, spent_by: { select: staffSelect } }, orderBy: { expense_date: 'desc' } },
         incomes: { select: { id: true, name: true, status: true, total_amount: true, paid_amount: true, currency: true, amount_base: true, created_at: true, income_type: { select: optionSelect }, received_by: { select: staffSelect } }, orderBy: { created_at: 'desc' } }
       }
     })
 
     if (!project) return { success: false, code: 'NOT_FOUND', error: context.translations.messages.notFound }
-    const normalized = normalizeProject(project)
+    const loggedHours = project.timesheets.reduce((sum, row) => sum + toFiniteNumber(row.hours_worked), 0)
+    const normalized = normalizeProject(project, loggedHours)
 
     return { success: true, data: { ...normalized,
       timesheets: project.timesheets.map(row => ({ ...row, date: iso(row.date), check_in_time: iso(row.check_in_time), check_out_time: iso(row.check_out_time), hours_worked: numberString(row.hours_worked), staff: withFullName(row.staff) })),
@@ -326,7 +340,7 @@ export const updateProject = async (id, payload = {}) => {
   if (!projectId || !validation.success) return { success: false, code: 'VALIDATION_ERROR', error: validation.issues?.[0]?.message || context.translations.messages.notFound }
 
   try {
-    const current = await prisma.project.findUnique({ where: { id: projectId }, select: { id: true, project_code: true, status_id: true, priority_id: true, actual_hours: true } })
+    const current = await prisma.project.findUnique({ where: { id: projectId }, select: { id: true, project_code: true, status_id: true, priority_id: true, actual_hours: true, actual_end_date: true } })
 
     if (!current) return { success: false, code: 'NOT_FOUND', error: context.translations.messages.notFound }
     const prepared = await prepareProjectData(validation.output, context.translations, current)
@@ -357,7 +371,7 @@ export const updateProjectStatus = async (id, statusId, payload = {}) => {
 
   try {
     const [project, status] = await Promise.all([
-      prisma.project.findUnique({ where: { id: projectId }, select: { id: true, project_code: true } }),
+      prisma.project.findUnique({ where: { id: projectId }, select: { id: true, project_code: true, actual_end_date: true, end_date: true, estimated_hours: true, project_manager_id: true } }),
       prisma.option.findFirst({
         where: { id: normalizedStatusId, category: 'PROJECT_STATUS', is_active: true },
         select: { id: true, value: true }
@@ -371,9 +385,25 @@ export const updateProjectStatus = async (id, statusId, payload = {}) => {
     }
 
     const updated = await prisma.$transaction(async transaction => {
+      const approved = await transaction.hrmstafftimesheet.aggregate({
+        where: { project_id: projectId, status: APPROVED_TIMESHEET_STATUS },
+        _sum: { hours_worked: true }
+      })
+
+      const loggedHours = toFiniteNumber(approved._sum.hours_worked)
+
+      const reviewReason = status.value !== 'COMPLETED' && (
+        loggedHours >= toFiniteNumber(project.estimated_hours) || toUtcDateOnly(new Date()) > project.end_date
+      )
+        ? loggedHours >= toFiniteNumber(project.estimated_hours) ? 'ESTIMATED_HOURS_REACHED' : 'TARGET_DEADLINE_REACHED'
+        : null
+
       const result = await transaction.project.update({
         where: { id: projectId },
-        data: { status_id: status.id },
+        data: {
+          status_id: status.id,
+          ...(status.value === 'COMPLETED' && { actual_end_date: project.actual_end_date || toUtcDateOnly(new Date()) })
+        },
         select: projectSelect
       })
 
@@ -386,12 +416,29 @@ export const updateProjectStatus = async (id, statusId, payload = {}) => {
         }
       })
 
-      return result
+      if (reviewReason) {
+        await transaction.auditlog.create({
+          data: {
+            action: 'PROJECT_REVIEW_REQUIRED',
+            module: 'PROJECTS',
+            details: {
+              projectId,
+              projectCode: project.project_code,
+              projectManagerId: project.project_manager_id,
+              reason: reviewReason,
+              loggedHours,
+              estimatedHours: toFiniteNumber(project.estimated_hours)
+            }
+          }
+        })
+      }
+
+      return { result, loggedHours }
     })
 
     revalidateProjects()
 
-    return { success: true, data: normalizeProject(updated), message: context.translations.messages.statusUpdated }
+    return { success: true, data: normalizeProject(updated.result, updated.loggedHours), message: context.translations.messages.statusUpdated }
   } catch {
     return { success: false, code: 'STATUS_UPDATE_FAILED', error: context.translations.messages.operationFailed }
   }
@@ -430,7 +477,7 @@ export const assignProjectMember = async (projectId, payload = {}) => {
   const role = typeof payload.role === 'string' ? payload.role.trim().slice(0, 191) : ''
 
   try {
-    const [project, staff] = await Promise.all([prisma.project.findUnique({ where: { id }, select: { id: true } }), prisma.hrmstaff.findUnique({ where: { id: staffId }, select: { id: true } })])
+    const [project, staff] = await Promise.all([prisma.project.findUnique({ where: { id }, select: { id: true } }), prisma.hrmstaff.findFirst({ where: { id: staffId, status: 'ACTIVE', contracts: activeStaffContractRelation({ startDate: new Date() }) }, select: { id: true } })])
 
     if (!project || !staff) return { success: false, code: 'VALIDATION_ERROR', error: context.translations.validation.invalidRelation }
     await prisma.$transaction([

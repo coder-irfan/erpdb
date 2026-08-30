@@ -8,7 +8,6 @@ import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import Chip from '@mui/material/Chip'
-import CircularProgress from '@mui/material/CircularProgress'
 import Dialog from '@mui/material/Dialog'
 import DialogContent from '@mui/material/DialogContent'
 import DialogTitle from '@mui/material/DialogTitle'
@@ -19,9 +18,12 @@ import Typography from '@mui/material/Typography'
 
 import { getTaskDetail } from '@/actions/tasks'
 import UserAvatar from '@/components/common/UserAvatar'
+import DetailSkeleton from '@/components/dialogs/DetailSkeleton'
 import { toDateInputValue } from '@/utils/contractDuration'
+import { sanitizeRichText } from '@/utils/richText'
 
 import { optionChipProps } from './taskUi'
+import TaskCollaborationPanels from './TaskCollaborationPanels'
 
 const Item = ({ label, value }) => (
   <div>
@@ -47,6 +49,7 @@ const TaskDetailModal = ({
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [task, setTask] = useState(null)
+  const [collaborationVersion, setCollaborationVersion] = useState(0)
 
   useEffect(() => {
     if (!open || !taskId) return
@@ -65,13 +68,20 @@ const TaskDetailModal = ({
 
     load()
 
+    const interval = setInterval(async () => {
+      const result = await getTaskDetail(taskId, { locale })
+
+      if (active && result.success) setTask(result.data)
+    }, 8000)
+
     return () => {
       active = false
+      clearInterval(interval)
     }
-  }, [dictionary.messages.detailLoadFailed, locale, open, refreshKey, taskId])
+  }, [collaborationVersion, dictionary.messages.detailLoadFailed, locale, open, refreshKey, taskId])
 
   return (
-    <Dialog open={open} onClose={loading ? undefined : onClose} fullWidth maxWidth='md'>
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth='md'>
       <DialogTitle className='flex items-start justify-between gap-4'>
         <div className='min-is-0'>
           <div className='flex flex-wrap items-center gap-2'>
@@ -100,16 +110,14 @@ const TaskDetailModal = ({
               {dictionary.actions.edit}
             </Button>
           )}
-          <IconButton onClick={onClose} disabled={loading}>
+          <IconButton onClick={onClose}>
             <i className='tabler-x' />
           </IconButton>
         </div>
       </DialogTitle>
       <DialogContent dividers className='min-bs-[480px]'>
         {loading ? (
-          <div className='flex min-bs-[400px] items-center justify-center'>
-            <CircularProgress />
-          </div>
+          <DetailSkeleton />
         ) : error ? (
           <Alert severity='error'>{error}</Alert>
         ) : task ? (
@@ -120,17 +128,16 @@ const TaskDetailModal = ({
                   <Typography variant='h6'>{dictionary.detail.overview}</Typography>
                   <Chip size='small' variant='tonal' label={task.priority.label} {...optionChipProps(task.priority)} />
                 </div>
-                <Typography color='text.secondary' className='whitespace-pre-wrap'>
-                  {task.description || '—'}
-                </Typography>
+                {task.description ? <div className='text-textSecondary [&_a]:text-primary [&_a]:underline [&_li]:mb-1 [&_ol]:list-decimal [&_ol]:pis-6 [&_pre]:overflow-x-auto [&_pre]:rounded [&_pre]:bg-actionHover [&_pre]:p-3 [&_ul]:list-disc [&_ul]:pis-6 [&_ul[data-type=taskList]]:list-none [&_ul[data-type=taskList]]:pis-0' dangerouslySetInnerHTML={{ __html: sanitizeRichText(task.description) }} /> : <Typography color='text.secondary'>—</Typography>}
               </CardContent>
             </Card>
             <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
               <Card variant='outlined'>
                 <CardContent>
-                  <Typography variant='h6' className='mb-4'>
-                    {dictionary.detail.schedule}
-                  </Typography>
+                  <div className='mb-4 flex flex-wrap items-center justify-between gap-2'>
+                    <Typography variant='h6'>{dictionary.detail.schedule}</Typography>
+                    {task.scope_completed && <Chip size='small' variant='tonal' color='success' label={dictionary.common.scopeCompleted} />}
+                  </div>
                   <div className='grid grid-cols-2 gap-4'>
                     <Item
                       label={dictionary.fields.dueDate}
@@ -140,7 +147,18 @@ const TaskDetailModal = ({
                     <Item label={dictionary.fields.estimatedHours} value={`${task.estimated_hours || 0}h`} />
                     <Item label={dictionary.fields.actualHours} value={`${task.actual_hours || 0}h`} />
                   </div>
-                  <LinearProgress variant='determinate' value={task.progress} className='mt-5 bs-2 rounded' />
+                  <div className='mt-5 flex flex-wrap items-center justify-between gap-2'>
+                    <Typography variant='body2' className='font-medium'>
+                      {`${task.actual_hours || '0.00'} / ${task.estimated_hours || '0.00'}h`}
+                    </Typography>
+                    <Typography variant='caption' color={Number(task.hours_variance) < 0 ? 'error' : 'success.main'}>
+                      {Number(task.hours_variance) >= 0
+                        ? dictionary.common.hoursSaved.replace('{hours}', Number(task.hours_variance).toFixed(2))
+                        : dictionary.common.hoursOver.replace('{hours}', Math.abs(Number(task.hours_variance)).toFixed(2))}
+                    </Typography>
+                    <Typography variant='caption' color='text.secondary'>{task.progress}%</Typography>
+                  </div>
+                  <LinearProgress variant='determinate' value={Math.min(100, task.progress)} color={task.progress > 100 ? 'error' : 'primary'} className='mt-2 bs-2 rounded' />
                 </CardContent>
               </Card>
               <Card variant='outlined'>
@@ -171,6 +189,26 @@ const TaskDetailModal = ({
                 </CardContent>
               </Card>
             </div>
+            <Card variant='outlined'>
+              <CardContent>
+                <Typography variant='h6' className='mb-4'>{dictionary.detail.timeAudit}</Typography>
+                {task.time_logs.length ? (
+                  <div className='divide-y divide-divider'>
+                    {task.time_logs.map(entry => (
+                      <div key={entry.id} className='grid grid-cols-1 gap-2 py-3 first:pt-0 sm:grid-cols-[140px_1fr_auto] sm:items-center'>
+                        <div>
+                          <Typography variant='body2' className='font-medium'>{toDateInputValue(entry.work_date)}</Typography>
+                          <Typography variant='caption' color='text.secondary'>{entry.staff.full_name}</Typography>
+                        </div>
+                        <Typography variant='body2' color='text.secondary'>{entry.notes || dictionary.common.noNotes}</Typography>
+                        <Chip size='small' variant='tonal' color='info' label={`${entry.worked_hours}h`} />
+                      </div>
+                    ))}
+                  </div>
+                ) : <Typography color='text.secondary'>{dictionary.detail.noTimeLogs}</Typography>}
+              </CardContent>
+            </Card>
+            <TaskCollaborationPanels task={task} locale={locale} dictionary={dictionary} canUpdate={canUpdate} onChanged={async () => setCollaborationVersion(value => value + 1)} />
           </div>
         ) : null}
       </DialogContent>

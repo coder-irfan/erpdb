@@ -13,6 +13,7 @@ import IconButton from '@mui/material/IconButton'
 import Typography from '@mui/material/Typography'
 
 import UserAvatar from '@/components/common/UserAvatar'
+import DualCurrencyAmount from '@/components/currency/DualCurrencyAmount'
 import { toDateInputValue } from '@/utils/contractDuration'
 import { formatCurrency } from '@/utils/formatCurrency'
 import { formatLedgerText, formatPaymentMethod } from '@/utils/ledgerDisplay'
@@ -73,23 +74,23 @@ const FinanceLoanDetailModal = ({ open, loan, locale, dictionary, autoPrint, onC
               <div className='grid grid-cols-2 gap-4 md:grid-cols-4'>
                 <Item
                   label={dictionary.fields.total}
-                  value={formatCurrency(loan.total_amount, locale, loan.currency)}
+                  value={<DualCurrencyAmount amount={loan.total_amount} amountBase={loan.amount_base} currency={loan.currency} exchangeRate={loan.exchange_rate} locale={locale} />}
                 />
                 <Item
                   label={dictionary.fields.monthly}
-                  value={formatCurrency(loan.monthly_deduction, locale, loan.currency)}
+                  value={<DualCurrencyAmount amount={loan.monthly_deduction} currency={loan.currency} exchangeRate={loan.exchange_rate} locale={locale} />}
                 />
                 <Item
                   label={dictionary.fields.repaid}
-                  value={formatCurrency(loan.repaid_amount, locale, loan.currency)}
+                  value={<DualCurrencyAmount amount={loan.repaid_amount} currency={loan.currency} exchangeRate={loan.exchange_rate} locale={locale} primaryClassName='text-success' />}
                   className='text-success'
                 />
                 <Item
                   label={dictionary.fields.remaining}
-                  value={formatCurrency(loan.remaining_balance, locale, loan.currency)}
+                  value={<DualCurrencyAmount amount={loan.remaining_balance} currency={loan.currency} exchangeRate={loan.exchange_rate} locale={locale} primaryClassName='text-error' />}
                   className='text-error'
                 />
-                <Item label={dictionary.fields.amountBase} value={formatCurrency(loan.amount_base, locale, 'USD')} />
+                <Item label='AFN Base Amount' value={formatCurrency(loan.amount_base, locale, 'AFN')} />
                 <Item label={dictionary.fields.exchangeRate} value={loan.exchange_rate} />
                 <Item label={dictionary.fields.currency} value={loan.currency} />
                 <Item label={dictionary.fields.status} value={loan.status.label} />
@@ -142,7 +143,7 @@ const FinanceLoanDetailModal = ({ open, loan, locale, dictionary, autoPrint, onC
                   {loan.repayments.map(repayment => (
                     <div key={repayment.id} className='grid grid-cols-1 gap-2 border-be border-divider pb-3 last:border-0 last:pb-0 sm:grid-cols-4'>
                       <Item label='Date' value={toDateInputValue(repayment.repayment_date)} />
-                      <Item label='Amount' value={formatCurrency(repayment.amount, locale, repayment.currency)} />
+                      <Item label='Amount' value={<DualCurrencyAmount amount={repayment.amount} amountBase={repayment.amount_base} currency={repayment.currency} exchangeRate={repayment.exchange_rate} locale={locale} />} />
                       <Item label='Payment Method' value={formatPaymentMethod(repayment.payment_method) || formatLedgerText(repayment.source)} />
                       <Item label='Notes' value={formatLedgerText(repayment.notes) || dictionary.common.notAvailable} />
                     </div>

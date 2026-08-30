@@ -56,11 +56,21 @@ const StaffContractDetailDialog = ({ contract, open, locale, dictionary, onClose
             </div>
           </div>
         </div>
-        <Chip
-          variant='tonal'
-          color={STATUS_COLORS[contract.status.value] || 'default'}
-          label={dictionary.status[contract.status.value] || contract.status.label}
-        />
+        <div className='flex flex-wrap items-center gap-2'>
+          {contract.remaining_days != null && (
+            <Chip
+              variant='tonal'
+              color={contract.remaining_days < 0 ? 'error' : contract.remaining_days <= 30 ? 'warning' : 'info'}
+              icon={<i className='tabler-calendar-time' />}
+              label={contract.remaining_days < 0 ? `Expired ${Math.abs(contract.remaining_days)} days ago` : `${contract.remaining_days} days remaining`}
+            />
+          )}
+          <Chip
+            variant='tonal'
+            color={STATUS_COLORS[contract.status.value] || 'default'}
+            label={dictionary.status[contract.status.value] || contract.status.label}
+          />
+        </div>
       </div>
       <div className='mt-5 flex flex-col gap-5 sm:mt-6 sm:gap-6'>
         <div className='grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4'>
@@ -90,6 +100,8 @@ const StaffContractDetailDialog = ({ contract, open, locale, dictionary, onClose
           />
           <DetailItem label={dictionary.fields.startDate} value={formatDate(contract.start_date, locale)} />
           <DetailItem label={dictionary.fields.endDate} value={formatDate(contract.end_date, locale)} />
+          <DetailItem label={dictionary.fields.duration || 'Duration'} value={contract.duration_label} />
+          <DetailItem label='Exchange Rate' value={contract.currency === 'USD' ? contract.exchange_rate : '1.0000'} />
           <DetailItem
             label={dictionary.fields.email}
             value={<QuickContact email={contract.staff.email}>{contract.staff.email}</QuickContact>}

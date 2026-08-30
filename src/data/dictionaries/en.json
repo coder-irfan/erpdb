@@ -113,7 +113,9 @@
     "contractManagement": "Contract Management",
     "financeManagement": "Finance Management",
     "contractOptions": "Customers / Clients",
+    "contractCountries": "Countries",
     "contractList": "Customer Contracts",
+    "financeContracts": "Finance Contracts",
     "otherContracts": "Others",
     "contractTypes": "Contract Types",
     "contractTemplates": "Contract Templates",
@@ -144,6 +146,7 @@
     "systemAuditLogs": "System Audit Logs",
     "invoiceOptions": "Invoice Options",
     "incomeCategories": "Income Categories",
+    "expenseCategories": "Expense Categories",
     "crmVisitorOptions": "Visitor Purposes"
   },
   "notifications": {
@@ -160,6 +163,8 @@
     "rowsPerPage": "Rows per page:",
     "of": "of",
     "deleteAction": "Delete log",
+    "deleteSelected": "Delete selected",
+    "selectAll": "Select all audit logs on this page",
     "deleteTitle": "Delete audit log",
     "deleteDescription": "Delete this audit log entry? This action cannot be undone.",
     "deleteSuccess": "Audit log entry deleted successfully.",
@@ -477,7 +482,6 @@
     },
     "actions": {
       "mark": "Mark Attendance",
-      "markAllPresent": "Mark All Present",
       "bulkAbsent": "Mark Remaining Absent",
       "export": "Export CSV",
       "print": "Print",
@@ -485,8 +489,8 @@
       "delete": "Delete",
       "save": "Save Attendance",
       "saveAll": "Save All Attendance",
-      "saveNext": "Save & Mark Next",
       "saveChanges": "Save Changes",
+      "addNote": "Add Note / Reason",
       "saving": "Saving...",
       "cancel": "Cancel"
     },
@@ -502,7 +506,9 @@
     "drawer": {
       "title": "Mark Daily Attendance",
       "editTitle": "Edit Attendance",
-      "description": "Only staff not yet marked for this date are available.",
+      "description": "Review and update every active staff member in one view.",
+      "noStaffFound": "No matching staff found",
+      "readyToSave": "attendance entries ready to save",
       "completeTitle": "Attendance is complete for this date",
       "completeDescription": "Every active staff member has already been marked."
     },
@@ -561,6 +567,8 @@
       "notFound": "The attendance entry could not be found.",
       "loadFailed": "Attendance records could not be loaded.",
       "operationFailed": "The operation could not be completed. Please try again.",
+      "futureDateBlocked": "Attendance cannot be recorded for future dates. Use Leave Requests for planned absences.",
+      "payrollLocked": "Attendance is locked because payroll for this month has been finalized.",
       "unauthenticated": "Sign in to access attendance.",
       "forbidden": "You do not have permission to access attendance.",
       "deleteTitle": "Delete Attendance Entry",
@@ -1557,7 +1565,12 @@
     },
     "actions": {
       "exportCsv": "Export CSV",
-      "print": "Print Report"
+      "print": "Print Report",
+      "assignCustomPolicy": "Assign Custom Policy",
+      "renewContract": "Renew Contract",
+      "archiveStaff": "Archive Staff",
+      "cancel": "Cancel",
+      "confirmArchive": "Confirm Archive"
     },
     "kpis": {
       "baseSalary": "Total Base Salary",
@@ -1608,7 +1621,9 @@
       "contractType": "Contract Type",
       "endDate": "End Date",
       "daysRemaining": "Days Remaining",
-      "renewalStatus": "Renewal Status"
+      "renewalStatus": "Renewal Status",
+      "policy": "Policy",
+      "actions": "Actions"
     },
     "status": {
       "DRAFT": "Draft",
@@ -1625,7 +1640,11 @@
     },
     "common": {
       "records": "{count} report record(s)",
-      "notConfigured": "Not configured"
+      "notConfigured": "Not configured",
+      "systemDefault": "System default policy",
+      "daysOverdue": "{count} Days Overdue",
+      "daysRemaining": "{count} Days Remaining",
+      "archiveConfirmation": "Archive {name}? This will mark the staff member inactive, freeze payroll access, and revoke linked user sessions."
     },
     "pagination": {
       "rowsPerPage": "Rows per page:",
@@ -1655,7 +1674,9 @@
       "invalidReport": "Select a valid HRM report type.",
       "invalidDates": "Select a valid start and end date.",
       "dateRangeTooLarge": "The selected date range is too large.",
-      "staffNotFound": "The selected staff member could not be found."
+      "staffNotFound": "The selected staff member could not be found.",
+      "staffArchived": "Staff member archived successfully.",
+      "actionFailed": "The requested HRM action could not be completed."
     }
   },
   "financeReports": {
@@ -1751,18 +1772,24 @@
       "grossIncome": "Total Gross Income",
       "totalTransactions": "Total Transactions",
       "averageTransaction": "Average Transaction Value",
+      "incomeSources": "Income Sources",
       "operationalExpense": "Total Operational Expense",
       "topExpenseCategory": "Top Expense Category",
       "approvedPending": "Recorded / Pending",
+      "recordedExpenses": "Recorded Expenses",
+      "pendingExpenses": "Pending Expenses",
       "payrollDisbursed": "Total Payroll Disbursed",
       "totalDeductions": "Total Deductions",
       "activeStaffPaid": "Active Staff Paid",
+      "payrollRecords": "Payroll Records",
       "stockValuation": "Total Stock Valuation",
       "skuCount": "Total SKU Count",
       "lowStockCount": "Low Stock / Reorder Alerts",
+      "totalUnits": "Total Units in Stock",
       "activeLoanBalance": "Total Active Loan Balance",
       "totalRepaid": "Total Repaid to Date",
-      "monthlyRecovery": "Monthly Recovery Projection"
+      "monthlyRecovery": "Monthly Recovery Projection",
+      "totalIssued": "Total Loans Issued"
     },
     "table": {
       "date": "Date",
@@ -1855,6 +1882,22 @@
         "description": "Description"
       }
     },
+    "contractCountries": {
+      "title": "Contract Countries",
+      "description": "Maintain countries available for vendors and external contract parties.",
+      "add": "Add Country",
+      "addTitle": "Create Country",
+      "editTitle": "Edit Country",
+      "searchPlaceholder": "Search countries or descriptions",
+      "emptyTitle": "No Countries Found",
+      "emptyDescription": "Add the first country for external contracts.",
+      "deleteTitle": "Delete Country",
+      "deleteDescription": "Delete this country? Countries already used by contracts cannot be removed.",
+      "fields": {
+        "name": "Country Name",
+        "description": "Description"
+      }
+    },
     "incomeCategories": {
       "title": "Income Categories",
       "description": "Maintain the active categories available for finance income records.",
@@ -1866,6 +1909,22 @@
       "emptyDescription": "Add the first category used to classify income records.",
       "deleteTitle": "Delete Income Category",
       "deleteDescription": "Delete this income category? Categories linked to income records cannot be deleted.",
+      "fields": {
+        "name": "Title / Name",
+        "description": "Description"
+      }
+    },
+    "expenseCategories": {
+      "title": "Expense Categories",
+      "description": "Maintain the active categories available for corporate expense records.",
+      "add": "Add Expense Category",
+      "addTitle": "Create Expense Category",
+      "editTitle": "Edit Expense Category",
+      "searchPlaceholder": "Search expense categories or descriptions",
+      "emptyTitle": "No Expense Categories Found",
+      "emptyDescription": "Add the first category used to classify expense records.",
+      "deleteTitle": "Delete Expense Category",
+      "deleteDescription": "Delete this expense category? Categories linked to expense records cannot be deleted.",
       "fields": {
         "name": "Title / Name",
         "description": "Description"
@@ -2497,7 +2556,8 @@
     "reminders": {
       "30_DAY": "30-day expiration reminder",
       "15_DAY": "15-day expiration reminder",
-      "3_DAY": "3-day expiration reminder"
+      "3_DAY": "3-day expiration reminder",
+      "RENEWAL_REVIEW": "Renewal review notice"
     },
     "empty": {
       "title": "No contracts found",
@@ -2542,7 +2602,9 @@
       "titleTooLong": "The contract title must not exceed 191 characters.",
       "invalidOption": "Select valid contract options.",
       "invalidManager": "Select a valid account manager.",
-      "durationInvalid": "The selected duration must include a number and a day, week, month, or year unit."
+      "durationInvalid": "The selected duration must include a number and a day, week, month, or year unit.",
+      "activeEndDateRequired": "Extend the contract end date into the future before activating it.",
+      "terminationReasonRequired": "Enter a termination reason before terminating this contract."
     }
   },
   "contractOptions": {
@@ -2654,7 +2716,8 @@
       "create": "Create Invoice",
       "save": "Save Changes",
       "saving": "Saving…",
-      "viewPrint": "View / Print Invoice",
+      "viewDetails": "View Details",
+      "viewPrint": "Print Invoice",
       "recordPayment": "Record Payment",
       "edit": "Edit",
       "delete": "Delete",
@@ -2663,6 +2726,10 @@
       "close": "Close",
       "confirmPayment": "Confirm Payment",
       "printDownload": "Print / Download PDF"
+    },
+    "details": {
+      "title": "Invoice Details",
+      "overview": "Invoice Overview"
     },
     "form": {
       "createTitle": "Create Invoice",
@@ -2680,7 +2747,10 @@
       "issueDate": "Issue Date",
       "dueDate": "Due Date",
       "status": "Status",
-      "invoiceNumber": "Invoice Number"
+      "invoiceNumber": "Invoice Number",
+      "totalInvoiceAmount": "Total Invoice Amount",
+      "totalAmountPaid": "Total Amount Paid",
+      "remainingBalance": "Remaining Amount Due"
     },
     "placeholders": {
       "contract": "Search and select a contract"
@@ -2691,7 +2761,10 @@
       "amount": "Payment Amount",
       "method": "Payment Method",
       "notes": "Payment Notes",
-      "ledgerNotice": "Confirming this payment marks the invoice as paid and creates a linked FinanceIncome ledger entry.",
+      "ledgerNotice": "Confirming this payment updates the invoice balance and creates a linked FinanceIncome ledger entry.",
+      "history": "Recorded Payments",
+      "entries": "payment entries",
+      "noPayments": "No payments have been recorded.",
       "recording": "Recording…"
     },
     "print": {
@@ -2749,19 +2822,20 @@
       "dateInvalid": "Enter a valid date.",
       "notesTooLong": "Payment notes must not exceed 1,000 characters.",
       "invalidContract": "Select a valid contract and linked client.",
+      "contractInactive": "New invoices can only be created for an active, unexpired contract.",
       "invalidStatus": "Select a valid invoice status.",
       "paidViaPaymentOnly": "Use Record Payment to mark an invoice as paid.",
       "dateRangeInvalid": "Due date must be on or after the issue date.",
-      "fullPaymentRequired": "Payment amount must equal the full invoice amount."
+      "fullPaymentRequired": "Payment amount cannot exceed the remaining invoice balance."
     }
   },
   "inventoryManagement": {
     "metrics": {
-      "totalValue": "Total Stock Value",
+      "totalValue": "Total Inventory Value",
       "totalItems": "Total Items",
       "lowStock": "Low Stock Alerts",
       "outOfStock": "Out of Stock",
-      "usdHint": "Converted to USD",
+      "usdHint": "Asset inventory value in AFN",
       "itemsHint": "Distinct inventory records",
       "lowStockHint": "At or below reorder level",
       "outOfStockHint": "Items with no stock remaining"
@@ -2789,8 +2863,8 @@
       "item": "Item Name",
       "category": "Category",
       "quantity": "Qty in Stock",
-      "unitPrice": "Unit Price",
-      "totalValue": "Total Value",
+      "unitPrice": "Purchase Unit Cost",
+      "totalValue": "Asset Inventory Value",
       "reorderLevel": "Reorder Level",
       "status": "Status",
       "createdAt": "Created At",
@@ -2811,7 +2885,7 @@
       "sku": "SKU Code",
       "category": "Category",
       "quantity": "Quantity in Stock",
-      "unitPrice": "Unit Price",
+      "unitPrice": "Purchase Unit Cost",
       "currency": "Currency",
       "exchangeRate": "USD / AFN Exchange Rate",
       "reorderLevel": "Reorder Level",
@@ -2821,7 +2895,7 @@
       "currentStock": "Current Stock"
     },
     "placeholders": {
-      "autoSku": "Leave blank to auto-generate"
+      "autoSku": "Auto-generated (for example ITM-010)"
     },
     "form": {
       "addTitle": "Add Inventory Item",
@@ -3053,7 +3127,14 @@
     "pay": {
       "title": "Mark salary as paid",
       "description": "Confirm payment for {name}. Any scheduled staff loan deduction will be posted to the active loan balance.",
-      "confirm": "Confirm Payment"
+      "confirm": "Confirm Payment",
+      "earlyTitle": "⚠️ Early Payroll Execution Warning",
+      "earlyDescription": "You are attempting to mark payroll for {month} as PAID on {date}. Executing payroll prior to the end of the month will finalize calculations, lock all associated timesheet records, and generate a permanent Finance Expense ledger entry.",
+      "netPayout": "Net Payout Amount",
+      "targetLedger": "Target Ledger Account",
+      "payrollExpensesLedger": "Payroll Expenses",
+      "workingDaysToDate": "Working Days to Current Date",
+      "confirmEarly": "Confirm & Execute Payout"
     },
     "validation": {
       "required": "This field is required.",
@@ -3080,6 +3161,7 @@
       "created": "Payroll record created successfully.",
       "paid": "Salary marked paid and loan repayment posted successfully.",
       "alreadyPaid": "This salary has already been paid.",
+      "earlyConfirmationRequired": "Early payroll execution requires explicit confirmation.",
       "paidLocked": "Paid payroll records cannot be changed or deleted.",
       "deleted": "Draft payroll record deleted successfully.",
       "processorMissing": "Your user account is not linked to an active staff profile.",
@@ -3110,7 +3192,8 @@
     "types": {
       "STAFF": "Staff Loan",
       "EXTERNAL": "External Entity",
-      "BANK": "Bank / Company"
+      "BANK": "Bank / Company",
+      "CORPORATE": "Corporate Debt"
     },
     "table": {
       "loan": "Loan",
@@ -3146,7 +3229,7 @@
       "monthly": "Monthly Deduction",
       "issueDate": "Issue Date",
       "reason": "Reason / Notes",
-      "amountBase": "USD Base Amount",
+      "amountBase": "AFN Base Amount",
       "loanNumber": "Loan Number",
       "approver": "Approved By",
       "repaid": "Repaid Amount",

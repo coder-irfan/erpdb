@@ -4,6 +4,9 @@ import { Toaster } from 'sonner'
 
 // Context Imports
 import { NextAuthProvider } from '@/contexts/nextAuthProvider'
+import { NotificationProvider } from '@/contexts/NotificationProvider'
+import RoleNotificationStack from '@/components/ui/RoleNotificationCard'
+import UnsavedChangesGuard from '@/components/forms/UnsavedChangesGuard'
 import { VerticalNavProvider } from '@menu/contexts/verticalNavContext'
 import { SettingsProvider } from '@core/contexts/settingsContext'
 import ThemeProvider from '@components/theme'
@@ -33,7 +36,12 @@ const Providers = async props => {
       <VerticalNavProvider>
         <SettingsProvider settingsCookie={settingsCookie} mode={mode}>
           <ThemeProvider direction={direction} systemMode={systemMode}>
-            <ReduxProvider>{children}</ReduxProvider>
+            <NotificationProvider>
+              <ReduxProvider>
+                <UnsavedChangesGuard>{children}</UnsavedChangesGuard>
+              </ReduxProvider>
+              <RoleNotificationStack />
+            </NotificationProvider>
             <Toaster
               position='top-right'
               dir={direction}

@@ -1,9 +1,9 @@
 import 'server-only'
 
 import { prisma } from '@/libs/prisma'
-import { leaveDateToString } from '@/utils/leaveDates'
+import { calculateLeaveWorkingDays, getLeaveWorkingDateKeys, leaveDateToString } from '@/utils/leaveDates'
 
-export { calculateLeaveDays, parseLeaveDate } from '@/utils/leaveDates'
+export { calculateLeaveDays, calculateLeaveWorkingDays, parseLeaveDate } from '@/utils/leaveDates'
 
 export const LEAVE_READ_PERMISSIONS = ['hrm:read', 'hrm_leave:read']
 export const LEAVE_WRITE_PERMISSIONS = ['hrm:write', 'hrm_leave:write']
@@ -30,7 +30,7 @@ export const leaveSelect = {
   created_at: true,
   updated_at: true,
   staff: { select: { id: true, first_name: true, last_name: true, position: true, email: true } },
-  leave_type: { select: { id: true, label: true, value: true, is_active: true, is_paid_leave: true } },
+  leave_type: { select: { id: true, label: true, value: true, is_active: true, is_paid_leave: true, allowed_days_per_year: true } },
   status: { select: { id: true, label: true, value: true, is_active: true } },
   approved_by: { select: { id: true, first_name: true, last_name: true, position: true } },
   approved_by_user: { select: { id: true, name: true, email: true } }
@@ -47,6 +47,11 @@ export const normalizeLeave = leave => ({
     ...leave.staff,
     full_name: `${leave.staff.first_name} ${leave.staff.last_name}`.trim()
   },
+  leave_type: {
+    ...leave.leave_type,
+    allowed_days_per_year:
+      leave.leave_type.allowed_days_per_year == null ? null : Number(leave.leave_type.allowed_days_per_year)
+  },
   approved_by: leave.approved_by
     ? {
         ...leave.approved_by,
@@ -61,15 +66,14 @@ export const normalizeLeave = leave => ({
 })
 
 export const createLeaveAttendance = async (transaction, leave) => {
-  const dates = []
+  const holidays = await transaction.companyholiday.findMany({
+    where: { is_active: true, date: { gte: leave.start_date, lte: leave.end_date } },
+    select: { date: true }
+  })
 
-  for (
-    let cursor = new Date(leave.start_date);
-    cursor <= leave.end_date;
-    cursor = new Date(cursor.getTime() + 86_400_000)
-  ) {
-    dates.push(new Date(cursor))
-  }
+  const dates = getLeaveWorkingDateKeys(leave.start_date, leave.end_date, holidays.map(item => item.date)).map(
+    date => new Date(`${date}T00:00:00.000Z`)
+  )
 
   if (dates.length === 0) return 0
 
@@ -111,7 +115,7 @@ export const createLeaveAttendance = async (transaction, leave) => {
       update: {
         leave_id: leave.id,
         project_id: null,
-        status: 'LEAVE',
+        status: leave.is_paid ? 'LEAVE_PAID' : 'LEAVE_UNPAID',
         check_in_time: null,
         check_out_time: null,
         hours_worked: null,
@@ -121,7 +125,7 @@ export const createLeaveAttendance = async (transaction, leave) => {
         leave_id: leave.id,
         staff_id: leave.staff_id,
         date,
-        status: 'LEAVE',
+        status: leave.is_paid ? 'LEAVE_PAID' : 'LEAVE_UNPAID',
         notes: `Approved leave request ${leave.id}`
       }
     })
@@ -161,7 +165,7 @@ export const removeLeaveAttendance = async (transaction, leaveId) => {
 
   if (backups.length === 0) {
     await transaction.hrmstafftimesheet.deleteMany({
-      where: { leave_id: leaveId, status: 'LEAVE' }
+      where: { leave_id: leaveId, status: { in: ['LEAVE', 'LEAVE_PAID', 'LEAVE_UNPAID'] } }
     })
   }
 
@@ -181,3 +185,86 @@ export const hasOverlappingLeave = (transaction, { staffId, startDate, endDate, 
     },
     select: { id: true }
   })
+
+export const getHolidayDateKeys = async (client, startDate, endDate) => {
+  const holidays = await client.companyholiday.findMany({
+    where: { is_active: true, date: { gte: startDate, lte: endDate } },
+    select: { date: true }
+  })
+
+  return holidays.map(item => leaveDateToString(item.date))
+}
+
+export const getLeaveBalance = async (client, { staffId, leaveTypeId, year, excludeLeaveId = null }) => {
+  const yearStart = new Date(Date.UTC(year, 0, 1))
+  const yearEnd = new Date(Date.UTC(year, 11, 31))
+
+  const [leaveType, holidays, leaves] = await Promise.all([
+    client.option.findFirst({
+      where: { id: leaveTypeId, category: 'LEAVE_TYPE' },
+      select: { id: true, is_paid_leave: true, allowed_days_per_year: true }
+    }),
+    getHolidayDateKeys(client, yearStart, yearEnd),
+    client.hrmstaffleave.findMany({
+      where: {
+        staff_id: staffId,
+        leave_type_id: leaveTypeId,
+        ...(excludeLeaveId ? { NOT: { id: excludeLeaveId } } : {}),
+        start_date: { lte: yearEnd },
+        end_date: { gte: yearStart },
+        status: { is: { category: 'LEAVE_STATUS', value: { in: ['PENDING', 'APPROVED'] } } }
+      },
+      select: { start_date: true, end_date: true, status: { select: { value: true } } }
+    })
+  ])
+
+  if (!leaveType) return null
+
+  let taken = 0
+  let pending = 0
+
+  for (const leave of leaves) {
+    const clippedStart = leave.start_date < yearStart ? yearStart : leave.start_date
+    const clippedEnd = leave.end_date > yearEnd ? yearEnd : leave.end_date
+    const days = calculateLeaveWorkingDays(clippedStart, clippedEnd, holidays)
+
+    if (leave.status.value === 'APPROVED') taken += days
+    else pending += days
+  }
+
+  const allowed = leaveType.allowed_days_per_year == null ? null : Number(leaveType.allowed_days_per_year)
+
+  return {
+    allowed,
+    taken,
+    pending,
+    remaining: allowed == null ? null : Math.max(0, allowed - taken - pending),
+    isPaidDefault: leaveType.is_paid_leave
+  }
+}
+
+export const validateLeaveEntitlement = async (
+  client,
+  { staffId, leaveTypeId, startDate, endDate, excludeLeaveId = null }
+) => {
+  const startYear = startDate.getUTCFullYear()
+  const endYear = endDate.getUTCFullYear()
+
+  for (let year = startYear; year <= endYear; year += 1) {
+    const balance = await getLeaveBalance(client, { staffId, leaveTypeId, year, excludeLeaveId })
+
+    if (!balance) return { valid: false, code: 'LEAVE_TYPE_NOT_FOUND' }
+    if (balance.allowed == null) continue
+
+    const yearStart = new Date(Date.UTC(year, 0, 1))
+    const yearEnd = new Date(Date.UTC(year, 11, 31))
+    const clippedStart = startDate < yearStart ? yearStart : startDate
+    const clippedEnd = endDate > yearEnd ? yearEnd : endDate
+    const holidays = await getHolidayDateKeys(client, clippedStart, clippedEnd)
+    const requested = calculateLeaveWorkingDays(clippedStart, clippedEnd, holidays)
+
+    if (requested > balance.remaining) return { valid: false, code: 'LEAVE_BALANCE_EXCEEDED', balance, requested, year }
+  }
+
+  return { valid: true }
+}

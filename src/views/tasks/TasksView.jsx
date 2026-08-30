@@ -34,11 +34,11 @@ const EMPTY_DATA = {
 
 const EMPTY_OPTIONS = { projects: [], staff: [], statuses: [], priorities: [] }
 
-const TasksView = ({ locale, dictionary, canManage, canUpdate, canDelete }) => {
+const TasksView = ({ locale, dictionary, canManage, canUpdate, canDelete, fixedProjectId = '', embedded = false }) => {
   const [view, setView] = useState('KANBAN')
   const [searchInput, setSearchInput] = useState('')
   const [search, setSearch] = useState('')
-  const [projectId, setProjectId] = useState('')
+  const [projectId, setProjectId] = useState(fixedProjectId)
   const [priorityId, setPriorityId] = useState('')
   const [statusId, setStatusId] = useState('')
   const [assigneeId, setAssigneeId] = useState('')
@@ -127,14 +127,25 @@ const TasksView = ({ locale, dictionary, canManage, canUpdate, canDelete }) => {
 
   const changeStatus = async (task, nextStatusId) => {
     if (task.status_id === nextStatusId) return
+    const nextStatus = data.statuses.find(status => status.id === nextStatusId)
+
+    if (!nextStatus) return false
+
     setStatusUpdating(task.id)
+    setData(current => ({ ...current, tasks: current.tasks.map(item => item.id === task.id ? { ...item, status_id: nextStatus.id, status: nextStatus } : item) }))
     const result = await updateTaskStatus(task.id, nextStatusId, { locale })
 
     if (result.success) {
       toast.success(result.message)
       await refresh()
-    } else toast.error(result.error || dictionary.messages.operationFailed)
+    } else {
+      setData(current => ({ ...current, tasks: current.tasks.map(item => item.id === task.id ? task : item) }))
+      toast.error(result.error || dictionary.messages.operationFailed)
+    }
+
     setStatusUpdating(null)
+
+    return result.success
   }
 
   const remove = async () => {
@@ -151,10 +162,12 @@ const TasksView = ({ locale, dictionary, canManage, canUpdate, canDelete }) => {
     setDeleting(false)
   }
 
-  const activeFilters = [projectId, priorityId, statusId, assigneeId].filter(Boolean).length
+  const activeFilters = [searchInput.trim(), fixedProjectId ? '' : projectId, priorityId, statusId, assigneeId].filter(Boolean).length
 
   const resetFilters = () => {
-    setProjectId('')
+    setSearchInput('')
+    setSearch('')
+    setProjectId(fixedProjectId)
     setPriorityId('')
     setStatusId('')
     setAssigneeId('')
@@ -183,6 +196,7 @@ const TasksView = ({ locale, dictionary, canManage, canUpdate, canDelete }) => {
 
   const sharedViewProps = {
     data,
+    locale,
     dictionary,
     canManage,
     canUpdate,
@@ -197,7 +211,7 @@ const TasksView = ({ locale, dictionary, canManage, canUpdate, canDelete }) => {
 
   return (
     <div className='flex flex-col gap-4'>
-      <TaskStatsCards summary={data.summary} dictionary={dictionary} />
+      {!embedded && <TaskStatsCards summary={data.summary} dictionary={dictionary} />}
       <Card className='border border-divider/70 shadow-sm'>
         <CardContent className='flex flex-wrap items-center justify-between gap-4'>
           <div className='flex is-full flex-wrap items-center gap-3 md:is-auto'>
@@ -233,7 +247,7 @@ const TasksView = ({ locale, dictionary, canManage, canUpdate, canDelete }) => {
             </ToggleButtonGroup>
 
             <TableFiltersPopover activeCount={activeFilters} locale={locale}>
-              {filterSelect(
+              {!fixedProjectId && filterSelect(
                 dictionary.filters.project,
                 projectId,
                 setProjectId,
@@ -298,7 +312,8 @@ const TasksView = ({ locale, dictionary, canManage, canUpdate, canDelete }) => {
       <TaskFormDrawer
         open={formOpen}
         task={editing}
-        options={options}
+        options={fixedProjectId ? { ...options, projects: options.projects.filter(project => project.id === fixedProjectId) } : options}
+        defaultProjectId={fixedProjectId}
         locale={locale}
         dictionary={dictionary}
         onClose={() => setFormOpen(false)}

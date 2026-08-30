@@ -4,6 +4,7 @@ import Chip from '@mui/material/Chip'
 import Typography from '@mui/material/Typography'
 
 import UserAvatar from '@/components/common/UserAvatar'
+import DualCurrencyAmount from '@/components/currency/DualCurrencyAmount'
 import DashboardTablePagination from '@/components/table/DashboardTablePagination'
 import EntityActionsMenu from '@/components/table/EntityActionsMenu'
 import TableEmptyStateRow from '@/components/table/TableEmptyStateRow'
@@ -86,22 +87,22 @@ const FinanceLoanTable = ({
           {
             id: 'total',
             label: dictionary.table.total,
-            render: loan => formatCurrency(loan.total_amount, locale, loan.currency)
+            render: loan => <DualCurrencyAmount amount={loan.total_amount} amountBase={loan.amount_base} currency={loan.currency} exchangeRate={loan.exchange_rate} locale={locale} />
           },
           {
             id: 'monthly',
             label: dictionary.table.monthly,
-            render: loan => formatCurrency(loan.monthly_deduction, locale, loan.currency)
+            render: loan => <DualCurrencyAmount amount={loan.monthly_deduction} currency={loan.currency} exchangeRate={loan.exchange_rate} locale={locale} />
           },
           {
             id: 'repaid',
             label: dictionary.table.repaid,
-            render: loan => formatCurrency(loan.repaid_amount, locale, loan.currency)
+            render: loan => <DualCurrencyAmount amount={loan.repaid_amount} currency={loan.currency} exchangeRate={loan.exchange_rate} locale={locale} />
           },
           {
             id: 'remaining',
             label: dictionary.table.remaining,
-            render: loan => formatCurrency(loan.remaining_balance, locale, loan.currency)
+            render: loan => <DualCurrencyAmount amount={loan.remaining_balance} currency={loan.currency} exchangeRate={loan.exchange_rate} locale={locale} />
           },
           { id: 'date', label: dictionary.table.date, render: loan => toDateInputValue(loan.issue_date) }
         ]}
@@ -171,26 +172,16 @@ const FinanceLoanTable = ({
                         </div>
                       </td>
                       <td className='text-end'>
-                        <Typography className='min-is-[130px] whitespace-nowrap font-medium'>
-                          {formatCurrency(loan.total_amount, locale, loan.currency)}
-                        </Typography>
+                        <DualCurrencyAmount amount={loan.total_amount} amountBase={loan.amount_base} currency={loan.currency} exchangeRate={loan.exchange_rate} locale={locale} className='min-is-[130px] items-end' />
                       </td>
                       <td className='text-end'>
-                        <Typography className='min-is-[130px] whitespace-nowrap'>
-                          {formatCurrency(loan.monthly_deduction, locale, loan.currency)}
-                        </Typography>
+                        <DualCurrencyAmount amount={loan.monthly_deduction} currency={loan.currency} exchangeRate={loan.exchange_rate} locale={locale} className='min-is-[130px] items-end' />
                       </td>
                       <td className='text-end'>
-                        <Typography className='min-is-[125px] whitespace-nowrap text-success'>
-                          {formatCurrency(loan.repaid_amount, locale, loan.currency)}
-                        </Typography>
+                        <DualCurrencyAmount amount={loan.repaid_amount} currency={loan.currency} exchangeRate={loan.exchange_rate} locale={locale} className='min-is-[125px] items-end' primaryClassName='text-success' />
                       </td>
                       <td className='text-end'>
-                        <Typography
-                          className={`min-is-[135px] whitespace-nowrap font-semibold ${toFiniteNumber(loan.remaining_balance) > 0 ? 'text-error' : 'text-success'}`}
-                        >
-                          {formatCurrency(loan.remaining_balance, locale, loan.currency)}
-                        </Typography>
+                        <DualCurrencyAmount amount={loan.remaining_balance} currency={loan.currency} exchangeRate={loan.exchange_rate} locale={locale} className='min-is-[135px] items-end' primaryClassName={toFiniteNumber(loan.remaining_balance) > 0 ? 'text-error' : 'text-success'} />
                       </td>
                       <td>
                         <Chip size='small' variant='tonal' color={statusColor} label={loan.status.label} />

@@ -4,12 +4,12 @@ import Chip from '@mui/material/Chip'
 import Typography from '@mui/material/Typography'
 
 import DashboardTablePagination from '@/components/table/DashboardTablePagination'
+import DualCurrencyAmount from '@/components/currency/DualCurrencyAmount'
 import EntityActionsMenu from '@/components/table/EntityActionsMenu'
 import TableEmptyStateRow from '@/components/table/TableEmptyStateRow'
 import TableSkeletonRows from '@/components/table/TableSkeletonRows'
 import ResponsiveDataTable from '@/components/tables/ResponsiveDataTable'
 import { toDateInputValue } from '@/utils/contractDuration'
-import { formatCurrency } from '@/utils/formatCurrency'
 
 import tableStyles from '@core/styles/table.module.css'
 
@@ -36,6 +36,7 @@ const OthersContractTableView = ({
 }) => {
   const renderActions = contract => (
     <EntityActionsMenu
+      locale={locale}
       actions={[
         { label: dictionary.actions.view, icon: 'tabler-eye', onClick: () => onView(contract) },
         {
@@ -51,7 +52,7 @@ const OthersContractTableView = ({
           onClick: () => onDelete(contract)
         }
       ]}
-      statusOptions={canWrite ? data.statuses : []}
+      statusOptions={canWrite ? data.statuses.map(status => ({ ...status, skipConfirmation: status.value === 'TERMINATED' })) : []}
       currentStatus={contract.status_id}
       statusDisabled={statusUpdating === contract.id}
       changeStatusLabel={dictionary.actions.changeStatus}
@@ -73,7 +74,7 @@ const OthersContractTableView = ({
               {contract.contract_number}
             </Typography>
             <Typography variant='body2' color='text.secondary' className='truncate'>
-              {contract.title}
+              {contract.vendor?.company_name || contract.title}
             </Typography>
           </div>
         )}
@@ -88,10 +89,11 @@ const OthersContractTableView = ({
         renderMobileActions={renderActions}
         mobileMetadata={[
           { id: 'type', label: 'Contract Type', render: contract => contract.contract_type.label },
+          { id: 'owner', label: 'Internal Owner', render: contract => contract.account_manager?.full_name || '—' },
           {
             id: 'amount',
             label: 'Total Amount',
-            render: contract => formatCurrency(contract.total_amount, locale, contract.currency)
+            render: contract => <DualCurrencyAmount amount={contract.total_amount} amountBase={contract.amount_base} currency={contract.currency} exchangeRate={contract.exchange_rate} locale={locale} />
           },
           { id: 'start', label: 'Start Date', render: contract => toDateInputValue(contract.start_date) },
           { id: 'end', label: 'End Date', render: contract => toDateInputValue(contract.end_date) }
@@ -109,8 +111,9 @@ const OthersContractTableView = ({
             <thead>
               <tr>
                 <th>Contract Number</th>
-                <th>Third Party / Title</th>
+                <th>Third-Party Company / Vendor</th>
                 <th>Contract Type</th>
+                <th>Internal Owner</th>
                 <th className='text-end'>Total Amount</th>
                 <th>Start Date</th>
                 <th>End Date</th>
@@ -120,10 +123,10 @@ const OthersContractTableView = ({
             </thead>
             <tbody>
               {loading ? (
-                <TableSkeletonRows columns={8} />
+                <TableSkeletonRows columns={9} />
               ) : data.contracts.length === 0 ? (
                 <TableEmptyStateRow
-                  colSpan={8}
+                  colSpan={9}
                   icon='tabler-building-store'
                   title='No other contracts found'
                   description='Create a vendor, lease, or miscellaneous contract or adjust the filters.'
@@ -147,12 +150,14 @@ const OthersContractTableView = ({
                     </td>
                     <td>
                       <Typography color='text.primary' className='min-is-[180px] font-medium'>
-                        {contract.title}
+                        {contract.vendor?.company_name || contract.title}
                       </Typography>
+                      <Typography variant='caption' color='text.secondary'>{contract.vendor?.contact_name || contract.title}</Typography>
                     </td>
                     <td>{contract.contract_type.label}</td>
-                    <td className='whitespace-nowrap text-end font-semibold'>
-                      {formatCurrency(contract.total_amount, locale, contract.currency)}
+                    <td>{contract.account_manager?.full_name || '—'}</td>
+                    <td className='whitespace-nowrap text-end'>
+                      <DualCurrencyAmount amount={contract.total_amount} amountBase={contract.amount_base} currency={contract.currency} exchangeRate={contract.exchange_rate} locale={locale} className='items-end' />
                     </td>
                     <td className='whitespace-nowrap'>{toDateInputValue(contract.start_date)}</td>
                     <td className='whitespace-nowrap'>{toDateInputValue(contract.end_date)}</td>

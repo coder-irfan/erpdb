@@ -51,7 +51,7 @@ const InvoicePaymentDialog = ({ open, invoice, paymentMethods, locale, dictionar
           </div>
           <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
             {field('payment_date', dictionary.payment.date, { type: 'date', slotProps: { inputLabel: { shrink: true } } })}
-            {field('amount', dictionary.payment.amount, { type: 'number', inputProps: { min: 0, step: '0.01' } })}
+            {field('amount', dictionary.payment.amount, { type: 'number', inputProps: { min: 0.01, max: Number(invoice?.remaining_balance || 0), step: '0.01' } })}
           </div>
           <Controller name='payment_method_id' control={control} render={({ field }) => (
             <CustomTextField {...field} select value={field.value || ''} label={dictionary.payment.method} error={Boolean(errors.payment_method_id)} helperText={errors.payment_method_id?.message}>

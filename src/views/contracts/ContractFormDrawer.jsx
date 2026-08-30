@@ -18,12 +18,12 @@ import CustomTextField from '@core/components/mui/TextField'
 import { createContract, updateContract } from '@/actions/contracts'
 import { createStaffContract, updateStaffContract } from '@/actions/hrm/contracts'
 import LoadingButtonContent from '@/components/LoadingButtonContent'
-import { CONTRACT_TYPE_DOMAINS, getContractTypeDomain } from '@/data/contractTypes'
+import LocalizedDateTimePicker from '@/components/inputs/LocalizedDateTimePicker'
+import { CONTRACT_TYPE_DOMAINS } from '@/data/contractTypes'
 import { createContractSchema } from '@/schemas/contracts'
 import { createStaffContractSchema } from '@/schemas/hrm/contracts'
-import { calculateContractEndDate, toDateInputValue } from '@/utils/contractDuration'
-
-const TARGETS = ['HRM', 'CUSTOMER', 'FINANCE', 'OTHERS']
+import { calculateContractEndDate, formatDateRangeDuration, toDateInputValue } from '@/utils/contractDuration'
+import { convertToBaseCurrency, formatCurrency } from '@/utils/formatCurrency'
 
 const getDefaultStatus = statuses =>
   statuses.find(option => option.is_default)?.id ||
@@ -31,15 +31,23 @@ const getDefaultStatus = statuses =>
   statuses[0]?.id ||
   ''
 
-const getEmptyValues = (formOptions, defaultTarget = 'CUSTOMER') => ({
-  target_category: defaultTarget,
+const getEmptyValues = formOptions => ({
   client_id: '',
+  vendor_id: '',
+  vendor_name: '',
+  vendor_contact_name: '',
+  vendor_contact_email: '',
+  vendor_phone: '',
+  vendor_address: '',
   lead_id: '',
   staff_id: '',
   title: '',
   contract_type_id: '',
   template_id: '',
+  termination_reason: '',
   contract_duration: '',
+  probation_days: 90,
+  notice_period_days: 30,
   position_title: '',
   base_salary: '',
   total_amount: '',
@@ -53,7 +61,8 @@ const getEmptyValues = (formOptions, defaultTarget = 'CUSTOMER') => ({
   account_manager_id: '',
   auto_renew: false,
   invoice_id: '',
-  installment_schedule: ''
+  installment_schedule: '',
+  termination_date: ''
 })
 
 const ContractFormDrawer = ({
@@ -62,7 +71,9 @@ const ContractFormDrawer = ({
   formOptions,
   locale,
   dictionary,
-  defaultTarget = 'CUSTOMER',
+  contractContext = 'CUSTOMER',
+  initialValues = null,
+  drawerTitle = null,
   onClose,
   onSaved
 }) => {
@@ -77,13 +88,13 @@ const ContractFormDrawer = ({
   const resolver = useMemo(
     () => async (values, context, options) => {
       const schema =
-        values.target_category === 'HRM'
+        contractContext === 'HRM'
           ? createStaffContractSchema(dictionary.validation)
           : createContractSchema(dictionary.validation)
 
-      return valibotResolver(schema)(values, context, options)
+      return valibotResolver(schema)({ ...values, target_category: contractContext }, context, options)
     },
-    [dictionary.validation]
+    [contractContext, dictionary.validation]
   )
 
   const {
@@ -92,17 +103,38 @@ const ContractFormDrawer = ({
     reset,
     setValue,
     formState: { errors, isSubmitting }
-  } = useForm({ resolver, defaultValues: getEmptyValues(formOptions, defaultTarget) })
+  } = useForm({ resolver, defaultValues: getEmptyValues(formOptions) })
 
-  const targetCategory = useWatch({ control, name: 'target_category' }) || defaultTarget
+  const targetCategory = contractContext
   const startDate = useWatch({ control, name: 'start_date' })
   const durationId = useWatch({ control, name: 'contract_duration' })
+  const statusId = useWatch({ control, name: 'status_id' })
+  const currency = useWatch({ control, name: 'currency' })
+  const baseSalary = useWatch({ control, name: 'base_salary' })
+  const exchangeRate = useWatch({ control, name: 'exchange_rate' })
   const durations = formOptions.options.CONTRACT_DURATION || []
   const selectedDuration = durations.find(option => option.id === durationId)
+  const selectedStatus = statusOptions.find(option => option.id === statusId)
 
   const calculatedEndDate = useMemo(
     () => toDateInputValue(calculateContractEndDate(startDate, selectedDuration)),
     [selectedDuration, startDate]
+  )
+
+  const calculatedDuration = useMemo(
+    () => formatDateRangeDuration(startDate, calculatedEndDate),
+    [calculatedEndDate, startDate]
+  )
+
+  const baseSalaryPreview = useMemo(
+    () =>
+      convertToBaseCurrency(
+        Number(baseSalary) || 0,
+        currency,
+        Number(exchangeRate) || 0,
+        formOptions.baseCurrency || 'AFN'
+      ),
+    [baseSalary, currency, exchangeRate, formOptions.baseCurrency]
   )
 
   const typeCategory = CONTRACT_TYPE_DOMAINS[targetCategory] || CONTRACT_TYPE_DOMAINS.CUSTOMER
@@ -119,22 +151,25 @@ const ContractFormDrawer = ({
   useEffect(() => {
     if (!open) return
 
-    const editingTarget = contract?.contract_type?.category
-      ? getContractTypeDomain(contract.contract_type.category)
-      : defaultTarget
-
     reset(
       contract
         ? {
-            ...getEmptyValues(formOptions, editingTarget),
-            target_category: editingTarget,
+            ...getEmptyValues(formOptions),
             client_id: contract.client_id || '',
+            vendor_id: contract.vendor_id || '',
+            vendor_name: contract.vendor?.company_name || (contract.contract_type?.category === 'CONTRACT_TYPE_OTHER' ? contract.title : ''),
+            vendor_contact_name: contract.vendor?.contact_name || '',
+            vendor_contact_email: contract.vendor?.email || '',
+            vendor_phone: contract.vendor?.phone || '',
+            vendor_address: contract.vendor?.address || '',
             lead_id: contract.lead_id || '',
             staff_id: contract.staff_id || '',
             title: contract.title || '',
             contract_type_id: contract.contract_type_id || '',
-            template_id: contract.contract_type?.category === 'CONTRACT_POLICY' ? contract.contract_type_id : '',
-            contract_duration: contract.contract_duration || '',
+            template_id:
+              contract.template_id ||
+              (contract.contract_type?.category === 'CONTRACT_POLICY' ? contract.contract_type_id : ''),
+            contract_duration: contract.duration_id || contract.contract_duration || '',
             position_title: contract.position_title || '',
             base_salary: String(contract.base_salary || ''),
             total_amount: String(contract.total_amount || ''),
@@ -146,23 +181,49 @@ const ContractFormDrawer = ({
             country_id: contract.country_id || '',
             level_id: contract.level_id || '',
             account_manager_id: contract.account_manager_id || '',
-            auto_renew: Boolean(contract.auto_renew)
+            auto_renew: Boolean(contract.auto_renew),
+            probation_days: contract.probation_days || 90,
+            notice_period_days: contract.notice_period_days || 30,
+            termination_date: toDateInputValue(contract.termination_date),
+            termination_reason: contract.termination_reason || ''
           }
-        : getEmptyValues(formOptions, defaultTarget)
+        : initialValues
+          ? {
+              ...getEmptyValues(formOptions),
+              ...initialValues,
+              staff_id: initialValues.staff_id || '',
+              contract_type_id: initialValues.contract_type_id || '',
+              template_id: initialValues.template_id || '',
+              contract_duration: initialValues.contract_duration || initialValues.duration_id || '',
+              position_title: initialValues.position_title || '',
+              base_salary: String(initialValues.base_salary || ''),
+              currency: initialValues.currency || formOptions.baseCurrency || 'AFN',
+              exchange_rate: String(initialValues.exchange_rate || formOptions.exchangeRate || '65'),
+              start_date: toDateInputValue(initialValues.start_date || new Date()),
+              end_date: toDateInputValue(initialValues.end_date),
+              status_id: initialValues.status_id || getDefaultStatus(formOptions.options.CONTRACT_STATUS || [])
+            }
+          : getEmptyValues(formOptions)
     )
-  }, [contract, defaultTarget, formOptions, open, reset])
+  }, [contract, formOptions, initialValues, open, reset])
 
   const submit = async values => {
-    const payload = { ...values, end_date: values.end_date || calculatedEndDate, locale }
+    const payload = {
+      ...values,
+      end_date: targetCategory === 'HRM' ? calculatedEndDate : values.end_date || calculatedEndDate,
+      locale
+    }
+
+    delete payload.target_category
 
     const result =
-      values.target_category === 'HRM'
+      targetCategory === 'HRM'
         ? contract
           ? await updateStaffContract(contract.id, payload)
           : await createStaffContract(payload)
         : contract
-          ? await updateContract(contract.id, payload)
-          : await createContract(payload)
+          ? await updateContract(contract.id, payload, targetCategory)
+          : await createContract(payload, targetCategory)
 
     if (!result.success) return toast.error(result.error || dictionary.messages.operationFailed)
 
@@ -171,14 +232,18 @@ const ContractFormDrawer = ({
     await onSaved(result.data)
   }
 
-  const field = (name, label, props = {}) => (
+  const field = (name, label, props = {}) => {
+    const FieldComponent = props.type === 'date' ? LocalizedDateTimePicker : CustomTextField
+    const resolvedProps = props.type === 'date' ? { ...props, type: undefined, locale } : props
+
+    return (
     <Controller
       name={name}
       control={control}
       render={({ field: controllerField }) => (
-        <CustomTextField
+        <FieldComponent
           {...controllerField}
-          {...props}
+          {...resolvedProps}
           value={controllerField.value ?? ''}
           label={label}
           error={Boolean(errors[name])}
@@ -186,7 +251,8 @@ const ContractFormDrawer = ({
         />
       )}
     />
-  )
+    )
+  }
 
   const selectField = (name, label, options, placeholder) => (
     <Controller
@@ -248,26 +314,14 @@ const ContractFormDrawer = ({
     >
       <div className='flex items-start justify-between gap-4 border-be border-divider p-5'>
         <div>
-          <Typography variant='h5'>{contract ? dictionary.form.editTitle : dictionary.form.addTitle}</Typography>
-          <Typography color='text.secondary'>One contract engine, adapted to the selected target.</Typography>
+          <Typography variant='h5'>
+            {drawerTitle || (contract ? dictionary.form.editTitle : dictionary.form.addTitle)}
+          </Typography>
+          <Typography color='text.secondary'>Contract details are tailored to this module.</Typography>
         </div>
         <IconButton onClick={onClose} disabled={isSubmitting}><i className='tabler-x' /></IconButton>
       </div>
       <form onSubmit={handleSubmit(submit)} className='flex flex-1 flex-col gap-5 overflow-y-auto p-5' noValidate>
-        <Controller
-          name='target_category'
-          control={control}
-          render={({ field }) => (
-            <CustomTextField {...field} select label='Target Category' disabled={Boolean(contract)}>
-              {TARGETS.map(target => (
-                <MenuItem key={target} value={target}>
-                  {{ HRM: 'HRM / Staff', CUSTOMER: 'Customers / Clients', FINANCE: 'Invoices / Finance', OTHERS: 'Others' }[target]}
-                </MenuItem>
-              ))}
-            </CustomTextField>
-          )}
-        />
-
         {targetCategory === 'HRM' && (
           <>
             {selectField(
@@ -279,10 +333,16 @@ const ContractFormDrawer = ({
             <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
               {selectField('contract_type_id', 'Contract Type', typeOptions, 'Select HRM type')}
               {selectField('template_id', 'Agreed Terms / Template', formOptions.templates || [], 'Select template')}
+              {selectField('contract_duration', dictionary.fields.duration, durations, dictionary.placeholders.duration)}
               {field('position_title', 'Position Title')}
               {field('base_salary', 'Base Salary', { type: 'number', inputProps: { min: 0.01, step: '0.01' } })}
               {field('start_date', dictionary.fields.startDate, { type: 'date', slotProps: { inputLabel: { shrink: true } } })}
-              {field('end_date', dictionary.fields.endDate, { type: 'date', slotProps: { inputLabel: { shrink: true } } })}
+              <LocalizedDateTimePicker locale={locale} label={dictionary.fields.endDate} value={calculatedEndDate} disabled />
+              {field('probation_days', 'Probation Period (Days)', { type: 'number', inputProps: { min: 1, step: '1' } })}
+              {field('notice_period_days', 'Notice Period (Days)', { type: 'number', inputProps: { min: 1, step: '1' } })}
+            </div>
+            <div className='rounded border border-info/20 bg-infoLighter p-3'>
+              <Typography variant='body2' className='font-semibold'>Calculated duration: {calculatedDuration || 'Select a duration'}</Typography>
             </div>
           </>
         )}
@@ -291,6 +351,7 @@ const ContractFormDrawer = ({
           <>
             {clientField}
             {selectField('lead_id', 'Linked Lead (Optional)', (formOptions.leads || []).map(lead => ({ ...lead, label: lead.title })), 'Select lead')}
+            {selectField('template_id', 'Agreement Template', formOptions.templates || [], 'Select agreement template')}
             {field('title', dictionary.fields.title)}
           </>
         )}
@@ -323,10 +384,57 @@ const ContractFormDrawer = ({
                 </CustomTextField>
               )}
             />
+            {field('title', dictionary.fields.title)}
           </>
         )}
 
-        {targetCategory === 'OTHERS' && field('title', 'Third Party / Entity Name')}
+        {targetCategory === 'OTHERS' && (
+          <>
+            <Controller
+              name='vendor_id'
+              control={control}
+              render={({ field }) => (
+                <Autocomplete
+                  options={formOptions.vendors || []}
+                  value={(formOptions.vendors || []).find(vendor => vendor.id === field.value) || null}
+                  onChange={(_, vendor) => {
+                    field.onChange(vendor?.id || '')
+                    if (!vendor) return
+                    setValue('vendor_name', vendor.company_name, { shouldValidate: true })
+                    setValue('vendor_contact_name', vendor.contact_name, { shouldValidate: true })
+                    setValue('vendor_contact_email', vendor.email, { shouldValidate: true })
+                    setValue('vendor_phone', vendor.phone || '')
+                    setValue('vendor_address', vendor.address || '')
+                  }}
+                  getOptionLabel={vendor => vendor.company_name}
+                  isOptionEqualToValue={(option, value) => option.id === value.id}
+                  renderOption={(props, vendor) => <li {...props} key={vendor.id}><div><Typography variant='body2'>{vendor.company_name}</Typography><Typography variant='caption' color='text.secondary'>{vendor.contact_name} · {vendor.email}</Typography></div></li>}
+                  renderInput={params => <CustomTextField {...params} label='Select Existing Vendor (Optional)' placeholder='Search saved vendors' />}
+                />
+              )}
+            />
+            <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
+              {field('vendor_name', 'Third-Party Company / Vendor Name', { required: true, placeholder: 'e.g. Azizi Bank' })}
+              {field('vendor_contact_name', 'Vendor Representative / Contact Person', { required: true })}
+              {field('vendor_contact_email', 'Vendor Contact Email', { required: true, type: 'email' })}
+              {field('vendor_phone', 'Vendor Contact Phone')}
+            </div>
+            {field('vendor_address', 'Vendor Address', { multiline: true, minRows: 2 })}
+            {field('title', 'Agreement Title / Subject')}
+            <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
+              {selectField(
+                'account_manager_id',
+                'Internal Owner / Responsible Lead',
+                (formOptions.staff || []).map(person => ({
+                  ...person,
+                  label: `${person.full_name}${person.position ? ` — ${person.position}` : ''}`
+                })),
+                'Select responsible employee'
+              )}
+              {selectField('country_id', 'Country', formOptions.options.COUNTRY || [], 'Select country')}
+            </div>
+          </>
+        )}
 
         {targetCategory !== 'HRM' && (
           <>
@@ -348,7 +456,7 @@ const ContractFormDrawer = ({
               {targetCategory === 'OTHERS' ? (
                 field('end_date', dictionary.fields.endDate, { type: 'date', slotProps: { inputLabel: { shrink: true } } })
               ) : (
-                <CustomTextField label={dictionary.fields.endDate} type='date' value={calculatedEndDate} disabled slotProps={{ inputLabel: { shrink: true } }} />
+                <LocalizedDateTimePicker locale={locale} label={dictionary.fields.endDate} value={calculatedEndDate} disabled />
               )}
               {field('total_amount', targetCategory === 'OTHERS' ? 'Contract Amount' : dictionary.fields.amount, { type: 'number', inputProps: { min: 0, step: '0.01' } })}
               <Controller
@@ -364,7 +472,7 @@ const ContractFormDrawer = ({
               {field('exchange_rate', dictionary.fields.exchangeRate, { type: 'number', inputProps: { min: 0, step: '0.0001' } })}
               {targetCategory === 'FINANCE' && field('installment_schedule', 'Installment Schedule', { multiline: true, minRows: 2 })}
             </div>
-            {targetCategory === 'CUSTOMER' && (
+            {['CUSTOMER', 'OTHERS'].includes(targetCategory) && (
               <Controller
                 name='auto_renew'
                 control={control}
@@ -390,7 +498,29 @@ const ContractFormDrawer = ({
               )}
             />
           )}
+          {targetCategory === 'HRM' && currency === 'USD' &&
+            field('exchange_rate', dictionary.fields.exchangeRate, { type: 'number', inputProps: { min: 0.0001, step: '0.0001' } })}
         </div>
+
+        {targetCategory === 'HRM' && currency === 'USD' && (
+          <div className='rounded border border-success/20 bg-successLighter p-3'>
+            <Typography variant='caption'>Base currency preview</Typography>
+            <Typography className='font-semibold'>
+              {formatCurrency(baseSalaryPreview, locale, formOptions.baseCurrency || 'AFN')}
+            </Typography>
+          </div>
+        )}
+
+        {selectedStatus?.value === 'TERMINATED' && (
+          <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
+            {field('termination_date', 'Termination Date', { type: 'date', slotProps: { inputLabel: { shrink: true } } })}
+            {field('termination_reason', 'Termination Reason', {
+              multiline: true,
+              minRows: 3,
+              placeholder: 'Explain why this contract is being terminated.'
+            })}
+          </div>
+        )}
 
         <div className='mt-auto flex justify-end gap-3 pt-4'>
           <Button variant='tonal' color='secondary' onClick={onClose} disabled={isSubmitting}>{dictionary.actions.cancel}</Button>

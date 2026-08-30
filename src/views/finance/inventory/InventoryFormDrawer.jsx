@@ -23,7 +23,6 @@ const defaults = (options, item) => ({
   quantity_in_stock: String(item?.quantity_in_stock ?? 0),
   unit_price: item?.unit_price || '',
   reorder_level: String(item?.reorder_level ?? 5),
-  status_id: item?.status_id || options.statuses.find(option => option.value === 'IN_STOCK')?.id || options.statuses[0]?.id || '',
   currency: item?.currency || options.baseCurrency || 'AFN',
   exchange_rate: item?.exchange_rate || String(options.exchangeRate || '65')
 })
@@ -34,8 +33,8 @@ const InventoryFormDrawer = ({ open, item, options, locale, dictionary, onClose,
   const quantity = useWatch({ control, name: 'quantity_in_stock' })
   const currency = useWatch({ control, name: 'currency' })
   const exchangeRate = useWatch({ control, name: 'exchange_rate' })
-  const baseUnitPrice = useMemo(() => convertToBaseCurrency(unitPrice, currency, exchangeRate, 'USD'), [currency, exchangeRate, unitPrice])
-  const baseTotal = baseUnitPrice * Number(quantity || 0)
+  const usdUnitValue = useMemo(() => convertToBaseCurrency(unitPrice, currency, exchangeRate, 'USD'), [currency, exchangeRate, unitPrice])
+  const usdTotalValue = usdUnitValue * Number(quantity || 0)
 
   useEffect(() => { if (open) reset(defaults(options, item)) }, [item, open, options, reset])
 
@@ -57,16 +56,15 @@ const InventoryFormDrawer = ({ open, item, options, locale, dictionary, onClose,
     <form className='flex flex-1 flex-col gap-5 overflow-y-auto p-5' onSubmit={handleSubmit(submit)} noValidate>
       <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
         {field('name', dictionary.fields.name)}
-        {field('sku_code', dictionary.fields.sku, { placeholder: dictionary.placeholders.autoSku })}
+        {field('sku_code', dictionary.fields.sku, { disabled: true, placeholder: 'Auto-generated (for example ITM-010)' })}
         <Controller name='category_id' control={control} render={({ field }) => <CustomTextField {...field} select fullWidth label={dictionary.fields.category} error={Boolean(errors.category_id)} helperText={errors.category_id?.message}>{options.categories.map(option => <MenuItem key={option.id} value={option.id}>{option.label}</MenuItem>)}</CustomTextField>} />
-        <Controller name='status_id' control={control} render={({ field }) => <CustomTextField {...field} select fullWidth label={dictionary.fields.status} error={Boolean(errors.status_id)} helperText={errors.status_id?.message}>{options.statuses.map(option => <MenuItem key={option.id} value={option.id}>{dictionary.stockStatus[option.value] || option.label}</MenuItem>)}</CustomTextField>} />
-        {field('quantity_in_stock', dictionary.fields.quantity, { type: 'number', inputProps: { min: 0, step: 1 } })}
+        {field('quantity_in_stock', dictionary.fields.quantity, { type: 'number', disabled: Boolean(item), inputProps: { min: 0, step: 1 } })}
         {field('reorder_level', dictionary.fields.reorderLevel, { type: 'number', inputProps: { min: 0, step: 1 } })}
-        {field('unit_price', dictionary.fields.unitPrice, { type: 'number', inputProps: { min: 0.01, step: '0.01' } })}
+        {field('unit_price', 'Purchase Unit Cost', { type: 'number', inputProps: { min: 0.01, step: '0.01' } })}
         <Controller name='currency' control={control} render={({ field }) => <CustomTextField {...field} select fullWidth label={dictionary.fields.currency}><MenuItem value='AFN'>AFN</MenuItem><MenuItem value='USD'>USD</MenuItem></CustomTextField>} />
         {field('exchange_rate', dictionary.fields.exchangeRate, { type: 'number', inputProps: { min: 0.0001, step: '0.0001' } })}
       </div>
-      <div className='grid grid-cols-2 gap-4 rounded border border-divider p-4'><div><Typography variant='caption' color='text.secondary'>{dictionary.fields.baseAmount}</Typography><Typography className='font-semibold text-primary'>{formatCurrency(baseUnitPrice, locale, 'USD')}</Typography></div><div><Typography variant='caption' color='text.secondary'>{dictionary.fields.baseTotal}</Typography><Typography className='font-semibold text-primary'>{formatCurrency(toFiniteNumber(baseTotal), locale, 'USD')}</Typography></div></div>
+      <div className='grid grid-cols-2 gap-4 rounded border border-divider p-4'><div><Typography variant='caption' color='text.secondary'>Calculated USD Unit Value</Typography><Typography className='font-semibold text-primary'>{formatCurrency(usdUnitValue, locale, 'USD')}</Typography></div><div><Typography variant='caption' color='text.secondary'>Calculated USD Total Value</Typography><Typography className='font-semibold text-primary'>{formatCurrency(toFiniteNumber(usdTotalValue), locale, 'USD')}</Typography></div></div>
       <Typography variant='caption' color='text.secondary'>{dictionary.form.statusNotice}</Typography>
       <div className='mt-auto flex justify-end gap-3 border-bs border-divider pt-5'><Button variant='tonal' color='secondary' disabled={isSubmitting} onClick={onClose}>{dictionary.actions.cancel}</Button><Button type='submit' variant='contained' disabled={isSubmitting}><LoadingButtonContent loading={isSubmitting} loadingLabel={dictionary.actions.saving}>{item ? dictionary.actions.save : dictionary.actions.create}</LoadingButtonContent></Button></div>
     </form>

@@ -6,6 +6,10 @@ import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import Chip from '@mui/material/Chip'
+import Dialog from '@mui/material/Dialog'
+import DialogActions from '@mui/material/DialogActions'
+import DialogContent from '@mui/material/DialogContent'
+import DialogTitle from '@mui/material/DialogTitle'
 import MenuItem from '@mui/material/MenuItem'
 import Tab from '@mui/material/Tab'
 import Tabs from '@mui/material/Tabs'
@@ -13,15 +17,18 @@ import Typography from '@mui/material/Typography'
 import { toast } from 'sonner'
 
 import CustomTextField from '@core/components/mui/TextField'
+import { updateStaffStatus } from '@/actions/hrm/staff'
 import UserAvatar from '@/components/common/UserAvatar'
 import DashboardTablePagination from '@/components/table/DashboardTablePagination'
 import TableEmptyStateRow from '@/components/table/TableEmptyStateRow'
 import TableSkeletonRows from '@/components/table/TableSkeletonRows'
 import TableFiltersPopover from '@/components/table/TableFiltersPopover'
+import LocalizedDateTimePicker from '@/components/inputs/LocalizedDateTimePicker'
 import ResponsiveDataTable from '@/components/tables/ResponsiveDataTable'
 import { formatCurrency, toFiniteNumber } from '@/utils/formatCurrency'
+import ContractFormDrawer from '@/views/contracts/ContractFormDrawer'
 
-import ReportStatsCards from './ReportStatsCards'
+import ReportStatsCards from '@/components/reports/ReportStatsCards'
 import ReportTrendChart from './ReportTrendChart'
 import ActiveHrmReportPrint from './HrmReportPrintDocuments'
 
@@ -31,6 +38,7 @@ const REPORT_TYPES = ['payroll', 'attendance', 'leaves', 'contracts']
 const PAYROLL_STATUS_COLORS = { PAID: 'success', PENDING: 'warning', DRAFT: 'secondary' }
 const localeMap = { en: 'en-US', fa: 'fa-AF', ps: 'ps-AF' }
 const EMPTY_REPORT = { summary: {}, trend: [], rows: [], staff: [] }
+const REPORT_BASE_CURRENCY = 'AFN'
 
 const toInputDate = date => date.toISOString().slice(0, 10)
 
@@ -58,7 +66,16 @@ const getPresetRange = preset => {
 
 const escapeCsv = value => `"${String(value ?? '').replaceAll('"', '""')}"`
 
-const HrmReportsView = ({ locale, dictionary, setup, generatedAt }) => {
+const HrmReportsView = ({
+  locale,
+  dictionary,
+  contractDictionary,
+  setup,
+  generatedAt,
+  contractFormOptions,
+  canManageContracts,
+  canArchiveStaff
+}) => {
   const initialRange = getPresetRange('this_month')
   const [reportType, setReportType] = useState('payroll')
   const [datePreset, setDatePreset] = useState('this_month')
@@ -73,6 +90,9 @@ const HrmReportsView = ({ locale, dictionary, setup, generatedAt }) => {
   const [page, setPage] = useState(0)
   const [rowsPerPage, setRowsPerPage] = useState(10)
   const [dataVersion, setDataVersion] = useState(0)
+  const [renewalValues, setRenewalValues] = useState(null)
+  const [archiveTarget, setArchiveTarget] = useState(null)
+  const [actionBusy, setActionBusy] = useState(false)
   const requestIdRef = useRef(0)
 
   const formatDate = useCallback(
@@ -106,8 +126,8 @@ const HrmReportsView = ({ locale, dictionary, setup, generatedAt }) => {
   )
 
   const currency = useCallback(
-    value => formatCurrency(toFiniteNumber(value), locale, setup.currency_code || 'AFN'),
-    [locale, setup.currency_code]
+    value => formatCurrency(toFiniteNumber(value), locale, REPORT_BASE_CURRENCY),
+    [locale]
   )
 
   const loadReport = useCallback(async () => {
@@ -205,6 +225,60 @@ const HrmReportsView = ({ locale, dictionary, setup, generatedAt }) => {
   useEffect(() => {
     if (page > 0 && page * rowsPerPage >= rows.length) setPage(0)
   }, [page, rows.length, rowsPerPage])
+
+  const expirationLabel = useCallback(
+    row =>
+      row.days_remaining < 0
+        ? dictionary.common.daysOverdue.replace('{count}', String(row.expiration_days))
+        : dictionary.common.daysRemaining.replace('{count}', String(row.expiration_days)),
+    [dictionary.common.daysOverdue, dictionary.common.daysRemaining]
+  )
+
+  const openRenewal = row => {
+    const nextStart = new Date(row.end_date)
+
+    nextStart.setUTCDate(nextStart.getUTCDate() + 1)
+
+    setRenewalValues({
+      staff_id: row.staff_id,
+      contract_type_id: row.contract_type_id,
+      template_id: row.template_id,
+      contract_duration: row.duration_id,
+      position_title: row.position,
+      base_salary: row.base_salary,
+      currency: row.currency,
+      exchange_rate: row.exchange_rate,
+      start_date: toInputDate(nextStart),
+      end_date: '',
+      status_id: '',
+      probation_days: row.probation_days,
+      notice_period_days: row.notice_period_days
+    })
+  }
+
+  const archiveStaff = async () => {
+    if (!archiveTarget) return
+
+    setActionBusy(true)
+
+    try {
+      const result = await updateStaffStatus(archiveTarget.staff_id, 'INACTIVE', { locale })
+
+      if (!result.success) {
+        toast.error(result.error || dictionary.messages.actionFailed)
+
+        return
+      }
+
+      toast.success(dictionary.messages.staffArchived)
+      setArchiveTarget(null)
+      await loadReport()
+    } catch {
+      toast.error(dictionary.messages.actionFailed)
+    } finally {
+      setActionBusy(false)
+    }
+  }
 
   const stats = useMemo(() => {
     const summary = data.summary || {}
@@ -366,8 +440,8 @@ const HrmReportsView = ({ locale, dictionary, setup, generatedAt }) => {
           row.approved_days,
           row.pending_requests,
           row.leave_types.map(item => `${item.name}: ${item.days}`).join('; '),
-          dictionary.common.notConfigured,
-          dictionary.common.notConfigured
+          row.allowance_days,
+          row.remaining_days
         ]
       }
     }
@@ -388,11 +462,11 @@ const HrmReportsView = ({ locale, dictionary, setup, generatedAt }) => {
         row.position,
         row.contract_type,
         formatDate(row.end_date),
-        row.days_remaining,
+        expirationLabel(row),
         dictionary.status[row.renewal_status]
       ]
     }
-  }, [dictionary, formatDate, formatMonth, reportType])
+  }, [dictionary, expirationLabel, formatDate, formatMonth, reportType])
 
   const exportCsv = () => {
     const content = [
@@ -426,6 +500,47 @@ const HrmReportsView = ({ locale, dictionary, setup, generatedAt }) => {
       </div>
     </div>
   )
+
+  const payrollAmount = (row, amountKey, originalKey, className = '') => (
+    <div className={className}>
+      <Typography className='whitespace-nowrap font-medium'>
+        {formatCurrency(row[amountKey], locale, REPORT_BASE_CURRENCY)}
+      </Typography>
+      {row.original_currency !== REPORT_BASE_CURRENCY && (
+        <Typography variant='caption' color='text.secondary' className='whitespace-nowrap'>
+          {formatCurrency(row[originalKey], locale, row.original_currency)}
+        </Typography>
+      )}
+    </div>
+  )
+
+  const contractActions = row => {
+    if (!canManageContracts && !canArchiveStaff) return null
+
+    const alreadyArchived = ['INACTIVE', 'TERMINATED'].includes(row.staff_status)
+
+    return (
+      <div className='flex flex-wrap justify-end gap-1' data-row-action>
+        {canManageContracts && (
+          <Button size='small' variant='tonal' startIcon={<i className='tabler-refresh' />} onClick={() => openRenewal(row)}>
+            {dictionary.actions.renewContract}
+          </Button>
+        )}
+        {canArchiveStaff && (
+          <Button
+            size='small'
+            variant='text'
+            color='error'
+            disabled={alreadyArchived || actionBusy}
+            startIcon={<i className='tabler-user-off' />}
+            onClick={() => setArchiveTarget(row)}
+          >
+            {dictionary.actions.archiveStaff}
+          </Button>
+        )}
+      </div>
+    )
+  }
 
   const renderMobilePrimary = row => {
     if (reportType === 'contracts') {
@@ -494,8 +609,8 @@ const HrmReportsView = ({ locale, dictionary, setup, generatedAt }) => {
       <Chip
         size='small'
         variant='tonal'
-        color={row.renewal_status === 'DUE_SOON' ? 'warning' : 'info'}
-        label={dictionary.status[row.renewal_status]}
+        color={row.renewal_status === 'EXPIRED' ? 'error' : row.renewal_status === 'DUE_SOON' ? 'warning' : 'info'}
+        label={expirationLabel(row)}
       />
     )
   }
@@ -507,22 +622,22 @@ const HrmReportsView = ({ locale, dictionary, setup, generatedAt }) => {
         {
           id: 'base',
           label: dictionary.table.baseSalary,
-          render: row => formatCurrency(row.base_salary, locale, row.currency)
+          render: row => payrollAmount(row, 'base_salary', 'original_base_salary')
         },
         {
           id: 'allowances',
           label: dictionary.table.allowances,
-          render: row => formatCurrency(row.allowances, locale, row.currency)
+          render: row => payrollAmount(row, 'allowances', 'original_allowances')
         },
         {
           id: 'deductions',
           label: dictionary.table.deductions,
-          render: row => formatCurrency(row.deductions, locale, row.currency)
+          render: row => payrollAmount(row, 'deductions', 'original_deductions')
         },
         {
           id: 'net',
           label: dictionary.table.netPayout,
-          render: row => formatCurrency(row.net_payout, locale, row.currency)
+          render: row => payrollAmount(row, 'net_payout', 'original_net_payout')
         }
       ]
     }
@@ -545,15 +660,24 @@ const HrmReportsView = ({ locale, dictionary, setup, generatedAt }) => {
           render: row =>
             row.leave_types.length ? row.leave_types.map(item => `${item.name}: ${item.days}`).join(', ') : '—'
         },
-        { id: 'allowance', label: dictionary.table.allowance, render: () => dictionary.common.notConfigured },
-        { id: 'remaining', label: dictionary.table.remaining, render: () => dictionary.common.notConfigured }
+        { id: 'allowance', label: dictionary.table.allowance, render: row => row.allowance_days },
+        { id: 'remaining', label: dictionary.table.remaining, render: row => row.remaining_days },
+        {
+          id: 'policy',
+          label: dictionary.table.policy,
+          render: row => (
+            <Button size='small' href={`/${locale}${row.policy_assignment_url}`}>
+              {dictionary.actions.assignCustomPolicy}
+            </Button>
+          )
+        }
       ]
     }
 
     return [
       { id: 'type', label: dictionary.table.contractType, render: row => row.contract_type },
       { id: 'end-date', label: dictionary.table.endDate, render: row => formatDate(row.end_date) },
-      { id: 'days', label: dictionary.table.daysRemaining, render: row => row.days_remaining }
+      { id: 'days', label: dictionary.table.daysRemaining, render: expirationLabel }
     ]
   }
 
@@ -587,11 +711,13 @@ const HrmReportsView = ({ locale, dictionary, setup, generatedAt }) => {
                 <tr key={row.id}>
                   <td>{staffCell(row)}</td>
                   <td>{formatMonth(row.period)}</td>
-                  <td className='text-end'>{formatCurrency(row.base_salary, locale, row.currency)}</td>
-                  <td className='text-end'>{formatCurrency(row.allowances, locale, row.currency)}</td>
-                  <td className='text-end text-warning'>{formatCurrency(row.deductions, locale, row.currency)}</td>
-                  <td className='text-end font-semibold text-success'>
-                    {formatCurrency(row.net_payout, locale, row.currency)}
+                  <td className='text-end'>{payrollAmount(row, 'base_salary', 'original_base_salary')}</td>
+                  <td className='text-end'>{payrollAmount(row, 'allowances', 'original_allowances')}</td>
+                  <td className='text-end text-warning'>
+                    {payrollAmount(row, 'deductions', 'original_deductions')}
+                  </td>
+                  <td className='text-end text-success'>
+                    {payrollAmount(row, 'net_payout', 'original_net_payout')}
                   </td>
                   <td>
                     <Chip
@@ -694,8 +820,20 @@ const HrmReportsView = ({ locale, dictionary, setup, generatedAt }) => {
                         : '—'}
                     </div>
                   </td>
-                  <td className='text-end text-textSecondary'>{dictionary.common.notConfigured}</td>
-                  <td className='text-end text-textSecondary'>{dictionary.common.notConfigured}</td>
+                  <td className='text-end'>
+                    <Typography className='font-medium'>{row.allowance_days}</Typography>
+                    <Typography variant='caption' color='text.secondary'>
+                      {dictionary.common.systemDefault}
+                    </Typography>
+                  </td>
+                  <td className='text-end'>
+                    <Typography className='font-medium'>{row.remaining_days}</Typography>
+                    {!row.has_custom_policy && (
+                      <Button size='small' href={`/${locale}${row.policy_assignment_url}`}>
+                        {dictionary.actions.assignCustomPolicy}
+                      </Button>
+                    )}
+                  </td>
                 </tr>
               ))
             )}
@@ -714,14 +852,15 @@ const HrmReportsView = ({ locale, dictionary, setup, generatedAt }) => {
             <th>{dictionary.table.endDate}</th>
             <th className='text-end'>{dictionary.table.daysRemaining}</th>
             <th>{dictionary.table.renewalStatus}</th>
+            {(canManageContracts || canArchiveStaff) && <th className='text-end'>{dictionary.table.actions}</th>}
           </tr>
         </thead>
         <tbody>
           {loading ? (
-            <TableSkeletonRows columns={6} />
+            <TableSkeletonRows columns={canManageContracts || canArchiveStaff ? 7 : 6} />
           ) : paginatedRows.length === 0 ? (
             <TableEmptyStateRow
-              colSpan={6}
+              colSpan={canManageContracts || canArchiveStaff ? 7 : 6}
               icon='tabler-file-time'
               title={dictionary.empty.title}
               description={dictionary.empty.description}
@@ -735,15 +874,23 @@ const HrmReportsView = ({ locale, dictionary, setup, generatedAt }) => {
                 <td>{staffCell(row)}</td>
                 <td>{row.contract_type}</td>
                 <td>{formatDate(row.end_date)}</td>
-                <td className='text-end font-semibold'>{row.days_remaining}</td>
+                <td className='text-end'>
+                  <Chip
+                    size='small'
+                    variant='tonal'
+                    color={row.renewal_status === 'EXPIRED' ? 'error' : row.renewal_status === 'DUE_SOON' ? 'warning' : 'info'}
+                    label={expirationLabel(row)}
+                  />
+                </td>
                 <td>
                   <Chip
                     size='small'
                     variant='tonal'
-                    color={row.renewal_status === 'DUE_SOON' ? 'warning' : 'info'}
+                    color={row.renewal_status === 'EXPIRED' ? 'error' : row.renewal_status === 'DUE_SOON' ? 'warning' : 'info'}
                     label={dictionary.status[row.renewal_status]}
                   />
                 </td>
+                {(canManageContracts || canArchiveStaff) && <td className='text-end'>{contractActions(row)}</td>}
               </tr>
             ))
           )}
@@ -766,8 +913,19 @@ const HrmReportsView = ({ locale, dictionary, setup, generatedAt }) => {
           />
           <div className='grid is-full grid-cols-2 gap-2 sm:flex sm:is-auto sm:flex-wrap sm:justify-end'>
             <TableFiltersPopover
-              activeCount={Number(Boolean(staffId)) + Number(datePreset !== 'this_month')}
+              activeCount={Number(Boolean(searchInput.trim())) + Number(Boolean(staffId)) + Number(datePreset !== 'this_month')}
               locale={locale}
+              onReset={() => {
+                const range = getPresetRange('this_month')
+
+                setSearchInput('')
+                setSearch('')
+                setDatePreset('this_month')
+                setStartDate(range.start)
+                setEndDate(range.end)
+                setStaffId('')
+                setPage(0)
+              }}
             >
               <CustomTextField
                 select
@@ -781,8 +939,8 @@ const HrmReportsView = ({ locale, dictionary, setup, generatedAt }) => {
                 <MenuItem value='year_to_date'>{dictionary.datePresets.yearToDate}</MenuItem>
                 <MenuItem value='custom'>{dictionary.datePresets.custom}</MenuItem>
               </CustomTextField>
-              <CustomTextField
-                type='date'
+              <LocalizedDateTimePicker
+                locale={locale}
                 label={dictionary.filters.startDate}
                 value={startDate}
                 onChange={event => {
@@ -792,8 +950,8 @@ const HrmReportsView = ({ locale, dictionary, setup, generatedAt }) => {
                 }}
                 className='is-full'
               />
-              <CustomTextField
-                type='date'
+              <LocalizedDateTimePicker
+                locale={locale}
                 label={dictionary.filters.endDate}
                 value={endDate}
                 onChange={event => {
@@ -923,6 +1081,7 @@ const HrmReportsView = ({ locale, dictionary, setup, generatedAt }) => {
           getMobileRowId={row => row.id}
           renderMobilePrimary={renderMobilePrimary}
           renderMobileStatus={renderMobileStatus}
+          renderMobileActions={reportType === 'contracts' ? contractActions : undefined}
           mobileMetadata={getMobileMetadata()}
           emptyState={{
             icon: dictionary.tabs[reportType].icon,
@@ -960,6 +1119,42 @@ const HrmReportsView = ({ locale, dictionary, setup, generatedAt }) => {
         emptyLabel={dictionary.empty.description}
         className='print:hidden'
       />
+      <ContractFormDrawer
+        open={Boolean(renewalValues)}
+        contract={null}
+        initialValues={renewalValues}
+        drawerTitle={dictionary.actions.renewContract}
+        formOptions={contractFormOptions}
+        locale={locale}
+        dictionary={contractDictionary}
+        contractContext='HRM'
+        onClose={() => setRenewalValues(null)}
+        onSaved={async () => {
+          setRenewalValues(null)
+          await loadReport()
+        }}
+      />
+      <Dialog
+        open={Boolean(archiveTarget)}
+        onClose={actionBusy ? undefined : () => setArchiveTarget(null)}
+        fullWidth
+        maxWidth='xs'
+      >
+        <DialogTitle>{dictionary.actions.archiveStaff}</DialogTitle>
+        <DialogContent dividers>
+          <Typography color='text.secondary'>
+            {dictionary.common.archiveConfirmation.replace('{name}', archiveTarget?.staff_name || '')}
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button variant='tonal' color='secondary' disabled={actionBusy} onClick={() => setArchiveTarget(null)}>
+            {dictionary.actions.cancel}
+          </Button>
+          <Button variant='contained' color='error' disabled={actionBusy} onClick={archiveStaff}>
+            {dictionary.actions.confirmArchive}
+          </Button>
+        </DialogActions>
+      </Dialog>
       {!loading && (
         <ActiveHrmReportPrint
           reportType={reportType}

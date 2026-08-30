@@ -8,6 +8,7 @@ import TableEmptyStateRow from '@/components/table/TableEmptyStateRow'
 import TableSkeletonRows from '@/components/table/TableSkeletonRows'
 import ResponsiveDataTable from '@/components/tables/ResponsiveDataTable'
 import UserAvatar from '@/components/common/UserAvatar'
+import DualCurrencyAmount from '@/components/currency/DualCurrencyAmount'
 import { formatCurrency } from '@/utils/formatCurrency'
 import { formatPaymentMethod } from '@/utils/ledgerDisplay'
 
@@ -68,7 +69,7 @@ const StaffCell = ({ staff, primary, secondary, fallback }) => (
 
 const TABLES = {
   income: {
-    headers: ['date', 'reference', 'sourceCategory', 'amountLocal', 'baseAmountUsd', 'paymentMethod', 'status'],
+    headers: ['date', 'reference', 'sourceCategory', 'amountLocal', 'paymentMethod', 'status'],
     render: (row, { dictionary, locale }) => (
       <>
         <td className='whitespace-nowrap'>{row.date}</td>
@@ -83,8 +84,7 @@ const TABLES = {
         <td>
           <PrimarySecondary primary={row.source} secondary={row.source_detail} />
         </td>
-        <td className='whitespace-nowrap font-medium'>{currencyCell(row.amount_local, row.currency, locale)}</td>
-        <td className='whitespace-nowrap'>{currencyCell(row.amount_usd, 'USD', locale)}</td>
+        <td><DualCurrencyAmount amount={row.amount_local} amountBase={row.amount_base ?? row.amount_display} currency={row.currency} exchangeRate={row.exchange_rate} locale={locale} /></td>
         <td>
           <Tooltip title={paymentMethodCell(row.payment_method, dictionary.common.notAvailable)}>
             <Typography className='max-is-[180px] truncate' variant='body2'>
@@ -117,7 +117,7 @@ const TABLES = {
         </td>
         <td>{row.category || dictionary.common.notAvailable}</td>
         <td><StaffCell staff={row.staff} primary={row.payee} fallback={dictionary.common.notAvailable} /></td>
-        <td className='whitespace-nowrap font-medium'>{currencyCell(row.amount_display, displayCurrency, locale)}</td>
+        <td><DualCurrencyAmount amount={row.amount_local} amountBase={row.amount_display} currency={row.currency} exchangeRate={row.exchange_rate} locale={locale} /></td>
         <td>{paymentMethodCell(row.payment_method, dictionary.common.notAvailable)}</td>
         <td>
           <StatusBadge value={row.status} dictionary={dictionary} />
@@ -132,10 +132,10 @@ const TABLES = {
         <td><StaffCell staff={row.staff} primary={row.staff_name} secondary={row.staff?.email} fallback={dictionary.common.notAvailable} /></td>
         <td>{row.designation || dictionary.common.notAvailable}</td>
         <td className='whitespace-nowrap'>{row.month}</td>
-        <td className='whitespace-nowrap'>{currencyCell(row.base_salary, displayCurrency, locale)}</td>
-        <td className='whitespace-nowrap text-success'>{currencyCell(row.bonus, displayCurrency, locale)}</td>
-        <td className='whitespace-nowrap text-error'>{currencyCell(row.deductions, displayCurrency, locale)}</td>
-        <td className='whitespace-nowrap font-semibold'>{currencyCell(row.net_paid, displayCurrency, locale)}</td>
+        <td><DualCurrencyAmount amount={row.original_base_salary} amountBase={row.base_salary} currency={row.currency} exchangeRate={row.exchange_rate} locale={locale} /></td>
+        <td><DualCurrencyAmount amount={row.original_bonus} amountBase={row.bonus} currency={row.currency} exchangeRate={row.exchange_rate} locale={locale} primaryClassName='text-success' /></td>
+        <td><DualCurrencyAmount amount={row.original_deductions} amountBase={row.deductions} currency={row.currency} exchangeRate={row.exchange_rate} locale={locale} primaryClassName='text-error' /></td>
+        <td><DualCurrencyAmount amount={row.original_net_paid} amountBase={row.net_paid} currency={row.currency} exchangeRate={row.exchange_rate} locale={locale} /></td>
         <td>
           <StatusBadge value={row.status} dictionary={dictionary} />
         </td>
@@ -150,8 +150,8 @@ const TABLES = {
         <td>{row.name}</td>
         <td>{row.category}</td>
         <td className='text-center'>{row.quantity}</td>
-        <td className='whitespace-nowrap'>{currencyCell(row.unit_cost, displayCurrency, locale)}</td>
-        <td className='whitespace-nowrap font-semibold'>{currencyCell(row.total_value, displayCurrency, locale)}</td>
+        <td><DualCurrencyAmount amount={row.original_unit_cost} amountBase={row.unit_cost} currency={row.currency} exchangeRate={row.exchange_rate} locale={locale} /></td>
+        <td><DualCurrencyAmount amount={row.original_total_value} amountBase={row.total_value} currency={row.currency} exchangeRate={row.exchange_rate} locale={locale} /></td>
         <td>
           <StatusBadge value={row.reorder_status} dictionary={dictionary} />
         </td>
@@ -172,9 +172,9 @@ const TABLES = {
           <td>
             <Chip size='small' variant='outlined' label={dictionary.loanTypes?.[row.type] || row.type} />
           </td>
-          <td className='whitespace-nowrap'>{currencyCell(row.total, displayCurrency, locale)}</td>
-          <td className='whitespace-nowrap text-success'>{currencyCell(row.repaid, displayCurrency, locale)}</td>
-          <td className='whitespace-nowrap font-semibold'>{currencyCell(row.remaining, displayCurrency, locale)}</td>
+          <td><DualCurrencyAmount amount={row.original_total} amountBase={row.total} currency={row.currency} exchangeRate={row.exchange_rate} locale={locale} /></td>
+          <td><DualCurrencyAmount amount={row.original_repaid} amountBase={row.repaid} currency={row.currency} exchangeRate={row.exchange_rate} locale={locale} primaryClassName='text-success' /></td>
+          <td><DualCurrencyAmount amount={row.original_remaining} amountBase={row.remaining} currency={row.currency} exchangeRate={row.exchange_rate} locale={locale} /></td>
           <td className='whitespace-nowrap'>{row.issue_date}</td>
         </>
       )
@@ -207,12 +207,7 @@ const FinanceReportTable = ({ tab, rows, loading, dictionary, locale, displayCur
         {
           id: 'local-amount',
           label: dictionary.table.amountLocal,
-          render: row => currencyCell(row.amount_local, row.currency, locale)
-        },
-        {
-          id: 'base-amount',
-          label: dictionary.table.baseAmountUsd,
-          render: row => currencyCell(row.amount_usd, 'USD', locale)
+          render: row => <DualCurrencyAmount amount={row.amount_local} amountBase={row.amount_base ?? row.amount_display} currency={row.currency} exchangeRate={row.exchange_rate} locale={locale} />
         },
         {
           id: 'payment',
@@ -238,7 +233,7 @@ const FinanceReportTable = ({ tab, rows, loading, dictionary, locale, displayCur
         {
           id: 'amount',
           label: dictionary.table.amount,
-          render: row => currencyCell(row.amount_display, displayCurrency, locale)
+          render: row => <DualCurrencyAmount amount={row.amount_local} amountBase={row.amount_display} currency={row.currency} exchangeRate={row.exchange_rate} locale={locale} />
         },
         {
           id: 'payment',

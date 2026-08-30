@@ -4,6 +4,7 @@ import Chip from '@mui/material/Chip'
 import Typography from '@mui/material/Typography'
 
 import DetailDialog from '@/components/dialogs/DetailDialog'
+import DualCurrencyAmount from '@/components/currency/DualCurrencyAmount'
 import PhoneNumber from '@/components/common/PhoneNumber'
 import QuickContact from '@/components/common/QuickContact'
 import { formatCurrency } from '@/utils/formatCurrency'
@@ -67,7 +68,7 @@ const LeadDetailDialog = ({ lead, open, locale, currencyCode, dictionary, onClos
           <Item label='Phone' value={<PhoneNumber value={lead.phone} />} />
           <Item
             label='Estimated value'
-            value={formatCurrency(lead.estimated_value, locale, lead.currency || currencyCode)}
+            value={<DualCurrencyAmount amount={lead.estimated_value} amountBase={lead.amount_base} currency={lead.currency || currencyCode} exchangeRate={lead.exchange_rate} locale={locale} />}
           />
           <Item label='Assigned to' value={lead.assigned_to?.full_name} />
           <Item label='Next follow-up' value={date(lead.next_follow_up_date, locale)} />

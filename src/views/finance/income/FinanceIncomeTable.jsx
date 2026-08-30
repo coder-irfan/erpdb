@@ -5,6 +5,7 @@ import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
 
 import UserAvatar from '@/components/common/UserAvatar'
+import DualCurrencyAmount from '@/components/currency/DualCurrencyAmount'
 import DashboardTablePagination from '@/components/table/DashboardTablePagination'
 import EntityActionsMenu from '@/components/table/EntityActionsMenu'
 import TableEmptyStateRow from '@/components/table/TableEmptyStateRow'
@@ -115,7 +116,7 @@ const FinanceIncomeTable = ({
           {
             id: 'amount',
             label: dictionary.table.amounts,
-            render: income => formatCurrency(income.total_amount, locale, income.currency)
+            render: income => <DualCurrencyAmount amount={income.total_amount} amountBase={income.amount_base} currency={income.currency} exchangeRate={income.exchange_rate} locale={locale} />
           },
           {
             id: 'paid-due',
@@ -209,12 +210,7 @@ const FinanceIncomeTable = ({
                       </td>
                       <td>
                         <div className='min-is-[225px]'>
-                          <div className='flex items-center gap-2'>
-                            <Typography variant='body2' className='whitespace-nowrap font-semibold'>
-                              {formatCurrency(income.total_amount, locale, income.currency)}
-                            </Typography>
-                            <Chip size='small' variant='outlined' label={income.currency} />
-                          </div>
+                          <DualCurrencyAmount amount={income.total_amount} amountBase={income.amount_base} currency={income.currency} exchangeRate={income.exchange_rate} locale={locale} />
                           <Typography variant='caption' color='text.secondary' className='block whitespace-nowrap'>
                             {dictionary.table.paid}: {formatCurrency(income.paid_amount, locale, income.currency)} ·{' '}
                             {dictionary.table.due}: {formatCurrency(income.remind_amount, locale, income.currency)}

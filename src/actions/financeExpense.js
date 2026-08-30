@@ -1,5 +1,7 @@
 'use server'
 
+import { randomUUID } from 'node:crypto'
+
 import { revalidatePath } from 'next/cache'
 
 import { Prisma } from '@prisma/client'
@@ -12,14 +14,17 @@ import { getCompanySetupRecord } from '@/libs/companySetup'
 import { prisma } from '@/libs/prisma'
 import { createFinanceExpenseSchema } from '@/schemas/financeExpense'
 import { toUtcDateOnly } from '@/utils/contractDuration'
-import { convertToBaseCurrency, toFiniteNumber } from '@/utils/formatCurrency'
+import { SYSTEM_BASE_CURRENCY, convertToBaseCurrency, effectiveAfnExchangeRate, normalizeToAfn, toFiniteNumber } from '@/utils/formatCurrency'
 
 const READ_PERMISSIONS = ['finance:read', 'finance_expense:read']
 const WRITE_PERMISSIONS = ['finance:write', 'finance_expense:write']
 const DELETE_PERMISSIONS = ['finance:delete', 'finance_expense:delete']
+const APPROVE_PERMISSIONS = ['finance_expense:approve']
+const PAY_PERMISSIONS = ['finance_expense:pay']
 const DEFAULT_PAGE_SIZE = 10
 const MAX_PAGE_SIZE = 100
-const RECEIPT_PATH_PATTERN = /^\/uploads\/images\/[a-zA-Z0-9._-]+$/
+const RECEIPT_PATH_PATTERN = /^\/uploads\/(?:images|expense-receipts)\/[a-zA-Z0-9._-]+$/
+const APPROVAL_STATUSES = new Set(['DRAFT', 'PENDING_APPROVAL', 'APPROVED', 'PAID', 'REJECTED'])
 
 const optionSelect = {
   id: true,
@@ -48,6 +53,12 @@ const staffSelect = {
 
 const expenseSelect = {
   id: true,
+  voucher_number: true,
+  vendor_payee: true,
+  approval_status: true,
+  approved_at: true,
+  paid_at: true,
+  rejection_reason: true,
   project_id: true,
   spent_by_id: true,
   payment_method_id: true,
@@ -59,6 +70,7 @@ const expenseSelect = {
   unit_price: true,
   sub_total: true,
   exchange_rate: true,
+  fx_snapshot_at: true,
   created_at: true,
   updated_at: true,
   amount_base: true,
@@ -66,7 +78,9 @@ const expenseSelect = {
   expense_type: { select: optionSelect },
   payment_method: { select: optionSelect },
   project: { select: projectSelect },
-  spent_by: { select: staffSelect }
+  spent_by: { select: staffSelect },
+  approved_by: { select: staffSelect },
+  processed_by: { select: staffSelect }
 }
 
 const normalizeLocale = locale => (i18n.locales.includes(locale) ? locale : i18n.defaultLocale)
@@ -80,12 +94,17 @@ const normalizeExpense = expense => ({
   unit_price: numberString(expense.unit_price),
   sub_total: numberString(expense.sub_total),
   exchange_rate: numberString(expense.exchange_rate, 4),
+  fx_snapshot_at: iso(expense.fx_snapshot_at),
+  approved_at: iso(expense.approved_at),
+  paid_at: iso(expense.paid_at),
   total_usd: numberString(convertToBaseCurrency(expense.sub_total, expense.currency, expense.exchange_rate, 'USD')),
   amount_base: numberString(expense.amount_base),
   expense_date: iso(expense.expense_date),
   created_at: iso(expense.created_at),
   updated_at: iso(expense.updated_at),
-  spent_by: withFullName(expense.spent_by)
+  spent_by: withFullName(expense.spent_by),
+  approved_by: withFullName(expense.approved_by),
+  processed_by: withFullName(expense.processed_by)
 })
 
 const getContext = async (payload, permissions) => {
@@ -111,6 +130,7 @@ const revalidateExpensePages = () => {
 }
 
 const validationPayload = payload => ({
+  vendor_payee: payload?.vendor_payee ?? '',
   details: payload?.details ?? '',
   expense_type_id: payload?.expense_type_id ?? '',
   project_id: payload?.project_id ?? '',
@@ -124,7 +144,7 @@ const validationPayload = payload => ({
   receipt_url: payload?.receipt_url ?? ''
 })
 
-const prepareExpenseData = async (values, translations) => {
+const prepareExpenseData = async (values, translations, current = null) => {
   const projectId = normalizeId(values.project_id)
   const staffId = normalizeId(values.spent_by_id)
   const typeId = normalizeId(values.expense_type_id)
@@ -158,7 +178,11 @@ const prepareExpenseData = async (values, translations) => {
 
   const quantity = Number.parseInt(values.quantity, 10)
   const unitPrice = toFiniteNumber(values.unit_price)
-  const exchangeRate = toFiniteNumber(values.exchange_rate)
+  const currency = current?.currency || values.currency
+
+  const exchangeRate = current
+    ? toFiniteNumber(current.exchange_rate)
+    : effectiveAfnExchangeRate(currency, setup.usd_afn_exchange_rate)
 
   if (!Number.isSafeInteger(quantity) || quantity <= 0 || unitPrice <= 0 || exchangeRate <= 0) {
     return { success: false, error: translations.validation.positiveInvalid }
@@ -169,12 +193,12 @@ const prepareExpenseData = async (values, translations) => {
   if (!expenseDate) return { success: false, error: translations.validation.dateInvalid }
 
   const subTotal = quantity * unitPrice
-  const baseCurrency = setup.currency_code || 'AFN'
-  const amountBase = convertToBaseCurrency(subTotal, values.currency, exchangeRate, baseCurrency)
+  const amountBase = normalizeToAfn(subTotal, currency, exchangeRate)
 
   return {
     success: true,
     data: {
+      vendor_payee: values.vendor_payee,
       project_id: projectId || null,
       spent_by_id: staffId || null,
       payment_method_id: paymentMethodId || null,
@@ -186,8 +210,9 @@ const prepareExpenseData = async (values, translations) => {
       unit_price: new Prisma.Decimal(unitPrice),
       sub_total: new Prisma.Decimal(subTotal),
       exchange_rate: new Prisma.Decimal(exchangeRate),
+      fx_snapshot_at: current?.fx_snapshot_at || new Date(),
       amount_base: new Prisma.Decimal(amountBase),
-      currency: values.currency
+      currency
     }
   }
 }
@@ -203,16 +228,19 @@ export const getFinanceExpenses = async (payload = {}) => {
   const typeId = normalizeId(payload.typeId)
   const projectId = normalizeId(payload.projectId)
   const staffId = normalizeId(payload.staffId)
+  const approvalStatus = APPROVAL_STATUSES.has(payload.approvalStatus) ? payload.approvalStatus : ''
 
   const where = {
     AND: [
       typeId ? { expense_type_id: typeId } : {},
       projectId ? { project_id: projectId } : {},
       staffId ? { spent_by_id: staffId } : {},
+      approvalStatus ? { approval_status: approvalStatus } : {},
       search
         ? {
             OR: [
               { details: { contains: search } },
+              { vendor_payee: { contains: search } },
               { project: { is: { title: { contains: search } } } },
               { spent_by: { is: { OR: [{ first_name: { contains: search } }, { last_name: { contains: search } }] } } }
             ]
@@ -236,11 +264,11 @@ export const getFinanceExpenses = async (payload = {}) => {
         skip: (page - 1) * limit,
         take: limit
       }),
-      prisma.financeexpense.aggregate({ _sum: { amount_base: true } }),
-      prisma.financeexpense.aggregate({ where: { project_id: { not: null } }, _sum: { amount_base: true } }),
-      prisma.financeexpense.aggregate({ where: { project_id: null }, _sum: { amount_base: true } }),
+      prisma.financeexpense.aggregate({ where: { approval_status: 'PAID' }, _sum: { amount_base: true } }),
+      prisma.financeexpense.aggregate({ where: { project_id: { not: null }, approval_status: 'PAID' }, _sum: { amount_base: true } }),
+      prisma.financeexpense.aggregate({ where: { project_id: null, approval_status: 'PAID' }, _sum: { amount_base: true } }),
       prisma.financeexpense.aggregate({
-        where: { expense_date: { gte: monthStart, lt: nextMonth } },
+        where: { expense_date: { gte: monthStart, lt: nextMonth }, approval_status: 'PAID' },
         _sum: { amount_base: true }
       })
     ])
@@ -251,7 +279,7 @@ export const getFinanceExpenses = async (payload = {}) => {
         expenses: expenses.map(normalizeExpense),
         totalCount,
         page,
-        baseCurrency: setup.currency_code || 'AFN',
+        baseCurrency: SYSTEM_BASE_CURRENCY,
         summary: {
           total: toFiniteNumber(total._sum.amount_base),
           project: toFiniteNumber(project._sum.amount_base),
@@ -299,7 +327,7 @@ export const getFinanceExpenseFormOptions = async (payload = {}) => {
         paymentMethods,
         projects,
         staff: staff.map(withFullName),
-        baseCurrency: setup.currency_code || 'AFN',
+        baseCurrency: SYSTEM_BASE_CURRENCY,
         exchangeRate: setup.usd_afn_exchange_rate || '65.0000'
       }
     }
@@ -342,7 +370,14 @@ export const createFinanceExpense = async (payload = {}) => {
     if (!prepared.success) return { success: false, code: 'VALIDATION_ERROR', error: prepared.error }
 
     const expense = await prisma.$transaction(async transaction => {
-      const created = await transaction.financeexpense.create({ data: prepared.data, select: { id: true } })
+      const created = await transaction.financeexpense.create({
+        data: {
+          ...prepared.data,
+          approval_status: 'PENDING_APPROVAL',
+          voucher_number: `EXP-${new Date().getUTCFullYear()}-${randomUUID().replaceAll('-', '').slice(-8).toUpperCase()}`
+        },
+        select: { id: true, approval_status: true }
+      })
 
       await transaction.auditlog.create({
         data: {
@@ -382,16 +417,32 @@ export const updateFinanceExpense = async (id, payload = {}) => {
   }
 
   try {
-    const current = await prisma.financeexpense.findUnique({ where: { id: expenseId }, select: { id: true } })
+    const current = await prisma.financeexpense.findUnique({
+      where: { id: expenseId },
+      select: { id: true, approval_status: true, currency: true, exchange_rate: true, fx_snapshot_at: true }
+    })
 
     if (!current) return { success: false, code: 'NOT_FOUND', error: context.translations.messages.notFound }
 
-    const prepared = await prepareExpenseData(validation.output, context.translations)
+    if (['APPROVED', 'PAID'].includes(current.approval_status)) {
+      return { success: false, code: 'EXPENSE_LOCKED', error: context.translations.messages.locked }
+    }
+
+    const prepared = await prepareExpenseData(validation.output, context.translations, current)
 
     if (!prepared.success) return { success: false, code: 'VALIDATION_ERROR', error: prepared.error }
 
     await prisma.$transaction([
-      prisma.financeexpense.update({ where: { id: expenseId }, data: prepared.data }),
+      prisma.financeexpense.update({
+        where: { id: expenseId },
+        data: {
+          ...prepared.data,
+          approval_status: 'PENDING_APPROVAL',
+          rejection_reason: null,
+          approved_by_id: null,
+          approved_at: null
+        }
+      }),
       prisma.auditlog.create({
         data: {
           user_id: context.session.user.id,
@@ -410,6 +461,228 @@ export const updateFinanceExpense = async (id, payload = {}) => {
   }
 }
 
+const getActiveStaffForUser = userId => prisma.hrmstaff.findFirst({
+  where: { user_id: userId, status: { not: 'TERMINATED' } },
+  select: { id: true }
+})
+
+const canApproveExpenseScope = (session, expense, staffId) => {
+  const roles = new Set((session.user.roles || []).map(role => String(role).toLowerCase()))
+
+  if (['super_admin', 'admin', 'finance_manager'].some(role => roles.has(role))) return true
+
+  return roles.has('project_manager') && Boolean(
+    expense.project_id && staffId && expense.project?.project_manager_id === staffId
+  )
+}
+
+export const approveFinanceExpense = async (id, payload = {}) => {
+  const context = await getContext(payload, APPROVE_PERMISSIONS)
+
+  if (!context.authorized) return { success: false, code: context.code, error: context.error }
+  const expenseId = normalizeId(id)
+
+  try {
+    const [expense, staff] = await Promise.all([
+      prisma.financeexpense.findUnique({
+        where: { id: expenseId },
+        select: {
+          id: true,
+          project_id: true,
+          approval_status: true,
+          project: { select: { project_manager_id: true } }
+        }
+      }),
+      getActiveStaffForUser(context.session.user.id)
+    ])
+
+    if (!expense) return { success: false, code: 'NOT_FOUND', error: context.translations.messages.notFound }
+
+    if (!staff || !canApproveExpenseScope(context.session, expense, staff.id)) {
+      return { success: false, code: 'FORBIDDEN', error: context.translations.messages.approvalForbidden }
+    }
+
+    if (expense.approval_status !== 'PENDING_APPROVAL') {
+      return { success: false, code: 'INVALID_TRANSITION', error: context.translations.messages.invalidTransition }
+    }
+
+    const approvedAt = new Date()
+
+    await prisma.$transaction([
+      prisma.financeexpense.update({
+        where: { id: expense.id },
+        data: { approval_status: 'APPROVED', approved_by_id: staff.id, approved_at: approvedAt, rejection_reason: null }
+      }),
+      prisma.auditlog.create({
+        data: {
+          user_id: context.session.user.id,
+          action: 'FINANCE_EXPENSE_APPROVED',
+          module: 'FINANCE',
+          details: { expenseId: expense.id, approvedByStaffId: staff.id, approvedAt: approvedAt.toISOString() }
+        }
+      })
+    ])
+
+    revalidateExpensePages()
+
+    return { success: true, message: context.translations.messages.approved }
+  } catch {
+    return { success: false, code: 'EXPENSE_APPROVAL_FAILED', error: context.translations.messages.operationFailed }
+  }
+}
+
+export const rejectFinanceExpense = async (id, payload = {}) => {
+  const context = await getContext(payload, APPROVE_PERMISSIONS)
+
+  if (!context.authorized) return { success: false, code: context.code, error: context.error }
+  const expenseId = normalizeId(id)
+  const reason = typeof payload.reason === 'string' ? payload.reason.trim().slice(0, 2000) : ''
+
+  try {
+    const [expense, staff] = await Promise.all([
+      prisma.financeexpense.findUnique({
+        where: { id: expenseId },
+        select: {
+          id: true,
+          project_id: true,
+          approval_status: true,
+          project: { select: { project_manager_id: true } }
+        }
+      }),
+      getActiveStaffForUser(context.session.user.id)
+    ])
+
+    if (!expense) return { success: false, code: 'NOT_FOUND', error: context.translations.messages.notFound }
+
+    if (!staff || !canApproveExpenseScope(context.session, expense, staff.id)) {
+      return { success: false, code: 'FORBIDDEN', error: context.translations.messages.approvalForbidden }
+    }
+
+    if (expense.approval_status !== 'PENDING_APPROVAL') {
+      return { success: false, code: 'INVALID_TRANSITION', error: context.translations.messages.invalidTransition }
+    }
+
+    await prisma.$transaction([
+      prisma.financeexpense.update({
+        where: { id: expense.id },
+        data: { approval_status: 'REJECTED', rejection_reason: reason || null, approved_by_id: staff.id, approved_at: new Date() }
+      }),
+      prisma.auditlog.create({
+        data: {
+          user_id: context.session.user.id,
+          action: 'FINANCE_EXPENSE_REJECTED',
+          module: 'FINANCE',
+          details: { expenseId: expense.id, rejectedByStaffId: staff.id, reason: reason || null }
+        }
+      })
+    ])
+
+    revalidateExpensePages()
+
+    return { success: true, message: context.translations.messages.rejected }
+  } catch {
+    return { success: false, code: 'EXPENSE_REJECTION_FAILED', error: context.translations.messages.operationFailed }
+  }
+}
+
+export const markFinanceExpensePaid = async (id, payload = {}) => {
+  const context = await getContext(payload, PAY_PERMISSIONS)
+
+  if (!context.authorized) return { success: false, code: context.code, error: context.error }
+  const expenseId = normalizeId(id)
+  const paymentMethodId = normalizeId(payload.payment_method_id)
+
+  try {
+    const [expense, paymentMethod, processor] = await Promise.all([
+      prisma.financeexpense.findUnique({
+        where: { id: expenseId },
+        select: {
+          id: true,
+          project_id: true,
+          vendor_payee: true,
+          details: true,
+          approval_status: true,
+          sub_total: true,
+          amount_base: true,
+          currency: true,
+          exchange_rate: true
+        }
+      }),
+      prisma.option.findFirst({
+        where: { id: paymentMethodId, category: 'PAYMENT_METHOD', is_active: true },
+        select: { id: true, label: true }
+      }),
+      getActiveStaffForUser(context.session.user.id)
+    ])
+
+    if (!expense) return { success: false, code: 'NOT_FOUND', error: context.translations.messages.notFound }
+
+    if (!paymentMethod || !processor) {
+      return { success: false, code: 'INVALID_RELATION', error: context.translations.validation.invalidRelation }
+    }
+
+    if (expense.approval_status !== 'APPROVED') {
+      return { success: false, code: 'INVALID_TRANSITION', error: context.translations.messages.invalidTransition }
+    }
+
+    const paidAt = new Date()
+    const entryDate = toUtcDateOnly(paidAt)
+
+    await prisma.$transaction(async transaction => {
+      await transaction.financeexpense.update({
+        where: { id: expense.id },
+        data: {
+          approval_status: 'PAID',
+          payment_method_id: paymentMethod.id,
+          processed_by_id: processor.id,
+          paid_at: paidAt
+        }
+      })
+
+      await transaction.generalledgerentry.create({
+        data: {
+          expense_id: expense.id,
+          account_code: expense.project_id ? 'EXPENSE-PROJECT' : 'EXPENSE-OVERHEAD',
+          entry_type: 'DEBIT',
+          transaction_amount: expense.sub_total,
+          transaction_currency: expense.currency,
+          exchange_rate: expense.exchange_rate,
+          debit_base: expense.amount_base,
+          credit_base: new Prisma.Decimal(0),
+          entry_date: entryDate,
+          description: `${expense.vendor_payee}: ${expense.details}`,
+          posted_by_user_id: context.session.user.id
+        }
+      })
+
+      await transaction.auditlog.create({
+        data: {
+          user_id: context.session.user.id,
+          action: 'FINANCE_EXPENSE_PAID',
+          module: 'FINANCE',
+          details: {
+            expenseId: expense.id,
+            processedByStaffId: processor.id,
+            paymentMethod: paymentMethod.label,
+            paidAt: paidAt.toISOString(),
+            debitBaseAfn: expense.amount_base.toString()
+          }
+        }
+      })
+    })
+
+    revalidateExpensePages()
+
+    return { success: true, message: context.translations.messages.paid }
+  } catch (error) {
+    if (error?.code === 'P2002') {
+      return { success: false, code: 'ALREADY_POSTED', error: context.translations.messages.invalidTransition }
+    }
+
+    return { success: false, code: 'EXPENSE_PAYMENT_FAILED', error: context.translations.messages.operationFailed }
+  }
+}
+
 export const deleteFinanceExpense = async (id, payload = {}) => {
   const context = await getContext(payload, DELETE_PERMISSIONS)
 
@@ -420,10 +693,14 @@ export const deleteFinanceExpense = async (id, payload = {}) => {
   try {
     const expense = await prisma.financeexpense.findUnique({
       where: { id: expenseId },
-      select: { id: true, details: true, project_id: true, receipt_url: true, sub_total: true, currency: true }
+      select: { id: true, approval_status: true, details: true, project_id: true, receipt_url: true, sub_total: true, currency: true }
     })
 
     if (!expense) return { success: false, code: 'NOT_FOUND', error: context.translations.messages.notFound }
+
+    if (['APPROVED', 'PAID'].includes(expense.approval_status)) {
+      return { success: false, code: 'EXPENSE_LOCKED', error: context.translations.messages.locked }
+    }
 
     await prisma.$transaction([
       prisma.financeexpense.delete({ where: { id: expense.id } }),

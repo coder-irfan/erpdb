@@ -14,7 +14,7 @@ import {
 } from '@/libs/crmLeads'
 import { prisma } from '@/libs/prisma'
 import { createLeadSchema } from '@/schemas/crm/leads'
-import { convertToBaseCurrency, toFiniteNumber } from '@/utils/formatCurrency'
+import { SYSTEM_BASE_CURRENCY, convertToBaseCurrency, toFiniteNumber } from '@/utils/formatCurrency'
 import { getDictionary } from '@/utils/getDictionary'
 
 const MAX_PAGE_SIZE = 200
@@ -180,7 +180,7 @@ export async function POST(request) {
               values.estimated_value,
               values.currency,
               setup.usd_afn_exchange_rate,
-              setup.currency_code
+              SYSTEM_BASE_CURRENCY
             )
           ),
           next_follow_up_date: parseOptionalDate(values.next_follow_up_date),

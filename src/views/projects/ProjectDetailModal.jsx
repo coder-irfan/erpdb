@@ -7,7 +7,6 @@ import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import Chip from '@mui/material/Chip'
-import CircularProgress from '@mui/material/CircularProgress'
 import Dialog from '@mui/material/Dialog'
 import DialogContent from '@mui/material/DialogContent'
 import DialogTitle from '@mui/material/DialogTitle'
@@ -21,10 +20,15 @@ import { toast } from 'sonner'
 
 import CustomTextField from '@core/components/mui/TextField'
 import { assignProjectMember, getProjectDetail, removeProjectMember, updateProjectContract } from '@/actions/projects'
+import { attachTimesheetToTask } from '@/actions/tasks'
 import UserAvatar from '@/components/common/UserAvatar'
+import DetailSkeleton from '@/components/dialogs/DetailSkeleton'
+import DualCurrencyAmount from '@/components/currency/DualCurrencyAmount'
 import ResponsiveDataTable from '@/components/tables/ResponsiveDataTable'
 import { toDateInputValue } from '@/utils/contractDuration'
 import { formatCurrency, toFiniteNumber } from '@/utils/formatCurrency'
+import { sanitizeRichText } from '@/utils/richText'
+import TasksView from '@/views/tasks/TasksView'
 
 const COLORS = {
   ACTIVE: 'success',
@@ -63,7 +67,9 @@ const EmptyPanel = ({ icon, text }) => (
   </div>
 )
 
-const ProjectTimesheetTable = ({ rows, dictionary }) => (
+const formatHours = value => toFiniteNumber(value).toFixed(2)
+
+const ProjectTimesheetTable = ({ rows, tasks, dictionary, canAttach, locked, working, onAttach }) => (
   <ResponsiveDataTable
     mobileRows={rows}
     getMobileRowId={row => row.id}
@@ -71,7 +77,8 @@ const ProjectTimesheetTable = ({ rows, dictionary }) => (
     mobileMetadata={[
       { id: 'date', label: dictionary.detail.date, render: row => toDateInputValue(row.date) },
       { id: 'hours', label: dictionary.detail.hours, render: row => `${row.hours_worked || 0}h` },
-      { id: 'note', label: dictionary.detail.note, render: row => row.notes || '—' }
+      { id: 'note', label: dictionary.detail.note, render: row => row.notes || '—' },
+      { id: 'task', label: dictionary.detail.task, render: row => row.task?.title || '—' }
     ]}
   >
     <div className='no-scrollbar overflow-x-auto'>
@@ -82,6 +89,7 @@ const ProjectTimesheetTable = ({ rows, dictionary }) => (
             <th className='p-3'>{dictionary.detail.date}</th>
             <th className='p-3'>{dictionary.detail.hours}</th>
             <th className='p-3'>{dictionary.detail.note}</th>
+            <th className='p-3'>{dictionary.detail.task}</th>
           </tr>
         </thead>
         <tbody>
@@ -96,6 +104,14 @@ const ProjectTimesheetTable = ({ rows, dictionary }) => (
                 <Typography variant='body2' className='truncate'>
                   {row.notes || '—'}
                 </Typography>
+              </td>
+              <td className='min-is-[190px] p-3'>
+                {canAttach ? (
+                  <CustomTextField select size='small' value={row.task_id || ''} disabled={locked || working} onChange={event => onAttach(row.id, event.target.value)}>
+                    <MenuItem value='' disabled>{dictionary.placeholders.task}</MenuItem>
+                    {tasks.map(task => <MenuItem key={task.id} value={task.id}>{task.title}</MenuItem>)}
+                  </CustomTextField>
+                ) : row.task?.title || '—'}
               </td>
             </tr>
           ))}
@@ -168,7 +184,7 @@ const ProjectFinanceTable = ({ project, dictionary, locale }) => {
                 </td>
                 <td className='p-3'>{toDateInputValue(row.date)}</td>
                 <td className={`p-3 text-end ${row.rowType === 'income' ? 'text-success' : 'text-error'}`}>
-                  {formatCurrency(row.amount, locale, row.currency)}
+                  <DualCurrencyAmount amount={row.amount} amountBase={row.amount_base} currency={row.currency} locale={locale} className='items-end' />
                 </td>
               </tr>
             ))}
@@ -185,8 +201,12 @@ const ProjectDetailModal = ({
   locale,
   baseCurrency,
   dictionary,
+  taskDictionary,
   options,
   canWrite,
+  canTaskManage,
+  canTaskUpdate,
+  canTaskDelete,
   refreshKey,
   initialTab = 0,
   onClose,
@@ -274,7 +294,19 @@ const ProjectDetailModal = ({
     setWorking(false)
   }
 
-  const timesheetHours = project?.timesheets.reduce((sum, row) => sum + toFiniteNumber(row.hours_worked), 0) || 0
+  const attachTimesheet = async (timesheetId, taskId) => {
+    if (!taskId) return
+    setWorking(true)
+    const result = await attachTimesheetToTask(taskId, timesheetId, { locale })
+
+    if (result.success) {
+      toast.success(result.message)
+      await load()
+    } else toast.error(result.error)
+    setWorking(false)
+  }
+
+  const timesheetHours = toFiniteNumber(project?.logged_hours)
   const profit = (project?.financeSummary.revenue || 0) - (project?.financeSummary.expenses || 0)
 
   const financeCards = project
@@ -286,7 +318,7 @@ const ProjectDetailModal = ({
     : []
 
   return (
-    <Dialog open={open} onClose={loading || working ? undefined : onClose} fullWidth maxWidth='lg'>
+    <Dialog open={open} onClose={working ? undefined : onClose} fullWidth maxWidth='lg'>
       <DialogTitle className='flex items-start justify-between gap-4'>
         <div className='min-is-0'>
           <div className='flex flex-wrap items-center gap-2'>
@@ -312,16 +344,14 @@ const ProjectDetailModal = ({
               {dictionary.actions.edit}
             </Button>
           )}
-          <IconButton onClick={onClose} disabled={loading || working}>
+          <IconButton onClick={onClose} disabled={working}>
             <i className='tabler-x' />
           </IconButton>
         </div>
       </DialogTitle>
       <DialogContent dividers className='min-bs-[620px]'>
         {loading ? (
-          <div className='flex min-bs-[520px] items-center justify-center'>
-            <CircularProgress />
-          </div>
+          <DetailSkeleton rows={6} />
         ) : error ? (
           <Alert severity='error'>{error}</Alert>
         ) : project ? (
@@ -337,6 +367,7 @@ const ProjectDetailModal = ({
                 iconPosition='start'
                 label={`${dictionary.detail.team} (${project.members.length})`}
               />
+              <Tab icon={<i className='tabler-list-check' />} iconPosition='start' label={dictionary.detail.tasks} />
               <Tab
                 icon={<i className='tabler-file-certificate' />}
                 iconPosition='start'
@@ -352,9 +383,12 @@ const ProjectDetailModal = ({
                     <Typography variant='h6' className='mb-4'>
                       {dictionary.detail.scope}
                     </Typography>
-                    <Typography color='text.secondary' className='mb-5 whitespace-pre-wrap'>
-                      {project.description || '—'}
-                    </Typography>
+                    {project.description ? (
+                      <div
+                        className='mb-5 text-textSecondary [&_blockquote]:border-is-4 [&_blockquote]:border-primary [&_blockquote]:pis-3 [&_li]:mb-1 [&_ol]:list-decimal [&_ol]:pis-6 [&_ul]:list-disc [&_ul]:pis-6'
+                        dangerouslySetInnerHTML={{ __html: sanitizeRichText(project.description) }}
+                      />
+                    ) : <Typography color='text.secondary' className='mb-5'>—</Typography>}
                     <div className='grid grid-cols-2 gap-4'>
                       <Item label={dictionary.fields.area} value={project.project_area} />
                       <Item label={dictionary.fields.sponsor} value={project.project_sponsor} />
@@ -374,7 +408,7 @@ const ProjectDetailModal = ({
                       <Item label={dictionary.fields.actualEndDate} value={toDateInputValue(project.actual_end_date)} />
                       <Item
                         label={dictionary.fields.estimatedHours}
-                        value={`${project.actual_hours || 0} / ${project.estimated_hours || 0}h`}
+                        value={`${formatHours(timesheetHours)} / ${formatHours(project.estimated_hours)}h`}
                       />
                     </div>
                     <LinearProgress variant='determinate' value={project.progress} className='mt-5 bs-2 rounded' />
@@ -388,7 +422,7 @@ const ProjectDetailModal = ({
                     <div className='grid grid-cols-2 gap-4 md:grid-cols-4'>
                       <Item
                         label={dictionary.detail.transactionAmount}
-                        value={formatCurrency(project.budget, locale, project.currency)}
+                        value={<DualCurrencyAmount amount={project.budget} amountBase={project.amount_base} currency={project.currency} locale={locale} />}
                         accent='font-semibold text-primary'
                       />
                       <Item
@@ -473,6 +507,9 @@ const ProjectDetailModal = ({
               </div>
             )}
             {tab === 2 && (
+              <TasksView locale={locale} dictionary={taskDictionary} canManage={canTaskManage} canUpdate={canTaskUpdate} canDelete={canTaskDelete} fixedProjectId={project.id} embedded />
+            )}
+            {tab === 3 && (
               <div className='flex flex-col gap-4'>
                 {canWrite && (
                   <Card variant='outlined'>
@@ -533,7 +570,7 @@ const ProjectDetailModal = ({
                 )}
               </div>
             )}
-            {tab === 3 && (
+            {tab === 4 && (
               <div className='flex flex-col gap-4'>
                 <Card variant='outlined'>
                   <CardContent>
@@ -541,7 +578,7 @@ const ProjectDetailModal = ({
                       <div>
                         <Typography variant='h6'>{dictionary.detail.timesheets}</Typography>
                         <Typography color='text.secondary'>
-                          {timesheetHours} / {project.estimated_hours || 0}h
+                          {formatHours(timesheetHours)} / {formatHours(project.estimated_hours)}h
                         </Typography>
                       </div>
                       <Chip
@@ -563,11 +600,11 @@ const ProjectDetailModal = ({
                 {project.timesheets.length === 0 ? (
                   <EmptyPanel icon='tabler-clock-off' text={dictionary.detail.noTimesheets} />
                 ) : (
-                  <ProjectTimesheetTable rows={project.timesheets} dictionary={dictionary} />
+                  <ProjectTimesheetTable rows={project.timesheets} tasks={project.tasks} dictionary={dictionary} canAttach={canTaskUpdate} locked={project.status.value === 'COMPLETED'} working={working} onAttach={attachTimesheet} />
                 )}
               </div>
             )}
-            {tab === 4 && (
+            {tab === 5 && (
               <div className='flex flex-col gap-4'>
                 <div className='grid grid-cols-1 gap-4 sm:grid-cols-3'>
                   {financeCards.map(([label, value, colorClass]) => (

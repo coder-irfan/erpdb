@@ -18,14 +18,22 @@ import {
   financeSalaryAdjustmentSchema,
   financeSalaryMonthSchema
 } from '@/schemas/financeSalary'
-import { convertToBaseCurrency, toFiniteNumber } from '@/utils/formatCurrency'
+import { SYSTEM_BASE_CURRENCY, convertToBaseCurrency, effectiveAfnExchangeRate, normalizeToAfn, toFiniteNumber } from '@/utils/formatCurrency'
+import {
+  getPayrollMonthCalendar,
+  getWorkingDaysThroughDate,
+  isEarlyPayrollExecution
+} from '@/utils/payrollCalendar'
+import { hasPayrollPayoutRole } from '@/utils/rbac'
+import { getDateKeyInTimeZone } from '@/utils/utcDate'
 
-const READ_PERMISSIONS = ['finance:read', 'finance_salary:read']
-const WRITE_PERMISSIONS = ['finance:write', 'finance_salary:write']
-const DELETE_PERMISSIONS = ['finance:delete', 'finance_salary:delete']
+const READ_PERMISSIONS = ['finance:read', 'finance_salary:read', 'hrm_payroll:read']
+const WRITE_PERMISSIONS = ['finance:write', 'finance_salary:write', 'hrm_payroll:write']
+const DELETE_PERMISSIONS = ['finance:delete', 'finance_salary:delete', 'hrm_payroll:delete']
 const DEFAULT_PAGE_SIZE = 10
 const MAX_PAGE_SIZE = 100
 const ACTIVE_LOAN_VALUES = ACTIVE_LOAN_STATUSES
+const PAYROLL_LEDGER_ACCOUNT = 'Payroll Expenses'
 
 const staffSelect = {
   id: true,
@@ -54,8 +62,10 @@ const salarySelect = {
   earned_salary: true,
   bonus_amount: true,
   loan_deduction: true,
+  unpaid_leave_deduction: true,
   payable_amount: true,
   exchange_rate: true,
+  fx_snapshot_at: true,
   loan_status: true,
   payment_date: true,
   processed_by_id: true,
@@ -92,8 +102,10 @@ const normalizeSalary = salary => ({
   earned_salary: moneyString(salary.earned_salary),
   bonus_amount: moneyString(salary.bonus_amount),
   loan_deduction: moneyString(salary.loan_deduction),
+  unpaid_leave_deduction: moneyString(salary.unpaid_leave_deduction),
   payable_amount: moneyString(salary.payable_amount),
   exchange_rate: moneyString(salary.exchange_rate, 4),
+  fx_snapshot_at: iso(salary.fx_snapshot_at),
   payable_usd: moneyString(convertToBaseCurrency(salary.payable_amount, salary.currency, salary.exchange_rate, 'USD')),
   amount_base: moneyString(salary.amount_base),
   payment_date: iso(salary.payment_date),
@@ -128,37 +140,9 @@ const revalidateSalaryPages = () => {
   revalidatePath('/[lang]/finance/loans', 'page')
 }
 
-const getMonthRange = monthValue => {
-  const [year, month] = monthValue.split('-').map(Number)
-
-  return {
-    year,
-    month,
-    start: new Date(Date.UTC(year, month - 1, 1)),
-    end: new Date(Date.UTC(year, month, 1)),
-    totalDays: new Date(Date.UTC(year, month, 0)).getUTCDate()
-  }
-}
+const getMonthRange = getPayrollMonthCalendar
 
 const dateKey = date => date.toISOString().slice(0, 10)
-
-const getWorkingDates = (range, weekendDays, holidays) => {
-  const weekends = new Set(
-    String(weekendDays || '5')
-      .split(',')
-      .map(value => Number.parseInt(value.trim(), 10))
-      .filter(value => Number.isInteger(value) && value >= 0 && value <= 6)
-  )
-
-  const holidayDates = new Set(holidays.map(holiday => dateKey(holiday.date)))
-  const dates = []
-
-  for (let cursor = new Date(range.start); cursor < range.end; cursor = new Date(cursor.getTime() + 86_400_000)) {
-    if (!weekends.has(cursor.getUTCDay()) && !holidayDates.has(dateKey(cursor))) dates.push(new Date(cursor))
-  }
-
-  return dates
-}
 
 const addLeaveDates = (target, leave, range) => {
   const start = leave.start_date > range.start ? leave.start_date : range.start
@@ -193,23 +177,26 @@ const calculateSalary = ({
   workedDays,
   bonusAmount,
   loanDeduction,
+  unpaidLeaveDeduction = 0,
   currency,
   exchangeRate,
   baseCurrency
 }) => {
   const dailyRate = totalDays > 0 ? baseSalary / totalDays : 0
   const earnedSalary = dailyRate * workedDays
-  const payableAmount = Math.max(0, earnedSalary + bonusAmount - loanDeduction)
+  const payableAmount = Math.max(0, earnedSalary + bonusAmount - loanDeduction - unpaidLeaveDeduction)
   const amountBase = convertToBaseCurrency(payableAmount, currency, exchangeRate, baseCurrency)
 
   return { dailyRate, earnedSalary, payableAmount, amountBase }
 }
 
-const getActiveLoans = (client, staffIds) =>
+const getActiveLoans = (client, staffIds, repaymentThrough = null) =>
   client.financeloan.findMany({
     where: {
       staff_id: { in: staffIds },
       loan_type: 'STAFF',
+      auto_deduct: true,
+      ...(repaymentThrough && { repayment_start_date: { lte: repaymentThrough } }),
       remaining_balance: { gt: 0 },
       status: { is: { category: 'LOAN_STATUS', value: { in: ACTIVE_LOAN_VALUES }, is_active: true } }
     },
@@ -248,7 +235,7 @@ const getPreparedAdjustment = async (salary, values, translations) => {
   if (exchangeRate <= 0) return { success: false, error: translations.validation.rateInvalid }
 
   const setup = await getCompanySetupRecord()
-  const baseCurrency = setup.currency_code || 'AFN'
+  const baseCurrency = SYSTEM_BASE_CURRENCY
   const sourceCurrency = salary.currency || values.currency
   const sourceRate = toFiniteNumber(salary.exchange_rate) || exchangeRate
 
@@ -267,9 +254,17 @@ const getPreparedAdjustment = async (salary, values, translations) => {
     workedDays,
     bonusAmount,
     loanDeduction,
+    unpaidLeaveDeduction: convertCurrency(
+      salary.unpaid_leave_deduction,
+      sourceCurrency,
+      sourceRate,
+      values.currency,
+      exchangeRate,
+      baseCurrency
+    ),
     currency: values.currency,
     exchangeRate,
-    baseCurrency: setup.currency_code || 'AFN'
+    baseCurrency: SYSTEM_BASE_CURRENCY
   })
 
   return {
@@ -325,7 +320,10 @@ export const getFinanceSalaries = async (payload = {}) => {
   }
 
   try {
-    const [setup, totalCount, salaries, summaryRows] = await Promise.all([
+    const range = getMonthRange(month)
+    const currentDate = getDateKeyInTimeZone('Asia/Kabul')
+
+    const [setup, totalCount, salaries, summaryRows, holidays] = await Promise.all([
       getCompanySetupRecord(),
       prisma.financesalary.count({ where }),
       prisma.financesalary.findMany({
@@ -338,10 +336,14 @@ export const getFinanceSalaries = async (payload = {}) => {
       prisma.financesalary.findMany({
         where: { timesheet_month: month },
         select: { status: true, amount_base: true, loan_deduction: true, currency: true, exchange_rate: true }
+      }),
+      prisma.companyholiday.findMany({
+        where: { is_active: true, date: { gte: range.start, lt: range.end } },
+        select: { date: true }
       })
     ])
 
-    const baseCurrency = setup.currency_code || 'AFN'
+    const baseCurrency = SYSTEM_BASE_CURRENCY
 
     const summary = summaryRows.reduce(
       (totals, row) => {
@@ -358,7 +360,26 @@ export const getFinanceSalaries = async (payload = {}) => {
       { total: 0, paid: 0, pending: 0, loanDeductions: 0 }
     )
 
-    return { success: true, data: { salaries: salaries.map(normalizeSalary), totalCount, page, baseCurrency, summary } }
+    return {
+      success: true,
+      data: {
+        salaries: salaries.map(normalizeSalary),
+        totalCount,
+        page,
+        baseCurrency: SYSTEM_BASE_CURRENCY,
+        summary,
+        payoutContext: {
+          currentDate,
+          isEarlyExecution: isEarlyPayrollExecution(month, currentDate),
+          workingDaysToDate: getWorkingDaysThroughDate(
+            month,
+            currentDate,
+            holidays.map(item => item.date)
+          ),
+          targetLedgerAccount: PAYROLL_LEDGER_ACCOUNT
+        }
+      }
+    }
   } catch {
     return { success: false, code: 'SALARY_LOAD_FAILED', error: context.translations.messages.loadFailed }
   }
@@ -384,7 +405,7 @@ export const getFinanceSalaryOptions = async (payload = {}) => {
       success: true,
       data: {
         staff: staff.map(withStaffName),
-        baseCurrency: setup.currency_code || 'AFN',
+        baseCurrency: SYSTEM_BASE_CURRENCY,
         exchangeRate: setup.usd_afn_exchange_rate || '65.0000',
         company: setup
       }
@@ -467,10 +488,15 @@ export const generateMonthlyPayroll = async (month, payload = {}) => {
       prisma.hrmstaff.findMany({
         where: {
           join_date: { lt: range.end },
-          OR: [
-            { status: 'ACTIVE' },
-            { termination_date: { gte: range.start } }
-          ]
+          status: 'ACTIVE',
+          contracts: {
+            some: {
+              status: { is: { category: 'CONTRACT_STATUS', value: 'ACTIVE' } },
+              start_date: { lt: range.end },
+              OR: [{ end_date: null }, { end_date: { gte: range.start } }],
+              payroll_frozen: false
+            }
+          }
         },
         select: staffSelect,
         orderBy: [{ first_name: 'asc' }, { last_name: 'asc' }]
@@ -508,32 +534,30 @@ export const generateMonthlyPayroll = async (month, payload = {}) => {
     const loans = eligible.length
       ? await getActiveLoans(
           prisma,
-          eligible.map(staff => staff.id)
+          eligible.map(staff => staff.id),
+          range.end
         )
       : []
 
-    const workingDates = getWorkingDates(range, setup.weekend_days, holidays)
+    const workingDates = range.workingDates
 
     if (workingDates.length === 0) {
       return { success: false, code: 'EMPTY_WORKING_CALENDAR', error: context.translations.messages.operationFailed }
     }
 
     const workingDateKeys = new Set(workingDates.map(dateKey))
+    const holidayDateKeys = new Set(holidays.map(item => dateKey(item.date)).filter(key => workingDateKeys.has(key)))
     const attendance = new Map()
 
     timesheets.forEach(row => {
       const current = attendance.get(row.staff_id) || {
         presentDates: new Set(),
-        hours: 0,
-        absentDays: 0,
-        leaveDays: 0
+        hours: 0
       }
 
       const normalizedStatus = row.status?.toUpperCase()
 
       if (normalizedStatus === 'PRESENT') current.presentDates.add(dateKey(row.date))
-      if (normalizedStatus === 'ABSENT') current.absentDays += 1
-      if (normalizedStatus === 'LEAVE') current.leaveDays += 1
       current.hours += toFiniteNumber(row.hours_worked)
       attendance.set(row.staff_id, current)
     })
@@ -553,16 +577,14 @@ export const generateMonthlyPayroll = async (month, payload = {}) => {
 
       for (const staff of eligible) {
         const salaryAmount = toFiniteNumber(staff.salary)
-        const currency = staff.salary_currency || setup.currency_code || 'AFN'
+        const currency = staff.salary_currency || SYSTEM_BASE_CURRENCY
 
         const exchangeRate =
           toFiniteNumber(staff.salary_exchange_rate) || toFiniteNumber(setup.usd_afn_exchange_rate) || 65
 
         const staffAttendance = attendance.get(staff.id) || {
           presentDates: new Set(),
-          hours: 0,
-          absentDays: 0,
-          leaveDays: 0
+          hours: 0
         }
 
         const joinKey = dateKey(staff.join_date)
@@ -574,11 +596,17 @@ export const generateMonthlyPayroll = async (month, payload = {}) => {
           return key >= joinKey && (!terminationKey || key <= terminationKey)
         })
 
-        const presentPayableDates = new Set(
+        const recordedPresentDates = new Set(
           [...staffAttendance.presentDates].filter(
             key => workingDateKeys.has(key) && key >= joinKey && (!terminationKey || key <= terminationKey)
           )
         )
+
+        const paidHolidayDates = new Set(
+          [...holidayDateKeys].filter(key => key >= joinKey && (!terminationKey || key <= terminationKey))
+        )
+
+        const presentPayableDates = new Set([...recordedPresentDates, ...paidHolidayDates])
 
         let paidLeaveDays = 0
 
@@ -595,25 +623,18 @@ export const generateMonthlyPayroll = async (month, payload = {}) => {
               !presentPayableDates.has(key)
           )
 
-          const fullRangeDays = Math.floor((leave.end_date.getTime() - leave.start_date.getTime()) / 86_400_000) + 1
-          const clippedStart = leave.start_date > range.start ? leave.start_date : range.start
-          const monthEnd = new Date(range.end.getTime() - 86_400_000)
-          const clippedEnd = leave.end_date < monthEnd ? leave.end_date : monthEnd
-
-          const clippedDays = Math.max(
-            0,
-            Math.floor((clippedEnd.getTime() - clippedStart.getTime()) / 86_400_000) + 1
-          )
-
-          const monthLeaveCredit = toFiniteNumber(leave.total_days) * (clippedDays / fullRangeDays)
-
-          paidLeaveDays += Math.min(availableLeaveDates.length, monthLeaveCredit)
+          paidLeaveDays += availableLeaveDates.length
         }
 
         paidLeaveDays = Math.round(paidLeaveDays * 2) / 2
 
-        const payableDays = Math.min(eligibleWorkingDates.length, presentPayableDates.size + paidLeaveDays)
-        const maximumGross = workingDates.length > 0 ? (salaryAmount / workingDates.length) * payableDays : 0
+        const payableDays = Math.min(
+          eligibleWorkingDates.length,
+          presentPayableDates.size + paidLeaveDays
+        )
+
+        const absentDays = Math.max(0, eligibleWorkingDates.length - payableDays)
+        const maximumGross = (salaryAmount / workingDates.length) * payableDays
 
         const scheduledLoanDeduction = (loansByStaff.get(staff.id) || []).reduce((total, loan) => {
           const loanAmount = Math.min(toFiniteNumber(loan.monthly_deduction), toFiniteNumber(loan.remaining_balance))
@@ -626,13 +647,13 @@ export const generateMonthlyPayroll = async (month, payload = {}) => {
               loan.exchange_rate,
               currency,
               exchangeRate,
-              setup.currency_code || 'AFN'
+              SYSTEM_BASE_CURRENCY
             )
           )
         }, 0)
 
-        const loanDeduction = Math.min(scheduledLoanDeduction, maximumGross)
-        
+        const loanDeduction = Math.min(scheduledLoanDeduction, Math.max(0, maximumGross - unpaidLeaveDeduction))
+
         const calculation = calculateSalary({
           baseSalary: salaryAmount,
           totalDays: workingDates.length,
@@ -641,10 +662,10 @@ export const generateMonthlyPayroll = async (month, payload = {}) => {
           loanDeduction,
           currency,
           exchangeRate,
-          baseCurrency: setup.currency_code || 'AFN'
+          baseCurrency: SYSTEM_BASE_CURRENCY
         })
 
-        const notes = `Payable calendar: ${workingDates.length} working days; employee eligible for ${eligibleWorkingDates.length}; ${payableDays} payable (${staffAttendance.presentDates.size} present records, ${paidLeaveDays} approved paid leave days), ${staffAttendance.absentDays} absent; ${staffAttendance.hours.toFixed(2)} hours logged.`
+        const notes = `Payable calendar: ${workingDates.length} non-Friday days; Employee eligible for ${eligibleWorkingDates.length}; ${payableDays} payable (${recordedPresentDates.size} present records, ${paidHolidayDates.size} public holidays, ${paidLeaveDays} approved paid leave days), ${absentDays} absent; ${staffAttendance.hours.toFixed(2)} hours logged.`
 
         await transaction.financesalary.create({
           data: {
@@ -652,12 +673,13 @@ export const generateMonthlyPayroll = async (month, payload = {}) => {
             timesheet_month: validation.output.month,
             total_month_days: workingDates.length,
             worked_days: new Prisma.Decimal(payableDays),
-            off_days: new Prisma.Decimal(Math.max(0, eligibleWorkingDates.length - payableDays)),
+            off_days: new Prisma.Decimal(absentDays),
             base_salary: new Prisma.Decimal(salaryAmount),
             base_daily_rate: new Prisma.Decimal(calculation.dailyRate),
             earned_salary: new Prisma.Decimal(calculation.earnedSalary),
             bonus_amount: new Prisma.Decimal(0),
             loan_deduction: new Prisma.Decimal(loanDeduction),
+            unpaid_leave_deduction: new Prisma.Decimal(0),
             payable_amount: new Prisma.Decimal(calculation.payableAmount),
             exchange_rate: new Prisma.Decimal(exchangeRate),
             loan_status: loanDeduction > 0 ? 'PENDING' : 'NOT_APPLICABLE',
@@ -715,18 +737,28 @@ export const createFinanceSalary = async (payload = {}) => {
   try {
     const range = getMonthRange(validation.output.timesheet_month)
 
-    const [staff, setup, holidays] = await Promise.all([
-      prisma.hrmstaff.findUnique({ where: { id: validation.output.staff_id }, select: staffSelect }),
-      getCompanySetupRecord(),
-      prisma.companyholiday.findMany({
-        where: { is_active: true, date: { gte: range.start, lt: range.end } },
-        select: { date: true }
-      })
+    const [staff, setup] = await Promise.all([
+      prisma.hrmstaff.findFirst({
+        where: {
+          id: validation.output.staff_id,
+          status: 'ACTIVE',
+          contracts: {
+            some: {
+              status: { is: { category: 'CONTRACT_STATUS', value: 'ACTIVE' } },
+              start_date: { lt: range.end },
+              OR: [{ end_date: null }, { end_date: { gte: range.start } }],
+              payroll_frozen: false
+            }
+          }
+        },
+        select: staffSelect
+      }),
+      getCompanySetupRecord()
     ])
 
     if (!staff) return { success: false, code: 'INVALID_STAFF', error: context.translations.validation.invalidStaff }
 
-    const totalDays = getWorkingDates(range, setup.weekend_days, holidays).length
+    const totalDays = range.workingDays
 
     if (totalDays === 0) {
       return { success: false, code: 'EMPTY_WORKING_CALENDAR', error: context.translations.messages.operationFailed }
@@ -833,9 +865,13 @@ export const updateFinanceSalary = async (id, payload = {}) => {
 }
 
 export const markSalaryPaid = async (salaryId, payload = {}) => {
-  const context = await getContext(payload, WRITE_PERMISSIONS)
+  const context = await getContext(payload, [])
 
   if (!context.authorized) return { success: false, code: context.code, error: context.error }
+
+  if (!hasPayrollPayoutRole(context.session)) {
+    return { success: false, code: 'PAYOUT_ROLE_REQUIRED', error: context.translations.messages.forbidden }
+  }
 
   const id = normalizeId(salaryId)
 
@@ -852,13 +888,38 @@ export const markSalaryPaid = async (salaryId, payload = {}) => {
         if (!salary) return { error: 'NOT_FOUND' }
         if (salary.status === 'PAID') return { error: 'ALREADY_PAID' }
 
+        const currentDate = getDateKeyInTimeZone('Asia/Kabul')
+        const earlyExecution = isEarlyPayrollExecution(salary.timesheet_month, currentDate)
+
+        if (earlyExecution && payload?.confirmEarlyExecution !== true) {
+          return { error: 'EARLY_CONFIRMATION_REQUIRED' }
+        }
+
+        const salaryRange = getMonthRange(salary.timesheet_month)
+
+        const payableContract = await transaction.hrmstaffcontract.findFirst({
+          where: {
+            staff_id: salary.staff_id,
+            status: { is: { category: 'CONTRACT_STATUS', value: 'ACTIVE' } },
+            start_date: { lt: salaryRange.end },
+            OR: [{ end_date: null }, { end_date: { gte: salaryRange.start } }],
+            payroll_frozen: false
+          },
+          select: { id: true }
+        })
+
+        if (!payableContract) return { error: 'CONTRACT_PAYROLL_FROZEN' }
+
+        const executionTimestamp = new Date()
+        const snapshotRate = effectiveAfnExchangeRate(salary.currency, setup.usd_afn_exchange_rate)
+
         let remainingDeductionBase = convertToBaseCurrency(
           salary.loan_deduction,
           salary.currency,
-          salary.exchange_rate,
-          setup.currency_code || 'AFN'
+          snapshotRate,
+          SYSTEM_BASE_CURRENCY
         )
-        const loans = remainingDeductionBase > 0 ? await getActiveLoans(transaction, [salary.staff_id]) : []
+        const loans = remainingDeductionBase > 0 ? await getActiveLoans(transaction, [salary.staff_id], salaryRange.end) : []
         const appliedLoans = []
 
         for (const loan of loans) {
@@ -869,8 +930,8 @@ export const markSalaryPaid = async (salaryId, payload = {}) => {
           const loanRemainingBase = convertToBaseCurrency(
             loanRemaining,
             loan.currency,
-            loan.exchange_rate,
-            setup.currency_code || 'AFN'
+            effectiveAfnExchangeRate(loan.currency, setup.usd_afn_exchange_rate),
+            SYSTEM_BASE_CURRENCY
           )
 
           const appliedBase = Math.min(remainingDeductionBase, loanRemainingBase)
@@ -878,8 +939,8 @@ export const markSalaryPaid = async (salaryId, payload = {}) => {
           const appliedLoanCurrency = fromBaseCurrency(
             appliedBase,
             loan.currency,
-            loan.exchange_rate,
-            setup.currency_code || 'AFN'
+            effectiveAfnExchangeRate(loan.currency, setup.usd_afn_exchange_rate),
+            SYSTEM_BASE_CURRENCY
           )
 
           const repayment = await applyLoanRepayment(transaction, {
@@ -890,14 +951,16 @@ export const markSalaryPaid = async (salaryId, payload = {}) => {
             referenceId: salary.id,
             createdByUserId: context.session.user.id,
             notes: `Payroll deduction for ${salary.timesheet_month}`,
-            baseCurrency: setup.currency_code || 'AFN'
+            baseCurrency: SYSTEM_BASE_CURRENCY,
+            fxSnapshotRate: loan.exchange_rate,
+            fxSnapshotAt: executionTimestamp
           })
 
           const actualAppliedBase = convertToBaseCurrency(
             repayment.appliedAmount,
             loan.currency,
-            loan.exchange_rate,
-            setup.currency_code || 'AFN'
+            effectiveAfnExchangeRate(loan.currency, setup.usd_afn_exchange_rate),
+            SYSTEM_BASE_CURRENCY
           )
 
           remainingDeductionBase = Math.max(0, remainingDeductionBase - actualAppliedBase)
@@ -914,42 +977,105 @@ export const markSalaryPaid = async (salaryId, payload = {}) => {
           convertToBaseCurrency(
             salary.loan_deduction,
             salary.currency,
-            salary.exchange_rate,
-            setup.currency_code || 'AFN'
+            snapshotRate,
+            SYSTEM_BASE_CURRENCY
           ) - remainingDeductionBase
         )
 
         const appliedDeduction = fromBaseCurrency(
           appliedDeductionBase,
           salary.currency,
-          salary.exchange_rate,
-          setup.currency_code || 'AFN'
+          snapshotRate,
+          SYSTEM_BASE_CURRENCY
         )
 
         const correctedPayable = Math.max(
           0,
-          toFiniteNumber(salary.earned_salary) + toFiniteNumber(salary.bonus_amount) - appliedDeduction
+          toFiniteNumber(salary.earned_salary) +
+            toFiniteNumber(salary.bonus_amount) -
+            appliedDeduction -
+            toFiniteNumber(salary.unpaid_leave_deduction)
         )
 
         const correctedAmountBase = convertToBaseCurrency(
           correctedPayable,
           salary.currency,
-          salary.exchange_rate,
-          setup.currency_code || 'AFN'
+          snapshotRate,
+          SYSTEM_BASE_CURRENCY
         )
+
+        const afnPayout = normalizeToAfn(correctedPayable, salary.currency, snapshotRate)
+        const expenseAmountBase = afnPayout
+
+        const expenseType = await transaction.option.upsert({
+          where: { category_value: { category: 'EXPENSE_TYPE', value: 'PAYROLL_EXPENSES' } },
+          update: { label: 'Payroll Expenses', is_active: true },
+          create: {
+            category: 'EXPENSE_TYPE',
+            label: 'Payroll Expenses',
+            value: 'PAYROLL_EXPENSES',
+            color_code: 'info',
+            sort_order: 9,
+            is_active: true
+          },
+          select: { id: true }
+        })
 
         const updated = await transaction.financesalary.update({
           where: { id },
           data: {
             status: 'PAID',
-            payment_date: new Date(),
+            payment_date: executionTimestamp,
             processed_by_id: processor?.id || null,
             loan_deduction: new Prisma.Decimal(appliedDeduction),
             payable_amount: new Prisma.Decimal(correctedPayable),
             amount_base: new Prisma.Decimal(correctedAmountBase),
+            exchange_rate: new Prisma.Decimal(snapshotRate),
+            fx_snapshot_at: executionTimestamp,
             loan_status: appliedDeduction > 0.005 ? 'DEDUCTED' : 'NOT_APPLICABLE'
           },
           select: salarySelect
+        })
+
+        const expense = await transaction.financeexpense.create({
+          data: {
+            voucher_number: `EXP-${executionTimestamp.getUTCFullYear()}-${salary.id.slice(-8).toUpperCase()}`,
+            payroll_salary_id: salary.id,
+            spent_by_id: processor?.id || null,
+            approved_by_id: processor?.id || null,
+            processed_by_id: processor?.id || null,
+            vendor_payee: fullName(salary.staff),
+            approval_status: 'PAID',
+            approved_at: executionTimestamp,
+            paid_at: executionTimestamp,
+            expense_date: executionTimestamp,
+            details: `Payroll expense for ${fullName(salary.staff)} (${salary.timesheet_month})`,
+            expense_type_id: expenseType.id,
+            quantity: 1,
+            unit_price: new Prisma.Decimal(afnPayout),
+            sub_total: new Prisma.Decimal(afnPayout),
+            currency: 'AFN',
+            exchange_rate: new Prisma.Decimal(1),
+            fx_snapshot_at: executionTimestamp,
+            amount_base: new Prisma.Decimal(expenseAmountBase)
+          },
+          select: { id: true }
+        })
+
+        await transaction.generalledgerentry.create({
+          data: {
+            expense_id: expense.id,
+            account_code: 'EXPENSE-OVERHEAD',
+            entry_type: 'DEBIT',
+            transaction_amount: new Prisma.Decimal(afnPayout),
+            transaction_currency: 'AFN',
+            exchange_rate: new Prisma.Decimal(1),
+            debit_base: new Prisma.Decimal(expenseAmountBase),
+            credit_base: new Prisma.Decimal(0),
+            entry_date: executionTimestamp,
+            description: `Payroll disbursement for ${fullName(salary.staff)}`,
+            posted_by_user_id: context.session.user.id
+          }
         })
 
         await transaction.auditlog.create({
@@ -964,6 +1090,12 @@ export const markSalaryPaid = async (salaryId, payload = {}) => {
               executedByUserId: context.session.user.id,
               executedByName: context.session.user.name || null,
               executedByEmail: context.session.user.email || null,
+              expenseId: expense.id,
+              payoutAfn: afnPayout.toFixed(2),
+              fxRate: snapshotRate.toFixed(4),
+              fxSnapshotAt: executionTimestamp.toISOString(),
+              earlyExecution,
+              executionDate: currentDate,
               loanDeductions: appliedLoans
             }
           }
@@ -978,6 +1110,18 @@ export const markSalaryPaid = async (salaryId, payload = {}) => {
       return { success: false, code: 'NOT_FOUND', error: context.translations.messages.notFound }
     if (result.error === 'ALREADY_PAID')
       return { success: false, code: 'ALREADY_PAID', error: context.translations.messages.alreadyPaid }
+    if (result.error === 'EARLY_CONFIRMATION_REQUIRED')
+      return {
+        success: false,
+        code: 'EARLY_CONFIRMATION_REQUIRED',
+        error: context.translations.messages.earlyConfirmationRequired
+      }
+    if (result.error === 'CONTRACT_PAYROLL_FROZEN')
+      return {
+        success: false,
+        code: 'CONTRACT_PAYROLL_FROZEN',
+        error: 'Payroll is frozen because the staff member has no active contract for this pay period.'
+      }
 
     revalidateSalaryPages()
 

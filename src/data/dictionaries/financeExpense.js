@@ -29,6 +29,7 @@ const translations = {
       quantity: 'Qty & Unit Price',
       subtotal: 'Subtotal & Currency',
       actions: 'Actions'
+      ,status: 'Approval Status'
     },
     actions: {
       add: 'Log Expense',
@@ -42,6 +43,9 @@ const translations = {
       saving: 'Saving...',
       close: 'Close',
       download: 'Download Receipt'
+      ,approve: 'Approve Expense'
+      ,reject: 'Reject'
+      ,markPaid: 'Mark as Paid'
     },
     form: {
       addTitle: 'Log Expense',
@@ -51,6 +55,7 @@ const translations = {
       subtotalPreview: 'Transaction subtotal',
       basePreview: 'Base amount ({currency})',
       usdPreview: 'USD equivalent'
+      ,statusManagedHint: 'New and revised expenses enter Pending Approval.'
     },
     fields: {
       details: 'Expense Details',
@@ -67,6 +72,13 @@ const translations = {
       baseAmount: 'Base Amount',
       totalUsd: 'USD Equivalent',
       receipt: 'Receipt Attachment'
+      ,vendorPayee: 'Vendor / Payee'
+      ,approvalStatus: 'Approval Status'
+      ,voucherNumber: 'Voucher Number'
+      ,approvedBy: 'Approved By'
+      ,processedBy: 'Processing Officer'
+      ,paidAt: 'Paid Date'
+      ,rejectionReason: 'Rejection Reason'
     },
     placeholders: {
       details: 'Describe what was purchased or paid for',
@@ -74,6 +86,7 @@ const translations = {
       project: 'General overhead / no project',
       spentBy: 'No assigned staff',
       paymentMethod: 'No payment method selected'
+      ,vendorPayee: 'Google Ads, Building Landlord, Kabul Electric...'
     },
     detail: {
       title: 'Expense Details',
@@ -85,19 +98,21 @@ const translations = {
       exchangeRate: 'Locked Exchange Rate',
       createdAt: 'Created',
       updatedAt: 'Last Updated'
+      ,approval: 'Approval & Disbursement'
     },
     upload: {
       upload: 'Upload',
       replace: 'Replace',
       remove: 'Remove',
       fileHint: 'PNG, JPEG, WebP, or SVG up to {maxSizeMB} MB',
+      drop: 'Drag and drop a receipt image or PDF here.',
       previewAlt: 'Receipt preview',
       uploading: 'Uploading...',
       forbidden: 'You do not have permission to upload receipts.',
       invalidFile: 'Select a valid receipt image.',
       unauthenticated: 'Sign in before uploading a receipt.',
       unsafeFile: 'The receipt did not pass the security check.',
-      unsupportedType: 'Only PNG, JPEG, WebP, and SVG receipt images are supported.',
+      unsupportedType: 'Only PNG, JPEG, WebP, and PDF receipts are supported.',
       tooLarge: 'The receipt image must not exceed {maxSizeMB} MB.',
       uploadFailed: 'The receipt could not be uploaded. Please try again.'
     },
@@ -126,6 +141,7 @@ const translations = {
       dateInvalid: 'Enter a valid expense date.',
       invalidRelation: 'One or more selected linked records are invalid.',
       invalidReceipt: 'The receipt path is invalid. Upload the receipt again.'
+      ,vendorTooLong: 'Vendor / Payee must not exceed 191 characters.'
     },
     messages: {
       unauthenticated: 'Authentication is required.',
@@ -138,6 +154,25 @@ const translations = {
       updated: 'Expense record updated successfully.',
       deleted: 'Expense record deleted successfully.',
       operationFailed: 'The expense operation could not be completed.'
+      ,approved: 'Expense approved successfully.'
+      ,rejected: 'Expense rejected successfully.'
+      ,paid: 'Expense marked as paid and posted to the general ledger.'
+      ,locked: 'Approved and paid expenses cannot be edited or deleted.'
+      ,invalidTransition: 'This expense cannot move to the requested status.'
+      ,approvalForbidden: 'Only a Finance Director or the linked Project Manager may approve this expense.'
+    }
+    ,status: {
+      DRAFT: 'Draft',
+      PENDING_APPROVAL: 'Pending Approval',
+      APPROVED: 'Approved',
+      PAID: 'Paid',
+      REJECTED: 'Rejected'
+    }
+    ,workflow: {
+      approveTitle: 'Approve Expense',
+      rejectTitle: 'Reject Expense',
+      payTitle: 'Execute Disbursement',
+      approveDescription: 'Confirm that this expense has been reviewed and is ready for payment.'
     }
   }
 }

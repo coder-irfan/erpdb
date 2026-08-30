@@ -7,11 +7,13 @@ import {
   ATTENDANCE_WRITE_PERMISSIONS,
   calculateHours,
   dateToString,
+  getAttendanceDateGuard,
   normalizeAttendance,
   normalizeAttendanceInput,
   attendanceSelect
 } from '@/libs/hrmTimesheets'
 import { getCurrentStaff } from '@/libs/hrmLeaves'
+import { hasActiveStaffContract } from '@/libs/hrmContractAccess'
 import { prisma } from '@/libs/prisma'
 import { updateTimesheetSchema } from '@/schemas/hrm/timesheets'
 import { getDictionary } from '@/utils/getDictionary'
@@ -61,6 +63,15 @@ export async function PUT(request, context) {
     if (!existing) return responseError(dictionary.messages.notFound, 404, 'TIMESHEET_NOT_FOUND')
     if (!canManage && existing.staff_id !== currentStaff.id) return responseError(dictionary.messages.forbidden, 403, 'FORBIDDEN')
     if (existing.leave_id) return responseError(dictionary.messages.forbidden, 409, 'APPROVED_LEAVE_LOCKED')
+
+    const guard = await getAttendanceDateGuard(dateToString(existing.date))
+
+    if (guard.isFuture) return responseError(dictionary.messages.futureDateBlocked, 409, guard.code)
+    if (guard.payrollLocked) return responseError(dictionary.messages.payrollLocked, 409, guard.code)
+
+    if (!(await hasActiveStaffContract(prisma, { staffId: existing.staff_id, startDate: existing.date }))) {
+      return responseError('Attendance is blocked outside an active contract period.', 409, 'CONTRACT_INACTIVE')
+    }
 
     const date = dateToString(existing.date)
     const hours = calculateHours(date, validation.output.check_in_time, validation.output.check_out_time)
@@ -115,11 +126,19 @@ export async function DELETE(request, context) {
   if (!canManage && !currentStaff) return responseError(dictionary.messages.forbidden, 403, 'STAFF_PROFILE_REQUIRED')
 
   try {
-    const existing = await prisma.hrmstafftimesheet.findUnique({ where: { id }, select: { id: true, staff_id: true, leave_id: true } })
+    const existing = await prisma.hrmstafftimesheet.findUnique({
+      where: { id },
+      select: { id: true, staff_id: true, date: true, leave_id: true }
+    })
 
     if (!existing) return responseError(dictionary.messages.notFound, 404, 'TIMESHEET_NOT_FOUND')
     if (!canManage && existing.staff_id !== currentStaff.id) return responseError(dictionary.messages.forbidden, 403, 'FORBIDDEN')
     if (existing.leave_id) return responseError(dictionary.messages.forbidden, 409, 'APPROVED_LEAVE_LOCKED')
+
+    const guard = await getAttendanceDateGuard(dateToString(existing.date))
+
+    if (guard.isFuture) return responseError(dictionary.messages.futureDateBlocked, 409, guard.code)
+    if (guard.payrollLocked) return responseError(dictionary.messages.payrollLocked, 409, guard.code)
 
     await prisma.$transaction(async transaction => {
       const deleted = await transaction.hrmstafftimesheet.delete({ where: { id }, select: { staff_id: true, date: true } })

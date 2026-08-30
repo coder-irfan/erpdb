@@ -7,6 +7,7 @@ import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
 
 import UserAvatar from '@/components/common/UserAvatar'
+import DualCurrencyAmount from '@/components/currency/DualCurrencyAmount'
 import DashboardTablePagination from '@/components/table/DashboardTablePagination'
 import EntityActionsMenu from '@/components/table/EntityActionsMenu'
 import TableEmptyStateRow from '@/components/table/TableEmptyStateRow'
@@ -35,6 +36,7 @@ const chipProps = option => {
 const ProjectTableView = ({ data, loading, statusUpdating, page, rowsPerPage, locale, dictionary, canWrite, canDelete, statusOptions, onPageChange, onRowsPerPageChange, onView, onEdit, onMembers, onDelete, onStatusChange, onAdd }) => {
   const renderActions = project => (
     <EntityActionsMenu
+      locale={locale}
       moreActionsLabel={dictionary.table.actions}
       actions={[
         { label: dictionary.actions.view, icon: 'tabler-eye', onClick: () => onView(project) },
@@ -87,12 +89,12 @@ const ProjectTableView = ({ data, loading, statusUpdating, page, rowsPerPage, lo
           {
             id: 'hours',
             label: dictionary.table.hours,
-            render: project => `${project.actual_hours || 0} / ${project.estimated_hours || 0}h · ${project.progress}%`
+            render: project => `${Number(project.logged_hours || 0).toFixed(2)} / ${Number(project.estimated_hours || 0).toFixed(2)}h · ${project.progress}%`
           },
           {
             id: 'budget',
             label: dictionary.table.budget,
-            render: project => formatCurrency(project.budget, locale, project.currency)
+            render: project => <DualCurrencyAmount amount={project.budget} amountBase={project.amount_base} currency={project.currency} exchangeRate={project.exchange_rate} locale={locale} />
           },
           { id: 'priority', label: dictionary.table.priority, render: project => project.priority.label }
         ]}
@@ -118,8 +120,8 @@ const ProjectTableView = ({ data, loading, statusUpdating, page, rowsPerPage, lo
               <td><Typography variant='body2' className='min-is-[150px] whitespace-nowrap font-medium'>{project.client.company_name}</Typography></td>
               <td><div className='flex min-is-[185px] items-center gap-3'><Tooltip title={project.project_manager?.full_name || dictionary.common.unassigned}><UserAvatar user={project.project_manager || { name: dictionary.common.unassigned }} size={36} /></Tooltip><div><Typography variant='body2' className='max-is-[125px] truncate'>{project.project_manager?.full_name || dictionary.common.unassigned}</Typography>{project.members.length ? <AvatarGroup max={4} className='justify-end'>{project.members.map(member => <Tooltip key={member.id} title={`${member.staff.full_name}${member.role ? ` · ${member.role}` : ''}`}><UserAvatar user={member.staff} size={24} /></Tooltip>)}</AvatarGroup> : <Typography variant='caption' color='text.secondary'>{dictionary.common.noTeam}</Typography>}</div></div></td>
               <td><div className='min-is-[185px]'><Typography variant='body2' className='whitespace-nowrap'>{toDateInputValue(project.start_date)} {' → '} {toDateInputValue(project.end_date)}</Typography>{project.is_overdue ? <Chip size='small' variant='tonal' color='error' label={dictionary.common.overdue} className='mt-1' /> : project.actual_end_date ? <Chip size='small' variant='tonal' color='success' label={dictionary.common.completed} className='mt-1' /> : null}</div></td>
-              <td><div className='min-is-[145px]'><div className='mb-1 flex justify-between gap-3'><Typography variant='caption'>{project.actual_hours || 0} / {project.estimated_hours || 0}h</Typography><Typography variant='caption' color='text.secondary'>{project.progress}%</Typography></div><LinearProgress variant='determinate' value={project.progress} color={project.progress > 100 ? 'error' : 'primary'} className='bs-1.5 rounded' /></div></td>
-              <td className='text-end'><Tooltip title={`${dictionary.detail.baseAmount}: ${formatCurrency(project.amount_base, locale, data.baseCurrency)}`}><div className='min-is-[135px]'><Typography variant='body2' className='whitespace-nowrap font-semibold'>{formatCurrency(project.budget, locale, project.currency)}</Typography><Chip size='small' variant='outlined' label={project.currency} className='mt-1' /></div></Tooltip></td>
+              <td><div className='min-is-[145px]'><div className='mb-1 flex justify-between gap-3'><Typography variant='caption'>{Number(project.logged_hours || 0).toFixed(2)} / {Number(project.estimated_hours || 0).toFixed(2)}h</Typography><Typography variant='caption' color='text.secondary'>{project.progress}%</Typography></div><LinearProgress variant='determinate' value={project.progress} color={project.progress > 100 ? 'error' : 'primary'} className='bs-1.5 rounded' /></div></td>
+              <td className='text-end'><DualCurrencyAmount amount={project.budget} amountBase={project.amount_base} currency={project.currency} exchangeRate={project.exchange_rate} locale={locale} className='min-is-[135px] items-end' /></td>
               <td><div className='flex min-is-[120px] flex-col items-start gap-1'><Chip size='small' variant='tonal' label={project.status.label} {...chipProps(project.status)} /><Chip size='small' variant='outlined' label={project.priority.label} {...chipProps(project.priority)} /></div></td>
               <td className='text-end' onClick={event => event.stopPropagation()}>{renderActions(project)}</td>
             </tr>

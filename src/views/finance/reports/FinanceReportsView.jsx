@@ -8,15 +8,15 @@ import CardContent from '@mui/material/CardContent'
 import MenuItem from '@mui/material/MenuItem'
 import Tab from '@mui/material/Tab'
 import Tabs from '@mui/material/Tabs'
-import ToggleButton from '@mui/material/ToggleButton'
-import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
 import Typography from '@mui/material/Typography'
 import { toast } from 'sonner'
 
 import CustomTextField from '@core/components/mui/TextField'
+import ReportStatsCards from '@/components/reports/ReportStatsCards'
 import DashboardTablePagination from '@/components/table/DashboardTablePagination'
 import TableFiltersPopover from '@/components/table/TableFiltersPopover'
-import { toFiniteNumber } from '@/utils/formatCurrency'
+import LocalizedDateTimePicker from '@/components/inputs/LocalizedDateTimePicker'
+import { formatCurrency, toFiniteNumber } from '@/utils/formatCurrency'
 
 import FinanceReportCharts from './FinanceReportCharts'
 import FinanceReportTable from './FinanceReportTable'
@@ -74,15 +74,14 @@ const rowCategory = (tab, row) => {
 
 const FinanceReportsView = ({ locale, dictionary, setup, generatedAt }) => {
   const initialRange = getPresetRange('this_month')
-  const initialCurrency = ['AFN', 'USD'].includes(setup.currency_code) ? setup.currency_code : 'AFN'
+  const initialCurrency = 'AFN'
   const initialRate = String(toFiniteNumber(setup.usd_afn_exchange_rate) || 65)
   const [reportType, setReportType] = useState('income')
   const [datePreset, setDatePreset] = useState('this_month')
   const [startDate, setStartDate] = useState(initialRange.start)
   const [endDate, setEndDate] = useState(initialRange.end)
   const [displayCurrency, setDisplayCurrency] = useState(initialCurrency)
-  const [rateInput, setRateInput] = useState(initialRate)
-  const [reportRate, setReportRate] = useState(initialRate)
+  const reportRate = initialRate
   const [search, setSearch] = useState('')
   const [category, setCategory] = useState('')
   const [data, setData] = useState(EMPTY_REPORT)
@@ -90,14 +89,6 @@ const FinanceReportsView = ({ locale, dictionary, setup, generatedAt }) => {
   const [page, setPage] = useState(0)
   const [rowsPerPage, setRowsPerPage] = useState(10)
   const requestIdRef = useRef(0)
-
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      if (toFiniteNumber(rateInput) > 0) setReportRate(rateInput)
-    }, 350)
-
-    return () => clearTimeout(timeout)
-  }, [rateInput])
 
   useEffect(() => {
     if (!startDate || !endDate || startDate > endDate || toFiniteNumber(reportRate) <= 0) return undefined
@@ -173,11 +164,51 @@ const FinanceReportsView = ({ locale, dictionary, setup, generatedAt }) => {
   const activeReport = dictionary.tabs[reportType]
   const printDocumentProps = { data: { ...data, rows }, setup, locale, startDate, endDate }
 
+  const stats = useMemo(() => {
+    const summary = data.summary || {}
+    const currency = value => formatCurrency(value, locale, displayCurrency)
+
+    const configurations = {
+      income: [
+        { label: dictionary.kpis.grossIncome, value: currency(summary.gross_income), icon: 'tabler-cash' },
+        { label: dictionary.kpis.totalTransactions, value: summary.transaction_count || 0, icon: 'tabler-receipt' },
+        { label: dictionary.kpis.averageTransaction, value: currency(summary.average_transaction), icon: 'tabler-chart-arrows' },
+        { label: dictionary.kpis.incomeSources, value: summary.source_count || 0, icon: 'tabler-category' }
+      ],
+      expenses: [
+        { label: dictionary.kpis.operationalExpense, value: currency(summary.operational_expense), icon: 'tabler-cash-off' },
+        { label: dictionary.kpis.topExpenseCategory, value: summary.top_expense_category || dictionary.common.notAvailable, icon: 'tabler-chart-pie' },
+        { label: dictionary.kpis.recordedExpenses, value: summary.approved_count || 0, icon: 'tabler-circle-check' },
+        { label: dictionary.kpis.pendingExpenses, value: summary.pending_count || 0, icon: 'tabler-hourglass' }
+      ],
+      salary: [
+        { label: dictionary.kpis.payrollDisbursed, value: currency(summary.payroll_disbursed), icon: 'tabler-cash-banknote' },
+        { label: dictionary.kpis.totalDeductions, value: currency(summary.total_deductions), icon: 'tabler-circle-minus' },
+        { label: dictionary.kpis.activeStaffPaid, value: summary.active_staff_paid || 0, icon: 'tabler-users' },
+        { label: dictionary.kpis.payrollRecords, value: summary.payroll_record_count || 0, icon: 'tabler-file-invoice' }
+      ],
+      inventory: [
+        { label: dictionary.kpis.stockValuation, value: currency(summary.stock_valuation), icon: 'tabler-building-warehouse' },
+        { label: dictionary.kpis.skuCount, value: summary.sku_count || 0, icon: 'tabler-barcode' },
+        { label: dictionary.kpis.lowStockCount, value: summary.low_stock_count || 0, icon: 'tabler-alert-triangle' },
+        { label: dictionary.kpis.totalUnits, value: summary.total_units || 0, icon: 'tabler-packages' }
+      ],
+      loans: [
+        { label: dictionary.kpis.activeLoanBalance, value: currency(summary.active_loan_balance), icon: 'tabler-building-bank' },
+        { label: dictionary.kpis.totalRepaid, value: currency(summary.total_repaid), icon: 'tabler-circle-check' },
+        { label: dictionary.kpis.monthlyRecovery, value: currency(summary.monthly_recovery), icon: 'tabler-calendar-dollar' },
+        { label: dictionary.kpis.totalIssued, value: currency(summary.total_issued), icon: 'tabler-cash' }
+      ]
+    }
+
+    return configurations[reportType]
+  }, [data.summary, dictionary.common.notAvailable, dictionary.kpis, displayCurrency, locale, reportType])
+
   const activeFilterCount =
+    Number(Boolean(search.trim())) +
     Number(datePreset !== 'this_month') +
-    Number(displayCurrency !== initialCurrency) +
-    Number(toFiniteNumber(reportRate) !== toFiniteNumber(initialRate)) +
-    Number(Boolean(category))
+    Number(Boolean(category)) +
+    Number(displayCurrency !== initialCurrency)
 
   const changePreset = preset => {
     setDatePreset(preset)
@@ -354,8 +385,8 @@ const FinanceReportsView = ({ locale, dictionary, setup, generatedAt }) => {
                 <MenuItem value='this_year'>{dictionary.datePresets.thisYear}</MenuItem>
                 <MenuItem value='custom'>{dictionary.datePresets.custom}</MenuItem>
               </CustomTextField>
-              <CustomTextField
-                type='date'
+              <LocalizedDateTimePicker
+                locale={locale}
                 label={dictionary.filters.startDate}
                 value={startDate}
                 onChange={event => {
@@ -365,8 +396,8 @@ const FinanceReportsView = ({ locale, dictionary, setup, generatedAt }) => {
                 }}
                 className='is-full'
               />
-              <CustomTextField
-                type='date'
+              <LocalizedDateTimePicker
+                locale={locale}
                 label={dictionary.filters.endDate}
                 value={endDate}
                 onChange={event => {
@@ -393,34 +424,19 @@ const FinanceReportsView = ({ locale, dictionary, setup, generatedAt }) => {
                   </MenuItem>
                 ))}
               </CustomTextField>
-              <div className='flex flex-col gap-1'>
-                <Typography variant='caption' color='text.secondary'>
-                  {dictionary.filters.currency}
-                </Typography>
-                <ToggleButtonGroup
-                  exclusive
-                  size='small'
-                  value={displayCurrency}
-                  aria-label={dictionary.filters.currency}
-                  onChange={(_, value) => {
-                    if (value) {
-                      setDisplayCurrency(value)
-                      setPage(0)
-                    }
-                  }}
-                >
-                  <ToggleButton value='AFN'>AFN</ToggleButton>
-                  <ToggleButton value='USD'>USD</ToggleButton>
-                </ToggleButtonGroup>
-              </div>
               <CustomTextField
-                type='number'
-                label={dictionary.filters.exchangeRate}
-                value={rateInput}
-                onChange={event => setRateInput(event.target.value)}
+                select
+                label={dictionary.filters.currency}
+                value={displayCurrency}
+                onChange={event => {
+                  setDisplayCurrency(event.target.value)
+                  setPage(0)
+                }}
                 className='is-full'
-                slotProps={{ htmlInput: { min: 0.0001, step: 0.0001 } }}
-              />
+              >
+                <MenuItem value='AFN'>AFN</MenuItem>
+                <MenuItem value='USD'>USD</MenuItem>
+              </CustomTextField>
               {activeFilterCount > 0 && (
                 <Button
                   variant='tonal'
@@ -428,13 +444,12 @@ const FinanceReportsView = ({ locale, dictionary, setup, generatedAt }) => {
                   onClick={() => {
                     const range = getPresetRange('this_month')
 
+                    setSearch('')
                     setDatePreset('this_month')
                     setStartDate(range.start)
                     setEndDate(range.end)
-                    setDisplayCurrency(initialCurrency)
-                    setRateInput(initialRate)
-                    setReportRate(initialRate)
                     setCategory('')
+                    setDisplayCurrency(initialCurrency)
                     setPage(0)
                   }}
                 >
@@ -527,6 +542,8 @@ const FinanceReportsView = ({ locale, dictionary, setup, generatedAt }) => {
           </Typography>
         </div>
       </div>
+
+      <ReportStatsCards items={stats} loading={loading} className='print:hidden' />
 
       <Card className='report-table-card border border-divider/70 shadow-sm'>
         <CardContent className='flex flex-wrap items-center justify-between gap-2'>

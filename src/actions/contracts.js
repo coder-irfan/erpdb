@@ -13,11 +13,12 @@ import { runContractExpirationAuditCore } from '@/libs/contractExpirationAudit'
 import { getContractStatusOptions } from '@/libs/contractStatuses'
 import { getCompanySetupRecord } from '@/libs/companySetup'
 import { getContractTypeOptions } from '@/libs/contractTypes'
+import { compileCustomerContractTemplate } from '@/libs/customerContractTemplate'
 import { prisma } from '@/libs/prisma'
 import { nextSequentialNumber, withSequentialNumberRetry } from '@/libs/sequentialNumbers'
 import { createContractSchema } from '@/schemas/contracts'
 import { calculateContractEndDate, getRemainingDays, toUtcDateOnly } from '@/utils/contractDuration'
-import { convertToBaseCurrency, toFiniteNumber } from '@/utils/formatCurrency'
+import { SYSTEM_BASE_CURRENCY, convertToBaseCurrency, toFiniteNumber } from '@/utils/formatCurrency'
 import { getDictionary } from '@/utils/getDictionary'
 
 const READ_PERMISSIONS = ['contracts:read', 'contracts:write']
@@ -26,10 +27,21 @@ const DELETE_PERMISSIONS = ['contracts:delete']
 const DEFAULT_PAGE_SIZE = 10
 const MAX_PAGE_SIZE = 100
 const DRAFT_VALUES = ['DRAFT', 'PENDING', 'PENDING_APPROVAL', 'PENDING_SIGNATURE']
-const EXTERNAL_CLIENT_EMAIL = 'external-contracts@internal.invalid'
+const CONTRACT_CONTEXTS = ['CUSTOMER', 'FINANCE', 'OTHERS']
 
 const normalizeLocale = locale => (i18n.locales.includes(locale) ? locale : i18n.defaultLocale)
 const normalizeId = value => (typeof value === 'string' ? value.trim() : '')
+
+const normalizeContractContext = value => (CONTRACT_CONTEXTS.includes(value) ? value : null)
+
+const getContextTypeCategories = contractContext => [
+  CONTRACT_TYPE_DOMAINS[contractContext],
+  ...(contractContext === 'CUSTOMER' ? ['CONTRACT_TYPE'] : [])
+]
+
+const getContractScopeWhere = contractContext => ({
+  contract_type: { is: { category: { in: getContextTypeCategories(contractContext) } } }
+})
 
 const getContext = async (payload, permissions) => {
   const locale = normalizeLocale(payload?.locale)
@@ -55,6 +67,7 @@ const getContext = async (payload, permissions) => {
 const contractSelect = {
   id: true,
   client_id: true,
+  vendor_id: true,
   lead_id: true,
   contract_number: true,
   title: true,
@@ -62,6 +75,8 @@ const contractSelect = {
   total_amount: true,
   contract_duration: true,
   contract_type_id: true,
+  template_id: true,
+  content_html: true,
   country_id: true,
   percentage: true,
   currency: true,
@@ -88,8 +103,20 @@ const contractSelect = {
       tax_id: true
     }
   },
+  vendor: {
+    select: {
+      id: true,
+      company_name: true,
+      contact_name: true,
+      email: true,
+      phone: true,
+      address: true,
+      is_active: true
+    }
+  },
   status: { select: { id: true, label: true, value: true, color_code: true, is_active: true } },
-  contract_type: { select: { id: true, label: true, value: true, is_active: true } },
+  contract_type: { select: { id: true, label: true, value: true, category: true, is_active: true } },
+  template: { select: { id: true, label: true, value: true, description: true, is_active: true } },
   country: { select: { id: true, label: true, value: true } },
   level: { select: { id: true, label: true, value: true } },
   account_manager: {
@@ -170,31 +197,57 @@ const getTabWhere = tab => {
 }
 
 const validateRelations = async (values, currentContract = null) => {
-  const targetTypeCategory = CONTRACT_TYPE_DOMAINS[values.target_category] || CONTRACT_TYPE_DOMAINS.CUSTOMER
+  const countryCategory = values.target_category === 'OTHERS' ? 'COUNTRY' : 'CONTRACT_COUNTRY'
 
   const categories = [
     ['duration', values.contract_duration, 'CONTRACT_DURATION', currentContract?.contract_duration],
     ['status', values.status_id, 'CONTRACT_STATUS', currentContract?.status_id],
-    ['country', values.country_id, 'CONTRACT_COUNTRY', currentContract?.country_id],
+    ['country', values.country_id, countryCategory, currentContract?.country_id],
     ['level', values.level_id, 'CONTRACT_LEVEL', currentContract?.level_id]
   ]
 
-  const [client, lead, manager, contractType, setup, ...optionResults] = await Promise.all([
-    values.client_id ? prisma.crmclient.findUnique({ where: { id: values.client_id }, select: { id: true } }) : null,
+  const [client, lead, manager, contractType, template, setup, ...optionResults] = await Promise.all([
+    values.client_id
+      ? prisma.crmclient.findUnique({
+          where: { id: values.client_id },
+          select: {
+            id: true,
+            company_name: true,
+            primary_contact_name: true,
+            email: true,
+            phone: true,
+            address: true,
+            tax_id: true
+          }
+        })
+      : null,
     values.lead_id ? prisma.crmlead.findUnique({ where: { id: values.lead_id }, select: { id: true } }) : null,
     values.account_manager_id
-      ? prisma.hrmstaff.findUnique({ where: { id: values.account_manager_id }, select: { id: true } })
+      ? prisma.hrmstaff.findFirst({
+          where: { id: values.account_manager_id, status: 'ACTIVE' },
+          select: { id: true, first_name: true, last_name: true, email: true, phone: true, position: true }
+        })
       : null,
     prisma.option.findFirst({
       where: {
         id: values.contract_type_id,
         category: {
-          in: [targetTypeCategory, ...(values.target_category === 'CUSTOMER' ? ['CONTRACT_TYPE'] : [])]
+          in: getContextTypeCategories(values.target_category)
         },
         ...(currentContract?.contract_type_id === values.contract_type_id ? {} : { is_active: true })
       },
       select: { id: true, label: true, value: true, description: true, category: true }
     }),
+    values.template_id
+      ? prisma.option.findFirst({
+          where: {
+            id: values.template_id,
+            category: 'CONTRACT_POLICY',
+            ...(currentContract?.template_id === values.template_id ? {} : { is_active: true })
+          },
+          select: { id: true, label: true, value: true, description: true }
+        })
+      : null,
     getCompanySetupRecord(),
     ...categories.map(([, id, category, currentId]) =>
       id
@@ -217,6 +270,7 @@ const validateRelations = async (values, currentContract = null) => {
     lead,
     manager,
     contractType,
+    template,
     setup,
     ...Object.fromEntries(
       categories.map(([key], index) => [key, key === 'status' && !statusIsCanonical ? null : optionResults[index]])
@@ -224,12 +278,19 @@ const validateRelations = async (values, currentContract = null) => {
   }
 }
 
-const validationPayload = payload => ({
-  target_category: payload?.target_category || 'CUSTOMER',
+const validationPayload = (payload, contractContext) => ({
+  target_category: contractContext,
   client_id: payload?.client_id,
+  vendor_id: payload?.vendor_id || '',
+  vendor_name: payload?.vendor_name || '',
+  vendor_contact_name: payload?.vendor_contact_name || '',
+  vendor_contact_email: payload?.vendor_contact_email || '',
+  vendor_phone: payload?.vendor_phone || '',
+  vendor_address: payload?.vendor_address || '',
   lead_id: payload?.lead_id || '',
   title: payload?.title,
   contract_type_id: payload?.contract_type_id,
+  template_id: payload?.template_id || '',
   contract_duration: payload?.contract_duration,
   total_amount: String(payload?.total_amount ?? ''),
   currency: payload?.currency,
@@ -240,14 +301,22 @@ const validationPayload = payload => ({
   country_id: payload?.country_id || '',
   level_id: payload?.level_id || '',
   account_manager_id: payload?.account_manager_id || '',
+  termination_reason: payload?.termination_reason || '',
   auto_renew: Boolean(payload?.auto_renew)
 })
 
 const prepareContractData = async (values, translations, currentContract = null) => {
   const relations = await validateRelations(values, currentContract)
   const isOther = values.target_category === 'OTHERS'
+  const isCustomer = values.target_category === 'CUSTOMER'
 
-  if (!relations.client || !relations.contractType || (!isOther && !relations.duration) || !relations.status) {
+  if (
+    (!isOther && !relations.client) ||
+    !relations.contractType ||
+    (isCustomer && !relations.template) ||
+    (!isOther && !relations.duration) ||
+    !relations.status
+  ) {
     return { success: false, error: translations.validation.invalidOption }
   }
 
@@ -255,6 +324,17 @@ const prepareContractData = async (values, translations, currentContract = null)
 
   if (values.account_manager_id && !relations.manager) {
     return { success: false, error: translations.validation.invalidManager }
+  }
+
+  if (isOther && (!values.account_manager_id || !relations.manager)) {
+    return { success: false, error: translations.validation.invalidManager }
+  }
+
+  if (
+    isOther &&
+    (!values.vendor_name || !values.vendor_contact_name || !values.vendor_contact_email || !values.country_id)
+  ) {
+    return { success: false, error: translations.validation.required }
   }
 
   if ((values.country_id && !relations.country) || (values.level_id && !relations.level)) {
@@ -272,19 +352,21 @@ const prepareContractData = async (values, translations, currentContract = null)
   if (amount <= 0) return { success: false, error: translations.validation.amountInvalid }
   if (exchangeRate <= 0) return { success: false, error: translations.validation.exchangeRateInvalid }
 
-  const baseCurrency = relations.setup.currency_code || 'AFN'
+  const baseCurrency = SYSTEM_BASE_CURRENCY
   const amountBase = convertToBaseCurrency(amount, values.currency, exchangeRate, baseCurrency)
 
   return {
     success: true,
     data: {
-      client_id: values.client_id,
+      client_id: isOther ? null : values.client_id,
+      vendor_id: isOther ? values.vendor_id || null : null,
       lead_id: values.lead_id || null,
       title: values.title,
       status_id: values.status_id,
       total_amount: new Prisma.Decimal(amount),
       contract_duration: values.contract_duration || null,
       contract_type_id: values.contract_type_id,
+      template_id: isCustomer ? values.template_id : null,
       country_id: values.country_id || null,
       level_id: values.level_id || null,
       currency: values.currency,
@@ -294,27 +376,66 @@ const prepareContractData = async (values, translations, currentContract = null)
       end_date: endDate,
       auto_renew: values.auto_renew,
       account_manager_id: values.account_manager_id || null,
-      renewal_status: relations.status.value === 'EXPIRED' ? 'EXPIRED' : currentContract?.renewal_status || 'ACTIVE'
-    }
+      renewal_status:
+        relations.status.value === 'ACTIVE'
+          ? 'ACTIVE'
+          : relations.status.value === 'EXPIRED'
+            ? 'EXPIRED'
+            : relations.status.value === 'TERMINATED'
+              ? 'TERMINATED'
+              : 'NOT_APPLICABLE'
+    },
+    relations,
+    statusValue: relations.status.value
   }
 }
 
+const compileCustomerContent = (prepared, contractNumber) => {
+  const manager = prepared.relations.manager
+    ? {
+        ...prepared.relations.manager,
+        full_name: `${prepared.relations.manager.first_name} ${prepared.relations.manager.last_name}`.trim()
+      }
+    : null
+
+  return compileCustomerContractTemplate({
+    template: prepared.relations.template.description,
+    contract: prepared.data,
+    client: prepared.relations.client,
+    accountManager: manager,
+    setup: prepared.relations.setup,
+    contractNumber,
+    contractType: prepared.relations.contractType,
+    durationLabel: prepared.relations.duration?.label
+  })
+}
+
+const validateActiveEndDate = (statusValue, endDate) =>
+  statusValue !== 'ACTIVE' || endDate > toUtcDateOnly(new Date())
+
 const revalidateContracts = () => {
   revalidatePath('/[lang]/contracts', 'page')
+  revalidatePath('/[lang]/contracts/finance', 'page')
   revalidatePath('/[lang]/contracts/others', 'page')
   revalidatePath('/[lang]/crm/clients', 'page')
 }
 
-const getExternalContractClient = () =>
-  prisma.crmclient.upsert({
-    where: { email: EXTERNAL_CLIENT_EMAIL },
-    update: {},
+const upsertContractVendor = (transaction, values) =>
+  transaction.contractvendor.upsert({
+    where: { email: values.vendor_contact_email.toLowerCase() },
+    update: {
+      company_name: values.vendor_name,
+      contact_name: values.vendor_contact_name,
+      phone: values.vendor_phone || null,
+      address: values.vendor_address || null,
+      is_active: true
+    },
     create: {
-      company_name: 'External Contract Parties',
-      primary_contact_name: 'Contract Administration',
-      email: EXTERNAL_CLIENT_EMAIL,
-      status: 'ACTIVE',
-      notes: 'System-managed relationship holder for non-customer contracts.'
+      company_name: values.vendor_name,
+      contact_name: values.vendor_contact_name,
+      email: values.vendor_contact_email.toLowerCase(),
+      phone: values.vendor_phone || null,
+      address: values.vendor_address || null
     },
     select: { id: true }
   })
@@ -333,7 +454,7 @@ export const getContracts = async (payload = {}) => {
 
   const search = typeof payload.search === 'string' ? payload.search.trim() : ''
   const statusFilter = typeof payload.statusFilter === 'string' ? payload.statusFilter : 'ALL'
-  const scope = payload.scope === 'OTHERS' ? 'OTHERS' : 'ALL'
+  const scope = normalizeContractContext(payload.scope) || 'CUSTOMER'
   const serviceTypeId = normalizeId(payload.serviceTypeId)
   const clientId = normalizeId(payload.clientId)
   const fromDate = payload.fromDate ? toUtcDateOnly(payload.fromDate) : null
@@ -347,7 +468,7 @@ export const getContracts = async (payload = {}) => {
 
   const statusWhere = getTabWhere(statusFilter)
 
-  const scopeWhere = scope === 'OTHERS' ? { contract_type: { is: { category: CONTRACT_TYPE_DOMAINS.OTHERS } } } : {}
+  const scopeWhere = getContractScopeWhere(scope)
 
   const where = {
     AND: [
@@ -363,7 +484,10 @@ export const getContracts = async (payload = {}) => {
             OR: [
               { contract_number: { contains: search } },
               { title: { contains: search } },
-              { client: { is: { company_name: { contains: search } } } }
+              { client: { is: { company_name: { contains: search } } } },
+              { vendor: { is: { company_name: { contains: search } } } },
+              { vendor: { is: { contact_name: { contains: search } } } },
+              { vendor: { is: { email: { contains: search } } } }
             ]
           }
         : {}
@@ -405,7 +529,7 @@ export const getContracts = async (payload = {}) => {
         totalCount,
         page,
         totalPages: Math.max(1, Math.ceil(totalCount / limit)),
-        baseCurrency: setup?.currency_code || 'AFN',
+        baseCurrency: SYSTEM_BASE_CURRENCY,
         statuses,
         summary: {
           activeCount: active._count._all,
@@ -430,10 +554,16 @@ export const getContractFormOptions = async (payload = {}) => {
   if (!context.authorized) return { success: false, code: context.code, error: context.error }
 
   try {
-    const [clients, leads, invoices, staff, options, contractTypes, templates, statuses, setup] = await Promise.all([
+    const [clients, vendors, leads, invoices, staff, options, contractTypes, templates, clauses, statuses, setup] = await Promise.all([
       prisma.crmclient.findMany({
-        where: { status: 'ACTIVE', email: { not: EXTERNAL_CLIENT_EMAIL } },
+        where: { status: 'ACTIVE', NOT: { email: { endsWith: '.invalid' } } },
         select: { id: true, company_name: true, primary_contact_name: true, email: true },
+        orderBy: { company_name: 'asc' },
+        take: 500
+      }),
+      prisma.contractvendor.findMany({
+        where: { is_active: true },
+        select: { id: true, company_name: true, contact_name: true, email: true, phone: true, address: true },
         orderBy: { company_name: 'asc' },
         take: 500
       }),
@@ -448,13 +578,13 @@ export const getContractFormOptions = async (payload = {}) => {
         take: 500
       }),
       prisma.hrmstaff.findMany({
-        where: { status: { not: 'TERMINATED' } },
+        where: { status: 'ACTIVE' },
         select: { id: true, first_name: true, last_name: true, position: true, email: true },
         orderBy: [{ first_name: 'asc' }, { last_name: 'asc' }]
       }),
       prisma.option.findMany({
         where: {
-          category: { in: ['CONTRACT_TYPE', 'CONTRACT_DURATION', 'CONTRACT_COUNTRY', 'CONTRACT_LEVEL'] },
+          category: { in: ['CONTRACT_TYPE', 'CONTRACT_DURATION', 'CONTRACT_COUNTRY', 'COUNTRY', 'CONTRACT_LEVEL'] },
           is_active: true
         },
         select: {
@@ -474,6 +604,11 @@ export const getContractFormOptions = async (payload = {}) => {
         select: { id: true, label: true, value: true, description: true },
         orderBy: [{ sort_order: 'asc' }, { label: 'asc' }]
       }),
+      prisma.option.findMany({
+        where: { category: 'CONTRACT_CLAUSE', is_active: true },
+        select: { id: true, label: true, value: true, description: true, is_default: true, sort_order: true },
+        orderBy: [{ sort_order: 'asc' }, { label: 'asc' }]
+      }),
       getContractStatusOptions(),
       getCompanySetupRecord()
     ])
@@ -482,6 +617,7 @@ export const getContractFormOptions = async (payload = {}) => {
       success: true,
       data: {
         clients,
+        vendors,
         leads,
         invoices: invoices.map(invoice => ({
           ...invoice,
@@ -490,7 +626,7 @@ export const getContractFormOptions = async (payload = {}) => {
         })),
         staff: staff.map(person => ({ ...person, full_name: `${person.first_name} ${person.last_name}`.trim() })),
         options: Object.fromEntries(
-          ['CONTRACT_TYPE', 'CONTRACT_DURATION', 'CONTRACT_COUNTRY', 'CONTRACT_LEVEL']
+          ['CONTRACT_TYPE', 'CONTRACT_DURATION', 'CONTRACT_COUNTRY', 'COUNTRY', 'CONTRACT_LEVEL']
             .map(category => [category, options.filter(option => option.category === category)])
             .concat([
               ['CONTRACT_STATUS', statuses],
@@ -502,7 +638,8 @@ export const getContractFormOptions = async (payload = {}) => {
             ])
         ),
         templates,
-        baseCurrency: setup.currency_code || 'AFN',
+        clauses,
+        baseCurrency: SYSTEM_BASE_CURRENCY,
         exchangeRate: setup.usd_afn_exchange_rate || '65.0000'
       }
     }
@@ -551,26 +688,36 @@ export const getContractDetail = async (id, payload = {}) => {
   }
 }
 
-export const createContract = async (payload = {}) => {
+export const createContract = async (payload = {}, moduleContext = 'CUSTOMER') => {
   const context = await getContext(payload, WRITE_PERMISSIONS)
 
   if (!context.authorized) return { success: false, code: context.code, error: context.error }
+  const contractContext = normalizeContractContext(moduleContext)
 
-  const validation = safeParse(createContractSchema(context.translations.validation), validationPayload(payload))
+  if (!contractContext) {
+    return { success: false, code: 'INVALID_CONTRACT_CONTEXT', error: context.translations.validation.invalidOption }
+  }
+
+  const validation = safeParse(
+    createContractSchema(context.translations.validation),
+    validationPayload(payload, contractContext)
+  )
 
   if (!validation.success) {
     return { success: false, code: 'VALIDATION_ERROR', error: validation.issues[0]?.message }
   }
 
-  if (validation.output.target_category === 'OTHERS') {
-    const externalClient = await getExternalContractClient()
-
-    validation.output.client_id = externalClient.id
-  }
-
   const prepared = await prepareContractData(validation.output, context.translations)
 
   if (!prepared.success) return { success: false, code: 'VALIDATION_ERROR', error: prepared.error }
+
+  if (!validateActiveEndDate(prepared.statusValue, prepared.data.end_date)) {
+    return {
+      success: false,
+      code: 'ACTIVE_END_DATE_REQUIRED',
+      error: context.translations.validation.activeEndDateRequired
+    }
+  }
 
   try {
     const contract = await withSequentialNumberRetry(() => prisma.$transaction(async transaction => {
@@ -579,14 +726,33 @@ export const createContract = async (payload = {}) => {
         digits: 4
       })
 
-      const created = await transaction.contract.create({ data: { ...prepared.data, contract_number: contractNumber } })
+      const vendor =
+        validation.output.target_category === 'OTHERS'
+          ? await upsertContractVendor(transaction, validation.output)
+          : null
+
+      const contractData = {
+        ...prepared.data,
+        vendor_id: vendor?.id || null,
+        ...(validation.output.target_category === 'CUSTOMER'
+          ? { content_html: compileCustomerContent(prepared, contractNumber) }
+          : {})
+      }
+
+      const created = await transaction.contract.create({ data: { ...contractData, contract_number: contractNumber } })
 
       await transaction.auditlog.create({
         data: {
           user_id: context.session.user.id,
           action: 'CONTRACT_CREATED',
           module: 'CONTRACTS',
-          details: { contractId: created.id, contractNumber, clientId: created.client_id }
+          details: {
+            contractId: created.id,
+            contractNumber,
+            clientId: created.client_id,
+            vendorId: created.vendor_id,
+            internalOwnerId: created.account_manager_id
+          }
         }
       })
 
@@ -604,18 +770,22 @@ export const createContract = async (payload = {}) => {
   }
 }
 
-export const updateContract = async (id, payload = {}) => {
+export const updateContract = async (id, payload = {}, moduleContext = 'CUSTOMER') => {
   const context = await getContext(payload, WRITE_PERMISSIONS)
 
   if (!context.authorized) return { success: false, code: context.code, error: context.error }
   const contractId = normalizeId(id)
-  const validation = safeParse(createContractSchema(context.translations.validation), validationPayload(payload))
+  const contractContext = normalizeContractContext(moduleContext)
 
-  if (!contractId || !validation.success) {
+  const validation = contractContext
+    ? safeParse(createContractSchema(context.translations.validation), validationPayload(payload, contractContext))
+    : null
+
+  if (!contractId || !validation?.success) {
     return {
       success: false,
       code: 'VALIDATION_ERROR',
-      error: validation.issues?.[0]?.message || context.translations.messages.notFound
+      error: validation?.issues?.[0]?.message || context.translations.validation.invalidOption
     }
   }
 
@@ -624,24 +794,82 @@ export const updateContract = async (id, payload = {}) => {
 
     if (!current) return { success: false, code: 'NOT_FOUND', error: context.translations.messages.notFound }
 
-    if (validation.output.target_category === 'OTHERS') {
-      const externalClient = await getExternalContractClient()
-
-      validation.output.client_id = externalClient.id
+    if (!getContextTypeCategories(contractContext).includes(current.contract_type.category)) {
+      return { success: false, code: 'CONTRACT_CONTEXT_MISMATCH', error: context.translations.validation.invalidOption }
     }
 
     const prepared = await prepareContractData(validation.output, context.translations, current)
 
     if (!prepared.success) return { success: false, code: 'VALIDATION_ERROR', error: prepared.error }
 
+    if (!validateActiveEndDate(prepared.statusValue, prepared.data.end_date)) {
+      return {
+        success: false,
+        code: 'ACTIVE_END_DATE_REQUIRED',
+        error: context.translations.validation.activeEndDateRequired
+      }
+    }
+
+    const isTermination = current.status.value !== 'TERMINATED' && prepared.statusValue === 'TERMINATED'
+    const isActivation = current.status.value !== 'ACTIVE' && prepared.statusValue === 'ACTIVE'
+    const terminationReason = validation.output.termination_reason.trim()
+
+    if (isTermination && !terminationReason) {
+      return {
+        success: false,
+        code: 'TERMINATION_REASON_REQUIRED',
+        error: context.translations.validation.terminationReasonRequired
+      }
+    }
+
+    const contractData = {
+      ...prepared.data,
+      renewal_status:
+        prepared.statusValue === 'TERMINATED'
+          ? 'TERMINATED'
+          : prepared.statusValue === 'EXPIRED'
+            ? 'EXPIRED'
+            : prepared.statusValue === 'ACTIVE'
+              ? 'ACTIVE'
+              : 'NOT_APPLICABLE',
+      ...(validation.output.target_category === 'CUSTOMER'
+        ? { content_html: compileCustomerContent(prepared, current.contract_number) }
+        : {})
+    }
+
     await prisma.$transaction(async transaction => {
-      await transaction.contract.update({ where: { id: contractId }, data: prepared.data })
+      const vendor =
+        validation.output.target_category === 'OTHERS'
+          ? await upsertContractVendor(transaction, validation.output)
+          : null
+
+      await transaction.contract.update({
+        where: { id: contractId },
+        data: { ...contractData, vendor_id: vendor?.id || null }
+      })
       await transaction.auditlog.create({
         data: {
           user_id: context.session.user.id,
-          action: 'CONTRACT_UPDATED',
+          action: isTermination ? 'CONTRACT_TERMINATED' : 'CONTRACT_UPDATED',
           module: 'CONTRACTS',
-          details: { contractId, contractNumber: current.contract_number }
+          details: {
+            contractId,
+            contractNumber: current.contract_number,
+            fromStatus: current.status.value,
+            toStatus: prepared.statusValue,
+            vendorId: vendor?.id || null,
+            internalOwnerId: prepared.data.account_manager_id,
+            ...(isTermination
+              ? { reason: terminationReason, billingFrozen: true, terminatedAt: new Date().toISOString() }
+              : {}),
+            ...(isActivation
+              ? {
+                  countdownStartedAt: new Date().toISOString(),
+                  renewalNotificationsScheduled: true,
+                  autoRenew: validation.output.auto_renew
+                }
+              : {})
+          }
         }
       })
     })
@@ -667,7 +895,17 @@ export const updateContractStatus = async (id, statusId, payload = {}) => {
 
   try {
     const [contract, status] = await Promise.all([
-      prisma.contract.findUnique({ where: { id: contractId }, select: { id: true, contract_number: true } }),
+      prisma.contract.findUnique({
+        where: { id: contractId },
+        select: {
+          id: true,
+          contract_number: true,
+          end_date: true,
+          auto_renew: true,
+          status_id: true,
+          status: { select: { value: true } }
+        }
+      }),
       prisma.option.findFirst({
         where: {
           id: normalizedStatusId,
@@ -683,17 +921,67 @@ export const updateContractStatus = async (id, statusId, payload = {}) => {
     if (!status)
       return { success: false, code: 'VALIDATION_ERROR', error: context.translations.validation.invalidOption }
 
+    if (contract.status_id === status.id) {
+      return { success: true, message: context.translations.messages.statusUpdated }
+    }
+
+    if (!validateActiveEndDate(status.value, contract.end_date)) {
+      return {
+        success: false,
+        code: 'ACTIVE_END_DATE_REQUIRED',
+        error: context.translations.validation.activeEndDateRequired
+      }
+    }
+
+    const isTermination = contract.status.value !== 'TERMINATED' && status.value === 'TERMINATED'
+    const terminationReason = typeof payload.reason === 'string' ? payload.reason.trim() : ''
+
+    if (isTermination && !terminationReason) {
+      return {
+        success: false,
+        code: 'TERMINATION_REASON_REQUIRED',
+        error: context.translations.validation.terminationReasonRequired
+      }
+    }
+
+    const isActivation = contract.status.value !== 'ACTIVE' && status.value === 'ACTIVE'
+
     await prisma.$transaction(async transaction => {
       await transaction.contract.update({
         where: { id: contractId },
-        data: { status_id: status.id, ...(status.value === 'EXPIRED' ? { renewal_status: 'EXPIRED' } : {}) }
+        data: {
+          status_id: status.id,
+          renewal_status:
+            status.value === 'EXPIRED'
+              ? 'EXPIRED'
+              : status.value === 'TERMINATED'
+                ? 'TERMINATED'
+                : status.value === 'ACTIVE'
+                  ? 'ACTIVE'
+                  : 'NOT_APPLICABLE'
+        }
       })
       await transaction.auditlog.create({
         data: {
           user_id: context.session.user.id,
-          action: 'CONTRACT_STATUS_UPDATED',
+          action: isTermination ? 'CONTRACT_TERMINATED' : 'CONTRACT_STATUS_UPDATED',
           module: 'CONTRACTS',
-          details: { contractId, contractNumber: contract.contract_number, status: status.value }
+          details: {
+            contractId,
+            contractNumber: contract.contract_number,
+            fromStatus: contract.status.value,
+            toStatus: status.value,
+            ...(isTermination
+              ? { reason: terminationReason, billingFrozen: true, terminatedAt: new Date().toISOString() }
+              : {}),
+            ...(isActivation
+              ? {
+                  countdownStartedAt: new Date().toISOString(),
+                  renewalNotificationsScheduled: true,
+                  autoRenew: contract.auto_renew
+                }
+              : {})
+          }
         }
       })
     })

@@ -23,7 +23,7 @@ export const syncInvoiceSettlement = async (transaction, invoiceId) => {
   const [invoice, aggregate] = await Promise.all([
     transaction.contractinvoice.findUnique({
       where: { id: invoiceId },
-      select: { id: true, amount: true }
+      select: { id: true, amount: true, status: { select: { value: true } } }
     }),
     transaction.financeincome.aggregate({
       where: { invoice_id: invoiceId },
@@ -43,6 +43,22 @@ export const syncInvoiceSettlement = async (transaction, invoiceId) => {
   const normalizedPaid = Math.min(invoiceAmount, Math.max(0, paidAmount))
   const remainingBalance = roundMoney(Math.max(0, invoiceAmount - normalizedPaid))
   const statusValue = getSettlementStatus(normalizedPaid, invoiceAmount)
+
+  if (invoice.status.value === 'CANCELLED') {
+    return transaction.contractinvoice.update({
+      where: { id: invoiceId },
+      data: {
+        paid_amount: new Prisma.Decimal(normalizedPaid),
+        remaining_balance: new Prisma.Decimal(0)
+      },
+      select: {
+        id: true,
+        paid_amount: true,
+        remaining_balance: true,
+        status: { select: { id: true, label: true, value: true } }
+      }
+    })
+  }
 
   const status = await transaction.option.findUnique({
     where: { category_value: { category: 'INVOICE_STATUS', value: statusValue } },

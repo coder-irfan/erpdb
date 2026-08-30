@@ -14,13 +14,16 @@ export const createTaskSchema = customMessages => {
     status_id: pipe(string(messages.required), trim(), nonEmpty(messages.required)),
     priority_id: pipe(string(messages.required), trim(), nonEmpty(messages.required)),
     estimated_hours: optional(pipe(string(messages.numberInvalid), trim(), regex(NUMBER_PATTERN, messages.numberInvalid)), '0'),
-    actual_hours: optional(pipe(string(messages.numberInvalid), trim(), regex(NUMBER_PATTERN, messages.numberInvalid)), '0'),
     due_date: optional(pipe(string(messages.dateInvalid), trim(), regex(OPTIONAL_DATE_PATTERN, messages.dateInvalid)), '')
   })
 }
 
 export const logTaskHoursSchema = customMessages => {
-  const messages = { positiveInvalid: 'Enter a number greater than zero.', ...customMessages }
+  const messages = { positiveInvalid: 'Enter a number greater than zero.', dateInvalid: 'Enter a valid date.', notesTooLong: 'Notes must not exceed 2,000 characters.', ...customMessages }
 
-  return object({ hours: pipe(string(messages.positiveInvalid), trim(), regex(/^(?:0*[1-9]\d*|0*\.\d*[1-9]\d*)$/, messages.positiveInvalid)) })
+  return object({
+    hours: pipe(string(messages.positiveInvalid), trim(), regex(/^(?:0*[1-9]\d*|0*\.\d*[1-9]\d*)$/, messages.positiveInvalid)),
+    work_date: pipe(string(messages.dateInvalid), trim(), regex(/^\d{4}-\d{2}-\d{2}$/, messages.dateInvalid)),
+    notes: optional(pipe(string(), trim(), maxLength(2000, messages.notesTooLong)), '')
+  })
 }

@@ -1,4 +1,4 @@
-import { maxLength, nonEmpty, object, optional, pipe, regex, string, trim } from 'valibot'
+import { boolean, maxLength, nonEmpty, object, optional, pipe, regex, string, trim } from 'valibot'
 
 export const LEAVE_DECISIONS = ['APPROVED', 'REJECTED']
 export const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/
@@ -21,6 +21,7 @@ export const createLeaveSchema = customMessages => {
     end_date: pipe(string(messages.dateInvalid), trim(), regex(DATE_PATTERN, messages.dateInvalid)),
     total_days: optional(pipe(string(messages.daysInvalid), trim(), regex(LEAVE_DAYS_PATTERN, messages.daysInvalid)), ''),
     status_id: optional(pipe(string(), trim()), ''),
+    is_paid: optional(boolean(), true),
     reason: optional(pipe(string(), trim(), maxLength(2000, messages.reasonTooLong)), '')
   })
 }

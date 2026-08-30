@@ -15,6 +15,7 @@ import { toast } from 'sonner'
 import CustomTextField from '@core/components/mui/TextField'
 import QuickContact from '@/components/common/QuickContact'
 import UserAvatar from '@/components/common/UserAvatar'
+import DualCurrencyAmount from '@/components/currency/DualCurrencyAmount'
 import DashboardTablePagination from '@/components/table/DashboardTablePagination'
 import EntityActionsMenu from '@/components/table/EntityActionsMenu'
 import TableFiltersPopover from '@/components/table/TableFiltersPopover'
@@ -223,7 +224,7 @@ const StaffListTable = ({
       }),
       columnHelper.accessor('salary', {
         header: dictionary.table.salary,
-        cell: info => formatCurrency(info.getValue(), locale, info.row.original.salary_currency || baseCurrency)
+        cell: info => <DualCurrencyAmount amount={info.getValue()} amountBase={info.row.original.amount_base} currency={info.row.original.salary_currency || baseCurrency} exchangeRate={info.row.original.salary_exchange_rate} locale={locale} />
       }),
       columnHelper.accessor('status', {
         header: dictionary.table.status,
@@ -244,6 +245,7 @@ const StaffListTable = ({
 
           return (
             <EntityActionsMenu
+              locale={locale}
               actions={[
                 { label: dictionary.actions.view, icon: 'tabler-eye', onClick: () => setDetailStaffId(employee.id) },
                 canUpdate && {
@@ -299,7 +301,7 @@ const StaffListTable = ({
               slotProps={{ input: { startAdornment: <i className='tabler-search text-textSecondary' /> } }}
             />
             <div className='grid is-full grid-cols-2 gap-2 sm:flex sm:is-auto sm:flex-wrap sm:gap-3 sm:justify-end'>
-              <TableFiltersPopover activeCount={Number(Boolean(status)) + Number(Boolean(position))} locale={locale}>
+              <TableFiltersPopover activeCount={Number(Boolean(searchInput.trim())) + Number(Boolean(status)) + Number(Boolean(position))} locale={locale} onReset={() => { setSearchInput(''); setSearch(''); setStatus(''); setPosition(''); setPage(0) }}>
                 <CustomTextField
                   select
                   value={status}

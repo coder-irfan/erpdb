@@ -15,9 +15,12 @@ const Detail = ({ label, value, className = '' }) => (
   </div>
 )
 
-const TermsRow = ({ children, shaded = false }) => <tr className={shaded ? 'bg-gray-50' : 'bg-white'}>{children}</tr>
-const TermsLabel = ({ children }) => <th className='w-1/4 border border-gray-200 px-3 py-2.5 text-start text-[10px] font-semibold uppercase tracking-wide text-gray-500'>{children}</th>
-const TermsValue = ({ children, colSpan }) => <td colSpan={colSpan} className='border border-gray-200 px-3 py-2.5 text-xs font-semibold text-gray-800'>{children}</td>
+const Term = ({ label, value }) => (
+  <div className='min-w-0 rounded border border-gray-200 bg-white px-3 py-2.5'>
+    <div className='text-[9px] font-semibold uppercase tracking-wide text-gray-500'>{label}</div>
+    <div className='mt-1 break-words text-xs font-semibold text-gray-800'>{value || '—'}</div>
+  </div>
+)
 
 const StaffContractPrintDocument = ({ contract, setup, locale, dictionary }) => {
   const print = dictionary.print
@@ -63,18 +66,17 @@ const StaffContractPrintDocument = ({ contract, setup, locale, dictionary }) => 
 
       <section>
         <SectionHeader>{print.terms}</SectionHeader>
-        <table className='w-full border-collapse'>
-          <tbody>
-            <TermsRow><TermsLabel>{dictionary.fields.contractType}</TermsLabel><TermsValue>{contract.contract_type.label}</TermsValue><TermsLabel>{dictionary.fields.status}</TermsLabel><TermsValue>{dictionary.status[contract.status.value] || contract.status.label}</TermsValue></TermsRow>
-            {isAfnSalary ? (
-              <TermsRow shaded><TermsLabel>{dictionary.fields.baseSalary}</TermsLabel><TermsValue colSpan={3}>{salary}</TermsValue></TermsRow>
-            ) : (
-              <TermsRow shaded><TermsLabel>{dictionary.fields.baseSalary}</TermsLabel><TermsValue>{salary}</TermsValue><TermsLabel>{print.exchangeRate}</TermsLabel><TermsValue>{contract.exchange_rate}</TermsValue></TermsRow>
-            )}
-            <TermsRow><TermsLabel>{dictionary.fields.startDate}</TermsLabel><TermsValue>{formatDate(contract.start_date, locale)}</TermsValue><TermsLabel>{dictionary.fields.endDate}</TermsLabel><TermsValue>{formatDate(contract.end_date, locale)}</TermsValue></TermsRow>
-            {!isAfnSalary && <TermsRow shaded><TermsLabel>{print.baseCurrencyValue}</TermsLabel><TermsValue colSpan={3}>{formatCurrency(contract.amount_base, locale, setup.currency_code || 'AFN')}</TermsValue></TermsRow>}
-          </tbody>
-        </table>
+        <div className='grid grid-cols-2 gap-2 rounded bg-gray-50 p-2 sm:grid-cols-4'>
+          <Term label={dictionary.fields.contractType} value={contract.contract_type.label} />
+          <Term label={dictionary.fields.status} value={dictionary.status[contract.status.value] || contract.status.label} />
+          <Term label={dictionary.fields.currency} value={currency} />
+          <Term label={dictionary.fields.duration || 'Duration'} value={contract.duration_label} />
+          <Term label={dictionary.fields.baseSalary} value={salary} />
+          <Term label={print.exchangeRate} value={isAfnSalary ? '1.0000' : contract.exchange_rate} />
+          <Term label={print.baseCurrencyValue} value={formatCurrency(contract.amount_base, locale, setup.currency_code || 'AFN')} />
+          <Term label={dictionary.fields.startDate} value={formatDate(contract.start_date, locale)} />
+          <Term label={dictionary.fields.endDate} value={formatDate(contract.end_date, locale)} />
+        </div>
       </section>
 
       <section>
@@ -83,6 +85,11 @@ const StaffContractPrintDocument = ({ contract, setup, locale, dictionary }) => 
           className='enterprise-legal-content print-document-body rounded border border-gray-200 bg-white px-4 py-3 text-justify text-xs leading-relaxed text-gray-800'
           dangerouslySetInnerHTML={{ __html: contract.content_html || `<p>${dictionary.details.noContent}</p>` }}
         />
+        <div className='mt-3 grid gap-2 rounded border border-gray-200 bg-gray-50 p-4 text-xs leading-relaxed text-gray-800'>
+          <p><strong>Probation:</strong> The first {contract.probation_days || 90} days constitute the probation period, subject to applicable employment law and documented performance review.</p>
+          <p><strong>Termination and resignation notice:</strong> Either party must provide at least {contract.notice_period_days || 30} days written notice, except where immediate termination is permitted by law.</p>
+          <p><strong>Final settlement:</strong> On termination, earned salary, approved benefits, recoverable advances, and any lawful severance must be reconciled before final clearance.</p>
+        </div>
       </section>
     </div>
   )

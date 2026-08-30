@@ -1,12 +1,14 @@
 'use client'
 
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 import Button from '@mui/material/Button'
 import Divider from '@mui/material/Divider'
 import Drawer from '@mui/material/Drawer'
 import IconButton from '@mui/material/IconButton'
+import FormControlLabel from '@mui/material/FormControlLabel'
 import MenuItem from '@mui/material/MenuItem'
+import Switch from '@mui/material/Switch'
 import Typography from '@mui/material/Typography'
 import { valibotResolver } from '@hookform/resolvers/valibot'
 import { Controller, useForm } from 'react-hook-form'
@@ -14,8 +16,9 @@ import { toast } from 'sonner'
 
 import CustomTextField from '@core/components/mui/TextField'
 import LoadingButtonContent from '@/components/LoadingButtonContent'
+import LocalizedDateTimePicker from '@/components/inputs/LocalizedDateTimePicker'
 import { createLeaveSchema } from '@/schemas/hrm/leaves'
-import { calculateLeaveDays, getKabulToday } from '@/utils/leaveDates'
+import { calculateLeaveWorkingDays, getKabulToday } from '@/utils/leaveDates'
 
 const today = () => getKabulToday()
 
@@ -31,10 +34,12 @@ const getDefaults = (leave, currentStaffId, statuses = []) => ({
   start_date: leave?.start_date || today(),
   end_date: leave?.end_date || today(),
   reason: leave?.reason || '',
+  is_paid: leave?.is_paid ?? true,
   status_id: leave?.status_id || statuses.find(status => status.value === 'PENDING')?.id || ''
 })
 
 const StaffLeaveDrawer = ({ open, leave, options, currentStaffId, canManage, locale, dictionary, onClose, onSaved }) => {
+  const [balance, setBalance] = useState(null)
   const staffOptions = useMemo(() => withCurrentOption(options.staff, leave?.staff), [leave?.staff, options.staff])
   const leaveTypes = useMemo(() => withCurrentOption(options.leaveTypes, leave?.leave_type), [leave?.leave_type, options.leaveTypes])
 
@@ -43,6 +48,7 @@ const StaffLeaveDrawer = ({ open, leave, options, currentStaffId, canManage, loc
     register,
     handleSubmit,
     reset,
+    setValue,
     watch,
     formState: { errors, isSubmitting }
   } = useForm({
@@ -56,7 +62,31 @@ const StaffLeaveDrawer = ({ open, leave, options, currentStaffId, canManage, loc
 
   const startDate = watch('start_date')
   const endDate = watch('end_date')
-  const calculatedDays = startDate && endDate ? calculateLeaveDays(startDate, endDate) : 0
+  const staffId = watch('staff_id')
+  const leaveTypeId = watch('leave_type_id')
+  const calculatedDays = startDate && endDate ? calculateLeaveWorkingDays(startDate, endDate, options.holidays || []) : 0
+
+  useEffect(() => {
+    if (!open || !staffId || !leaveTypeId || !startDate) {
+      setBalance(null)
+
+      return
+    }
+
+    const controller = new AbortController()
+    const params = new URLSearchParams({ staff_id: staffId, leave_type_id: leaveTypeId, year: startDate.slice(0, 4) })
+
+    if (leave?.id) params.set('exclude_leave_id', leave.id)
+
+    fetch(`/api/hrm/leaves/balance?${params}`, { cache: 'no-store', signal: controller.signal })
+      .then(response => response.json())
+      .then(result => setBalance(result.success ? result.data : null))
+      .catch(error => {
+        if (error.name !== 'AbortError') setBalance(null)
+      })
+
+    return () => controller.abort()
+  }, [leave?.id, leaveTypeId, open, staffId, startDate])
 
   const submit = async values => {
     if (calculatedDays < 1) return
@@ -115,20 +145,49 @@ const StaffLeaveDrawer = ({ open, leave, options, currentStaffId, canManage, loc
           name='leave_type_id'
           control={control}
           render={({ field }) => (
-            <CustomTextField {...field} select fullWidth required label={dictionary.fields.leaveType} value={field.value || ''} disabled={isSubmitting} error={Boolean(errors.leave_type_id)} helperText={errors.leave_type_id?.message}>
+            <CustomTextField {...field} onChange={event => {
+              field.onChange(event)
+              const selected = leaveTypes.find(type => type.id === event.target.value)
+
+              if (selected) setValue('is_paid', selected.is_paid_leave)
+            }} select fullWidth required label={dictionary.fields.leaveType} value={field.value || ''} disabled={isSubmitting} error={Boolean(errors.leave_type_id)} helperText={errors.leave_type_id?.message}>
               <MenuItem value='' disabled>{dictionary.placeholders.selectLeaveType}</MenuItem>
               {leaveTypes.map(type => <MenuItem key={type.id} value={type.id}>{type.label}</MenuItem>)}
             </CustomTextField>
           )}
         />
         <div className='grid grid-cols-1 gap-5 sm:grid-cols-2'>
-          <CustomTextField fullWidth required type='date' label={dictionary.fields.startDate} slotProps={{ inputLabel: { shrink: true } }} disabled={isSubmitting} error={Boolean(errors.start_date)} helperText={errors.start_date?.message} {...register('start_date')} />
-          <CustomTextField fullWidth required type='date' label={dictionary.fields.endDate} slotProps={{ inputLabel: { shrink: true } }} disabled={isSubmitting} error={Boolean(errors.end_date) || calculatedDays < 1} helperText={errors.end_date?.message || (calculatedDays < 1 ? dictionary.validation.dateRangeInvalid : '')} {...register('end_date')} />
+          <LocalizedDateTimePicker fullWidth required locale={locale} label={dictionary.fields.startDate} disabled={isSubmitting} error={Boolean(errors.start_date)} helperText={errors.start_date?.message} {...register('start_date')} />
+          <LocalizedDateTimePicker fullWidth required locale={locale} label={dictionary.fields.endDate} disabled={isSubmitting} error={Boolean(errors.end_date) || calculatedDays < 1} helperText={errors.end_date?.message || (calculatedDays < 1 ? dictionary.validation.dateRangeInvalid : '')} {...register('end_date')} />
         </div>
         <div className='flex items-center justify-between rounded border border-primary/20 bg-primaryLighter p-4'>
-          <Typography color='text.secondary'>{dictionary.drawer.calculatedDays}</Typography>
+          <Typography color='text.secondary'>Net Working Days (Fridays and public holidays excluded)</Typography>
           <Typography variant='h5' color={calculatedDays > 0 ? 'primary.main' : 'error.main'}>{Math.max(0, calculatedDays)}</Typography>
         </div>
+        {balance && (
+          <div className='rounded border border-divider p-4'>
+            <Typography variant='subtitle2'>Leave balance</Typography>
+            <Typography color='text.secondary'>
+              {balance.allowed == null
+                ? 'Yearly allowance is not configured for this leave type.'
+                : `Allowed: ${balance.allowed} / Taken: ${balance.taken} / Pending: ${balance.pending} / Remaining: ${balance.remaining}`}
+            </Typography>
+            {balance.remaining != null && calculatedDays > balance.remaining && (
+              <Typography color='error.main' variant='body2'>Requested days exceed the remaining balance.</Typography>
+            )}
+          </div>
+        )}
+        <Controller
+          name='is_paid'
+          control={control}
+          render={({ field }) => (
+            <FormControlLabel
+              control={<Switch checked={Boolean(field.value)} onChange={event => field.onChange(event.target.checked)} />}
+              label={`Paid Leave: ${field.value ? 'Yes' : 'No'}`}
+              disabled={isSubmitting || !canManage}
+            />
+          )}
+        />
         {!leave && canManage && (
           <Controller
             name='status_id'
@@ -146,7 +205,7 @@ const StaffLeaveDrawer = ({ open, leave, options, currentStaffId, canManage, loc
         <CustomTextField fullWidth multiline minRows={4} label={dictionary.fields.reason} placeholder={dictionary.placeholders.reason} disabled={isSubmitting} error={Boolean(errors.reason)} helperText={errors.reason?.message} {...register('reason')} />
         <div className='mt-auto flex justify-end gap-3 pt-4'>
           <Button type='button' variant='tonal' color='secondary' onClick={closeDrawer} disabled={isSubmitting}>{dictionary.actions.cancel}</Button>
-          <Button type='submit' variant='contained' disabled={isSubmitting || calculatedDays < 1}>
+          <Button type='submit' variant='contained' disabled={isSubmitting || calculatedDays < 1 || (balance?.remaining != null && calculatedDays > balance.remaining)}>
             <LoadingButtonContent loading={isSubmitting} loadingLabel={dictionary.actions.saving}>{leave ? dictionary.actions.saveChanges : dictionary.actions.submit}</LoadingButtonContent>
           </Button>
         </div>

@@ -41,8 +41,4 @@ src/assets/iconify-icons/generated-icons.js
 src/assets/iconify-icons/generated-icons.css
 
 # Codex & temporary build artifacts
-.build-temp*
-.build-tmp*
-.build-output*/
-.codex-tmp*
-*.tmp
+.prisma-tmp

@@ -6,6 +6,7 @@ import { getCompanySetupRecord } from '@/libs/companySetup'
 import { ACTIVE_OPERATIONAL_STATUSES, CLOSED_LOAN_STATUSES } from '@/libs/financialStatuses'
 import { prisma } from '@/libs/prisma'
 import { hasPermission } from '@/utils/rbac'
+import { formatAfghanMonth } from '@/utils/afghanDate'
 
 const PERIODS = new Set([6, 12])
 const CLOSED_LEADS = ['WON', 'LOST', 'CONVERTED', 'CLOSED']
@@ -67,7 +68,7 @@ const buildMonthBuckets = (rangeStart, months, locale) =>
 
     return {
       key: monthKey(date),
-      month: new Intl.DateTimeFormat(locale, { month: 'short', timeZone: 'UTC' }).format(date),
+      month: formatAfghanMonth(date, locale, { short: true, timeZone: 'UTC' }),
       income: 0,
       expense: 0,
       salary: 0,
@@ -118,7 +119,7 @@ const loadFinanceAnalytics = async ({ rangeStart, months, locale }) => {
     expenseGroups
   ] = await Promise.all([
     prisma.financeincome.aggregate({ _sum: { amount_base: true } }),
-    prisma.financeexpense.aggregate({ _sum: { amount_base: true } }),
+    prisma.financeexpense.aggregate({ where: { approval_status: 'PAID' }, _sum: { amount_base: true } }),
     prisma.financesalary.aggregate({ _sum: { amount_base: true } }),
     prisma.financeincome.aggregate({ where: { status: 'PAID' }, _sum: { amount_base: true } }),
     prisma.financeincome.findMany({
@@ -130,7 +131,7 @@ const loadFinanceAnalytics = async ({ rangeStart, months, locale }) => {
       select: { created_at: true, amount_base: true, total_amount: true, paid_amount: true }
     }),
     prisma.financeexpense.findMany({
-      where: { expense_date: { gte: rangeStart } },
+      where: { approval_status: 'PAID', expense_date: { gte: rangeStart } },
       select: { expense_date: true, amount_base: true }
     }),
     prisma.financesalary.findMany({
@@ -138,7 +139,7 @@ const loadFinanceAnalytics = async ({ rangeStart, months, locale }) => {
       select: { timesheet_month: true, amount_base: true }
     }),
     prisma.financeincome.groupBy({ by: ['income_type_id'], _sum: { amount_base: true } }),
-    prisma.financeexpense.groupBy({ by: ['expense_type_id'], _sum: { amount_base: true } })
+    prisma.financeexpense.groupBy({ where: { approval_status: 'PAID' }, by: ['expense_type_id'], _sum: { amount_base: true } })
   ])
 
   const buckets = buildMonthBuckets(rangeStart, months, locale)
@@ -424,6 +425,7 @@ const loadUrgentActions = async ({ capabilities, today, staffId }) => {
             remind_amount: true,
             amount_base: true,
             currency: true,
+            exchange_rate: true,
             remind_date: true,
             client: { select: { company_name: true, primary_contact_name: true } },
             invoice: { select: { invoice_number: true } }
@@ -456,6 +458,7 @@ const loadUrgentActions = async ({ capabilities, today, staffId }) => {
           orderBy: [{ issue_date: 'asc' }, { remaining_balance: 'desc' }],
           select: {
             id: true,
+            loan_type: true,
             loan_number: true,
             entity_name: true,
             total_amount: true,
@@ -463,22 +466,29 @@ const loadUrgentActions = async ({ capabilities, today, staffId }) => {
             monthly_deduction: true,
             amount_base: true,
             currency: true,
+            exchange_rate: true,
             issue_date: true,
             staff: { select: { first_name: true, last_name: true } },
-            status: { select: { label: true, value: true, color_code: true } }
+            status: { select: { label: true, value: true, color_code: true } },
+            repayments: { select: { amount_base: true } }
           }
         })
       : [],
     capabilities.loans
       ? prisma.financeloan.findMany({
           where: loanWhere,
-          select: { total_amount: true, remaining_balance: true, amount_base: true }
+          select: {
+            loan_type: true,
+            total_amount: true,
+            repaid_amount: true,
+            remaining_balance: true,
+            amount_base: true,
+            repayments: { select: { amount_base: true } }
+          }
         })
       : [],
     capabilities.inventory
       ? prisma.inventory.findMany({
-          where: { quantity_in_stock: { lte: prisma.inventory.fields.reorder_level } },
-          take: 6,
           orderBy: [{ quantity_in_stock: 'asc' }, { name: 'asc' }],
           select: {
             id: true,
@@ -492,6 +502,42 @@ const loadUrgentActions = async ({ capabilities, today, staffId }) => {
       : []
   ])
 
+  const remainingBase = row => {
+    const principalBase = toNumber(row.amount_base)
+    const ledgerRepaidBase = (row.repayments || []).reduce((sum, repayment) => sum + toNumber(repayment.amount_base), 0)
+
+    if (ledgerRepaidBase > 0) return Math.max(0, principalBase - ledgerRepaidBase)
+
+    return toNumber(row.total_amount)
+      ? principalBase * Math.min(1, Math.max(0, toNumber(row.remaining_balance) / toNumber(row.total_amount)))
+      : 0
+  }
+
+  const lowInventory = inventory
+    .filter(item => item.quantity_in_stock <= item.reorder_level)
+    .slice(0, 6)
+    .map(item => ({ ...item, stockState: item.quantity_in_stock === 0 ? 'OUT_OF_STOCK' : 'LOW_STOCK' }))
+
+  const loanTotals = loanPortfolio.reduce(
+    (totals, row) => {
+      const balance = remainingBase(row)
+
+      totals.count += 1
+      totals.remaining += balance
+
+      if (row.loan_type === 'CORPORATE') {
+        totals.corporateCount += 1
+        totals.corporateLiabilities += balance
+      } else {
+        totals.staffCount += 1
+        totals.staffReceivables += balance
+      }
+
+      return totals
+    },
+    { count: 0, remaining: 0, staffCount: 0, staffReceivables: 0, corporateCount: 0, corporateLiabilities: 0 }
+  )
+
   return {
     outstanding: outstanding.map(row => ({
       id: row.id,
@@ -500,7 +546,8 @@ const loadUrgentActions = async ({ capabilities, today, staffId }) => {
       dueDate: iso(row.remind_date),
       amount: toNumber(row.remind_amount),
       amountBase: round(outstandingBase(row)),
-      currency: row.currency
+      currency: row.currency,
+      exchangeRate: toNumber(row.exchange_rate)
     })),
     contracts: expirations.map(row => ({
       id: row.id,
@@ -512,39 +559,27 @@ const loadUrgentActions = async ({ capabilities, today, staffId }) => {
       status: row.status
     })),
     loans: loans.map(row => {
-      const remainingBase = toNumber(row.total_amount)
-        ? (toNumber(row.amount_base) * toNumber(row.remaining_balance)) / toNumber(row.total_amount)
-        : 0
+      const baseBalance = remainingBase(row)
 
       return {
         id: row.id,
+        loanType: row.loan_type,
         loan_number: row.loan_number,
         entityName: row.entity_name,
         totalAmount: round(row.total_amount),
         remainingBalance: round(row.remaining_balance),
         monthlyDeduction: round(row.monthly_deduction),
-        amountBase: round(remainingBase),
+        amountBase: round(baseBalance),
         currency: row.currency,
+        exchangeRate: toNumber(row.exchange_rate),
         staff: row.staff,
         status: row.status,
         borrower: fullName(row.staff) || row.entity_name || row.loan_number,
         issueDate: iso(row.issue_date)
       }
     }),
-    loanTotals: {
-      count: loanPortfolio.length,
-      remaining: round(
-        loanPortfolio.reduce(
-          (sum, row) =>
-            sum +
-            (toNumber(row.total_amount)
-              ? (toNumber(row.amount_base) * toNumber(row.remaining_balance)) / toNumber(row.total_amount)
-              : 0),
-          0
-        )
-      )
-    },
-    inventory
+    loanTotals: Object.fromEntries(Object.entries(loanTotals).map(([key, value]) => [key, round(value)])),
+    inventory: lowInventory
   }
 }
 
@@ -570,14 +605,13 @@ const loadPersonalSnapshot = async ({ staffId, today, monthStart }) => {
       where: { staff_id: staffId, date: { gte: monthStart } },
       _sum: { hours_worked: true }
     }),
-    prisma.financeloan.aggregate({
+    prisma.financeloan.findMany({
       where: {
         staff_id: staffId,
         remaining_balance: { gt: 0 },
         status: { is: { value: { notIn: CLOSED_LOANS } } }
       },
-      _sum: { amount_base: true },
-      _count: { _all: true }
+      select: { total_amount: true, remaining_balance: true, amount_base: true, repayments: { select: { amount_base: true } } }
     })
   ])
 
@@ -593,7 +627,20 @@ const loadPersonalSnapshot = async ({ staffId, today, monthStart }) => {
         }
       : null,
     monthHours: round(hours._sum.hours_worked),
-    loans: { count: loan._count._all, balance: round(loan._sum.amount_base) }
+    loans: {
+      count: loan.length,
+      balance: round(
+        loan.reduce((sum, row) => {
+          const repaidBase = row.repayments.reduce((total, repayment) => total + toNumber(repayment.amount_base), 0)
+
+          const fallbackBalance = toNumber(row.total_amount)
+            ? toNumber(row.amount_base) * (toNumber(row.remaining_balance) / toNumber(row.total_amount))
+            : 0
+
+          return sum + (repaidBase > 0 ? Math.max(0, toNumber(row.amount_base) - repaidBase) : fallbackBalance)
+        }, 0)
+      )
+    }
   }
 }
 
@@ -672,7 +719,7 @@ export const getDashboardData = async (payload = {}) => {
         locale,
         period: months,
         generatedAt: now.toISOString(),
-        company: { name: setup.company_name, currency: setup.currency_code || 'AFN' },
+        company: { name: setup.company_name, currency: 'AFN' },
         user: {
           id: session.user.id,
           name: session.user.name || fullName(staff) || session.user.email,

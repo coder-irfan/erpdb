@@ -180,3 +180,55 @@ export const sendContractExpirationEmail = async ({
     `
   })
 }
+
+export const sendContractRenewalReviewEmail = async ({
+  toEmail,
+  recipientName,
+  recipientRole,
+  contractNumber,
+  contractTitle,
+  endDate,
+  remainingDays,
+  companyName
+}) => {
+  const emailUser = getRequiredEnvironmentValue('EMAIL_USER')
+  const fromName = process.env.EMAIL_FROM_NAME || companyName || 'ERP System'
+
+  const formattedEndDate = new Intl.DateTimeFormat('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    timeZone: 'UTC'
+  }).format(endDate)
+
+  const roleMessage =
+    recipientRole === 'ACCOUNT_MANAGER'
+      ? 'Please review the agreement with the client and record the renewal decision.'
+      : 'Your agreement is ready for renewal review. Your account manager will contact you about the next term.'
+
+  await dispatchMail({
+    from: `"${fromName.replaceAll('"', '')}" <${emailUser}>`,
+    to: toEmail,
+    subject: `Renewal review required: ${contractNumber}`,
+    text: `Hello ${recipientName || ''},\n\nContract ${contractNumber} (${contractTitle}) reaches its end date on ${formattedEndDate}. ${roleMessage}`,
+    html: `
+      <div style="background:#f4f5fa;padding:32px 16px;font-family:Arial,sans-serif;color:#2f2b3d;">
+        <div style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:14px;overflow:hidden;box-shadow:0 8px 30px rgba(47,43,61,.08);">
+          <div style="background:#022483;color:#ffffff;padding:24px 30px;">
+            <div style="font-size:13px;opacity:.82;text-transform:uppercase;letter-spacing:.08em;">Renewal review</div>
+            <h1 style="margin:8px 0 0;font-size:24px;line-height:1.3;">${escapeHtml(contractNumber)}</h1>
+          </div>
+          <div style="padding:30px;">
+            <p style="margin:0 0 16px;line-height:1.7;">Hello ${escapeHtml(recipientName || toEmail)},</p>
+            <p style="margin:0 0 20px;line-height:1.7;"><strong>${escapeHtml(contractTitle)}</strong> is due for renewal review${remainingDays >= 0 ? ` in ${remainingDays} days` : ''}.</p>
+            <div style="background:#f8f8fb;border:1px solid #e7e7ef;border-radius:10px;padding:18px 20px;">
+              <div style="font-size:12px;color:#6d6b77;text-transform:uppercase;letter-spacing:.06em;">Current end date</div>
+              <div style="margin-top:6px;font-size:18px;font-weight:700;">${escapeHtml(formattedEndDate)}</div>
+            </div>
+            <p style="margin:22px 0 0;line-height:1.7;color:#6d6b77;">${escapeHtml(roleMessage)}</p>
+          </div>
+        </div>
+      </div>
+    `
+  })
+}

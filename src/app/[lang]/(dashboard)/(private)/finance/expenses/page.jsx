@@ -16,6 +16,8 @@ const ExpensesPage = async props => {
       dictionary={getFinanceExpenseDictionary(lang)}
       canWrite={hasAnyPermission(session, ['finance:write'])}
       canDelete={hasAnyPermission(session, ['finance:delete'])}
+      canApprove={hasAnyPermission(session, ['finance_expense:approve'])}
+      canPay={hasAnyPermission(session, ['finance_expense:pay'])}
       setup={setup}
     />
   )

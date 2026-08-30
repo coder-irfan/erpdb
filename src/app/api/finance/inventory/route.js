@@ -20,7 +20,7 @@ import {
 import { prisma } from '@/libs/prisma'
 import { withSequentialNumberRetry } from '@/libs/sequentialNumbers'
 import { inventoryItemSchema } from '@/schemas/inventory'
-import { toFiniteNumber } from '@/utils/formatCurrency'
+import { SYSTEM_BASE_CURRENCY, toFiniteNumber } from '@/utils/formatCurrency'
 
 const localeFrom = value => (['en', 'fa', 'ps'].includes(value) ? value : 'en')
 const errorResponse = (error, status, code) => Response.json({ success: false, error, code }, { status })
@@ -82,7 +82,8 @@ export async function GET(request) {
         options: {
           categories: options.categories,
           statuses: options.statuses,
-          baseCurrency: options.setup.currency_code || 'AFN',
+          staff: options.staff,
+          baseCurrency: SYSTEM_BASE_CURRENCY,
           exchangeRate: options.setup.usd_afn_exchange_rate || '65.0000'
         }
       }
@@ -105,7 +106,7 @@ export async function POST(request) {
 
   try {
     const options = await getInventoryOptions()
-    const validation = safeParse(inventoryItemSchema(dictionary.validation), inventoryPayload(payload, options.setup))
+    const validation = safeParse(inventoryItemSchema(dictionary.validation), inventoryPayload({ ...payload, sku_code: '' }, options.setup))
 
     if (!validation.success) return errorResponse(validation.issues[0]?.message, 400, 'VALIDATION_ERROR')
 

@@ -1,7 +1,7 @@
 import { Prisma } from '@prisma/client'
 
 import { authorizeAction } from '@/libs/actionAuthorization'
-import { LEAVE_WRITE_PERMISSIONS, createLeaveAttendance, getCurrentStaff, hasOverlappingLeave, leaveSelect, normalizeLeave, removeLeaveAttendance } from '@/libs/hrmLeaves'
+import { LEAVE_WRITE_PERMISSIONS, createLeaveAttendance, getCurrentStaff, hasOverlappingLeave, leaveSelect, normalizeLeave, removeLeaveAttendance, validateLeaveEntitlement } from '@/libs/hrmLeaves'
 import { prisma } from '@/libs/prisma'
 import { LEAVE_DECISIONS } from '@/schemas/hrm/leaves'
 import { getDictionary } from '@/utils/getDictionary'
@@ -40,6 +40,7 @@ export async function PATCH(request, routeContext) {
 
   if (!status) return responseError(dictionary.messages.statusNotFound, 409, 'STATUS_NOT_CONFIGURED')
   if (!existing) return responseError(dictionary.messages.notFound, 404, 'LEAVE_NOT_FOUND')
+
   if (payload.status === 'APPROVED' && currentStaff?.id === existing.staff_id) {
     return responseError(dictionary.messages.selfApprovalBlocked, 403, 'SELF_APPROVAL_BLOCKED')
   }
@@ -58,6 +59,22 @@ export async function PATCH(request, routeContext) {
           const error = new Error('OVERLAPPING_LEAVE')
 
           error.code = 'OVERLAPPING_LEAVE'
+          throw error
+        }
+
+        const entitlement = await validateLeaveEntitlement(transaction, {
+          staffId: existing.staff_id,
+          leaveTypeId: existing.leave_type_id,
+          startDate: existing.start_date,
+          endDate: existing.end_date,
+          excludeLeaveId: id
+        })
+
+        if (!entitlement.valid) {
+          const error = new Error(entitlement.code)
+
+          error.code = entitlement.code
+          error.entitlement = entitlement
           throw error
         }
       }
@@ -85,6 +102,10 @@ export async function PATCH(request, routeContext) {
   } catch (error) {
     if (error?.code === 'OVERLAPPING_LEAVE') {
       return responseError(dictionary.messages.overlappingLeave, 409, 'OVERLAPPING_LEAVE')
+    }
+
+    if (error?.code === 'LEAVE_BALANCE_EXCEEDED') {
+      return responseError(`This leave exceeds the employee's remaining yearly balance (${error.entitlement.balance.remaining} days).`, 409, 'LEAVE_BALANCE_EXCEEDED')
     }
 
     return responseError(dictionary.messages.operationFailed, 500, 'LEAVE_STATUS_UPDATE_FAILED')
