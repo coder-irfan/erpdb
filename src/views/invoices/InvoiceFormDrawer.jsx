@@ -178,129 +178,134 @@ const InvoiceFormDrawer = ({ open, invoice, options, locale, dictionary, onClose
         </IconButton>
       </div>
       <form onSubmit={handleSubmit(submit)} className='form-surface-scroll flex flex-1 flex-col gap-5 p-5' noValidate>
-        <FormSectionCards labels={[dictionary.tabs?.general || 'Invoice information', dictionary.tabs?.financial || 'Amounts and status']}>
-        <Controller
-          name='contract_id'
-          control={control}
-          render={({ field }) => (
-            <Autocomplete
-              options={contractOptions}
-              value={contractOptions.find(contract => contract.id === field.value) || null}
-              disabled={hasPayments}
-              onChange={(_, value) => selectContract(value)}
-              getOptionLabel={option => `${option.contract_number} — ${option.title}`}
-              isOptionEqualToValue={(option, value) => option.id === value.id}
-              renderOption={(props, option) => (
-                <li {...props} key={option.id}>
-                  <div>
-                    <Typography variant='body2'>
-                      {option.contract_number} — {option.title}
-                    </Typography>
-                    <Typography variant='caption' color='text.secondary'>
-                      {option.client.company_name}
-                    </Typography>
-                  </div>
-                </li>
-              )}
-              renderInput={params => (
+        <FormSectionCards
+          labels={[
+            dictionary.tabs?.general || 'Invoice information',
+            dictionary.tabs?.financial || 'Amounts and status'
+          ]}
+        >
+          <Controller
+            name='contract_id'
+            control={control}
+            render={({ field }) => (
+              <Autocomplete
+                options={contractOptions}
+                value={contractOptions.find(contract => contract.id === field.value) || null}
+                disabled={hasPayments}
+                onChange={(_, value) => selectContract(value)}
+                getOptionLabel={option => `${option.contract_number} — ${option.title}`}
+                isOptionEqualToValue={(option, value) => option.id === value.id}
+                renderOption={(props, option) => (
+                  <li {...props} key={option.id}>
+                    <div>
+                      <Typography variant='body2'>
+                        {option.contract_number} — {option.title}
+                      </Typography>
+                      <Typography variant='caption' color='text.secondary'>
+                        {option.client.company_name}
+                      </Typography>
+                    </div>
+                  </li>
+                )}
+                renderInput={params => (
+                  <CustomTextField
+                    {...params}
+                    label={dictionary.fields.contract}
+                    placeholder={dictionary.placeholders.contract}
+                    error={Boolean(errors.contract_id)}
+                    helperText={errors.contract_id?.message}
+                  />
+                )}
+              />
+            )}
+          />
+          <CustomTextField
+            label={dictionary.fields.client}
+            value={client?.company_name || ''}
+            disabled
+            helperText={client ? client.email : dictionary.form.selectContractHelp}
+          />
+          <div className='grid grid-cols-1 gap-4 sm:grid-cols-3'>
+            {field('amount', dictionary.fields.amount, {
+              type: 'number',
+              disabled: hasPayments,
+              inputProps: { min: 0, step: '0.01' }
+            })}
+            <Controller
+              name='currency'
+              control={control}
+              render={({ field }) => (
                 <CustomTextField
-                  {...params}
-                  label={dictionary.fields.contract}
-                  placeholder={dictionary.placeholders.contract}
-                  error={Boolean(errors.contract_id)}
-                  helperText={errors.contract_id?.message}
-                />
+                  {...field}
+                  select
+                  disabled={hasPayments}
+                  value={field.value || options.baseCurrency || 'AFN'}
+                  label={dictionary.fields.currency}
+                  error={Boolean(errors.currency)}
+                  helperText={errors.currency?.message}
+                >
+                  <MenuItem value='AFN'>AFN</MenuItem>
+                  <MenuItem value='USD'>USD</MenuItem>
+                </CustomTextField>
               )}
             />
-          )}
-        />
-        <CustomTextField
-          label={dictionary.fields.client}
-          value={client?.company_name || ''}
-          disabled
-          helperText={client ? client.email : dictionary.form.selectContractHelp}
-        />
-        <div className='grid grid-cols-1 gap-4 sm:grid-cols-3'>
-          {field('amount', dictionary.fields.amount, {
-            type: 'number',
-            disabled: hasPayments,
-            inputProps: { min: 0, step: '0.01' }
-          })}
+            {field('exchange_rate', dictionary.fields.exchangeRate, {
+              type: 'number',
+              disabled: hasPayments,
+              inputProps: { min: 0, step: '0.0001' }
+            })}
+          </div>
+          <div className='rounded border border-divider bg-actionHover p-4'>
+            <Typography variant='caption' color='text.secondary'>
+              {dictionary.form.baseAmount.replace('{currency}', options.baseCurrency)}
+            </Typography>
+            <Typography variant='h6'>{formatCurrency(amountBase, locale, options.baseCurrency)}</Typography>
+          </div>
+          <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
+            {field('issued_date', dictionary.fields.issueDate, {
+              type: 'date',
+              slotProps: { inputLabel: { shrink: true } }
+            })}
+            <div className='flex flex-col gap-2'>
+              {field('due_date', dictionary.fields.dueDate, {
+                type: 'date',
+                slotProps: { inputLabel: { shrink: true } }
+              })}
+              <DateDurationHelper
+                startDate={issuedDate}
+                endDate={dueDate}
+                durationOptions={options.durationOptions || []}
+                onEndDateChange={value => setValue('due_date', value, { shouldDirty: true, shouldValidate: true })}
+              />
+            </div>
+          </div>
           <Controller
-            name='currency'
+            name='status_id'
             control={control}
             render={({ field }) => (
               <CustomTextField
                 {...field}
                 select
                 disabled={hasPayments}
-                value={field.value || options.baseCurrency || 'AFN'}
-                label={dictionary.fields.currency}
-                error={Boolean(errors.currency)}
-                helperText={errors.currency?.message}
+                value={field.value || defaultStatus(options.statuses)}
+                label={dictionary.fields.status}
+                error={Boolean(errors.status_id)}
+                helperText={errors.status_id?.message}
               >
-                <MenuItem value='AFN'>AFN</MenuItem>
-                <MenuItem value='USD'>USD</MenuItem>
+                {options.statuses
+                  .filter(
+                    status => !['PAID', 'PARTIALLY_PAID'].includes(status.value) || status.id === invoice?.status_id
+                  )
+                  .map(status => (
+                    <MenuItem key={status.id} value={status.id}>
+                      {status.label}
+                    </MenuItem>
+                  ))}
               </CustomTextField>
             )}
           />
-          {field('exchange_rate', dictionary.fields.exchangeRate, {
-            type: 'number',
-            disabled: hasPayments,
-            inputProps: { min: 0, step: '0.0001' }
-          })}
-        </div>
-        <div className='rounded border border-divider bg-actionHover p-4'>
-          <Typography variant='caption' color='text.secondary'>
-            {dictionary.form.baseAmount.replace('{currency}', options.baseCurrency)}
-          </Typography>
-          <Typography variant='h6'>{formatCurrency(amountBase, locale, options.baseCurrency)}</Typography>
-        </div>
-        <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
-          {field('issued_date', dictionary.fields.issueDate, {
-            type: 'date',
-            slotProps: { inputLabel: { shrink: true } }
-          })}
-          <div className='flex flex-col gap-2'>
-            {field('due_date', dictionary.fields.dueDate, {
-              type: 'date',
-              slotProps: { inputLabel: { shrink: true } }
-            })}
-            <DateDurationHelper
-              startDate={issuedDate}
-              endDate={dueDate}
-              durationOptions={options.durationOptions || []}
-              onEndDateChange={value => setValue('due_date', value, { shouldDirty: true, shouldValidate: true })}
-            />
-          </div>
-        </div>
-        <Controller
-          name='status_id'
-          control={control}
-          render={({ field }) => (
-            <CustomTextField
-              {...field}
-              select
-              disabled={hasPayments}
-              value={field.value || defaultStatus(options.statuses)}
-              label={dictionary.fields.status}
-              error={Boolean(errors.status_id)}
-              helperText={errors.status_id?.message}
-            >
-              {options.statuses
-                .filter(
-                  status => !['PAID', 'PARTIALLY_PAID'].includes(status.value) || status.id === invoice?.status_id
-                )
-                .map(status => (
-                  <MenuItem key={status.id} value={status.id}>
-                    {status.label}
-                  </MenuItem>
-                ))}
-            </CustomTextField>
-          )}
-        />
         </FormSectionCards>
-        <div className='form-surface-actions -mx-5 -mb-5 mt-auto flex justify-end gap-3 p-5'>
+        <div className='form-surface-actions -mx-5 -mb-5 mt-auto flex justify-end gap-3 px-5 pt-5'>
           <Button variant='tonal' color='secondary' onClick={onClose} disabled={isSubmitting}>
             {dictionary.actions.cancel}
           </Button>

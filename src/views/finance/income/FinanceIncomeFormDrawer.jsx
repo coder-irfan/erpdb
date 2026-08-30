@@ -38,7 +38,8 @@ const emptyValues = options => ({
   currency: options.baseCurrency || 'AFN',
   exchange_rate: String(options.exchangeRate || '65'),
   received_by_id: options.currentStaffId || '',
-  payment_method_id: options.paymentMethods.find(option => option.is_default)?.id || options.paymentMethods[0]?.id || '',
+  payment_method_id:
+    options.paymentMethods.find(option => option.is_default)?.id || options.paymentMethods[0]?.id || '',
   payment_date: toDateInputValue(new Date()),
   notes: '',
   pay_details: '',
@@ -81,7 +82,8 @@ const FinanceIncomeFormDrawer = ({ open, income, options, locale, dictionary, on
     [currency, exchangeRate, options.baseCurrency, total]
   )
 
-  const totalUsd = currency === 'USD' ? total : toFiniteNumber(exchangeRate) > 0 ? total / toFiniteNumber(exchangeRate) : 0
+  const totalUsd =
+    currency === 'USD' ? total : toFiniteNumber(exchangeRate) > 0 ? total / toFiniteNumber(exchangeRate) : 0
   const projects = options.projects.filter(project => !clientId || project.client_id === clientId)
   const contracts = options.contracts.filter(contract => !clientId || contract.client_id === clientId)
   const invoices = options.invoices.filter(invoice => !clientId || invoice.client_id === clientId)
@@ -197,173 +199,239 @@ const FinanceIncomeFormDrawer = ({ open, income, options, locale, dictionary, on
         </IconButton>
       </div>
       <form className='form-surface-scroll flex flex-1 flex-col gap-5 p-5' onSubmit={handleSubmit(submit)} noValidate>
-        <FormSectionCards labels={[dictionary.tabs?.general || 'Income information', dictionary.tabs?.source || 'Source and allocation', dictionary.tabs?.financial || 'Financial details']}>
-        {field('name', dictionary.fields.name)}
+        <FormSectionCards
+          labels={[
+            dictionary.tabs?.general || 'Income information',
+            dictionary.tabs?.source || 'Source and allocation',
+            dictionary.tabs?.financial || 'Financial details'
+          ]}
+        >
+          {field('name', dictionary.fields.name)}
 
-        <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
-          {isClientIncome && relationField(
-            'client_id',
-            dictionary.fields.client,
-            options.clients,
-            dictionary.placeholders.client,
-            item => item.company_name,
-            value => {
-              if (!value) return
-              const selectedProject = options.projects.find(item => item.id === projectId)
-              const selectedContract = options.contracts.find(item => item.id === contractId)
-              const selectedInvoice = options.invoices.find(item => item.id === invoiceId)
+          <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
+            {isClientIncome &&
+              relationField(
+                'client_id',
+                dictionary.fields.client,
+                options.clients,
+                dictionary.placeholders.client,
+                item => item.company_name,
+                value => {
+                  if (!value) return
+                  const selectedProject = options.projects.find(item => item.id === projectId)
+                  const selectedContract = options.contracts.find(item => item.id === contractId)
+                  const selectedInvoice = options.invoices.find(item => item.id === invoiceId)
 
-              if (selectedProject && selectedProject.client_id !== value.id) setValue('project_id', '')
-              if (selectedContract && selectedContract.client_id !== value.id) setValue('contract_id', '')
-              if (selectedInvoice && selectedInvoice.client_id !== value.id) setValue('invoice_id', '')
-            },
-            undefined,
-            Boolean(invoiceId)
-          )}
-          <Controller
-            name='income_type_id'
-            control={control}
-            render={({ field: controllerField }) => (
-              <CustomTextField
-                {...controllerField}
-                select
-                onChange={event => {
-                  controllerField.onChange(event)
-                  const nextType = options.incomeTypes.find(item => item.id === event.target.value)
+                  if (selectedProject && selectedProject.client_id !== value.id) setValue('project_id', '')
+                  if (selectedContract && selectedContract.client_id !== value.id) setValue('contract_id', '')
+                  if (selectedInvoice && selectedInvoice.client_id !== value.id) setValue('invoice_id', '')
+                },
+                undefined,
+                Boolean(invoiceId)
+              )}
+            <Controller
+              name='income_type_id'
+              control={control}
+              render={({ field: controllerField }) => (
+                <CustomTextField
+                  {...controllerField}
+                  select
+                  onChange={event => {
+                    controllerField.onChange(event)
+                    const nextType = options.incomeTypes.find(item => item.id === event.target.value)
 
-                  if (nextType?.requires_invoice) {
-                    setError('invoice_id', { type: 'manual', message: dictionary.validation.invoiceRequired })
-                  }
-                }}
-                value={controllerField.value || ''}
-                label={dictionary.fields.incomeType}
-                error={Boolean(errors.income_type_id)}
-                helperText={errors.income_type_id?.message}
-                slotProps={{
-                  select: {
-                    displayEmpty: true,
-                    renderValue: selected => options.incomeTypes.find(item => item.id === selected)?.label || dictionary.placeholders.incomeType
-                  }
-                }}
-              >
-                <MenuItem value='' disabled>{dictionary.placeholders.incomeType}</MenuItem>
-                {options.incomeTypes.map(item => <MenuItem key={item.id} value={item.id}>{item.label}</MenuItem>)}
-              </CustomTextField>
+                    if (nextType?.requires_invoice) {
+                      setError('invoice_id', { type: 'manual', message: dictionary.validation.invoiceRequired })
+                    }
+                  }}
+                  value={controllerField.value || ''}
+                  label={dictionary.fields.incomeType}
+                  error={Boolean(errors.income_type_id)}
+                  helperText={errors.income_type_id?.message}
+                  slotProps={{
+                    select: {
+                      displayEmpty: true,
+                      renderValue: selected =>
+                        options.incomeTypes.find(item => item.id === selected)?.label ||
+                        dictionary.placeholders.incomeType
+                    }
+                  }}
+                >
+                  <MenuItem value='' disabled>
+                    {dictionary.placeholders.incomeType}
+                  </MenuItem>
+                  {options.incomeTypes.map(item => (
+                    <MenuItem key={item.id} value={item.id}>
+                      {item.label}
+                    </MenuItem>
+                  ))}
+                </CustomTextField>
+              )}
+            />
+            {isClientIncome &&
+              relationField(
+                'project_id',
+                dictionary.fields.project,
+                projects,
+                dictionary.placeholders.project,
+                item => `${item.project_code} · ${item.title}`,
+                value => value && setValue('client_id', value.client_id),
+                undefined,
+                Boolean(invoiceId)
+              )}
+            {isClientIncome &&
+              relationField(
+                'contract_id',
+                dictionary.fields.contract,
+                contracts,
+                dictionary.placeholders.contract,
+                item => `${item.contract_number} · ${item.title}`,
+                value => value && setValue('client_id', value.client_id),
+                undefined,
+                Boolean(invoiceId)
+              )}
+            {relationField(
+              'invoice_id',
+              dictionary.fields.invoice,
+              invoices,
+              dictionary.placeholders.invoice,
+              item => item.invoice_number,
+              value => {
+                if (!value) {
+                  setValue('client_id', '')
+                  setValue('contract_id', '')
+                  setValue('project_id', '')
+
+                  return
+                }
+
+                setValue('client_id', value.client_id)
+                setValue('contract_id', value.contract_id)
+                setValue('project_id', value.project_id || '')
+                const outstanding = Number(value.remaining_balance) > 0 ? value.remaining_balance : value.amount
+
+                setValue('total_amount', String(outstanding || ''))
+                setValue('paid_amount', String(outstanding || ''))
+                setValue('currency', value.currency || options.baseCurrency || 'AFN')
+                setValue('exchange_rate', String(value.exchange_rate || options.exchangeRate || '65'))
+              },
+              item => item.id !== income?.invoice_id && (Number(item.remaining_balance) <= 0.005 || !item.project_id)
             )}
-          />
-          {isClientIncome && relationField(
-            'project_id',
-            dictionary.fields.project,
-            projects,
-            dictionary.placeholders.project,
-            item => `${item.project_code} · ${item.title}`,
-            value => value && setValue('client_id', value.client_id),
-            undefined,
-            Boolean(invoiceId)
-          )}
-          {isClientIncome && relationField(
-            'contract_id',
-            dictionary.fields.contract,
-            contracts,
-            dictionary.placeholders.contract,
-            item => `${item.contract_number} · ${item.title}`,
-            value => value && setValue('client_id', value.client_id),
-            undefined,
-            Boolean(invoiceId)
-          )}
-          {relationField(
-            'invoice_id',
-            dictionary.fields.invoice,
-            invoices,
-            dictionary.placeholders.invoice,
-            item => item.invoice_number,
-            value => {
-              if (!value) {
-                setValue('client_id', '')
-                setValue('contract_id', '')
-                setValue('project_id', '')
+            {relationField(
+              'received_by_id',
+              dictionary.fields.receivedBy,
+              options.staff,
+              dictionary.placeholders.receivedBy,
+              item => `${item.full_name} · ${item.position}`
+            )}
+            {relationField(
+              'payment_method_id',
+              dictionary.fields.paymentMethod,
+              options.paymentMethods,
+              dictionary.placeholders.paymentMethod,
+              item => item.label
+            )}
+            {field('payment_date', dictionary.fields.paymentDate, {
+              type: 'date',
+              slotProps: { inputLabel: { shrink: true } }
+            })}
+          </div>
 
-                return
-              }
+          <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
+            {field('total_amount', dictionary.fields.totalAmount, {
+              type: 'number',
+              inputProps: { min: 0, step: '0.01', readOnly: Boolean(invoiceId) }
+            })}
+            {field('paid_amount', dictionary.fields.paidAmount, {
+              type: 'number',
+              inputProps: { min: 0, step: '0.01' }
+            })}
+            <Controller
+              name='currency'
+              control={control}
+              render={({ field: controllerField }) => (
+                <CustomTextField
+                  {...controllerField}
+                  select
+                  disabled={Boolean(invoiceId)}
+                  value={controllerField.value || options.baseCurrency || 'AFN'}
+                  label={dictionary.fields.currency}
+                  error={Boolean(errors.currency)}
+                  helperText={errors.currency?.message}
+                >
+                  <MenuItem value='AFN'>AFN</MenuItem>
+                  <MenuItem value='USD'>USD</MenuItem>
+                </CustomTextField>
+              )}
+            />
+            {field('exchange_rate', dictionary.fields.exchangeRate, {
+              type: 'number',
+              inputProps: { min: 0, step: '0.0001', readOnly: Boolean(invoiceId) }
+            })}
+          </div>
 
-              setValue('client_id', value.client_id)
-              setValue('contract_id', value.contract_id)
-              setValue('project_id', value.project_id || '')
-              const outstanding = Number(value.remaining_balance) > 0 ? value.remaining_balance : value.amount
+          <Card variant='outlined'>
+            <CardContent>
+              <div className='mb-3 flex items-center justify-between gap-3'>
+                <Typography variant='h6'>{dictionary.form.paymentPreview}</Typography>
+                <Chip
+                  size='small'
+                  variant='tonal'
+                  color={STATUS_COLORS[derivedStatus]}
+                  label={dictionary.status[derivedStatus]}
+                />
+              </div>
+              <div className='grid grid-cols-2 gap-4 sm:grid-cols-4'>
+                <div>
+                  <Typography variant='caption' color='text.secondary'>
+                    {dictionary.fields.remainingAmount}
+                  </Typography>
+                  <Typography className='font-semibold'>{formatCurrency(remaining, locale, currency)}</Typography>
+                </div>
+                <div>
+                  <Typography variant='caption' color='text.secondary'>
+                    {dictionary.form.basePreview.replace('{currency}', options.baseCurrency)}
+                  </Typography>
+                  <Typography className='font-semibold text-success'>
+                    {formatCurrency(baseAmount, locale, options.baseCurrency)}
+                  </Typography>
+                </div>
+                <div>
+                  <Typography variant='caption' color='text.secondary'>
+                    {dictionary.form.usdPreview}
+                  </Typography>
+                  <Typography className='font-semibold'>{formatCurrency(totalUsd, locale, 'USD')}</Typography>
+                </div>
+                <div>
+                  <Typography variant='caption' color='text.secondary'>
+                    {dictionary.form.derivedStatus}
+                  </Typography>
+                  <Typography className='font-semibold'>{dictionary.status[derivedStatus]}</Typography>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
-              setValue('total_amount', String(outstanding || ''))
-              setValue('paid_amount', String(outstanding || ''))
-              setValue('currency', value.currency || options.baseCurrency || 'AFN')
-              setValue('exchange_rate', String(value.exchange_rate || options.exchangeRate || '65'))
-            },
-            item => item.id !== income?.invoice_id && (Number(item.remaining_balance) <= 0.005 || !item.project_id)
-          )}
-          {relationField(
-            'received_by_id',
-            dictionary.fields.receivedBy,
-            options.staff,
-            dictionary.placeholders.receivedBy,
-            item => `${item.full_name} · ${item.position}`
-          )}
-          {relationField(
-            'payment_method_id',
-            dictionary.fields.paymentMethod,
-            options.paymentMethods,
-            dictionary.placeholders.paymentMethod,
-            item => item.label
-          )}
-          {field('payment_date', dictionary.fields.paymentDate, {
-            type: 'date',
-            slotProps: { inputLabel: { shrink: true } }
+          {remaining > 0.005 &&
+            field('remind_date', dictionary.fields.reminderDate, {
+              type: 'date',
+              slotProps: { inputLabel: { shrink: true } }
+            })}
+          {field('notes', dictionary.fields.notes, {
+            multiline: true,
+            minRows: 2,
+            placeholder: dictionary.placeholders.notes
           })}
-        </div>
-
-        <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
-          {field('total_amount', dictionary.fields.totalAmount, { type: 'number', inputProps: { min: 0, step: '0.01', readOnly: Boolean(invoiceId) } })}
-          {field('paid_amount', dictionary.fields.paidAmount, { type: 'number', inputProps: { min: 0, step: '0.01' } })}
-          <Controller
-            name='currency'
-            control={control}
-            render={({ field: controllerField }) => (
-              <CustomTextField {...controllerField} select disabled={Boolean(invoiceId)} value={controllerField.value || options.baseCurrency || 'AFN'} label={dictionary.fields.currency} error={Boolean(errors.currency)} helperText={errors.currency?.message}>
-                <MenuItem value='AFN'>AFN</MenuItem>
-                <MenuItem value='USD'>USD</MenuItem>
-              </CustomTextField>
-            )}
-          />
-          {field('exchange_rate', dictionary.fields.exchangeRate, { type: 'number', inputProps: { min: 0, step: '0.0001', readOnly: Boolean(invoiceId) } })}
-        </div>
-
-        <Card variant='outlined'>
-          <CardContent>
-            <div className='mb-3 flex items-center justify-between gap-3'>
-              <Typography variant='h6'>{dictionary.form.paymentPreview}</Typography>
-              <Chip size='small' variant='tonal' color={STATUS_COLORS[derivedStatus]} label={dictionary.status[derivedStatus]} />
-            </div>
-            <div className='grid grid-cols-2 gap-4 sm:grid-cols-4'>
-              <div><Typography variant='caption' color='text.secondary'>{dictionary.fields.remainingAmount}</Typography><Typography className='font-semibold'>{formatCurrency(remaining, locale, currency)}</Typography></div>
-              <div><Typography variant='caption' color='text.secondary'>{dictionary.form.basePreview.replace('{currency}', options.baseCurrency)}</Typography><Typography className='font-semibold text-success'>{formatCurrency(baseAmount, locale, options.baseCurrency)}</Typography></div>
-              <div><Typography variant='caption' color='text.secondary'>{dictionary.form.usdPreview}</Typography><Typography className='font-semibold'>{formatCurrency(totalUsd, locale, 'USD')}</Typography></div>
-              <div><Typography variant='caption' color='text.secondary'>{dictionary.form.derivedStatus}</Typography><Typography className='font-semibold'>{dictionary.status[derivedStatus]}</Typography></div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {remaining > 0.005 && field('remind_date', dictionary.fields.reminderDate, { type: 'date', slotProps: { inputLabel: { shrink: true } } })}
-        {field('notes', dictionary.fields.notes, {
-          multiline: true,
-          minRows: 2,
-          placeholder: dictionary.placeholders.notes
-        })}
-        {field('pay_details', dictionary.fields.paymentDetails, {
-          multiline: true,
-          minRows: 3,
-          placeholder: dictionary.placeholders.paymentDetails
-        })}
-
+          {field('pay_details', dictionary.fields.paymentDetails, {
+            multiline: true,
+            minRows: 3,
+            placeholder: dictionary.placeholders.paymentDetails
+          })}
         </FormSectionCards>
-        <div className='form-surface-actions -mx-5 -mb-5 mt-auto flex justify-end gap-3 p-5'>
-          <Button variant='tonal' color='secondary' onClick={onClose} disabled={isSubmitting}>{dictionary.actions.cancel}</Button>
+        <div className='form-surface-actions -mx-5 -mb-5 mt-auto flex justify-end gap-3 px-5 pt-5'>
+          <Button variant='tonal' color='secondary' onClick={onClose} disabled={isSubmitting}>
+            {dictionary.actions.cancel}
+          </Button>
           <Button type='submit' variant='contained' disabled={isSubmitting}>
             <LoadingButtonContent loading={isSubmitting} loadingLabel={dictionary.actions.saving}>
               {income ? dictionary.actions.save : dictionary.actions.create}

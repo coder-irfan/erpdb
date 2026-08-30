@@ -68,7 +68,13 @@ const FinanceLoanFormDrawer = ({ open, initialLoanType = 'STAFF', options, local
   )
 
   const amortization = useMemo(
-    () => calculateAmortizationSchedule({ principal: totalAmount, annualInterestRate: interestRate, tenureMonths, issueDate }),
+    () =>
+      calculateAmortizationSchedule({
+        principal: totalAmount,
+        annualInterestRate: interestRate,
+        tenureMonths,
+        issueDate
+      }),
     [interestRate, issueDate, tenureMonths, totalAmount]
   )
 
@@ -126,111 +132,186 @@ const FinanceLoanFormDrawer = ({ open, initialLoanType = 'STAFF', options, local
         </IconButton>
       </div>
       <form className='form-surface-scroll flex flex-1 flex-col gap-5 p-5' onSubmit={handleSubmit(submit)} noValidate>
-        <FormSectionCards labels={[dictionary.tabs?.general || 'Loan information', dictionary.tabs?.terms || 'Repayment terms', dictionary.tabs?.schedule || 'Repayment schedule']}>
-        <div className='rounded border border-primary/30 bg-primaryLighter p-4'>
-          <Typography variant='h6'>{loanType === 'STAFF' ? 'Staff Loan & Salary Advance' : 'Corporate Debt & Liability'}</Typography>
-          <Typography variant='body2' color='text.secondary'>{loanType === 'STAFF' ? 'Company → employee receivable' : 'Lender → company payable'}</Typography>
-        </div>
-        {loanType === 'STAFF' ? (
-          <Controller
-            name='staff_id'
-            control={control}
-            render={({ field }) => (
-              <Autocomplete
-                options={options.staff}
-                value={options.staff.find(item => item.id === field.value) || null}
-                onChange={(_, value) => field.onChange(value?.id || '')}
-                getOptionLabel={item => `${item.full_name} · ${item.position}`}
-                isOptionEqualToValue={(option, value) => option.id === value.id}
-                renderInput={params => (
-                  <CustomTextField
-                    {...params}
-                    label={dictionary.fields.staff}
-                    error={Boolean(errors.staff_id)}
-                    helperText={errors.staff_id?.message}
-                  />
+        <FormSectionCards
+          labels={[
+            dictionary.tabs?.general || 'Loan information',
+            dictionary.tabs?.terms || 'Repayment terms',
+            dictionary.tabs?.schedule || 'Repayment schedule'
+          ]}
+        >
+          <div className='rounded border border-primary/30 bg-primaryLighter p-4'>
+            <Typography variant='h6'>
+              {loanType === 'STAFF' ? 'Staff Loan & Salary Advance' : 'Corporate Debt & Liability'}
+            </Typography>
+            <Typography variant='body2' color='text.secondary'>
+              {loanType === 'STAFF' ? 'Company → employee receivable' : 'Lender → company payable'}
+            </Typography>
+          </div>
+          {loanType === 'STAFF' ? (
+            <Controller
+              name='staff_id'
+              control={control}
+              render={({ field }) => (
+                <Autocomplete
+                  options={options.staff}
+                  value={options.staff.find(item => item.id === field.value) || null}
+                  onChange={(_, value) => field.onChange(value?.id || '')}
+                  getOptionLabel={item => `${item.full_name} · ${item.position}`}
+                  isOptionEqualToValue={(option, value) => option.id === value.id}
+                  renderInput={params => (
+                    <CustomTextField
+                      {...params}
+                      label={dictionary.fields.staff}
+                      error={Boolean(errors.staff_id)}
+                      helperText={errors.staff_id?.message}
+                    />
+                  )}
+                />
+              )}
+            />
+          ) : (
+            <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
+              {field('entity_name', 'Lender Name / Entity')}
+              <Controller
+                name='lender_type'
+                control={control}
+                render={({ field }) => (
+                  <CustomTextField {...field} select label='Lender Type'>
+                    <MenuItem value='BANK'>Bank</MenuItem>
+                    <MenuItem value='EXTERNAL_BUSINESS'>External Business</MenuItem>
+                    <MenuItem value='OWNER'>Director / Owner Loan</MenuItem>
+                  </CustomTextField>
                 )}
               />
-            )}
-          />
-        ) : (
-          <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
-            {field('entity_name', 'Lender Name / Entity')}
-            <Controller name='lender_type' control={control} render={({ field }) => (
-              <CustomTextField {...field} select label='Lender Type'>
-                <MenuItem value='BANK'>Bank</MenuItem>
-                <MenuItem value='EXTERNAL_BUSINESS'>External Business</MenuItem>
-                <MenuItem value='OWNER'>Director / Owner Loan</MenuItem>
-              </CustomTextField>
-            )} />
-          </div>
-        )}
-        <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
-          {field('total_amount', dictionary.fields.total, { type: 'number', inputProps: { min: 0.01, step: '0.01' } })}
-          {loanType === 'STAFF' && field('monthly_deduction', dictionary.fields.monthly, { type: 'number', inputProps: { min: 0.01, step: '0.01' } })}
-          <Controller
-            name='currency'
-            control={control}
-            render={({ field }) => (
-              <CustomTextField {...field} select label={dictionary.fields.currency}>
-                <MenuItem value='AFN'>AFN</MenuItem>
-                <MenuItem value='USD'>USD</MenuItem>
-              </CustomTextField>
-            )}
-          />
-          {field('exchange_rate', dictionary.fields.exchangeRate, {
-            type: 'number',
-            inputProps: { min: 0.0001, step: '0.0001' }
-          })}
-          {field('issue_date', dictionary.fields.issueDate, {
-            type: 'date',
-            slotProps: { inputLabel: { shrink: true } }
-          })}
-          {loanType === 'STAFF' ? field('repayment_start_date', 'Repayment Start Date', { type: 'date', slotProps: { inputLabel: { shrink: true } } }) : (
-            <>
-              {field('annual_interest_rate', 'Annual Interest Rate (%)', { type: 'number', inputProps: { min: 0, step: '0.0001' } })}
-              {field('tenure_months', 'Tenure (Months)', { type: 'number', inputProps: { min: 1, step: 1 } })}
-              {field('disbursement_bank_account', 'Disbursement Bank Account')}
-            </>
-          )}
-        </div>
-        {loanType === 'STAFF' && <Controller name='auto_deduct' control={control} render={({ field }) => (
-          <FormControlLabel control={<Switch checked={field.value} onChange={event => field.onChange(event.target.checked)} />} label='Auto-Deduct from Payslip' />
-        )} />}
-        {field('reason', dictionary.fields.reason, { multiline: true, minRows: 3 })}
-        <Card variant='outlined'>
-          <CardContent>
-            <Typography variant='h6' className='mb-3'>
-              {dictionary.form.calculation}
-            </Typography>
-            <div className='grid grid-cols-2 gap-4'>
-              <div>
-                <Typography variant='caption' color='text.secondary'>
-                  {dictionary.fields.total}
-                </Typography>
-                <Typography className='font-semibold'>
-                  {formatCurrency(toFiniteNumber(totalAmount), locale, currency)}
-                </Typography>
-              </div>
-              <div>
-                <Typography variant='caption' color='text.secondary'>
-                  AFN Base Amount / USD Equivalent
-                </Typography>
-                <Typography className='font-semibold text-primary'>
-                  <DualCurrencyAmount amount={totalAmount} amountBase={amountBase} currency={currency} exchangeRate={exchangeRate} locale={locale} />
-                </Typography>
-              </div>
             </div>
-          </CardContent>
-        </Card>
-        {loanType === 'CORPORATE' && amortization.length > 0 && (
-          <Card variant='outlined'><CardContent>
-            <Typography variant='h6' className='mb-3'>Calculated Amortization Schedule</Typography>
-            <div className='max-h-72 overflow-auto'><table className='w-full text-sm'><thead><tr><th className='p-2 text-start'>#</th><th className='p-2 text-start'>Due</th><th className='p-2 text-end'>Principal</th><th className='p-2 text-end'>Interest</th><th className='p-2 text-end'>Payment</th><th className='p-2 text-end'>Balance</th></tr></thead><tbody>{amortization.map(row => <tr key={row.installment_number} className='border-bs border-divider'><td className='p-2'>{row.installment_number}</td><td className='p-2'>{toDateInputValue(row.due_date)}</td><td className='p-2 text-end'>{formatCurrency(row.principal_amount, locale, currency)}</td><td className='p-2 text-end'>{formatCurrency(row.interest_amount, locale, currency)}</td><td className='p-2 text-end font-semibold'>{formatCurrency(row.payment_amount, locale, currency)}</td><td className='p-2 text-end'>{formatCurrency(row.remaining_principal, locale, currency)}</td></tr>)}</tbody></table></div>
-          </CardContent></Card>
-        )}
+          )}
+          <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
+            {field('total_amount', dictionary.fields.total, {
+              type: 'number',
+              inputProps: { min: 0.01, step: '0.01' }
+            })}
+            {loanType === 'STAFF' &&
+              field('monthly_deduction', dictionary.fields.monthly, {
+                type: 'number',
+                inputProps: { min: 0.01, step: '0.01' }
+              })}
+            <Controller
+              name='currency'
+              control={control}
+              render={({ field }) => (
+                <CustomTextField {...field} select label={dictionary.fields.currency}>
+                  <MenuItem value='AFN'>AFN</MenuItem>
+                  <MenuItem value='USD'>USD</MenuItem>
+                </CustomTextField>
+              )}
+            />
+            {field('exchange_rate', dictionary.fields.exchangeRate, {
+              type: 'number',
+              inputProps: { min: 0.0001, step: '0.0001' }
+            })}
+            {field('issue_date', dictionary.fields.issueDate, {
+              type: 'date',
+              slotProps: { inputLabel: { shrink: true } }
+            })}
+            {loanType === 'STAFF' ? (
+              field('repayment_start_date', 'Repayment Start Date', {
+                type: 'date',
+                slotProps: { inputLabel: { shrink: true } }
+              })
+            ) : (
+              <>
+                {field('annual_interest_rate', 'Annual Interest Rate (%)', {
+                  type: 'number',
+                  inputProps: { min: 0, step: '0.0001' }
+                })}
+                {field('tenure_months', 'Tenure (Months)', { type: 'number', inputProps: { min: 1, step: 1 } })}
+                {field('disbursement_bank_account', 'Disbursement Bank Account')}
+              </>
+            )}
+          </div>
+          {loanType === 'STAFF' && (
+            <Controller
+              name='auto_deduct'
+              control={control}
+              render={({ field }) => (
+                <FormControlLabel
+                  control={<Switch checked={field.value} onChange={event => field.onChange(event.target.checked)} />}
+                  label='Auto-Deduct from Payslip'
+                />
+              )}
+            />
+          )}
+          {field('reason', dictionary.fields.reason, { multiline: true, minRows: 3 })}
+          <Card variant='outlined'>
+            <CardContent>
+              <Typography variant='h6' className='mb-3'>
+                {dictionary.form.calculation}
+              </Typography>
+              <div className='grid grid-cols-2 gap-4'>
+                <div>
+                  <Typography variant='caption' color='text.secondary'>
+                    {dictionary.fields.total}
+                  </Typography>
+                  <Typography className='font-semibold'>
+                    {formatCurrency(toFiniteNumber(totalAmount), locale, currency)}
+                  </Typography>
+                </div>
+                <div>
+                  <Typography variant='caption' color='text.secondary'>
+                    AFN Base Amount / USD Equivalent
+                  </Typography>
+                  <Typography className='font-semibold text-primary'>
+                    <DualCurrencyAmount
+                      amount={totalAmount}
+                      amountBase={amountBase}
+                      currency={currency}
+                      exchangeRate={exchangeRate}
+                      locale={locale}
+                    />
+                  </Typography>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          {loanType === 'CORPORATE' && amortization.length > 0 && (
+            <Card variant='outlined'>
+              <CardContent>
+                <Typography variant='h6' className='mb-3'>
+                  Calculated Amortization Schedule
+                </Typography>
+                <div className='max-h-72 overflow-auto'>
+                  <table className='w-full text-sm'>
+                    <thead>
+                      <tr>
+                        <th className='p-2 text-start'>#</th>
+                        <th className='p-2 text-start'>Due</th>
+                        <th className='p-2 text-end'>Principal</th>
+                        <th className='p-2 text-end'>Interest</th>
+                        <th className='p-2 text-end'>Payment</th>
+                        <th className='p-2 text-end'>Balance</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {amortization.map(row => (
+                        <tr key={row.installment_number} className='border-bs border-divider'>
+                          <td className='p-2'>{row.installment_number}</td>
+                          <td className='p-2'>{toDateInputValue(row.due_date)}</td>
+                          <td className='p-2 text-end'>{formatCurrency(row.principal_amount, locale, currency)}</td>
+                          <td className='p-2 text-end'>{formatCurrency(row.interest_amount, locale, currency)}</td>
+                          <td className='p-2 text-end font-semibold'>
+                            {formatCurrency(row.payment_amount, locale, currency)}
+                          </td>
+                          <td className='p-2 text-end'>{formatCurrency(row.remaining_principal, locale, currency)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </FormSectionCards>
-        <div className='form-surface-actions -mx-5 -mb-5 mt-auto flex justify-end gap-3 p-5'>
+        <div className='form-surface-actions -mx-5 -mb-5 mt-auto flex justify-end gap-3 px-5 pt-5'>
           <Button variant='tonal' color='secondary' disabled={isSubmitting} onClick={onClose}>
             {dictionary.actions.cancel}
           </Button>

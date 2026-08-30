@@ -115,121 +115,128 @@ const LeadDrawer = ({ open, lead, options, baseCurrency, locale, dictionary, onC
         </IconButton>
       </div>
       <form onSubmit={handleSubmit(submit)} className='form-surface-scroll flex flex-1 flex-col gap-5 p-5' noValidate>
-        <FormSectionCards labels={[dictionary.tabs?.general || 'Lead information', dictionary.tabs?.pipeline || 'Pipeline and ownership']}>
-        <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
-          {field('title', dictionary.fields.title)}
-          {field('company_name', dictionary.fields.company)}
-          {field('contact_name', dictionary.fields.contact)}
-          {field('email', dictionary.fields.email, { type: 'email' })}
-          {field('phone', dictionary.fields.phone)}
-          <Controller
-            name='estimated_value'
-            control={control}
-            render={({ field: controllerField }) => (
-              <CustomTextField
-                {...controllerField}
-                type='number'
-                value={controllerField.value ?? 0}
-                label={dictionary.fields.value}
-                inputProps={{ min: 0, step: '0.01' }}
-                error={Boolean(errors.estimated_value)}
-                helperText={errors.estimated_value?.message}
-                onChange={event => controllerField.onChange(event.target.value === '' ? 0 : Number(event.target.value))}
-              />
-            )}
-          />
-          <Controller
-            name='currency'
-            control={control}
-            render={({ field: controllerField }) => (
-              <CustomTextField
-                {...controllerField}
-                select
-                value={controllerField.value || baseCurrency}
-                label={dictionary.fields.currency}
-                error={Boolean(errors.currency)}
-                helperText={errors.currency?.message}
-              >
-                <MenuItem value='AFN'>AFN</MenuItem>
-                <MenuItem value='USD'>USD</MenuItem>
-              </CustomTextField>
-            )}
-          />
-          <Controller
-            name='source_id'
-            control={control}
-            render={({ field: controllerField }) => (
-              <CustomTextField
-                {...controllerField}
-                select
-                value={controllerField.value || ''}
-                label={dictionary.fields.source}
-                error={Boolean(errors.source_id)}
-                helperText={errors.source_id?.message}
-              >
-                <MenuItem value='' disabled>
-                  {dictionary.placeholders.source}
-                </MenuItem>
-                {options.sources.map(item => (
-                  <MenuItem key={item.id} value={item.id}>
-                    {item.label}
+        <FormSectionCards
+          labels={[
+            dictionary.tabs?.general || 'Lead information',
+            dictionary.tabs?.pipeline || 'Pipeline and ownership'
+          ]}
+        >
+          <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
+            {field('title', dictionary.fields.title)}
+            {field('company_name', dictionary.fields.company)}
+            {field('contact_name', dictionary.fields.contact)}
+            {field('email', dictionary.fields.email, { type: 'email' })}
+            {field('phone', dictionary.fields.phone)}
+            <Controller
+              name='estimated_value'
+              control={control}
+              render={({ field: controllerField }) => (
+                <CustomTextField
+                  {...controllerField}
+                  type='number'
+                  value={controllerField.value ?? 0}
+                  label={dictionary.fields.value}
+                  inputProps={{ min: 0, step: '0.01' }}
+                  error={Boolean(errors.estimated_value)}
+                  helperText={errors.estimated_value?.message}
+                  onChange={event =>
+                    controllerField.onChange(event.target.value === '' ? 0 : Number(event.target.value))
+                  }
+                />
+              )}
+            />
+            <Controller
+              name='currency'
+              control={control}
+              render={({ field: controllerField }) => (
+                <CustomTextField
+                  {...controllerField}
+                  select
+                  value={controllerField.value || baseCurrency}
+                  label={dictionary.fields.currency}
+                  error={Boolean(errors.currency)}
+                  helperText={errors.currency?.message}
+                >
+                  <MenuItem value='AFN'>AFN</MenuItem>
+                  <MenuItem value='USD'>USD</MenuItem>
+                </CustomTextField>
+              )}
+            />
+            <Controller
+              name='source_id'
+              control={control}
+              render={({ field: controllerField }) => (
+                <CustomTextField
+                  {...controllerField}
+                  select
+                  value={controllerField.value || ''}
+                  label={dictionary.fields.source}
+                  error={Boolean(errors.source_id)}
+                  helperText={errors.source_id?.message}
+                >
+                  <MenuItem value='' disabled>
+                    {dictionary.placeholders.source}
                   </MenuItem>
-                ))}
-              </CustomTextField>
-            )}
-          />
-          <Controller
-            name='status_id'
-            control={control}
-            render={({ field: controllerField }) => (
-              <CustomTextField
-                {...controllerField}
-                select
-                value={controllerField.value || ''}
-                label={dictionary.fields.status}
-                error={Boolean(errors.status_id)}
-                helperText={errors.status_id?.message}
-              >
-                <MenuItem value='' disabled>
-                  {dictionary.placeholders.status}
-                </MenuItem>
-                {options.statuses.map(item => (
-                  <MenuItem key={item.id} value={item.id}>
-                    {item.label}
+                  {options.sources.map(item => (
+                    <MenuItem key={item.id} value={item.id}>
+                      {item.label}
+                    </MenuItem>
+                  ))}
+                </CustomTextField>
+              )}
+            />
+            <Controller
+              name='status_id'
+              control={control}
+              render={({ field: controllerField }) => (
+                <CustomTextField
+                  {...controllerField}
+                  select
+                  value={controllerField.value || ''}
+                  label={dictionary.fields.status}
+                  error={Boolean(errors.status_id)}
+                  helperText={errors.status_id?.message}
+                >
+                  <MenuItem value='' disabled>
+                    {dictionary.placeholders.status}
                   </MenuItem>
-                ))}
-              </CustomTextField>
-            )}
-          />
-          <Controller
-            name='assigned_to_id'
-            control={control}
-            render={({ field: controllerField }) => (
-              <CustomTextField
-                {...controllerField}
-                select
-                value={controllerField.value || ''}
-                label={dictionary.fields.assigned}
-                error={Boolean(errors.assigned_to_id)}
-                helperText={errors.assigned_to_id?.message}
-              >
-                <MenuItem value=''>{dictionary.placeholders.unassigned}</MenuItem>
-                {options.staff.map(item => (
-                  <MenuItem key={item.id} value={item.id}>
-                    {item.full_name}
-                  </MenuItem>
-                ))}
-              </CustomTextField>
-            )}
-          />
-          {field('next_follow_up_date', dictionary.fields.followUp, {
-            type: 'datetime-local',
-            slotProps: { inputLabel: { shrink: true } }
-          })}
-        </div>
-        {field('notes', dictionary.fields.notes, { multiline: true, minRows: 4 })}
+                  {options.statuses.map(item => (
+                    <MenuItem key={item.id} value={item.id}>
+                      {item.label}
+                    </MenuItem>
+                  ))}
+                </CustomTextField>
+              )}
+            />
+            <Controller
+              name='assigned_to_id'
+              control={control}
+              render={({ field: controllerField }) => (
+                <CustomTextField
+                  {...controllerField}
+                  select
+                  value={controllerField.value || ''}
+                  label={dictionary.fields.assigned}
+                  error={Boolean(errors.assigned_to_id)}
+                  helperText={errors.assigned_to_id?.message}
+                >
+                  <MenuItem value=''>{dictionary.placeholders.unassigned}</MenuItem>
+                  {options.staff.map(item => (
+                    <MenuItem key={item.id} value={item.id}>
+                      {item.full_name}
+                    </MenuItem>
+                  ))}
+                </CustomTextField>
+              )}
+            />
+            {field('next_follow_up_date', dictionary.fields.followUp, {
+              type: 'datetime-local',
+              slotProps: { inputLabel: { shrink: true } }
+            })}
+          </div>
+          {field('notes', dictionary.fields.notes, { multiline: true, minRows: 4 })}
         </FormSectionCards>
-        <div className='form-surface-actions -mx-5 -mb-5 mt-auto flex justify-end gap-3 p-5'>
+        <div className='form-surface-actions -mx-5 -mb-5 mt-auto flex justify-end gap-3 px-5 pt-5'>
           <Button variant='tonal' color='secondary' disabled={isSubmitting} onClick={onClose}>
             {dictionary.actions.cancel}
           </Button>

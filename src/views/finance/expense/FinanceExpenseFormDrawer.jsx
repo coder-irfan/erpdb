@@ -64,7 +64,8 @@ const FinanceExpenseFormDrawer = ({ open, expense, options, locale, dictionary, 
     [currency, exchangeRate, options.baseCurrency, subTotal]
   )
 
-  const totalUsd = currency === 'USD' ? subTotal : toFiniteNumber(exchangeRate) > 0 ? subTotal / toFiniteNumber(exchangeRate) : 0
+  const totalUsd =
+    currency === 'USD' ? subTotal : toFiniteNumber(exchangeRate) > 0 ? subTotal / toFiniteNumber(exchangeRate) : 0
 
   useEffect(() => {
     if (!open) return
@@ -155,111 +156,179 @@ const FinanceExpenseFormDrawer = ({ open, expense, options, locale, dictionary, 
           <Typography variant='h5'>{expense ? dictionary.form.editTitle : dictionary.form.addTitle}</Typography>
           <Typography color='text.secondary'>{dictionary.form.description}</Typography>
         </div>
-        <IconButton onClick={onClose} disabled={isSubmitting} aria-label={dictionary.actions.close}><i className='tabler-x' /></IconButton>
+        <IconButton onClick={onClose} disabled={isSubmitting} aria-label={dictionary.actions.close}>
+          <i className='tabler-x' />
+        </IconButton>
       </div>
       <form className='form-surface-scroll flex flex-1 flex-col gap-5 p-5' onSubmit={handleSubmit(submit)} noValidate>
-        <FormSectionCards labels={[dictionary.tabs?.general || 'Expense information', dictionary.tabs?.payment || 'Payment and evidence']}>
-        <div className='flex items-center justify-between gap-3 rounded border border-divider p-3'>
-          <div>
-            <Typography variant='caption' color='text.secondary'>{dictionary.fields.approvalStatus}</Typography>
-            <Typography variant='body2'>{dictionary.form.statusManagedHint}</Typography>
-          </div>
-          <Chip
-            size='small'
-            variant='tonal'
-            color={expense?.approval_status === 'REJECTED' ? 'error' : 'warning'}
-            label={dictionary.status[expense?.approval_status || 'PENDING_APPROVAL']}
-          />
-        </div>
-
-        {field('vendor_payee', dictionary.fields.vendorPayee, {
-          placeholder: dictionary.placeholders.vendorPayee
-        })}
-        {field('details', dictionary.fields.details, {
-          multiline: true,
-          minRows: 3,
-          placeholder: dictionary.placeholders.details
-        })}
-
-        <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-          <Controller
-            name='expense_type_id'
-            control={control}
-            render={({ field: controllerField }) => (
-              <CustomTextField
-                {...controllerField}
-                select
-                value={controllerField.value || ''}
-                label={dictionary.fields.expenseType}
-                error={Boolean(errors.expense_type_id)}
-                helperText={errors.expense_type_id?.message}
-                slotProps={{
-                  select: {
-                    displayEmpty: true,
-                    renderValue: selected => options.expenseTypes.find(item => item.id === selected)?.label || dictionary.placeholders.expenseType
-                  }
-                }}
-              >
-                <MenuItem value='' disabled>{dictionary.placeholders.expenseType}</MenuItem>
-                {options.expenseTypes.map(item => <MenuItem key={item.id} value={item.id}>{item.label}</MenuItem>)}
-              </CustomTextField>
-            )}
-          />
-          {field('expense_date', dictionary.fields.expenseDate, { type: 'date', slotProps: { inputLabel: { shrink: true } } })}
-          {relationField('project_id', dictionary.fields.project, options.projects, dictionary.placeholders.project, item => `${item.project_code} · ${item.title}`)}
-          {relationField('spent_by_id', dictionary.fields.spentBy, options.staff, dictionary.placeholders.spentBy, item => `${item.full_name} · ${item.position}`)}
-          {field('quantity', dictionary.fields.quantity, { type: 'number', inputProps: { min: 1, step: 1 } })}
-          {field('unit_price', dictionary.fields.unitPrice, { type: 'number', inputProps: { min: 0, step: '0.01' } })}
-          <Controller
-            name='currency'
-            control={control}
-            render={({ field: controllerField }) => (
-              <CustomTextField {...controllerField} select value={controllerField.value || options.baseCurrency || 'AFN'} label={dictionary.fields.currency} error={Boolean(errors.currency)} helperText={errors.currency?.message}>
-                <MenuItem value='AFN'>AFN</MenuItem>
-                <MenuItem value='USD'>USD</MenuItem>
-              </CustomTextField>
-            )}
-          />
-          {field('exchange_rate', dictionary.fields.exchangeRate, { type: 'number', inputProps: { min: 0, step: '0.0001', readOnly: true } })}
-        </div>
-
-        <Card variant='outlined'>
-          <CardContent>
-            <Typography variant='h6' className='mb-3'>{dictionary.form.calculation}</Typography>
-            <div className='grid grid-cols-1 gap-4 sm:grid-cols-3'>
-              <div><Typography variant='caption' color='text.secondary'>{dictionary.form.subtotalPreview}</Typography><Typography className='font-semibold text-error'>{formatCurrency(subTotal, locale, currency)}</Typography></div>
-              <div><Typography variant='caption' color='text.secondary'>{dictionary.form.basePreview.replace('{currency}', options.baseCurrency)}</Typography><Typography className='font-semibold'>{formatCurrency(amountBase, locale, options.baseCurrency)}</Typography></div>
-              <div><Typography variant='caption' color='text.secondary'>{dictionary.form.usdPreview}</Typography><Typography className='font-semibold'>{formatCurrency(totalUsd, locale, 'USD')}</Typography></div>
+        <FormSectionCards
+          labels={[
+            dictionary.tabs?.general || 'Expense information',
+            dictionary.tabs?.payment || 'Payment and evidence'
+          ]}
+        >
+          <div className='flex items-center justify-between gap-3 rounded border border-divider p-3'>
+            <div>
+              <Typography variant='caption' color='text.secondary'>
+                {dictionary.fields.approvalStatus}
+              </Typography>
+              <Typography variant='body2'>{dictionary.form.statusManagedHint}</Typography>
             </div>
-          </CardContent>
-        </Card>
-
-        <Controller
-          name='receipt_url'
-          control={control}
-          render={({ field: controllerField }) => (
-            <FileUpload
-              compact
-              value={controllerField.value || ''}
-              onChange={value => controllerField.onChange(value || '')}
-              label={dictionary.fields.receipt}
-              maxSizeMB={4}
-              uploadType='expenseReceipt'
-              accept={{
-                'application/pdf': ['.pdf'],
-                'image/jpeg': ['.jpg', '.jpeg'],
-                'image/png': ['.png'],
-                'image/webp': ['.webp']
-              }}
-              translations={dictionary.upload}
+            <Chip
+              size='small'
+              variant='tonal'
+              color={expense?.approval_status === 'REJECTED' ? 'error' : 'warning'}
+              label={dictionary.status[expense?.approval_status || 'PENDING_APPROVAL']}
             />
-          )}
-        />
-        {errors.receipt_url && <Typography variant='caption' color='error'>{errors.receipt_url.message}</Typography>}
+          </div>
 
+          {field('vendor_payee', dictionary.fields.vendorPayee, {
+            placeholder: dictionary.placeholders.vendorPayee
+          })}
+          {field('details', dictionary.fields.details, {
+            multiline: true,
+            minRows: 3,
+            placeholder: dictionary.placeholders.details
+          })}
+
+          <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+            <Controller
+              name='expense_type_id'
+              control={control}
+              render={({ field: controllerField }) => (
+                <CustomTextField
+                  {...controllerField}
+                  select
+                  value={controllerField.value || ''}
+                  label={dictionary.fields.expenseType}
+                  error={Boolean(errors.expense_type_id)}
+                  helperText={errors.expense_type_id?.message}
+                  slotProps={{
+                    select: {
+                      displayEmpty: true,
+                      renderValue: selected =>
+                        options.expenseTypes.find(item => item.id === selected)?.label ||
+                        dictionary.placeholders.expenseType
+                    }
+                  }}
+                >
+                  <MenuItem value='' disabled>
+                    {dictionary.placeholders.expenseType}
+                  </MenuItem>
+                  {options.expenseTypes.map(item => (
+                    <MenuItem key={item.id} value={item.id}>
+                      {item.label}
+                    </MenuItem>
+                  ))}
+                </CustomTextField>
+              )}
+            />
+            {field('expense_date', dictionary.fields.expenseDate, {
+              type: 'date',
+              slotProps: { inputLabel: { shrink: true } }
+            })}
+            {relationField(
+              'project_id',
+              dictionary.fields.project,
+              options.projects,
+              dictionary.placeholders.project,
+              item => `${item.project_code} · ${item.title}`
+            )}
+            {relationField(
+              'spent_by_id',
+              dictionary.fields.spentBy,
+              options.staff,
+              dictionary.placeholders.spentBy,
+              item => `${item.full_name} · ${item.position}`
+            )}
+            {field('quantity', dictionary.fields.quantity, { type: 'number', inputProps: { min: 1, step: 1 } })}
+            {field('unit_price', dictionary.fields.unitPrice, { type: 'number', inputProps: { min: 0, step: '0.01' } })}
+            <Controller
+              name='currency'
+              control={control}
+              render={({ field: controllerField }) => (
+                <CustomTextField
+                  {...controllerField}
+                  select
+                  value={controllerField.value || options.baseCurrency || 'AFN'}
+                  label={dictionary.fields.currency}
+                  error={Boolean(errors.currency)}
+                  helperText={errors.currency?.message}
+                >
+                  <MenuItem value='AFN'>AFN</MenuItem>
+                  <MenuItem value='USD'>USD</MenuItem>
+                </CustomTextField>
+              )}
+            />
+            {field('exchange_rate', dictionary.fields.exchangeRate, {
+              type: 'number',
+              inputProps: { min: 0, step: '0.0001', readOnly: true }
+            })}
+          </div>
+
+          <Card variant='outlined'>
+            <CardContent>
+              <Typography variant='h6' className='mb-3'>
+                {dictionary.form.calculation}
+              </Typography>
+              <div className='grid grid-cols-1 gap-4 sm:grid-cols-3'>
+                <div>
+                  <Typography variant='caption' color='text.secondary'>
+                    {dictionary.form.subtotalPreview}
+                  </Typography>
+                  <Typography className='font-semibold text-error'>
+                    {formatCurrency(subTotal, locale, currency)}
+                  </Typography>
+                </div>
+                <div>
+                  <Typography variant='caption' color='text.secondary'>
+                    {dictionary.form.basePreview.replace('{currency}', options.baseCurrency)}
+                  </Typography>
+                  <Typography className='font-semibold'>
+                    {formatCurrency(amountBase, locale, options.baseCurrency)}
+                  </Typography>
+                </div>
+                <div>
+                  <Typography variant='caption' color='text.secondary'>
+                    {dictionary.form.usdPreview}
+                  </Typography>
+                  <Typography className='font-semibold'>{formatCurrency(totalUsd, locale, 'USD')}</Typography>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Controller
+            name='receipt_url'
+            control={control}
+            render={({ field: controllerField }) => (
+              <FileUpload
+                compact
+                value={controllerField.value || ''}
+                onChange={value => controllerField.onChange(value || '')}
+                label={dictionary.fields.receipt}
+                maxSizeMB={4}
+                uploadType='expenseReceipt'
+                accept={{
+                  'application/pdf': ['.pdf'],
+                  'image/jpeg': ['.jpg', '.jpeg'],
+                  'image/png': ['.png'],
+                  'image/webp': ['.webp']
+                }}
+                translations={dictionary.upload}
+              />
+            )}
+          />
+          {errors.receipt_url && (
+            <Typography variant='caption' color='error'>
+              {errors.receipt_url.message}
+            </Typography>
+          )}
         </FormSectionCards>
-        <div className='form-surface-actions -mx-5 -mb-5 mt-auto flex justify-end gap-3 p-5'>
-          <Button variant='tonal' color='secondary' onClick={onClose} disabled={isSubmitting}>{dictionary.actions.cancel}</Button>
+        <div className='form-surface-actions -mx-5 -mb-5 mt-auto flex justify-end gap-3 px-5 pt-5'>
+          <Button variant='tonal' color='secondary' onClick={onClose} disabled={isSubmitting}>
+            {dictionary.actions.cancel}
+          </Button>
           <Button type='submit' variant='contained' disabled={isSubmitting}>
             <LoadingButtonContent loading={isSubmitting} loadingLabel={dictionary.actions.saving}>
               {expense ? dictionary.actions.save : dictionary.actions.create}

@@ -46,9 +46,12 @@ const DateDurationHelper = ({ startDate, endDate, durationOptions = [], onEndDat
             <Chip
               key={option.id || option.value}
               size='small'
-              variant='outlined'
+              variant='tonal'
+              color='primary'
+              clickable
               label={option.label}
               disabled={!startDate}
+              className='cursor-pointer rounded-full transition-all duration-200 hover:-translate-y-px hover:shadow-sm disabled:cursor-not-allowed'
               onClick={() => applyDuration(option)}
             />
           ))}

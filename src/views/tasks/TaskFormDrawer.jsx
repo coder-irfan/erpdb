@@ -144,84 +144,101 @@ const TaskFormDrawer = ({ open, task, options, defaultProjectId = '', locale, di
         </IconButton>
       </div>
       <form className='form-surface-scroll flex flex-1 flex-col gap-5 p-5' onSubmit={handleSubmit(submit)} noValidate>
-        <FormSectionCards labels={[dictionary.tabs?.general || 'General information', dictionary.tabs?.planning || 'Planning and assignment']}>
-        {field('title', dictionary.fields.title)}
-        <Controller
-          name='project_id'
-          control={control}
-          render={({ field: input }) => (
-            <Autocomplete
-              options={options.projects}
-              value={options.projects.find(project => project.id === input.value) || null}
-              onChange={(_, value) => input.onChange(value?.id || '')}
-              getOptionLabel={option => `${option.project_code} · ${option.title}`}
-              isOptionEqualToValue={(option, value) => option.id === value.id}
-              renderInput={params => (
-                <CustomTextField
-                  {...params}
-                  label={dictionary.fields.project}
-                  placeholder={dictionary.placeholders.project}
-                  error={Boolean(errors.project_id)}
-                  helperText={errors.project_id?.message}
-                />
-              )}
-            />
-          )}
-        />
-        <Controller
-          name='description'
-          control={control}
-          render={({ field: input }) => (
-            <RichTextEditor className='sm:col-span-2' {...input} value={input.value || ''} label={dictionary.fields.description} error={Boolean(errors.description)} helperText={errors.description?.message} />
-          )}
-        />
-        <Controller
-          name='assignee_ids'
-          control={control}
-          render={({ field: input }) => (
-            <Autocomplete
-              multiple
-              options={options.staff}
-              value={options.staff.filter(staff => input.value?.includes(staff.id))}
-              onChange={(_, values) => input.onChange(values.map(value => value.id))}
-              getOptionLabel={option => option.full_name}
-              isOptionEqualToValue={(option, value) => option.id === value.id}
-              renderTags={(values, getTagProps) =>
-                values.map((value, index) => {
-                  const { key, ...tagProps } = getTagProps({ index })
+        <FormSectionCards
+          labels={[
+            dictionary.tabs?.general || 'General information',
+            dictionary.tabs?.planning || 'Planning and assignment'
+          ]}
+        >
+          {field('title', dictionary.fields.title)}
+          <Controller
+            name='project_id'
+            control={control}
+            render={({ field: input }) => (
+              <Autocomplete
+                options={options.projects}
+                value={options.projects.find(project => project.id === input.value) || null}
+                onChange={(_, value) => input.onChange(value?.id || '')}
+                getOptionLabel={option => `${option.project_code} · ${option.title}`}
+                isOptionEqualToValue={(option, value) => option.id === value.id}
+                renderInput={params => (
+                  <CustomTextField
+                    {...params}
+                    label={dictionary.fields.project}
+                    placeholder={dictionary.placeholders.project}
+                    error={Boolean(errors.project_id)}
+                    helperText={errors.project_id?.message}
+                  />
+                )}
+              />
+            )}
+          />
+          <Controller
+            name='description'
+            control={control}
+            render={({ field: input }) => (
+              <RichTextEditor
+                className='sm:col-span-2'
+                {...input}
+                value={input.value || ''}
+                label={dictionary.fields.description}
+                error={Boolean(errors.description)}
+                helperText={errors.description?.message}
+              />
+            )}
+          />
+          <Controller
+            name='assignee_ids'
+            control={control}
+            render={({ field: input }) => (
+              <Autocomplete
+                multiple
+                options={options.staff}
+                value={options.staff.filter(staff => input.value?.includes(staff.id))}
+                onChange={(_, values) => input.onChange(values.map(value => value.id))}
+                getOptionLabel={option => option.full_name}
+                isOptionEqualToValue={(option, value) => option.id === value.id}
+                renderTags={(values, getTagProps) =>
+                  values.map((value, index) => {
+                    const { key, ...tagProps } = getTagProps({ index })
 
-                  return <Chip key={key || value.id} size='small' label={value.full_name} {...tagProps} />
-                })
-              }
-              renderInput={params => (
-                <CustomTextField
-                  {...params}
-                  label={dictionary.fields.assignees}
-                  placeholder={dictionary.placeholders.assignees}
-                  error={Boolean(errors.assignee_ids)}
-                  helperText={errors.assignee_ids?.message}
-                />
-              )}
-            />
-          )}
-        />
-        <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
-          {select('status_id', dictionary.fields.status, options.statuses, dictionary.placeholders.status)}
-          {select('priority_id', dictionary.fields.priority, options.priorities, dictionary.placeholders.priority)}
-          {field('estimated_hours', dictionary.fields.estimatedHours, {
-            type: 'number',
-            inputProps: { min: 0, step: '0.25' }
-          })}
-          {task && field('actual_hours', dictionary.fields.actualHours, {
-            type: 'number',
-            disabled: true,
-            helperText: dictionary.form.actualHoursLocked,
-            inputProps: { min: 0, step: '0.25' }
-          })}
-          {field('due_date', dictionary.fields.dueDate, { type: 'date', inputProps: { min: earliestDueDate }, slotProps: { inputLabel: { shrink: true } } })}
-        </div>
+                    return <Chip key={key || value.id} size='small' label={value.full_name} {...tagProps} />
+                  })
+                }
+                renderInput={params => (
+                  <CustomTextField
+                    {...params}
+                    label={dictionary.fields.assignees}
+                    placeholder={dictionary.placeholders.assignees}
+                    error={Boolean(errors.assignee_ids)}
+                    helperText={errors.assignee_ids?.message}
+                  />
+                )}
+              />
+            )}
+          />
+          <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
+            {select('status_id', dictionary.fields.status, options.statuses, dictionary.placeholders.status)}
+            {select('priority_id', dictionary.fields.priority, options.priorities, dictionary.placeholders.priority)}
+            {field('estimated_hours', dictionary.fields.estimatedHours, {
+              type: 'number',
+              inputProps: { min: 0, step: '0.25' }
+            })}
+            {task &&
+              field('actual_hours', dictionary.fields.actualHours, {
+                type: 'number',
+                disabled: true,
+                helperText: dictionary.form.actualHoursLocked,
+                inputProps: { min: 0, step: '0.25' }
+              })}
+            {field('due_date', dictionary.fields.dueDate, {
+              type: 'date',
+              inputProps: { min: earliestDueDate },
+              slotProps: { inputLabel: { shrink: true } }
+            })}
+          </div>
         </FormSectionCards>
-        <div className='form-surface-actions -mx-5 -mb-5 mt-auto flex justify-end gap-3 p-5'>
+        <div className='form-surface-actions -mx-5 -mb-5 mt-auto flex justify-end gap-3 px-5 pt-5'>
           <Button variant='tonal' color='secondary' onClick={onClose} disabled={isSubmitting}>
             {dictionary.actions.cancel}
           </Button>

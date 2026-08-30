@@ -319,157 +319,206 @@ const ContractFormDrawer = ({
         </IconButton>
       </div>
       <form onSubmit={handleSubmit(submit)} className='form-surface-scroll flex flex-1 flex-col gap-5 p-5' noValidate>
-        <FormSectionCards labels={[dictionary.tabs?.general || 'Contract information', dictionary.tabs?.terms || 'Terms and parties', dictionary.tabs?.financial || 'Financial terms']}>
-        {targetCategory === 'HRM' && (
-          <>
-            {selectField(
-              'staff_id',
-              'Staff Member',
-              formOptions.staff.map(person => ({ ...person, label: person.full_name })),
-              'Select staff member'
-            )}
-            <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
-              {selectField('contract_type_id', 'Contract Type', typeOptions, 'Select HRM type')}
-              {selectField('template_id', 'Agreed Terms / Template', formOptions.templates || [], 'Select template')}
-              {field('position_title', 'Position Title')}
-              {field('base_salary', 'Base Salary', { type: 'number', inputProps: { min: 0.01, step: '0.01' } })}
-              {field('start_date', dictionary.fields.startDate, {
-                type: 'date',
-                slotProps: { inputLabel: { shrink: true } }
-              })}
-              <div className='flex flex-col gap-2'>
-                {field('end_date', dictionary.fields.endDate, {
+        <FormSectionCards
+          labels={[
+            dictionary.tabs?.general || 'Contract information',
+            dictionary.tabs?.terms || 'Terms and parties',
+            dictionary.tabs?.financial || 'Financial terms'
+          ]}
+        >
+          {targetCategory === 'HRM' && (
+            <>
+              {selectField(
+                'staff_id',
+                'Staff Member',
+                formOptions.staff.map(person => ({ ...person, label: person.full_name })),
+                'Select staff member'
+              )}
+              <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
+                {selectField('contract_type_id', 'Contract Type', typeOptions, 'Select HRM type')}
+                {selectField('template_id', 'Agreed Terms / Template', formOptions.templates || [], 'Select template')}
+                {field('position_title', 'Position Title')}
+                {field('base_salary', 'Base Salary', { type: 'number', inputProps: { min: 0.01, step: '0.01' } })}
+                {field('start_date', dictionary.fields.startDate, {
                   type: 'date',
                   slotProps: { inputLabel: { shrink: true } }
                 })}
-                <DateDurationHelper
-                  startDate={startDate}
-                  endDate={endDate}
-                  durationOptions={durations}
-                  onEndDateChange={value => setValue('end_date', value, { shouldDirty: true, shouldValidate: true })}
-                />
+                <div className='flex flex-col gap-2'>
+                  {field('end_date', dictionary.fields.endDate, {
+                    type: 'date',
+                    slotProps: { inputLabel: { shrink: true } }
+                  })}
+                  <DateDurationHelper
+                    startDate={startDate}
+                    endDate={endDate}
+                    durationOptions={durations}
+                    onEndDateChange={value => setValue('end_date', value, { shouldDirty: true, shouldValidate: true })}
+                  />
+                </div>
+                {field('probation_days', 'Probation Period (Days)', {
+                  type: 'number',
+                  inputProps: { min: 1, step: '1' }
+                })}
+                {field('notice_period_days', 'Notice Period (Days)', {
+                  type: 'number',
+                  inputProps: { min: 1, step: '1' }
+                })}
               </div>
-              {field('probation_days', 'Probation Period (Days)', {
-                type: 'number',
-                inputProps: { min: 1, step: '1' }
-              })}
-              {field('notice_period_days', 'Notice Period (Days)', {
-                type: 'number',
-                inputProps: { min: 1, step: '1' }
-              })}
-            </div>
-          </>
-        )}
+            </>
+          )}
 
-        {targetCategory === 'CUSTOMER' && (
-          <>
-            {clientField}
-            {selectField(
-              'lead_id',
-              'Linked Lead (Optional)',
-              (formOptions.leads || []).map(lead => ({ ...lead, label: lead.title })),
-              'Select lead'
-            )}
-            {selectField('template_id', 'Agreement Template', formOptions.templates || [], 'Select agreement template')}
-            {field('title', dictionary.fields.title)}
-          </>
-        )}
+          {targetCategory === 'CUSTOMER' && (
+            <>
+              {clientField}
+              {selectField(
+                'lead_id',
+                'Linked Lead (Optional)',
+                (formOptions.leads || []).map(lead => ({ ...lead, label: lead.title })),
+                'Select lead'
+              )}
+              {selectField(
+                'template_id',
+                'Agreement Template',
+                formOptions.templates || [],
+                'Select agreement template'
+              )}
+              {field('title', dictionary.fields.title)}
+            </>
+          )}
 
-        {targetCategory === 'OTHERS' && (
-          <>
-            <Controller
-              name='vendor_id'
-              control={control}
-              render={({ field }) => (
-                <Autocomplete
-                  options={formOptions.vendors || []}
-                  value={(formOptions.vendors || []).find(vendor => vendor.id === field.value) || null}
-                  onChange={(_, vendor) => {
-                    field.onChange(vendor?.id || '')
-                    if (!vendor) return
-                    setValue('vendor_name', vendor.company_name, { shouldValidate: true })
-                    setValue('vendor_contact_name', vendor.contact_name, { shouldValidate: true })
-                    setValue('vendor_contact_email', vendor.email, { shouldValidate: true })
-                    setValue('vendor_phone', vendor.phone || '')
-                    setValue('vendor_address', vendor.address || '')
-                  }}
-                  getOptionLabel={vendor => vendor.company_name}
-                  isOptionEqualToValue={(option, value) => option.id === value.id}
-                  renderOption={(props, vendor) => (
-                    <li {...props} key={vendor.id}>
-                      <div>
-                        <Typography variant='body2'>{vendor.company_name}</Typography>
-                        <Typography variant='caption' color='text.secondary'>
-                          {vendor.contact_name} <>&middot;</> {vendor.email}
-                        </Typography>
-                      </div>
-                    </li>
+          {targetCategory === 'OTHERS' && (
+            <>
+              <Controller
+                name='vendor_id'
+                control={control}
+                render={({ field }) => (
+                  <Autocomplete
+                    options={formOptions.vendors || []}
+                    value={(formOptions.vendors || []).find(vendor => vendor.id === field.value) || null}
+                    onChange={(_, vendor) => {
+                      field.onChange(vendor?.id || '')
+                      if (!vendor) return
+                      setValue('vendor_name', vendor.company_name, { shouldValidate: true })
+                      setValue('vendor_contact_name', vendor.contact_name, { shouldValidate: true })
+                      setValue('vendor_contact_email', vendor.email, { shouldValidate: true })
+                      setValue('vendor_phone', vendor.phone || '')
+                      setValue('vendor_address', vendor.address || '')
+                    }}
+                    getOptionLabel={vendor => vendor.company_name}
+                    isOptionEqualToValue={(option, value) => option.id === value.id}
+                    renderOption={(props, vendor) => (
+                      <li {...props} key={vendor.id}>
+                        <div>
+                          <Typography variant='body2'>{vendor.company_name}</Typography>
+                          <Typography variant='caption' color='text.secondary'>
+                            {vendor.contact_name} <>&middot;</> {vendor.email}
+                          </Typography>
+                        </div>
+                      </li>
+                    )}
+                    renderInput={params => (
+                      <CustomTextField
+                        {...params}
+                        label='Select Existing Vendor (Optional)'
+                        placeholder='Search saved vendors'
+                      />
+                    )}
+                  />
+                )}
+              />
+              <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
+                {field('vendor_name', 'Third-Party Company / Vendor Name', {
+                  required: true,
+                  placeholder: 'e.g. Azizi Bank'
+                })}
+                {field('vendor_contact_name', 'Vendor Representative / Contact Person', { required: true })}
+                {field('vendor_contact_email', 'Vendor Contact Email', { required: true, type: 'email' })}
+                {field('vendor_phone', 'Vendor Contact Phone')}
+              </div>
+              {field('vendor_address', 'Vendor Address', { multiline: true, minRows: 2 })}
+              {field('title', 'Agreement Title / Subject')}
+              <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
+                {selectField(
+                  'account_manager_id',
+                  'Internal Owner / Responsible Lead',
+                  (formOptions.staff || []).map(person => ({
+                    ...person,
+                    label: `${person.full_name}${person.position ? ` - ${person.position}` : ''}`
+                  })),
+                  'Select responsible employee'
+                )}
+                {selectField('country_id', 'Country', formOptions.options.COUNTRY || [], 'Select country')}
+              </div>
+            </>
+          )}
+
+          {targetCategory !== 'HRM' && (
+            <>
+              <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
+                {selectField(
+                  'contract_type_id',
+                  targetCategory === 'OTHERS' ? 'Contract Purpose' : 'Contract Type',
+                  typeOptions,
+                  'Select contract type'
+                )}
+                {field('start_date', dictionary.fields.startDate, {
+                  type: 'date',
+                  slotProps: { inputLabel: { shrink: true } }
+                })}
+                <div className='flex flex-col gap-2'>
+                  {field('end_date', dictionary.fields.endDate, {
+                    type: 'date',
+                    slotProps: { inputLabel: { shrink: true } }
+                  })}
+                  <DateDurationHelper
+                    startDate={startDate}
+                    endDate={endDate}
+                    durationOptions={durations}
+                    onEndDateChange={value => setValue('end_date', value, { shouldDirty: true, shouldValidate: true })}
+                  />
+                </div>
+                {field('total_amount', targetCategory === 'OTHERS' ? 'Contract Amount' : dictionary.fields.amount, {
+                  type: 'number',
+                  inputProps: { min: 0, step: '0.01' }
+                })}
+                <Controller
+                  name='currency'
+                  control={control}
+                  render={({ field }) => (
+                    <CustomTextField {...field} select label={dictionary.fields.currency}>
+                      <MenuItem value='AFN'>AFN</MenuItem>
+                      <MenuItem value='USD'>USD</MenuItem>
+                    </CustomTextField>
                   )}
-                  renderInput={params => (
-                    <CustomTextField
-                      {...params}
-                      label='Select Existing Vendor (Optional)'
-                      placeholder='Search saved vendors'
+                />
+                {field('exchange_rate', dictionary.fields.exchangeRate, {
+                  type: 'number',
+                  inputProps: { min: 0, step: '0.0001' }
+                })}
+              </div>
+              {['CUSTOMER', 'OTHERS'].includes(targetCategory) && (
+                <Controller
+                  name='auto_renew'
+                  control={control}
+                  render={({ field }) => (
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          checked={Boolean(field.value)}
+                          onChange={event => field.onChange(event.target.checked)}
+                        />
+                      }
+                      label={dictionary.fields.autoRenew}
                     />
                   )}
                 />
               )}
-            />
-            <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
-              {field('vendor_name', 'Third-Party Company / Vendor Name', {
-                required: true,
-                placeholder: 'e.g. Azizi Bank'
-              })}
-              {field('vendor_contact_name', 'Vendor Representative / Contact Person', { required: true })}
-              {field('vendor_contact_email', 'Vendor Contact Email', { required: true, type: 'email' })}
-              {field('vendor_phone', 'Vendor Contact Phone')}
-            </div>
-            {field('vendor_address', 'Vendor Address', { multiline: true, minRows: 2 })}
-            {field('title', 'Agreement Title / Subject')}
-            <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
-              {selectField(
-                'account_manager_id',
-                'Internal Owner / Responsible Lead',
-                (formOptions.staff || []).map(person => ({
-                  ...person,
-                  label: `${person.full_name}${person.position ? ` - ${person.position}` : ''}`
-                })),
-                'Select responsible employee'
-              )}
-              {selectField('country_id', 'Country', formOptions.options.COUNTRY || [], 'Select country')}
-            </div>
-          </>
-        )}
+            </>
+          )}
 
-        {targetCategory !== 'HRM' && (
-          <>
-            <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
-              {selectField(
-                'contract_type_id',
-                targetCategory === 'OTHERS' ? 'Contract Purpose' : 'Contract Type',
-                typeOptions,
-                'Select contract type'
-              )}
-              {field('start_date', dictionary.fields.startDate, {
-                type: 'date',
-                slotProps: { inputLabel: { shrink: true } }
-              })}
-              <div className='flex flex-col gap-2'>
-                {field('end_date', dictionary.fields.endDate, {
-                  type: 'date',
-                  slotProps: { inputLabel: { shrink: true } }
-                })}
-                <DateDurationHelper
-                  startDate={startDate}
-                  endDate={endDate}
-                  durationOptions={durations}
-                  onEndDateChange={value => setValue('end_date', value, { shouldDirty: true, shouldValidate: true })}
-                />
-              </div>
-              {field('total_amount', targetCategory === 'OTHERS' ? 'Contract Amount' : dictionary.fields.amount, {
-                type: 'number',
-                inputProps: { min: 0, step: '0.01' }
-              })}
+          <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
+            {selectField('status_id', dictionary.fields.status, statusOptions, dictionary.placeholders.status)}
+            {targetCategory === 'HRM' && (
               <Controller
                 name='currency'
                 control={control}
@@ -480,75 +529,39 @@ const ContractFormDrawer = ({
                   </CustomTextField>
                 )}
               />
-              {field('exchange_rate', dictionary.fields.exchangeRate, {
+            )}
+            {targetCategory === 'HRM' &&
+              currency === 'USD' &&
+              field('exchange_rate', dictionary.fields.exchangeRate, {
                 type: 'number',
-                inputProps: { min: 0, step: '0.0001' }
+                inputProps: { min: 0.0001, step: '0.0001' }
+              })}
+          </div>
+
+          {targetCategory === 'HRM' && currency === 'USD' && (
+            <div className='rounded border border-success/20 bg-successLighter p-3'>
+              <Typography variant='caption'>Base currency preview</Typography>
+              <Typography className='font-semibold'>
+                {formatCurrency(baseSalaryPreview, locale, formOptions.baseCurrency || 'AFN')}
+              </Typography>
+            </div>
+          )}
+
+          {selectedStatus?.value === 'TERMINATED' && (
+            <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
+              {field('termination_date', 'Termination Date', {
+                type: 'date',
+                slotProps: { inputLabel: { shrink: true } }
+              })}
+              {field('termination_reason', 'Termination Reason', {
+                multiline: true,
+                minRows: 3,
+                placeholder: 'Explain why this contract is being terminated.'
               })}
             </div>
-            {['CUSTOMER', 'OTHERS'].includes(targetCategory) && (
-              <Controller
-                name='auto_renew'
-                control={control}
-                render={({ field }) => (
-                  <FormControlLabel
-                    control={
-                      <Switch checked={Boolean(field.value)} onChange={event => field.onChange(event.target.checked)} />
-                    }
-                    label={dictionary.fields.autoRenew}
-                  />
-                )}
-              />
-            )}
-          </>
-        )}
-
-        <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
-          {selectField('status_id', dictionary.fields.status, statusOptions, dictionary.placeholders.status)}
-          {targetCategory === 'HRM' && (
-            <Controller
-              name='currency'
-              control={control}
-              render={({ field }) => (
-                <CustomTextField {...field} select label={dictionary.fields.currency}>
-                  <MenuItem value='AFN'>AFN</MenuItem>
-                  <MenuItem value='USD'>USD</MenuItem>
-                </CustomTextField>
-              )}
-            />
           )}
-          {targetCategory === 'HRM' &&
-            currency === 'USD' &&
-            field('exchange_rate', dictionary.fields.exchangeRate, {
-              type: 'number',
-              inputProps: { min: 0.0001, step: '0.0001' }
-            })}
-        </div>
-
-        {targetCategory === 'HRM' && currency === 'USD' && (
-          <div className='rounded border border-success/20 bg-successLighter p-3'>
-            <Typography variant='caption'>Base currency preview</Typography>
-            <Typography className='font-semibold'>
-              {formatCurrency(baseSalaryPreview, locale, formOptions.baseCurrency || 'AFN')}
-            </Typography>
-          </div>
-        )}
-
-        {selectedStatus?.value === 'TERMINATED' && (
-          <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
-            {field('termination_date', 'Termination Date', {
-              type: 'date',
-              slotProps: { inputLabel: { shrink: true } }
-            })}
-            {field('termination_reason', 'Termination Reason', {
-              multiline: true,
-              minRows: 3,
-              placeholder: 'Explain why this contract is being terminated.'
-            })}
-          </div>
-        )}
-
         </FormSectionCards>
-        <div className='form-surface-actions -mx-5 -mb-5 mt-auto flex justify-end gap-3 p-5'>
+        <div className='form-surface-actions -mx-5 -mb-5 mt-auto flex justify-end gap-3 px-5 pt-5'>
           <Button variant='tonal' color='secondary' onClick={onClose} disabled={isSubmitting}>
             {dictionary.actions.cancel}
           </Button>

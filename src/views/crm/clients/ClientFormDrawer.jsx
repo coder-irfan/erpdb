@@ -109,63 +109,68 @@ const ClientFormDrawer = ({ open, client, staff, locale, dictionary, onClose, on
         </IconButton>
       </div>
       <form onSubmit={handleSubmit(submit)} className='form-surface-scroll flex flex-1 flex-col gap-5 p-5' noValidate>
-        <FormSectionCards labels={[dictionary.tabs?.general || 'Client information', dictionary.tabs?.relationship || 'Relationship management']}>
-        <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
-          {field('company_name', dictionary.fields.company)}
-          {field('primary_contact_name', dictionary.fields.contact)}
-          {field('email', dictionary.fields.email, { type: 'email' })}
-          {field('phone', dictionary.fields.phone)}
-          {field('tax_number', dictionary.fields.tax)}
-          <Controller
-            name='account_manager_id'
-            control={control}
-            render={({ field: controllerField }) => (
-              <CustomTextField
-                {...controllerField}
-                select
-                value={controllerField.value || ''}
-                label={dictionary.fields.manager}
-                error={Boolean(errors.account_manager_id)}
-                helperText={errors.account_manager_id?.message}
-                slotProps={{
-                  select: {
-                    displayEmpty: true,
-                    renderValue: selected =>
-                      staff.find(item => item.id === selected)?.full_name || dictionary.placeholders.manager
-                  }
-                }}
-              >
-                <MenuItem value=''>{dictionary.placeholders.manager}</MenuItem>
-                {staff.map(item => (
-                  <MenuItem key={item.id} value={item.id}>
-                    {item.full_name} — {item.position}
-                  </MenuItem>
-                ))}
-              </CustomTextField>
-            )}
-          />
-          <Controller
-            name='status'
-            control={control}
-            render={({ field: controllerField }) => (
-              <CustomTextField
-                {...controllerField}
-                select
-                value={controllerField.value || 'ACTIVE'}
-                label={dictionary.fields.status}
-                error={Boolean(errors.status)}
-                helperText={errors.status?.message}
-              >
-                <MenuItem value='ACTIVE'>{dictionary.status.ACTIVE}</MenuItem>
-                <MenuItem value='INACTIVE'>{dictionary.status.INACTIVE}</MenuItem>
-              </CustomTextField>
-            )}
-          />
-        </div>
-        {field('address', dictionary.fields.address, { multiline: true, minRows: 3 })}
-        {field('notes', dictionary.fields.notes, { multiline: true, minRows: 3 })}
+        <FormSectionCards
+          labels={[
+            dictionary.tabs?.general || 'Client information',
+            dictionary.tabs?.relationship || 'Relationship management'
+          ]}
+        >
+          <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
+            {field('company_name', dictionary.fields.company)}
+            {field('primary_contact_name', dictionary.fields.contact)}
+            {field('email', dictionary.fields.email, { type: 'email' })}
+            {field('phone', dictionary.fields.phone)}
+            {field('tax_number', dictionary.fields.tax)}
+            <Controller
+              name='account_manager_id'
+              control={control}
+              render={({ field: controllerField }) => (
+                <CustomTextField
+                  {...controllerField}
+                  select
+                  value={controllerField.value || ''}
+                  label={dictionary.fields.manager}
+                  error={Boolean(errors.account_manager_id)}
+                  helperText={errors.account_manager_id?.message}
+                  slotProps={{
+                    select: {
+                      displayEmpty: true,
+                      renderValue: selected =>
+                        staff.find(item => item.id === selected)?.full_name || dictionary.placeholders.manager
+                    }
+                  }}
+                >
+                  <MenuItem value=''>{dictionary.placeholders.manager}</MenuItem>
+                  {staff.map(item => (
+                    <MenuItem key={item.id} value={item.id}>
+                      {item.full_name} — {item.position}
+                    </MenuItem>
+                  ))}
+                </CustomTextField>
+              )}
+            />
+            <Controller
+              name='status'
+              control={control}
+              render={({ field: controllerField }) => (
+                <CustomTextField
+                  {...controllerField}
+                  select
+                  value={controllerField.value || 'ACTIVE'}
+                  label={dictionary.fields.status}
+                  error={Boolean(errors.status)}
+                  helperText={errors.status?.message}
+                >
+                  <MenuItem value='ACTIVE'>{dictionary.status.ACTIVE}</MenuItem>
+                  <MenuItem value='INACTIVE'>{dictionary.status.INACTIVE}</MenuItem>
+                </CustomTextField>
+              )}
+            />
+          </div>
+          {field('address', dictionary.fields.address, { multiline: true, minRows: 3 })}
+          {field('notes', dictionary.fields.notes, { multiline: true, minRows: 3 })}
         </FormSectionCards>
-        <div className='form-surface-actions -mx-5 -mb-5 mt-auto flex justify-end gap-3 p-5'>
+        <div className='form-surface-actions -mx-5 -mb-5 mt-auto flex justify-end gap-3 px-5 pt-5'>
           <Button variant='tonal' color='secondary' onClick={onClose} disabled={isSubmitting}>
             {dictionary.actions.cancel}
           </Button>

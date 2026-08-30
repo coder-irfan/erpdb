@@ -594,6 +594,9 @@ body,
   z-index: 20;
   flex-shrink: 0;
   border-block-start: 1px solid var(--mui-palette-divider);
+  background: rgb(var(--mui-palette-background-paperChannel) / 0.78);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   padding-block: 0.75rem !important;
 }
 
@@ -664,11 +667,17 @@ body,
   z-index: 20;
   flex-shrink: 0;
   border-block-start: 1px solid var(--mui-palette-divider);
+  background: rgb(var(--mui-palette-background-paperChannel) / 0.78);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   padding-block: 0.75rem !important;
 }
 
 .MuiDialog-paper > form > .MuiDialogActions-root {
   padding-block: 0.75rem;
+  background: rgb(var(--mui-palette-background-paperChannel) / 0.78);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 .MuiDialog-paper > form > .MuiDialogContent-root {
