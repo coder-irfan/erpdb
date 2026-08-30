@@ -28,7 +28,7 @@ import { useForm, Controller } from 'react-hook-form'
 import CustomTextField from '@core/components/mui/TextField'
 
 // Styled Component Imports
-import AppReactDatepicker from '@/libs/styles/AppReactDatepicker'
+import NativeDateInput from '@/components/inputs/NativeDateInput'
 
 const FormValidationBasic = () => {
   // States
@@ -122,7 +122,7 @@ const FormValidationBasic = () => {
                     {...field}
                     fullWidth
                     label='Password'
-                    placeholder='············'
+                    placeholder='Â·Â·Â·Â·Â·Â·Â·Â·Â·Â·Â·Â·'
                     id='form-validation-basic-password'
                     type={isPasswordShown ? 'text' : 'password'}
                     slotProps={{
@@ -152,7 +152,7 @@ const FormValidationBasic = () => {
                 control={control}
                 rules={{ required: true }}
                 render={({ field: { value, onChange } }) => (
-                  <AppReactDatepicker
+                  <NativeDateInput
                     selected={value}
                     showYearDropdown
                     showMonthDropdown

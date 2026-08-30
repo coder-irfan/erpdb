@@ -13,6 +13,7 @@ import { toast } from 'sonner'
 
 import CustomTextField from '@core/components/mui/TextField'
 import LoadingButtonContent from '@/components/LoadingButtonContent'
+import FormSectionCards from '@/components/forms/FormSectionCards'
 import { inventoryItemSchema } from '@/schemas/inventory'
 import { convertToBaseCurrency, formatCurrency, toFiniteNumber } from '@/utils/formatCurrency'
 
@@ -52,8 +53,9 @@ const InventoryFormDrawer = ({ open, item, options, locale, dictionary, onClose,
   const field = (name, label, props = {}) => <Controller name={name} control={control} render={({ field: controllerField }) => <CustomTextField {...controllerField} {...props} fullWidth value={controllerField.value ?? ''} label={label} error={Boolean(errors[name])} helperText={errors[name]?.message} />} />
 
   return <Drawer anchor='right' open={open} onClose={isSubmitting ? undefined : onClose} slotProps={{ paper: { className: 'is-full sm:is-[680px]' } }}>
-    <div className='flex items-start justify-between gap-4 border-be border-divider p-5'><div><Typography variant='h5'>{item ? dictionary.form.editTitle : dictionary.form.addTitle}</Typography><Typography color='text.secondary'>{dictionary.form.description}</Typography></div><IconButton onClick={onClose} disabled={isSubmitting}><i className='tabler-x' /></IconButton></div>
-    <form className='flex flex-1 flex-col gap-5 overflow-y-auto p-5' onSubmit={handleSubmit(submit)} noValidate>
+    <div className='form-surface-header flex items-start justify-between gap-4 border-be border-divider p-5'><div><Typography variant='h5'>{item ? dictionary.form.editTitle : dictionary.form.addTitle}</Typography><Typography color='text.secondary'>{dictionary.form.description}</Typography></div><IconButton onClick={onClose} disabled={isSubmitting}><i className='tabler-x' /></IconButton></div>
+    <form className='form-surface-scroll flex flex-1 flex-col gap-5 p-5' onSubmit={handleSubmit(submit)} noValidate>
+      <FormSectionCards labels={[dictionary.tabs?.general || 'Item information', dictionary.tabs?.valuation || 'Stock and valuation']}>
       <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
         {field('name', dictionary.fields.name)}
         {field('sku_code', dictionary.fields.sku, { disabled: true, placeholder: 'Auto-generated (for example ITM-010)' })}
@@ -66,7 +68,8 @@ const InventoryFormDrawer = ({ open, item, options, locale, dictionary, onClose,
       </div>
       <div className='grid grid-cols-2 gap-4 rounded border border-divider p-4'><div><Typography variant='caption' color='text.secondary'>Calculated USD Unit Value</Typography><Typography className='font-semibold text-primary'>{formatCurrency(usdUnitValue, locale, 'USD')}</Typography></div><div><Typography variant='caption' color='text.secondary'>Calculated USD Total Value</Typography><Typography className='font-semibold text-primary'>{formatCurrency(toFiniteNumber(usdTotalValue), locale, 'USD')}</Typography></div></div>
       <Typography variant='caption' color='text.secondary'>{dictionary.form.statusNotice}</Typography>
-      <div className='mt-auto flex justify-end gap-3 border-bs border-divider pt-5'><Button variant='tonal' color='secondary' disabled={isSubmitting} onClick={onClose}>{dictionary.actions.cancel}</Button><Button type='submit' variant='contained' disabled={isSubmitting}><LoadingButtonContent loading={isSubmitting} loadingLabel={dictionary.actions.saving}>{item ? dictionary.actions.save : dictionary.actions.create}</LoadingButtonContent></Button></div>
+      </FormSectionCards>
+      <div className='form-surface-actions -mx-5 -mb-5 mt-auto flex justify-end gap-3 p-5'><Button variant='tonal' color='secondary' disabled={isSubmitting} onClick={onClose}>{dictionary.actions.cancel}</Button><Button type='submit' variant='contained' disabled={isSubmitting}><LoadingButtonContent loading={isSubmitting} loadingLabel={dictionary.actions.saving}>{item ? dictionary.actions.save : dictionary.actions.create}</LoadingButtonContent></Button></div>
     </form>
   </Drawer>
 }

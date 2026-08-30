@@ -13,6 +13,7 @@ import { toast } from 'sonner'
 
 import CustomTextField from '@core/components/mui/TextField'
 import LoadingButtonContent from '@/components/LoadingButtonContent'
+import FormSectionCards from '@/components/forms/FormSectionCards'
 import { createVisitorSchema } from '@/schemas/crm/visitors'
 
 const EMPTY_VALUES = {
@@ -130,7 +131,7 @@ const VisitorFormDrawer = ({ open, visitor, staff, locale, dictionary, onClose, 
       transitionDuration={300}
       slotProps={{ paper: { className: 'is-full sm:is-[580px]' } }}
     >
-      <div className='flex items-start justify-between gap-4 border-be border-divider p-5'>
+      <div className='form-surface-header flex items-start justify-between gap-4 border-be border-divider p-5'>
         <div>
           <Typography variant='h5'>{visitor ? dictionary.form.editTitle : dictionary.form.addTitle}</Typography>
           <Typography color='text.secondary'>{dictionary.form.description}</Typography>
@@ -141,7 +142,8 @@ const VisitorFormDrawer = ({ open, visitor, staff, locale, dictionary, onClose, 
       </div>
 
       <form onSubmit={handleSubmit(submit)} className='flex min-bs-0 flex-1 flex-col' noValidate>
-        <div className='flex-1 overflow-y-auto p-5'>
+        <div className='form-surface-scroll p-5'>
+          <FormSectionCards labels={[dictionary.tabs?.general || 'Visitor information', dictionary.tabs?.visit || 'Visit details']}>
           <div className='grid grid-cols-1 gap-5 sm:grid-cols-2'>
             <Controller
               name='full_name'
@@ -282,9 +284,10 @@ const VisitorFormDrawer = ({ open, visitor, staff, locale, dictionary, onClose, 
               )}
             />
           </div>
+          </FormSectionCards>
         </div>
 
-        <div className='flex justify-end gap-3 border-bs border-divider p-5'>
+        <div className='form-surface-actions flex justify-end gap-3 p-5'>
           <Button variant='tonal' color='secondary' disabled={isSubmitting} onClick={closeDrawer}>
             {dictionary.actions.cancel}
           </Button>

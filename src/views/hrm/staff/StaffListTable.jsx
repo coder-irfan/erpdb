@@ -21,6 +21,7 @@ import EntityActionsMenu from '@/components/table/EntityActionsMenu'
 import TableFiltersPopover from '@/components/table/TableFiltersPopover'
 import ResponsiveDataTable from '@/components/tables/ResponsiveDataTable'
 import { formatCurrency } from '@/utils/formatCurrency'
+import { formatStatusLabel } from '@/utils/formatStatusLabel'
 import { getAvailableStaffUsers, getStaffList, getStaffStats, updateStaffStatus } from '@/actions/hrm/staff'
 
 import StaffDetailModal from './StaffDetailModal'
@@ -233,7 +234,7 @@ const StaffListTable = ({
             size='small'
             variant='tonal'
             color={STATUS_COLORS[info.getValue()] || 'default'}
-            label={dictionary.status[info.getValue()] || info.getValue()}
+            label={formatStatusLabel(info.getValue(), dictionary.status[info.getValue()])}
           />
         )
       }),

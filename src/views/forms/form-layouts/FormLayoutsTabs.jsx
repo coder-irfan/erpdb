@@ -22,7 +22,7 @@ import IconButton from '@mui/material/IconButton'
 import CustomTextField from '@core/components/mui/TextField'
 
 // Styled Component Imports
-import AppReactDatepicker from '@/libs/styles/AppReactDatepicker'
+import NativeDateInput from '@/components/inputs/NativeDateInput'
 
 const FormLayoutsWithTabs = () => {
   // States
@@ -149,7 +149,7 @@ const FormLayoutsWithTabs = () => {
                   </CustomTextField>
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6 }}>
-                  <AppReactDatepicker
+                  <NativeDateInput
                     selected={formData.date}
                     showYearDropdown
                     showMonthDropdown
@@ -195,7 +195,7 @@ const FormLayoutsWithTabs = () => {
                   <CustomTextField
                     fullWidth
                     label='Password'
-                    placeholder='············'
+                    placeholder='Â·Â·Â·Â·Â·Â·Â·Â·Â·Â·Â·Â·'
                     id='form-layout-tabs-password'
                     type={formData.isPasswordShown ? 'text' : 'password'}
                     value={formData.password}
@@ -222,7 +222,7 @@ const FormLayoutsWithTabs = () => {
                   <CustomTextField
                     fullWidth
                     label='Confirm Password'
-                    placeholder='············'
+                    placeholder='Â·Â·Â·Â·Â·Â·Â·Â·Â·Â·Â·Â·'
                     id='form-layout-tabs-confirm-password'
                     type={formData.setIsConfirmPasswordShown ? 'text' : 'password'}
                     value={formData.confirmPassword}

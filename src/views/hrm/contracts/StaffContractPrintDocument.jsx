@@ -1,4 +1,5 @@
 import { formatCurrency } from '@/utils/formatCurrency'
+import { formatStatusLabel } from '@/utils/formatStatusLabel'
 
 const DATE_LOCALES = { en: 'en-US', fa: 'fa-AF', ps: 'ps-AF' }
 
@@ -48,7 +49,7 @@ const StaffContractPrintDocument = ({ contract, setup, locale, dictionary }) => 
               <Detail label={dictionary.fields.staffMember} value={contract.staff.full_name} />
               <Detail label={dictionary.fields.fatherName} value={contract.staff.father_name} />
               <Detail label={dictionary.fields.tazkiraNo} value={contract.staff.tazkira_no} />
-              <Detail label={dictionary.fields.position} value={contract.position_title} />
+              <Detail label={dictionary.fields.position} value={contract.staff?.position} />
               <Detail label={dictionary.fields.phone} value={contract.staff.phone} />
               <Detail label={dictionary.fields.email} value={contract.staff.email} />
               <Detail className='col-span-2' label={dictionary.fields.address} value={contract.staff.address} />
@@ -68,7 +69,7 @@ const StaffContractPrintDocument = ({ contract, setup, locale, dictionary }) => 
         <SectionHeader>{print.terms}</SectionHeader>
         <div className='grid grid-cols-2 gap-2 rounded bg-gray-50 p-2 sm:grid-cols-4'>
           <Term label={dictionary.fields.contractType} value={contract.contract_type.label} />
-          <Term label={dictionary.fields.status} value={dictionary.status[contract.status.value] || contract.status.label} />
+          <Term label={dictionary.fields.status} value={formatStatusLabel(contract.status.value, dictionary.status[contract.status.value] || contract.status.label)} />
           <Term label={dictionary.fields.currency} value={currency} />
           <Term label={dictionary.fields.duration || 'Duration'} value={contract.duration_label} />
           <Term label={dictionary.fields.baseSalary} value={salary} />

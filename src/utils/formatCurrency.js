@@ -18,9 +18,9 @@ export const formatCurrency = (value, locale = 'en', currency = 'AFN') => {
 
   if (resolvedCurrency === 'AFN') {
     const formatted = new Intl.NumberFormat(localeMap[resolvedLocale] || localeMap.en, {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    }).format(amount)
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(Math.trunc(amount))
 
     return `${formatted} AFN`
   }

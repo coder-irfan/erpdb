@@ -11,6 +11,7 @@ import Divider from '@mui/material/Divider'
 
 // Component Imports
 import CustomTextField from '@core/components/mui/TextField'
+import FormSectionCards from '@/components/forms/FormSectionCards'
 
 // Vars
 export const initialFormData = {
@@ -56,7 +57,8 @@ const AddCustomerDrawer = ({ open, setOpen, onFormSubmit }) => {
       </div>
       <Divider />
       <div className='p-6'>
-        <form onSubmit={e => handleSubmit(e)} className='flex flex-col gap-5'>
+        <form onSubmit={e => handleSubmit(e)} className='form-surface-scroll flex flex-col gap-5'>
+          <FormSectionCards labels={['Customer information', 'Address and contact']}>
           <CustomTextField
             fullWidth
             id='name'
@@ -110,7 +112,8 @@ const AddCustomerDrawer = ({ open, setOpen, onFormSubmit }) => {
             value={data.contactNumber}
             onChange={e => setData({ ...data, contactNumber: e.target.value })}
           />
-          <div className='flex items-center gap-4'>
+          </FormSectionCards>
+          <div className='form-surface-actions flex items-center justify-end gap-4 px-1 py-3'>
             <Button variant='contained' type='submit'>
               Add
             </Button>

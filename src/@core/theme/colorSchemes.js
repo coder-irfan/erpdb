@@ -47,7 +47,7 @@ export const getContrastText = main => {
   const whiteContrast = contrastRatio(main, '#FFFFFF')
   const blackContrast = contrastRatio(main, '#000000')
 
-  return whiteContrast >= 3.5 || whiteContrast >= blackContrast ? '#FFFFFF' : '#000000'
+  return relativeLuminance(main) < 0.4 || whiteContrast >= blackContrast ? '#FFFFFF' : '#000000'
 }
 
 const getReadableText = (main, mode) => {

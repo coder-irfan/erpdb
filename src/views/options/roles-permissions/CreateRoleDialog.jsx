@@ -12,6 +12,7 @@ import { useForm } from 'react-hook-form'
 
 import CustomTextField from '@core/components/mui/TextField'
 import LoadingButtonContent from '@/components/LoadingButtonContent'
+import FormSectionCards from '@/components/forms/FormSectionCards'
 import { createRoleSchema } from '@/utils/validation/roleSchemas'
 
 import PermissionMatrix from './PermissionMatrix'
@@ -57,7 +58,7 @@ const CreateRoleDialog = ({ open, groups, onClose, onSubmit, translations }) => 
       onClose={isSubmitting ? undefined : handleClose}
       slotProps={{ paper: { className: 'is-full sm:is-[680px] lg:is-[760px]' } }}
     >
-      <div className='flex items-start justify-between gap-4 p-6'>
+      <div className='form-surface-header flex items-start justify-between gap-4 border-be border-divider p-6'>
         <div>
           <Typography variant='h5' component='span'>
             {translations.createRoleForm.title}
@@ -72,7 +73,8 @@ const CreateRoleDialog = ({ open, groups, onClose, onSubmit, translations }) => 
       </div>
       <Divider />
       <form className='flex min-bs-0 flex-1 flex-col' onSubmit={handleSubmit(submitForm)} noValidate>
-        <div className='flex flex-1 flex-col gap-6 overflow-y-auto p-6'>
+        <div className='form-surface-scroll flex flex-1 flex-col gap-6 p-6'>
+          <FormSectionCards labels={[translations.createRoleForm.title, translations.permissions || 'Permissions']}>
           <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
             <CustomTextField
               fullWidth
@@ -111,9 +113,10 @@ const CreateRoleDialog = ({ open, groups, onClose, onSubmit, translations }) => 
             translations={translations}
             disabled={isSubmitting}
           />
+          </FormSectionCards>
         </div>
         <Divider />
-        <div className='flex justify-end gap-3 p-6'>
+        <div className='form-surface-actions flex justify-end gap-3 px-6 py-3'>
           <Button variant='tonal' color='secondary' onClick={handleClose} disabled={isSubmitting}>
             {translations.cancel}
           </Button>

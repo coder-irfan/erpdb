@@ -12,6 +12,7 @@ import TableEmptyStateRow from '@/components/table/TableEmptyStateRow'
 import TableSkeletonRows from '@/components/table/TableSkeletonRows'
 import ResponsiveDataTable from '@/components/tables/ResponsiveDataTable'
 import { formatCurrency } from '@/utils/formatCurrency'
+import { formatStatusLabel } from '@/utils/formatStatusLabel'
 
 import tableStyles from '@core/styles/table.module.css'
 
@@ -99,7 +100,7 @@ const ClientTableView = ({
             size='small'
             variant='tonal'
             color={client.status === 'ACTIVE' ? 'success' : 'secondary'}
-            label={dictionary.status[client.status] || client.status}
+            label={formatStatusLabel(client.status, dictionary.status[client.status])}
           />
         )}
         renderMobileActions={renderActions}
@@ -223,7 +224,7 @@ const ClientTableView = ({
                         size='small'
                         variant='tonal'
                         color={client.status === 'ACTIVE' ? 'success' : 'secondary'}
-                        label={dictionary.status[client.status] || client.status}
+                        label={formatStatusLabel(client.status, dictionary.status[client.status])}
                       />
                     </td>
                     <td className='text-end font-semibold text-success'>

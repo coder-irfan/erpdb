@@ -25,6 +25,7 @@ import UserAvatar from '@/components/common/UserAvatar'
 import DetailSkeleton from '@/components/dialogs/DetailSkeleton'
 import TableEmptyStateRow from '@/components/table/TableEmptyStateRow'
 import { formatCurrency } from '@/utils/formatCurrency'
+import { formatStatusLabel } from '@/utils/formatStatusLabel'
 
 import StaffAttendanceHistory from './StaffAttendanceHistory'
 
@@ -118,7 +119,7 @@ const StaffDetailModal = ({ open, staffId, locale, dictionary, onClose }) => {
                     size='small'
                     variant='tonal'
                     color={STAFF_STATUS_COLORS[staff.status] || 'default'}
-                    label={dictionary.status[staff.status] || staff.status}
+                    label={formatStatusLabel(staff.status, dictionary.status[staff.status])}
                   />
                   {staff.user && (
                     <Chip size='small' variant='tonal' color='info' label={dictionary.details.linkedUser} />
@@ -175,7 +176,6 @@ const StaffDetailModal = ({ open, staffId, locale, dictionary, onClose }) => {
                       value={<DualCurrencyAmount amount={staff.salary} amountBase={staff.amount_base} currency={staff.salary_currency} exchangeRate={staff.salary_exchange_rate} locale={locale} />}
                     />
                     <DetailItem label={dictionary.fields.joinDate} value={formatDate(staff.join_date, locale)} />
-                    <DetailItem label={dictionary.fields.contractPeriod} value={staff.contract_period} />
                     <DetailItem label={dictionary.fields.systemUser} value={staff.user?.name || staff.user?.email} />
                     <DetailItem label={dictionary.details.createdAt} value={formatDate(staff.created_at, locale)} />
                   </div>
@@ -222,7 +222,7 @@ const StaffDetailModal = ({ open, staffId, locale, dictionary, onClose }) => {
                           label={contract.status?.label}
                         />
                       </div>
-                      <Typography>{contract.position_title}</Typography>
+                      <Typography>{contract.staff?.position || staff.position}</Typography>
                       <Typography color='text.secondary'>
                         {`${formatDate(contract.start_date, locale)} — ${formatDate(contract.end_date, locale)}`}
                       </Typography>

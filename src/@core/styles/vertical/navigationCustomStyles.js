@@ -36,7 +36,9 @@ const navigationCustomStyles = (verticalNavOptions, theme) => {
       }
     },
     [`& .${menuClasses.root}`]: {
-      paddingBlock: theme.spacing(1),
+      marginBlockStart: '4px',
+      paddingBlockStart: '12px',
+      paddingBlockEnd: theme.spacing(1),
       paddingInline: collapsedNotHovered ? theme.spacing(1) : theme.spacing(3)
     },
     [`& .${verticalNavClasses.backdrop}`]: {

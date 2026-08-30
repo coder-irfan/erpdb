@@ -46,7 +46,6 @@ const normalizeStaff = staff => ({
   guarantor_license: staff.guarantor_license,
   join_date: staff.join_date.toISOString(),
   termination_date: staff.termination_date?.toISOString() ?? null,
-  contract_period: staff.contract_period,
   user_id: staff.user_id,
   status: staff.status,
   created_at: staff.created_at.toISOString(),
@@ -102,7 +101,6 @@ const staffListSelect = {
   guarantor_license: true,
   join_date: true,
   termination_date: true,
-  contract_period: true,
   user_id: true,
   status: true,
   created_at: true,
@@ -147,7 +145,6 @@ const validateStaff = (payload, translations) =>
     guarantor_phone: payload?.guarantor_phone ?? '',
     guarantor_license: payload?.guarantor_license ?? '',
     join_date: payload?.join_date,
-    contract_period: payload?.contract_period ?? '',
     user_id: payload?.user_id || null,
     status: payload?.status || 'ACTIVE'
   })
@@ -172,7 +169,6 @@ const toStaffData = (values, exchangeRate, baseCurrency) => ({
   guarantor_phone: nullableText(values.guarantor_phone),
   guarantor_license: nullableText(values.guarantor_license),
   join_date: toUtcDateOnly(values.join_date),
-  contract_period: nullableText(values.contract_period),
   user_id: values.user_id || null,
   status: values.status
 })

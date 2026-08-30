@@ -239,9 +239,9 @@ const contractTypes = [
   { category: 'CONTRACT_TYPE_CUSTOMER', label: 'Fixed-Price', value: 'FIXED_PRICE', sort_order: 2 },
   { category: 'CONTRACT_TYPE_CUSTOMER', label: 'Retainer', value: 'RETAINER', sort_order: 3 },
   { category: 'CONTRACT_TYPE_CUSTOMER', label: 'NDA', value: 'NDA', sort_order: 4 },
-  { category: 'CONTRACT_TYPE_FINANCE', label: 'Payment Schedule', value: 'PAYMENT_SCHEDULE', sort_order: 1 },
-  { category: 'CONTRACT_TYPE_FINANCE', label: 'Installment Agreement', value: 'INSTALLMENT_AGREEMENT', sort_order: 2 },
-  { category: 'CONTRACT_TYPE_FINANCE', label: 'Settlement', value: 'SETTLEMENT', sort_order: 3 },
+  { category: 'CONTRACT_TYPE_CUSTOMER', label: 'Payment Schedule', value: 'PAYMENT_SCHEDULE', sort_order: 5 },
+  { category: 'CONTRACT_TYPE_CUSTOMER', label: 'Installment Agreement', value: 'INSTALLMENT_AGREEMENT', sort_order: 6 },
+  { category: 'CONTRACT_TYPE_CUSTOMER', label: 'Settlement', value: 'SETTLEMENT', sort_order: 7 },
   { category: 'CONTRACT_TYPE_OTHER', label: 'Vendor Supply', value: 'VENDOR_SUPPLY', sort_order: 1 },
   { category: 'CONTRACT_TYPE_OTHER', label: 'Office Lease', value: 'OFFICE_LEASE', sort_order: 2 },
   { category: 'CONTRACT_TYPE_OTHER', label: 'External NDA', value: 'EXTERNAL_NDA', sort_order: 3 }

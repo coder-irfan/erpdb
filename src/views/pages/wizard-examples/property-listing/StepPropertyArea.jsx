@@ -16,7 +16,7 @@ import CustomTextField from '@core/components/mui/TextField'
 import DirectionalIcon from '@components/DirectionalIcon'
 
 // Styled Component Imports
-import AppReactDatepicker from '@/libs/styles/AppReactDatepicker'
+import NativeDateInput from '@/components/inputs/NativeDateInput'
 
 const StepPropertyDetails = ({ activeStep, handleNext, handlePrev, steps }) => {
   // States
@@ -76,7 +76,7 @@ const StepPropertyDetails = ({ activeStep, handleNext, handlePrev, steps }) => {
         />
       </Grid>
       <Grid size={{ xs: 12, md: 6 }}>
-        <AppReactDatepicker
+        <NativeDateInput
           selected={date}
           placeholderText='YYYY-MM-DD'
           dateFormat={'yyyy-MM-dd'}

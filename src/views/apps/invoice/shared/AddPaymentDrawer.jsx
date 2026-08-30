@@ -12,9 +12,10 @@ import Divider from '@mui/material/Divider'
 
 // Component Imports
 import CustomTextField from '@core/components/mui/TextField'
+import FormSectionCards from '@/components/forms/FormSectionCards'
 
 // Styled Component Imports
-import AppReactDatepicker from '@/libs/styles/AppReactDatepicker'
+import NativeDateInput from '@/components/inputs/NativeDateInput'
 
 // Vars
 const initialData = {
@@ -57,6 +58,7 @@ const AddPaymentDrawer = ({ open, handleClose }) => {
       <Divider />
       <div className='p-6'>
         <form onSubmit={handleSubmit} className='flex flex-col gap-6'>
+          <FormSectionCards labels={['Payment details', 'Payment notes']}>
           <CustomTextField
             fullWidth
             id='invoice-balance'
@@ -81,7 +83,7 @@ const AddPaymentDrawer = ({ open, handleClose }) => {
             value={formData.paymentAmount}
             onChange={e => setFormData({ ...formData, paymentAmount: +e.target.value })}
           />
-          <AppReactDatepicker
+          <NativeDateInput
             selected={formData.paymentDate}
             id='payment-date'
             onChange={date => date !== null && setFormData({ ...formData, paymentDate: date })}
@@ -112,7 +114,8 @@ const AddPaymentDrawer = ({ open, handleClose }) => {
             value={formData.paymentNote}
             onChange={e => setFormData({ ...formData, paymentNote: e.target.value })}
           />
-          <div className='flex items-center gap-4'>
+          </FormSectionCards>
+          <div className='form-surface-actions flex items-center justify-end gap-4 px-1 py-3'>
             <Button variant='contained' type='submit'>
               Send
             </Button>

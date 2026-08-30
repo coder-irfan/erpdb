@@ -20,7 +20,7 @@ import { activeStaffContractRelation } from '@/libs/hrmContractAccess'
 import { prisma } from '@/libs/prisma'
 import { ATTENDANCE_STATUSES, createTimesheetSchema, DATE_PATTERN } from '@/schemas/hrm/timesheets'
 import { getDictionary } from '@/utils/getDictionary'
-import { hasAnyPermission } from '@/utils/rbac'
+import { hasAnyPermission, hasAttendancePayrollOverrideRole } from '@/utils/rbac'
 
 const responseError = (error, status, code) => Response.json({ success: false, error, code }, { status })
 const localeFrom = value => (['en', 'fa', 'ps'].includes(value) ? value : 'en')
@@ -82,7 +82,7 @@ export async function GET(request) {
 }
 
 export async function POST(request) {
-  const authorization = await authorizeAction(ATTENDANCE_WRITE_PERMISSIONS)
+  const authorization = await authorizeAction()
   let payload
 
   try {
@@ -102,7 +102,13 @@ export async function POST(request) {
     )
   }
 
-  const canManage = hasAnyPermission(authorization.session, ['hrm:write'])
+  const canOverridePayrollLock = hasAttendancePayrollOverrideRole(authorization.session)
+
+  if (!canOverridePayrollLock && !hasAnyPermission(authorization.session, ATTENDANCE_WRITE_PERMISSIONS)) {
+    return responseError(dictionary.messages.forbidden, 403, 'FORBIDDEN')
+  }
+
+  const canManage = canOverridePayrollLock || hasAnyPermission(authorization.session, ['hrm:write'])
   const currentStaff = canManage ? null : await getCurrentStaff(authorization.session.user.id)
 
   if (!canManage && !currentStaff) {
@@ -117,8 +123,11 @@ export async function POST(request) {
 
   const guard = await getAttendanceDateGuard(date)
 
+  const payrollOverride =
+    payload?.payrollOverride === true && canOverridePayrollLock
+
   if (guard.isFuture) return responseError(dictionary.messages.futureDateBlocked, 409, guard.code)
-  if (guard.payrollLocked) return responseError(dictionary.messages.payrollLocked, 409, guard.code)
+  if (guard.payrollLocked && !payrollOverride) return responseError(dictionary.messages.payrollLocked, 409, guard.code)
 
   if (payload?.bulkRemainingAbsent === true) {
     if (!canManage) return responseError(dictionary.messages.forbidden, 403, 'FORBIDDEN')
@@ -155,7 +164,7 @@ export async function POST(request) {
             user_id: authorization.session.user.id,
             action: 'ATTENDANCE_BULK_ABSENT',
             module: 'HRM',
-            details: { date, requestedCount: remaining.length }
+            details: { date, requestedCount: remaining.length, payrollOverride: guard.payrollLocked && payrollOverride }
           }
         })
       })
@@ -237,7 +246,13 @@ export async function POST(request) {
           user_id: authorization.session.user.id,
           action: 'ATTENDANCE_CREATED',
           module: 'HRM',
-          details: { timesheetId: created.id, staffId: created.staff_id, date, status: created.status }
+          details: {
+            timesheetId: created.id,
+            staffId: created.staff_id,
+            date,
+            status: created.status,
+            payrollOverride: guard.payrollLocked && payrollOverride
+          }
         }
       })
 

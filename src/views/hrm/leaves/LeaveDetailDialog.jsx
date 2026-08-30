@@ -5,6 +5,7 @@ import Typography from '@mui/material/Typography'
 
 import DetailDialog from '@/components/dialogs/DetailDialog'
 import { formatMetadata } from '@/utils/formatMetadata'
+import { formatStatusLabel } from '@/utils/formatStatusLabel'
 
 const localeMap = { en: 'en-US', fa: 'fa-AF', ps: 'ps-AF' }
 const date = (value, locale) => value ? new Intl.DateTimeFormat(localeMap[locale] || 'en-US', { dateStyle: 'medium', timeZone: 'UTC' }).format(new Date(`${value}T00:00:00.000Z`)) : '—'
@@ -15,7 +16,7 @@ const LeaveDetailDialog = ({ leave, open, locale, dictionary, onClose }) => {
 
   return <DetailDialog open={open} onClose={onClose} title={leave.staff.full_name} subtitle={leave.leave_type.label}>
     <div className='flex flex-col gap-5 sm:gap-6'>
-      <Chip className='w-fit' size='small' variant='tonal' color={{ APPROVED: 'success', REJECTED: 'error', PENDING: 'warning' }[leave.status.value] || 'default'} label={dictionary.status[leave.status.value] || leave.status.label} />
+      <Chip className='w-fit' size='small' variant='tonal' color={{ APPROVED: 'success', REJECTED: 'error', PENDING: 'warning' }[leave.status.value] || 'default'} label={formatStatusLabel(leave.status.value, dictionary.status[leave.status.value] || leave.status.label)} />
       <div className='grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3'>
         <Item label='Leave type' value={leave.leave_type.label} />
         <Item label='Start date' value={date(leave.start_date, locale)} />

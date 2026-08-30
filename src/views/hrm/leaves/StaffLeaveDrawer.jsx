@@ -16,9 +16,11 @@ import { toast } from 'sonner'
 
 import CustomTextField from '@core/components/mui/TextField'
 import LoadingButtonContent from '@/components/LoadingButtonContent'
-import LocalizedDateTimePicker from '@/components/inputs/LocalizedDateTimePicker'
+import FormSectionCards from '@/components/forms/FormSectionCards'
+import NativeDateTimeInput from '@/components/inputs/NativeDateTimeInput'
 import { createLeaveSchema } from '@/schemas/hrm/leaves'
 import { calculateLeaveWorkingDays, getKabulToday } from '@/utils/leaveDates'
+import { formatStatusLabel } from '@/utils/formatStatusLabel'
 
 const today = () => getKabulToday()
 
@@ -120,7 +122,7 @@ const StaffLeaveDrawer = ({ open, leave, options, currentStaffId, canManage, loc
 
   return (
     <Drawer anchor='right' open={open} onClose={closeDrawer} slotProps={{ paper: { className: 'is-full sm:is-[540px]' } }}>
-      <div className='flex items-start justify-between gap-4 p-6'>
+      <div className='form-surface-header flex items-start justify-between gap-4 border-be border-divider p-6'>
         <div>
           <Typography variant='h5'>{leave ? dictionary.drawer.editTitle : dictionary.drawer.title}</Typography>
           <Typography color='text.secondary'>{dictionary.drawer.description}</Typography>
@@ -130,14 +132,15 @@ const StaffLeaveDrawer = ({ open, leave, options, currentStaffId, canManage, loc
         </IconButton>
       </div>
       <Divider />
-      <form className='flex flex-1 flex-col gap-5 overflow-y-auto p-6' onSubmit={handleSubmit(submit)} noValidate>
+      <form className='form-surface-scroll flex flex-1 flex-col gap-5 p-6' onSubmit={handleSubmit(submit)} noValidate>
+        <FormSectionCards labels={[dictionary.tabs?.general || 'Leave request', dictionary.tabs?.approval || 'Balance and approval']}>
         <Controller
           name='staff_id'
           control={control}
           render={({ field }) => (
             <CustomTextField {...field} select fullWidth required label={dictionary.fields.staff} value={field.value || ''} disabled={isSubmitting || !canManage} error={Boolean(errors.staff_id)} helperText={errors.staff_id?.message}>
               <MenuItem value='' disabled>{dictionary.placeholders.selectStaff}</MenuItem>
-              {staffOptions.map(staff => <MenuItem key={staff.id} value={staff.id}>{staff.full_name} — {staff.position}</MenuItem>)}
+              {staffOptions.map(staff => <MenuItem key={staff.id} value={staff.id}>{staff.full_name} <>&mdash;</> {staff.position}</MenuItem>)}
             </CustomTextField> 
           )}
         />
@@ -157,8 +160,8 @@ const StaffLeaveDrawer = ({ open, leave, options, currentStaffId, canManage, loc
           )}
         />
         <div className='grid grid-cols-1 gap-5 sm:grid-cols-2'>
-          <LocalizedDateTimePicker fullWidth required locale={locale} label={dictionary.fields.startDate} disabled={isSubmitting} error={Boolean(errors.start_date)} helperText={errors.start_date?.message} {...register('start_date')} />
-          <LocalizedDateTimePicker fullWidth required locale={locale} label={dictionary.fields.endDate} disabled={isSubmitting} error={Boolean(errors.end_date) || calculatedDays < 1} helperText={errors.end_date?.message || (calculatedDays < 1 ? dictionary.validation.dateRangeInvalid : '')} {...register('end_date')} />
+          <NativeDateTimeInput fullWidth required locale={locale} label={dictionary.fields.startDate} disabled={isSubmitting} error={Boolean(errors.start_date)} helperText={errors.start_date?.message} {...register('start_date')} />
+          <NativeDateTimeInput fullWidth required locale={locale} label={dictionary.fields.endDate} disabled={isSubmitting} error={Boolean(errors.end_date) || calculatedDays < 1} helperText={errors.end_date?.message || (calculatedDays < 1 ? dictionary.validation.dateRangeInvalid : '')} {...register('end_date')} />
         </div>
         <div className='flex items-center justify-between rounded border border-primary/20 bg-primaryLighter p-4'>
           <Typography color='text.secondary'>Net Working Days (Fridays and public holidays excluded)</Typography>
@@ -197,13 +200,14 @@ const StaffLeaveDrawer = ({ open, leave, options, currentStaffId, canManage, loc
                 <MenuItem value='' disabled>{dictionary.placeholders.selectStatus}</MenuItem>
                 {options.statuses
                   .filter(status => ['PENDING', 'APPROVED'].includes(status.value))
-                  .map(status => <MenuItem key={status.id} value={status.id}>{dictionary.status[status.value] || status.label}</MenuItem>)}
+                  .map(status => <MenuItem key={status.id} value={status.id}>{formatStatusLabel(status.value, dictionary.status[status.value] || status.label)}</MenuItem>)}
               </CustomTextField>
             )}
           />
         )}
         <CustomTextField fullWidth multiline minRows={4} label={dictionary.fields.reason} placeholder={dictionary.placeholders.reason} disabled={isSubmitting} error={Boolean(errors.reason)} helperText={errors.reason?.message} {...register('reason')} />
-        <div className='mt-auto flex justify-end gap-3 pt-4'>
+        </FormSectionCards>
+        <div className='form-surface-actions -mx-6 -mb-6 mt-auto flex justify-end gap-3 p-6'>
           <Button type='button' variant='tonal' color='secondary' onClick={closeDrawer} disabled={isSubmitting}>{dictionary.actions.cancel}</Button>
           <Button type='submit' variant='contained' disabled={isSubmitting || calculatedDays < 1 || (balance?.remaining != null && calculatedDays > balance.remaining)}>
             <LoadingButtonContent loading={isSubmitting} loadingLabel={dictionary.actions.saving}>{leave ? dictionary.actions.saveChanges : dictionary.actions.submit}</LoadingButtonContent>

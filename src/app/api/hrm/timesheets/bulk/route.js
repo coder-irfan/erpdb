@@ -14,14 +14,14 @@ import {
 import { prisma } from '@/libs/prisma'
 import { createTimesheetSchema, DATE_PATTERN } from '@/schemas/hrm/timesheets'
 import { getDictionary } from '@/utils/getDictionary'
-import { hasAnyPermission } from '@/utils/rbac'
+import { hasAnyPermission, hasAttendancePayrollOverrideRole } from '@/utils/rbac'
 
 const MAX_BULK_RECORDS = 1_000
 const responseError = (error, status, code) => Response.json({ success: false, error, code }, { status })
 const localeFrom = value => (['en', 'fa', 'ps'].includes(value) ? value : 'en')
 
 export async function POST(request) {
-  const authorization = await authorizeAction(ATTENDANCE_WRITE_PERMISSIONS)
+  const authorization = await authorizeAction()
   let payload
 
   try {
@@ -41,7 +41,13 @@ export async function POST(request) {
     )
   }
 
-  const canManage = hasAnyPermission(authorization.session, ['hrm:write'])
+  const canOverridePayrollLock = hasAttendancePayrollOverrideRole(authorization.session)
+
+  if (!canOverridePayrollLock && !hasAnyPermission(authorization.session, ATTENDANCE_WRITE_PERMISSIONS)) {
+    return responseError(dictionary.messages.forbidden, 403, 'FORBIDDEN')
+  }
+
+  const canManage = canOverridePayrollLock || hasAnyPermission(authorization.session, ['hrm:write'])
   const currentStaff = canManage ? null : await getCurrentStaff(authorization.session.user.id)
 
   if (!canManage && !currentStaff) {
@@ -56,11 +62,14 @@ export async function POST(request) {
 
   const guard = await getAttendanceDateGuard(date)
 
+  const payrollOverride =
+    payload?.payrollOverride === true && canOverridePayrollLock
+
   if (guard.isFuture) {
     return responseError(dictionary.messages.futureDateBlocked, 409, guard.code)
   }
 
-  if (guard.payrollLocked) {
+  if (guard.payrollLocked && !payrollOverride) {
     return responseError(dictionary.messages.payrollLocked, 409, guard.code)
   }
 
@@ -166,7 +175,13 @@ export async function POST(request) {
           user_id: authorization.session.user.id,
           action: 'ATTENDANCE_BULK_SAVED',
           module: 'HRM',
-          details: { date, requestedCount: records.length, savedCount: editableRecords.length, createdCount }
+          details: {
+            date,
+            requestedCount: records.length,
+            savedCount: editableRecords.length,
+            createdCount,
+            payrollOverride: guard.payrollLocked && payrollOverride
+          }
         }
       })
     )

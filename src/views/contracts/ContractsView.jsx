@@ -13,7 +13,7 @@ import CustomTextField from '@core/components/mui/TextField'
 import { deleteContract, getContractFormOptions, getContracts, runContractExpirationAudit, updateContractStatus } from '@/actions/contracts'
 import ConfirmDeleteModal from '@/components/dialogs/ConfirmDeleteModal'
 import TableFiltersPopover from '@/components/table/TableFiltersPopover'
-import LocalizedDateTimePicker from '@/components/inputs/LocalizedDateTimePicker'
+import NativeDateTimeInput from '@/components/inputs/NativeDateTimeInput'
 import { CONTRACT_TYPE_DOMAINS } from '@/data/contractTypes'
 
 import ContractDetailModal from './ContractDetailModal'
@@ -31,7 +31,7 @@ const EMPTY_DATA = {
 
 const EMPTY_OPTIONS = {
   clients: [], vendors: [], staff: [],
-  leads: [], invoices: [], templates: [],
+  leads: [], templates: [],
   options: { CONTRACT_TYPE: [], CONTRACT_TYPES: [], CONTRACT_DURATION: [], CONTRACT_COUNTRY: [], COUNTRY: [], CONTRACT_LEVEL: [], CONTRACT_STATUS: [] },
   baseCurrency: 'AFN', exchangeRate: '65.0000'
 }
@@ -172,8 +172,8 @@ const ContractsView = ({ locale, dictionary, setup, canWrite, canDelete, canRunA
               </CustomTextField>
               {scope !== 'OTHERS' && <Autocomplete options={formOptions.clients} value={formOptions.clients.find(client => client.id === clientId) || null} onChange={(_, value) => { setClientId(value?.id || ''); setPage(0) }} getOptionLabel={option => option.company_name} isOptionEqualToValue={(option, value) => option.id === value.id} renderInput={params => <CustomTextField {...params} label={dictionary.filters.client} placeholder={dictionary.filters.allClients} />} />}
               <div className='grid grid-cols-1 gap-3 sm:grid-cols-2'>
-                <LocalizedDateTimePicker locale={locale} label={dictionary.filters.fromDate} value={fromDate} onChange={event => { setFromDate(event.target.value); setPage(0) }} />
-                <LocalizedDateTimePicker locale={locale} label={dictionary.filters.toDate} value={toDate} onChange={event => { setToDate(event.target.value); setPage(0) }} />
+                <NativeDateTimeInput locale={locale} label={dictionary.filters.fromDate} value={fromDate} onChange={event => { setFromDate(event.target.value); setPage(0) }} />
+                <NativeDateTimeInput locale={locale} label={dictionary.filters.toDate} value={toDate} onChange={event => { setToDate(event.target.value); setPage(0) }} />
               </div>
               {activeFilterCount > 0 && <Button variant='tonal' color='secondary' onClick={() => { setSearchInput(''); setSearch(''); setStatusFilter('ALL'); setServiceTypeId(''); setClientId(''); setFromDate(''); setToDate(''); setPage(0) }}>{dictionary.filters.clear}</Button>}
             </TableFiltersPopover>

@@ -11,14 +11,18 @@ import MenuItem from '@mui/material/MenuItem'
 import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
 import { valibotResolver } from '@hookform/resolvers/valibot'
-import { Controller, useForm } from 'react-hook-form'
+import { Controller, useForm, useWatch } from 'react-hook-form'
 import { toast } from 'sonner'
 
 import CustomTextField from '@core/components/mui/TextField'
 import { createStaffContract, updateStaffContract } from '@/actions/hrm/contracts'
+import DateDurationHelper from '@/components/contracts/DateDurationHelper'
 import LoadingButtonContent from '@/components/LoadingButtonContent'
-import LocalizedDateTimePicker from '@/components/inputs/LocalizedDateTimePicker'
+import FormSectionCards from '@/components/forms/FormSectionCards'
+import NativeDateTimeInput from '@/components/inputs/NativeDateTimeInput'
 import { createStaffContractSchema } from '@/schemas/hrm/contracts'
+import { toDateInputValue } from '@/utils/contractDuration'
+import { formatStatusLabel } from '@/utils/formatStatusLabel'
 
 const toInputDate = value => (value ? new Date(value).toISOString().slice(0, 10) : '')
 
@@ -26,7 +30,6 @@ const getDefaultValues = (contract, statuses, baseCurrency) => ({
   staff_id: contract?.staff_id || '',
   contract_type_id: contract?.contract_type_id || '',
   template_id: contract?.contract_type?.category === 'CONTRACT_POLICY' ? contract.contract_type_id : '',
-  position_title: contract?.position_title || '',
   base_salary: contract?.base_salary || '',
   currency: contract?.currency || baseCurrency,
   start_date: toInputDate(contract?.start_date) || new Date().toISOString().slice(0, 10),
@@ -78,8 +81,17 @@ const StaffContractDrawer = ({ open, contract, options, locale, dictionary, onCl
     defaultValues: getDefaultValues(contract, statusOptions, options.setup.currency_code || 'AFN')
   })
 
+  const startDate = useWatch({ control, name: 'start_date' })
+  const endDate = useWatch({ control, name: 'end_date' })
+  const configuredDurations = options.options?.CONTRACT_DURATION
+  const durationOptions = useMemo(() => configuredDurations || [], [configuredDurations])
+
   useEffect(() => {
-    if (open) reset(getDefaultValues(contract, statusOptions, options.setup.currency_code || 'AFN'))
+    if (!open) return
+
+    const resetValues = getDefaultValues(contract, statusOptions, options.setup.currency_code || 'AFN')
+
+    reset(resetValues)
   }, [contract, open, options.setup.currency_code, reset, statusOptions])
 
   const handleStaffChange = event => {
@@ -89,7 +101,6 @@ const StaffContractDrawer = ({ open, contract, options, locale, dictionary, onCl
     setValue('staff_id', selectedId, { shouldDirty: true, shouldValidate: true })
 
     if (staff) {
-      setValue('position_title', staff.position, { shouldDirty: true, shouldValidate: true })
       setValue('base_salary', staff.salary, { shouldDirty: true, shouldValidate: true })
       setValue('currency', staff.salary_currency || options.setup.currency_code || 'AFN', {
         shouldDirty: true,
@@ -100,9 +111,9 @@ const StaffContractDrawer = ({ open, contract, options, locale, dictionary, onCl
 
   const submitForm = async values => {
     try {
-      const result = contract
-        ? await updateStaffContract(contract.id, { ...values, locale })
-        : await createStaffContract({ ...values, locale })
+      const payload = { ...values, locale }
+
+      const result = contract ? await updateStaffContract(contract.id, payload) : await createStaffContract(payload)
 
       if (!result.success) {
         toast.error(result.error)
@@ -125,7 +136,7 @@ const StaffContractDrawer = ({ open, contract, options, locale, dictionary, onCl
       onClose={isSubmitting ? undefined : onClose}
       PaperProps={{ className: 'is-full sm:is-[540px]' }}
     >
-      <div className='flex items-start justify-between gap-4 p-6'>
+      <div className='form-surface-header flex items-start justify-between gap-4 border-be border-divider p-6'>
         <div>
           <Typography variant='h5'>{contract ? dictionary.drawer.editTitle : dictionary.drawer.addTitle}</Typography>
           <Typography color='text.secondary'>{dictionary.drawer.description}</Typography>
@@ -135,7 +146,8 @@ const StaffContractDrawer = ({ open, contract, options, locale, dictionary, onCl
         </IconButton>
       </div>
       <Divider />
-      <form className='flex flex-1 flex-col gap-5 overflow-y-auto p-6' onSubmit={handleSubmit(submitForm)}>
+      <form className='form-surface-scroll flex flex-1 flex-col gap-5 p-6' onSubmit={handleSubmit(submitForm)}>
+        <FormSectionCards labels={[dictionary.tabs?.general || 'Contract assignment', dictionary.tabs?.terms || 'Employment terms', dictionary.tabs?.compensation || 'Compensation']}>
         {contract && (
           <CustomTextField
             fullWidth
@@ -185,8 +197,8 @@ const StaffContractDrawer = ({ open, contract, options, locale, dictionary, onCl
               helperText={errors.contract_type_id?.message}
             >
               <MenuItem value='' disabled>
-              {dictionary.placeholders.selectContractType || dictionary.placeholders.selectPolicy}
-            </MenuItem>
+                {dictionary.placeholders.selectContractType || dictionary.placeholders.selectPolicy}
+              </MenuItem>
               {contractTypeOptions.map(type => (
                 <MenuItem key={type.id} value={type.id}>
                   {type.label}
@@ -209,20 +221,18 @@ const StaffContractDrawer = ({ open, contract, options, locale, dictionary, onCl
               error={Boolean(errors.template_id)}
               helperText={errors.template_id?.message}
             >
-              <MenuItem value='' disabled>{dictionary.placeholders.selectPolicy}</MenuItem>
-              {options.policies.map(policy => <MenuItem key={policy.id} value={policy.id}>{policy.label}</MenuItem>)}
+              <MenuItem value='' disabled>
+                {dictionary.placeholders.selectPolicy}
+              </MenuItem>
+              {options.policies.map(policy => (
+                <MenuItem key={policy.id} value={policy.id}>
+                  {policy.label}
+                </MenuItem>
+              ))}
             </CustomTextField>
           )}
         />
         <div className='grid grid-cols-1 gap-5 sm:grid-cols-2'>
-          <CustomTextField
-            fullWidth
-            required
-            label={dictionary.fields.position}
-            error={Boolean(errors.position_title)}
-            helperText={errors.position_title?.message}
-            {...register('position_title')}
-          />
           <CustomTextField
             fullWidth
             required
@@ -252,7 +262,7 @@ const StaffContractDrawer = ({ open, contract, options, locale, dictionary, onCl
               </CustomTextField>
             )}
           />
-          <LocalizedDateTimePicker
+          <NativeDateTimeInput
             fullWidth
             required
             locale={locale}
@@ -262,15 +272,24 @@ const StaffContractDrawer = ({ open, contract, options, locale, dictionary, onCl
             helperText={errors.start_date?.message}
             {...register('start_date')}
           />
-          <LocalizedDateTimePicker
-            fullWidth
-            locale={locale}
-            label={dictionary.fields.endDate}
-            slotProps={{ inputLabel: { shrink: true } }}
-            error={Boolean(errors.end_date)}
-            helperText={errors.end_date?.message}
-            {...register('end_date')}
-          />
+          <div className='flex flex-col gap-2'>
+            <NativeDateTimeInput
+              fullWidth
+              required
+              locale={locale}
+              label={dictionary.fields.endDate}
+              slotProps={{ inputLabel: { shrink: true } }}
+              error={Boolean(errors.end_date)}
+              helperText={errors.end_date?.message}
+              {...register('end_date')}
+            />
+            <DateDurationHelper
+              startDate={startDate}
+              endDate={endDate}
+              durationOptions={durationOptions}
+              onEndDateChange={value => setValue('end_date', value, { shouldDirty: true, shouldValidate: true })}
+            />
+          </div>
         </div>
         <Controller
           name='status_id'
@@ -291,7 +310,7 @@ const StaffContractDrawer = ({ open, contract, options, locale, dictionary, onCl
               </MenuItem>
               {statusOptions.map(status => (
                 <MenuItem key={status.id} value={status.id}>
-                  {dictionary.status[status.value] || status.label}
+                  {formatStatusLabel(status.value, dictionary.status[status.value] || status.label)}
                 </MenuItem>
               ))}
             </CustomTextField>
@@ -317,7 +336,8 @@ const StaffContractDrawer = ({ open, contract, options, locale, dictionary, onCl
             ))}
           </div>
         </div>
-        <div className='mt-auto flex justify-end gap-3 pt-4'>
+        </FormSectionCards>
+        <div className='form-surface-actions -mx-6 -mb-6 mt-auto flex justify-end gap-3 p-6'>
           <Button type='button' variant='tonal' color='secondary' onClick={onClose} disabled={isSubmitting}>
             {dictionary.actions.cancel}
           </Button>

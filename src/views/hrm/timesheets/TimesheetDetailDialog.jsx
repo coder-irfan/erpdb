@@ -6,6 +6,7 @@ import Typography from '@mui/material/Typography'
 import DetailDialog from '@/components/dialogs/DetailDialog'
 import QuickContact from '@/components/common/QuickContact'
 import { formatMetadata } from '@/utils/formatMetadata'
+import { formatStatusLabel } from '@/utils/formatStatusLabel'
 
 const Item = ({ label, value }) => (
   <div className='rounded-lg border border-divider/70 bg-backgroundDefault/40 p-3'>
@@ -32,7 +33,7 @@ const TimesheetDetailDialog = ({ record, open, dictionary, onClose }) => {
           size='small'
           variant='tonal'
           color={{ PRESENT: 'success', ABSENT: 'error', LEAVE: 'info' }[record.status]}
-          label={dictionary.status[record.status] || record.status}
+          label={formatStatusLabel(record.status, dictionary.status[record.status])}
         />
         <div className='grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3'>
           <Item label='Date' value={record.date} />

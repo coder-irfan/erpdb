@@ -18,6 +18,7 @@ import ResponsiveDataTable from '@/components/tables/ResponsiveDataTable'
 import PhoneNumber from '@/components/common/PhoneNumber'
 import QuickContact from '@/components/common/QuickContact'
 import { formatCurrency, toFiniteNumber } from '@/utils/formatCurrency'
+import { formatStatusLabel } from '@/utils/formatStatusLabel'
 
 const localeMap = { en: 'en-US', fa: 'fa-AF', ps: 'ps-AF' }
 
@@ -129,7 +130,7 @@ const ClientProfileModal = ({
                   size='small'
                   variant='tonal'
                   color={client.status === 'ACTIVE' ? 'success' : 'secondary'}
-                  label={dictionary.status[client.status] || client.status}
+                  label={formatStatusLabel(client.status, dictionary.status[client.status])}
                 />
               </div>
               <Typography color='text.secondary'>

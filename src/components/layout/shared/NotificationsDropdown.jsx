@@ -124,7 +124,7 @@ const NotificationDropdown = ({ dictionary: providedDictionary }) => {
       >
         {({ TransitionProps, placement }) => (
           <Fade {...TransitionProps} style={{ transformOrigin: placement === 'bottom-end' ? 'right top' : 'left top' }}>
-            <Paper className={classnames('bs-full', settings.skin === 'bordered' ? 'border shadow-none' : 'shadow-lg')}>
+            <Paper className={classnames('topbar-dropdown bs-full', settings.skin === 'bordered' ? 'border shadow-none' : 'shadow-lg')}>
               <ClickAwayListener onClickAway={() => setOpen(false)}>
                 <div className='bs-full flex flex-col'>
                   <div className='flex items-center gap-2 pli-4 plb-3.5'>

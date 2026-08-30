@@ -21,9 +21,10 @@ import DashboardTablePagination from '@/components/table/DashboardTablePaginatio
 import EntityActionsMenu from '@/components/table/EntityActionsMenu'
 import TableEmptyStateRow from '@/components/table/TableEmptyStateRow'
 import TableFiltersPopover from '@/components/table/TableFiltersPopover'
-import LocalizedDateTimePicker from '@/components/inputs/LocalizedDateTimePicker'
+import NativeDateTimeInput from '@/components/inputs/NativeDateTimeInput'
 import TableSkeletonRows from '@/components/table/TableSkeletonRows'
 import ResponsiveDataTable from '@/components/tables/ResponsiveDataTable'
+import { formatStatusLabel } from '@/utils/formatStatusLabel'
 
 import AttendanceDrawer from './AttendanceDrawer'
 import AttendanceStatsCards from './AttendanceStatsCards'
@@ -61,7 +62,7 @@ const formatDate = (value, locale) =>
 
 const escapeCsv = value => `"${String(value ?? '').replaceAll('"', '""')}"`
 
-const TimesheetsView = ({ initialDate, canWrite, canDelete, defaultWorkHours, printSetup, locale, dictionary }) => {
+const TimesheetsView = ({ initialDate, canWrite, canDelete, canOverridePayrollLock, defaultWorkHours, printSetup, locale, dictionary }) => {
   const [selectedDate, setSelectedDate] = useState(initialDate)
   const [data, setData] = useState(EMPTY_DATA)
   const [loading, setLoading] = useState(true)
@@ -77,11 +78,13 @@ const TimesheetsView = ({ initialDate, canWrite, canDelete, defaultWorkHours, pr
   const [deleteLoading, setDeleteLoading] = useState(false)
   const [printData, setPrintData] = useState(null)
   const [printLoadingId, setPrintLoadingId] = useState(null)
+  const [payrollOverrideEnabled, setPayrollOverrideEnabled] = useState(false)
 
   const changeDate = nextDate => {
     setSelectedDate(nextDate)
     setPage(0)
     setDrawerOpen(false)
+    setPayrollOverrideEnabled(false)
   }
 
   const loadData = useCallback(async () => {
@@ -141,11 +144,21 @@ const TimesheetsView = ({ initialDate, canWrite, canDelete, defaultWorkHours, pr
     setDrawerOpen(true)
   }
 
-  const attendanceBlocked = loading || data.guard?.blocked
+  const payrollOverrideActive = Boolean(
+    canOverridePayrollLock && data.guard?.payrollLocked && payrollOverrideEnabled
+  )
+
+  const effectiveGuard = {
+    ...data.guard,
+    payrollOverride: payrollOverrideActive,
+    blocked: Boolean(data.guard?.isFuture || (data.guard?.payrollLocked && !payrollOverrideActive))
+  }
+
+  const attendanceBlocked = loading || effectiveGuard.blocked
 
   const attendanceBlockedMessage = data.guard?.isFuture
     ? dictionary.messages.futureDateBlocked
-    : data.guard?.payrollLocked
+    : data.guard?.payrollLocked && !canOverridePayrollLock
       ? dictionary.messages.payrollLocked
       : ''
 
@@ -155,7 +168,11 @@ const TimesheetsView = ({ initialDate, canWrite, canDelete, defaultWorkHours, pr
     setDeleteLoading(true)
 
     try {
-      const response = await fetch(`/api/hrm/timesheets/${deleteTarget.id}?locale=${locale}`, { method: 'DELETE' })
+      const params = new URLSearchParams({ locale })
+
+      if (payrollOverrideActive) params.set('payroll_override', 'true')
+
+      const response = await fetch(`/api/hrm/timesheets/${deleteTarget.id}?${params.toString()}`, { method: 'DELETE' })
       const result = await response.json()
 
       if (!response.ok || !result.success) toast.error(result.error || dictionary.messages.operationFailed)
@@ -289,7 +306,7 @@ const TimesheetsView = ({ initialDate, canWrite, canDelete, defaultWorkHours, pr
                     <i className='tabler-chevron-left' />
                   </IconButton>
                 </Tooltip>
-                <LocalizedDateTimePicker
+                <NativeDateTimeInput
                   locale={locale}
                   label={dictionary.date.date}
                   value={selectedDate}
@@ -355,6 +372,28 @@ const TimesheetsView = ({ initialDate, canWrite, canDelete, defaultWorkHours, pr
         </CardContent>
         {error && <Alert severity='error'>{error}</Alert>}
         {attendanceBlockedMessage && <Alert severity='warning'>{attendanceBlockedMessage}</Alert>}
+        {data.guard?.payrollLocked && canOverridePayrollLock && (
+          <Alert
+            severity={payrollOverrideActive ? 'success' : 'info'}
+            icon={<i className={payrollOverrideActive ? 'tabler-lock-open' : 'tabler-lock'} />}
+            action={
+              <Button
+                color='inherit'
+                size='small'
+                variant='outlined'
+                onClick={() => setPayrollOverrideEnabled(current => !current)}
+              >
+                {payrollOverrideActive
+                  ? dictionary.actions.lockAttendance || 'Disable Force Edit'
+                  : dictionary.actions.unlockAttendance || 'Unlock Attendance for Edit'}
+              </Button>
+            }
+          >
+            {payrollOverrideActive
+              ? dictionary.messages.payrollOverrideActive || 'Administrative override is active for this payroll period.'
+              : dictionary.messages.payrollLockedAdmin || 'Payroll for this month has been finalized. Unlock attendance only for an authorized correction.'}
+          </Alert>
+        )}
         <ResponsiveDataTable
           mobileRows={data.records}
           loading={loading}
@@ -379,21 +418,21 @@ const TimesheetsView = ({ initialDate, canWrite, canDelete, defaultWorkHours, pr
               size='small'
               variant='tonal'
               color={STATUS_COLORS[record.status]}
-              label={dictionary.status[record.status]}
+              label={formatStatusLabel(record.status, dictionary.status[record.status])}
             />
           )}
           renderMobileActions={renderRecordActions}
           mobileMetadata={[
             { id: 'position', label: dictionary.fields.position, render: record => record.staff.position },
-            { id: 'check-in', label: dictionary.fields.checkIn, render: record => record.check_in_time || '—' },
-            { id: 'check-out', label: dictionary.fields.checkOut, render: record => record.check_out_time || '—' },
+            { id: 'check-in', label: dictionary.fields.checkIn, render: record => record.check_in_time || '-' },
+            { id: 'check-out', label: dictionary.fields.checkOut, render: record => record.check_out_time || '-' },
             {
               id: 'hours',
               label: dictionary.fields.hours,
               render: record =>
-                record.hours_worked ? `${Number(record.hours_worked).toFixed(2)} ${dictionary.hoursShort}` : '—'
+                record.hours_worked ? `${Number(record.hours_worked).toFixed(2)} ${dictionary.hoursShort}` : '-'
             },
-            { id: 'notes', label: dictionary.fields.notes, render: record => record.notes || '—' }
+            { id: 'notes', label: dictionary.fields.notes, render: record => record.notes || '-' }
           ]}
           emptyState={{
             icon: 'tabler-calendar-time',
@@ -465,15 +504,15 @@ const TimesheetsView = ({ initialDate, canWrite, canDelete, defaultWorkHours, pr
                           size='small'
                           variant='tonal'
                           color={STATUS_COLORS[record.status]}
-                          label={dictionary.status[record.status]}
+                          label={formatStatusLabel(record.status, dictionary.status[record.status])}
                         />
                       </td>
-                      <td>{record.check_in_time || '—'}</td>
-                      <td>{record.check_out_time || '—'}</td>
+                      <td>{record.check_in_time || '-'}</td>
+                      <td>{record.check_out_time || '-'}</td>
                       <td>
                         {record.hours_worked
                           ? `${Number(record.hours_worked).toFixed(2)} ${dictionary.hoursShort}`
-                          : '—'}
+                          : '-' }
                       </td>
                       <td>
                         {record.notes ? (
@@ -483,7 +522,7 @@ const TimesheetsView = ({ initialDate, canWrite, canDelete, defaultWorkHours, pr
                             </Typography>
                           </Tooltip>
                         ) : (
-                          '—'
+                          '-'
                         )}
                       </td>
                       <td className='no-print text-end'>{renderRecordActions(record)}</td>
@@ -516,7 +555,8 @@ const TimesheetsView = ({ initialDate, canWrite, canDelete, defaultWorkHours, pr
         date={selectedDate}
         attendanceStaff={data.attendanceStaff}
         defaultWorkHours={defaultWorkHours}
-        guard={data.guard}
+        guard={effectiveGuard}
+        loading={loading}
         locale={locale}
         dictionary={dictionary}
         onClose={() => setDrawerOpen(false)}

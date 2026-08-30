@@ -7,6 +7,7 @@ import DetailDialog from '@/components/dialogs/DetailDialog'
 import PhoneNumber from '@/components/common/PhoneNumber'
 import QuickContact from '@/components/common/QuickContact'
 import { formatMetadata } from '@/utils/formatMetadata'
+import { formatStatusLabel } from '@/utils/formatStatusLabel'
 
 const localeMap = { en: 'en-US', fa: 'fa-AF', ps: 'ps-AF' }
 
@@ -42,7 +43,7 @@ const VisitorDetailDialog = ({ visitor, open, locale, dictionary, purposeLabel, 
             size='small'
             variant='tonal'
             color={visitor.status === 'CHECKED_IN' ? 'warning' : 'success'}
-            label={dictionary.status[visitor.status] || visitor.status}
+            label={formatStatusLabel(visitor.status, dictionary.status[visitor.status])}
           />
           {visitor.converted_lead && (
             <Chip

@@ -20,7 +20,7 @@ import CustomTextField from '@core/components/mui/TextField'
 import DirectionalIcon from '@components/DirectionalIcon'
 
 // Styled Component Imports
-import AppReactDatepicker from '@/libs/styles/AppReactDatepicker'
+import NativeDateInput from '@/components/inputs/NativeDateInput'
 
 // Vars
 const offeredItemsArray = ['Apple iPhone 12 Pro', 'Apple iPhone 12 Mini', 'Apple iPhone 12', 'Apple iPhone 11 Pro Max']
@@ -119,7 +119,7 @@ const StepDealDetails = ({ activeStep, handleNext, handlePrev, steps }) => {
         </Grid>
       </Grid>
       <Grid size={{ xs: 12, sm: 6 }}>
-        <AppReactDatepicker
+        <NativeDateInput
           selectsRange
           endDate={endDate}
           selected={startDate}

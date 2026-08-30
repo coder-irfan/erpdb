@@ -12,6 +12,7 @@ import DetailSkeleton from '@/components/dialogs/DetailSkeleton'
 
 import CustomTextField from '@core/components/mui/TextField'
 import TableEmptyStateRow from '@/components/table/TableEmptyStateRow'
+import { formatStatusLabel } from '@/utils/formatStatusLabel'
 
 import tableStyles from '@core/styles/table.module.css'
 
@@ -89,7 +90,7 @@ const StaffAttendanceHistory = ({ active, staffId, locale, dictionary }) => {
               ) : records.map(record => (
                 <tr key={record.id}>
                   <td>{new Intl.DateTimeFormat(localeMap[locale] || 'en-US', { dateStyle: 'medium', timeZone: 'UTC' }).format(new Date(`${record.date}T00:00:00.000Z`))}</td>
-                  <td><Chip size='small' variant='tonal' color={STATUS_COLORS[record.status]} label={attendanceDictionary.status?.[record.status] || record.status} /></td>
+                  <td><Chip size='small' variant='tonal' color={STATUS_COLORS[record.status]} label={formatStatusLabel(record.status, attendanceDictionary.status?.[record.status])} /></td>
                   <td>{record.check_in_time || '—'}</td><td>{record.check_out_time || '—'}</td><td>{record.hours_worked ? Number(record.hours_worked).toFixed(2) : '—'}</td>
                 </tr>
               ))}

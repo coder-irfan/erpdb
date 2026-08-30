@@ -5,7 +5,7 @@ import { getCompanySetupRecord } from '@/libs/companySetup'
 import { getKabulToday } from '@/libs/hrmTimesheets'
 import { getBrandingSettings } from '@/libs/systemSettings'
 import { getDictionary } from '@/utils/getDictionary'
-import { hasAnyPermission } from '@/utils/rbac'
+import { hasAnyPermission, hasAttendancePayrollOverrideRole } from '@/utils/rbac'
 import TimesheetsView from '@/views/hrm/timesheets/TimesheetsView'
 
 const TimesheetsPage = async props => {
@@ -18,11 +18,14 @@ const TimesheetsPage = async props => {
     getBrandingSettings()
   ])
 
+  const canOverridePayrollLock = hasAttendancePayrollOverrideRole(session)
+
   return (
     <TimesheetsView
       initialDate={getKabulToday()}
-      canWrite={hasAnyPermission(session, ['hrm:write', 'hrm_timesheet:write'])}
+      canWrite={canOverridePayrollLock || hasAnyPermission(session, ['hrm:write', 'hrm_timesheet:write'])}
       canDelete={hasAnyPermission(session, ['hrm:delete', 'hrm_timesheet:delete'])}
+      canOverridePayrollLock={canOverridePayrollLock}
       defaultWorkHours={{ start: setup.default_work_start, end: setup.default_work_end }}
       printSetup={{ ...setup, company_logo: setup.company_logo || branding.lightLogoUrl || null }}
       locale={lang}

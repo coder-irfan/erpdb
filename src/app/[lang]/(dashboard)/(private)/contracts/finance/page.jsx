@@ -1,34 +1,9 @@
-import { getServerSession } from 'next-auth'
-
-import { authOptions } from '@/libs/auth'
-import { getCompanySetupRecord } from '@/libs/companySetup'
-import { getBrandingSettings } from '@/libs/systemSettings'
-import { getDictionary } from '@/utils/getDictionary'
-import { hasAnyPermission } from '@/utils/rbac'
-import ContractsView from '@/views/contracts/ContractsView'
+import { redirect } from 'next/navigation'
 
 const FinanceContractsPage = async props => {
   const { lang } = await props.params
 
-  const [dictionary, session, setup, branding] = await Promise.all([
-    getDictionary(lang),
-    getServerSession(authOptions),
-    getCompanySetupRecord(),
-    getBrandingSettings()
-  ])
-
-  return (
-    <ContractsView
-      locale={lang}
-      dictionary={dictionary.contractsMain}
-      setup={{ ...setup, company_logo: setup.company_logo || branding.lightLogoUrl || null }}
-      canWrite={hasAnyPermission(session, ['contracts:write', 'finance:write'])}
-      canDelete={hasAnyPermission(session, ['contracts:delete', 'finance:delete'])}
-      canRunAudit={false}
-      scope='FINANCE'
-      contractContext='FINANCE'
-    />
-  )
+  redirect(`/${lang}/contracts`)
 }
 
 export default FinanceContractsPage

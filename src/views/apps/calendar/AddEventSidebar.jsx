@@ -19,9 +19,10 @@ import PerfectScrollbar from 'react-perfect-scrollbar'
 
 // Component Imports
 import CustomTextField from '@core/components/mui/TextField'
+import FormSectionCards from '@/components/forms/FormSectionCards'
 
 // Styled Component Imports
-import AppReactDatepicker from '@/libs/styles/AppReactDatepicker'
+import NativeDateInput from '@/components/inputs/NativeDateInput'
 
 // Slice Imports
 import { addEvent, deleteEvent, updateEvent, selectedEvent, filterEvents } from '@/redux-store/slices/calendar'
@@ -220,6 +221,7 @@ const AddEventSidebar = props => {
       >
         <Box className='sidebar-body plb-5 pli-6'>
           <form onSubmit={handleSubmit(onSubmit)} autoComplete='off' className='flex flex-col gap-6'>
+            <FormSectionCards labels={['Event information', 'Schedule and guests', 'Additional details']}>
             <Controller
               name='title'
               control={control}
@@ -248,7 +250,7 @@ const AddEventSidebar = props => {
               <MenuItem value='ETC'>ETC</MenuItem>
             </CustomTextField>
 
-            <AppReactDatepicker
+            <NativeDateInput
               selectsStart
               id='event-start-date'
               endDate={values.endDate}
@@ -260,7 +262,7 @@ const AddEventSidebar = props => {
               onChange={date => date !== null && setValues({ ...values, startDate: new Date(date) })}
               onSelect={handleStartDate}
             />
-            <AppReactDatepicker
+            <NativeDateInput
               selectsEnd
               id='event-end-date'
               endDate={values.endDate}
@@ -323,7 +325,8 @@ const AddEventSidebar = props => {
               value={values.description}
               onChange={e => setValues({ ...values, description: e.target.value })}
             />
-            <div className='flex items-center'>
+            </FormSectionCards>
+            <div className='form-surface-actions flex items-center justify-end px-1 py-3'>
               <RenderSidebarFooter />
             </div>
           </form>

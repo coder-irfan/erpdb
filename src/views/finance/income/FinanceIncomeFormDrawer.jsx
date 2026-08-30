@@ -18,6 +18,7 @@ import { toast } from 'sonner'
 import CustomTextField from '@core/components/mui/TextField'
 import { createFinanceIncome, updateFinanceIncome } from '@/actions/financeIncome'
 import LoadingButtonContent from '@/components/LoadingButtonContent'
+import FormSectionCards from '@/components/forms/FormSectionCards'
 import { createFinanceIncomeSchema } from '@/schemas/financeIncome'
 import { toDateInputValue } from '@/utils/contractDuration'
 import { convertToBaseCurrency, formatCurrency, toFiniteNumber } from '@/utils/formatCurrency'
@@ -186,7 +187,7 @@ const FinanceIncomeFormDrawer = ({ open, income, options, locale, dictionary, on
       onClose={isSubmitting ? undefined : onClose}
       slotProps={{ paper: { className: 'is-full sm:is-[700px]' } }}
     >
-      <div className='flex items-start justify-between gap-4 border-be border-divider p-5'>
+      <div className='form-surface-header flex items-start justify-between gap-4 border-be border-divider p-5'>
         <div>
           <Typography variant='h5'>{income ? dictionary.form.editTitle : dictionary.form.addTitle}</Typography>
           <Typography color='text.secondary'>{dictionary.form.description}</Typography>
@@ -195,7 +196,8 @@ const FinanceIncomeFormDrawer = ({ open, income, options, locale, dictionary, on
           <i className='tabler-x' />
         </IconButton>
       </div>
-      <form className='flex flex-1 flex-col gap-5 overflow-y-auto p-5' onSubmit={handleSubmit(submit)} noValidate>
+      <form className='form-surface-scroll flex flex-1 flex-col gap-5 p-5' onSubmit={handleSubmit(submit)} noValidate>
+        <FormSectionCards labels={[dictionary.tabs?.general || 'Income information', dictionary.tabs?.source || 'Source and allocation', dictionary.tabs?.financial || 'Financial details']}>
         {field('name', dictionary.fields.name)}
 
         <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
@@ -359,7 +361,8 @@ const FinanceIncomeFormDrawer = ({ open, income, options, locale, dictionary, on
           placeholder: dictionary.placeholders.paymentDetails
         })}
 
-        <div className='mt-auto flex justify-end gap-3 pt-4'>
+        </FormSectionCards>
+        <div className='form-surface-actions -mx-5 -mb-5 mt-auto flex justify-end gap-3 p-5'>
           <Button variant='tonal' color='secondary' onClick={onClose} disabled={isSubmitting}>{dictionary.actions.cancel}</Button>
           <Button type='submit' variant='contained' disabled={isSubmitting}>
             <LoadingButtonContent loading={isSubmitting} loadingLabel={dictionary.actions.saving}>

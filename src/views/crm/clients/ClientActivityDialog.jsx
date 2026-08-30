@@ -15,7 +15,7 @@ import { toast } from 'sonner'
 
 import CustomTextField from '@core/components/mui/TextField'
 import LoadingButtonContent from '@/components/LoadingButtonContent'
-import LocalizedDateTimePicker from '@/components/inputs/LocalizedDateTimePicker'
+import NativeDateTimeInput from '@/components/inputs/NativeDateTimeInput'
 import { createActivitySchema } from '@/schemas/crm/leads'
 
 const TYPES = ['CALL', 'MEETING', 'EMAIL', 'NOTE', 'FOLLOW_UP']
@@ -101,7 +101,7 @@ const ClientActivityDialog = ({ open, client, locale, dictionary, onClose, onSav
       onClose={isSubmitting ? undefined : onClose}
       PaperProps={{ className: 'is-full sm:is-[520px]' }}
     >
-      <div className='flex items-center justify-between border-be border-divider p-5'>
+      <div className='form-surface-header flex items-center justify-between border-be border-divider p-5'>
         <div>
           <Typography variant='h5'>{dictionary.activity.addTitle}</Typography>
           <Typography color='text.secondary'>{detail?.company_name || client.company_name}</Typography>
@@ -113,9 +113,12 @@ const ClientActivityDialog = ({ open, client, locale, dictionary, onClose, onSav
       <div className='overflow-y-auto px-5 py-6'>
         <form
           onSubmit={handleSubmit(submit)}
-          className='mb-8 flex flex-col gap-4 rounded border border-divider bg-actionHover px-4 py-5'
+          className='form-section-card mb-8 flex flex-col gap-4'
           noValidate
         >
+          <h4 className='border-be border-divider/80 pb-2 text-xs font-semibold uppercase tracking-wider text-textSecondary'>
+            {dictionary.activity.add}
+          </h4>
           <Controller
             name='activity_type'
             control={control}
@@ -168,7 +171,7 @@ const ClientActivityDialog = ({ open, client, locale, dictionary, onClose, onSav
             name='due_date'
             control={control}
             render={({ field }) => (
-              <LocalizedDateTimePicker
+              <NativeDateTimeInput
                 {...field}
                 value={field.value || ''}
                 mode='datetime'
@@ -219,7 +222,7 @@ const ClientActivityDialog = ({ open, client, locale, dictionary, onClose, onSav
                         />
                       </div>
                       <Typography variant='body2' color='text.secondary'>
-                        {activity.staff?.full_name || '—'} · {formatDate(activity.activity_date)}
+                        {activity.staff?.full_name || '-'} <>&middot;</> {formatDate(activity.activity_date)}
                       </Typography>
                       {activity.description && (
                         <Typography className='mt-2 whitespace-pre-line'>{activity.description}</Typography>

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 
 import { useRouter } from 'next/navigation'
 
@@ -18,7 +18,8 @@ import { useSettings } from '@core/hooks/useSettings'
 import FileUpload from '@/components/common/FileUpload'
 import LoadingButtonContent from '@/components/LoadingButtonContent'
 import ColorPickerField from '@/components/inputs/ColorPickerField'
-import LocalizedDateTimePicker from '@/components/inputs/LocalizedDateTimePicker'
+import ConfirmationComponent from '@/components/dialogs/ConfirmationComponent'
+import NativeDateTimeInput from '@/components/inputs/NativeDateTimeInput'
 import themeConfig from '@/configs/themeConfig'
 
 const LOGO_ACCEPT =
@@ -51,6 +52,15 @@ const getInitialForm = (settings, themeSettings = {}) => ({
     themeSettings.secondaryColorLight || themeSettings.secondaryColor || themeConfig.secondaryColorLight,
   primary_color_dark: themeSettings.primaryColorDark || themeConfig.primaryColorDark,
   secondary_color_dark: themeSettings.secondaryColorDark || themeConfig.secondaryColorDark
+})
+
+const getSavedState = (settings, themeSettings = {}) => ({
+  form: getInitialForm(settings, themeSettings),
+  companyLogo: settings.company_logo || null,
+  signatoryStamp: settings.signatory_stamp || null,
+  lightLogoUrl: settings.lightLogoUrl || null,
+  darkLogoUrl: settings.darkLogoUrl || null,
+  faviconUrl: settings.faviconUrl || null
 })
 
 const HEX_COLOR_PATTERN = /^#(?:[\da-f]{3}|[\da-f]{6})$/i
@@ -132,15 +142,48 @@ const SetupView = ({ dictionary, initialSettings, locale }) => {
   const router = useRouter()
   const { settings, updateSettings } = useSettings()
   const [activeTab, setActiveTab] = useState('general')
-  const [form, setForm] = useState(() => getInitialForm(initialSettings, settings))
-  const [companyLogo, setCompanyLogo] = useState(initialSettings.company_logo)
-  const [signatoryStamp, setSignatoryStamp] = useState(initialSettings.signatory_stamp)
-  const [lightLogoUrl, setLightLogoUrl] = useState(initialSettings.lightLogoUrl)
-  const [darkLogoUrl, setDarkLogoUrl] = useState(initialSettings.darkLogoUrl)
-  const [faviconUrl, setFaviconUrl] = useState(initialSettings.faviconUrl)
+  const [savedState, setSavedState] = useState(() => getSavedState(initialSettings, settings))
+  const [form, setForm] = useState(() => savedState.form)
+  const [companyLogo, setCompanyLogo] = useState(() => savedState.companyLogo)
+  const [signatoryStamp, setSignatoryStamp] = useState(() => savedState.signatoryStamp)
+  const [lightLogoUrl, setLightLogoUrl] = useState(() => savedState.lightLogoUrl)
+  const [darkLogoUrl, setDarkLogoUrl] = useState(() => savedState.darkLogoUrl)
+  const [faviconUrl, setFaviconUrl] = useState(() => savedState.faviconUrl)
   const [isSaving, setIsSaving] = useState(false)
+  const [discardDialogOpen, setDiscardDialogOpen] = useState(false)
+
+  const isDirty = useMemo(
+    () =>
+      JSON.stringify({ form, companyLogo, signatoryStamp, lightLogoUrl, darkLogoUrl, faviconUrl }) !==
+      JSON.stringify(savedState),
+    [companyLogo, darkLogoUrl, faviconUrl, form, lightLogoUrl, savedState, signatoryStamp]
+  )
 
   const updateField = event => setForm(current => ({ ...current, [event.target.name]: event.target.value }))
+
+  const resetToSavedState = () => {
+    setForm(savedState.form)
+    setCompanyLogo(savedState.companyLogo)
+    setSignatoryStamp(savedState.signatoryStamp)
+    setLightLogoUrl(savedState.lightLogoUrl)
+    setDarkLogoUrl(savedState.darkLogoUrl)
+    setFaviconUrl(savedState.faviconUrl)
+  }
+
+  const handleCancel = () => {
+    if (isDirty) {
+      setDiscardDialogOpen(true)
+
+      return
+    }
+
+    resetToSavedState()
+  }
+
+  const handleDiscard = () => {
+    resetToSavedState()
+    setDiscardDialogOpen(false)
+  }
 
   const handleSave = async () => {
     if (!form.company_name.trim()) {
@@ -200,12 +243,15 @@ const SetupView = ({ dictionary, initialSettings, locale }) => {
       }
 
       updateSettings(normalizedThemeColors)
-      setForm(getInitialForm(result.data, normalizedThemeColors))
-      setCompanyLogo(result.data.company_logo)
-      setSignatoryStamp(result.data.signatory_stamp)
-      setLightLogoUrl(result.data.lightLogoUrl)
-      setDarkLogoUrl(result.data.darkLogoUrl)
-      setFaviconUrl(result.data.faviconUrl)
+      const nextSavedState = getSavedState(result.data, normalizedThemeColors)
+
+      setSavedState(nextSavedState)
+      setForm(nextSavedState.form)
+      setCompanyLogo(nextSavedState.companyLogo)
+      setSignatoryStamp(nextSavedState.signatoryStamp)
+      setLightLogoUrl(nextSavedState.lightLogoUrl)
+      setDarkLogoUrl(nextSavedState.darkLogoUrl)
+      setFaviconUrl(nextSavedState.faviconUrl)
       toast.success(dictionary.saved)
       router.refresh()
     } catch {
@@ -336,7 +382,7 @@ const SetupView = ({ dictionary, initialSettings, locale }) => {
               onChange={updateField}
               sx={{ '& .MuiInputBase-root': { backgroundColor: 'transparent' } }}
             />
-            <LocalizedDateTimePicker
+            <NativeDateTimeInput
               fullWidth
               mode='time'
               locale={locale}
@@ -346,7 +392,7 @@ const SetupView = ({ dictionary, initialSettings, locale }) => {
               slotProps={{ inputLabel: { shrink: true } }}
               onChange={updateField}
             />
-            <LocalizedDateTimePicker
+            <NativeDateTimeInput
               fullWidth
               mode='time'
               locale={locale}
@@ -540,12 +586,28 @@ const SetupView = ({ dictionary, initialSettings, locale }) => {
       )}
 
       <div className='sticky bottom-4 z-10 flex justify-end rounded bg-backgroundPaper/90 p-4 shadow-md backdrop-blur'>
-        <Button variant='contained' onClick={handleSave} disabled={isSaving}>
-          <LoadingButtonContent loading={isSaving} loadingLabel={dictionary.saving}>
-            {dictionary.saveAll}
-          </LoadingButtonContent>
-        </Button>
+        <div className='flex gap-3'>
+          <Button variant='tonal' color='secondary' onClick={handleCancel} disabled={isSaving}>
+            {dictionary.cancel}
+          </Button>
+          <Button variant='contained' onClick={handleSave} disabled={isSaving}>
+            <LoadingButtonContent loading={isSaving} loadingLabel={dictionary.saving}>
+              {dictionary.saveAll}
+            </LoadingButtonContent>
+          </Button>
+        </div>
       </div>
+
+      <ConfirmationComponent
+        open={discardDialogOpen}
+        title={dictionary.discardChangesTitle}
+        message={dictionary.discardChangesMessage}
+        confirmText={dictionary.discard}
+        cancelText={dictionary.keepEditing}
+        color='warning'
+        onConfirm={handleDiscard}
+        onClose={() => setDiscardDialogOpen(false)}
+      />
     </div>
   )
 }

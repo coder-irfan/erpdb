@@ -7,6 +7,7 @@ import Button from '@mui/material/Button'
 import Divider from '@mui/material/Divider'
 import Drawer from '@mui/material/Drawer'
 import IconButton from '@mui/material/IconButton'
+import Skeleton from '@mui/material/Skeleton'
 import ToggleButton from '@mui/material/ToggleButton'
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
 import Typography from '@mui/material/Typography'
@@ -14,7 +15,7 @@ import { toast } from 'sonner'
 
 import CustomTextField from '@core/components/mui/TextField'
 import LoadingButtonContent from '@/components/LoadingButtonContent'
-import LocalizedDateTimePicker from '@/components/inputs/LocalizedDateTimePicker'
+import NativeDateTimeInput from '@/components/inputs/NativeDateTimeInput'
 
 const getEntries = (attendanceStaff, defaultWorkHours) =>
   attendanceStaff.map(staff => ({
@@ -29,12 +30,52 @@ const getEntries = (attendanceStaff, defaultWorkHours) =>
     noteOpen: Boolean(staff.record?.notes)
   }))
 
+const AttendanceDrawerSkeleton = ({ rows = 4 }) => (
+  <div aria-busy='true' aria-label='Loading attendance staff'>
+    <div className='space-y-3 md:hidden'>
+      {Array.from({ length: rows }).map((_, index) => (
+        <div key={index} className='overflow-hidden rounded-lg border border-divider p-4'>
+          <Skeleton variant='text' width='55%' height={28} animation='wave' />
+          <Skeleton variant='text' width='35%' height={20} animation='wave' />
+          <div className='mt-3 grid grid-cols-3 gap-2'>
+            <Skeleton variant='rounded' height={32} animation='wave' />
+            <Skeleton variant='rounded' height={32} animation='wave' />
+            <Skeleton variant='rounded' height={32} animation='wave' />
+          </div>
+          <div className='mt-3 grid grid-cols-2 gap-2'>
+            <Skeleton variant='rounded' height={54} animation='wave' />
+            <Skeleton variant='rounded' height={54} animation='wave' />
+          </div>
+          <Skeleton variant='rounded' height={40} animation='wave' className='mt-3' />
+        </div>
+      ))}
+    </div>
+    <div className='hidden divide-y divide-divider md:block'>
+      {Array.from({ length: rows }).map((_, index) => (
+        <div key={index} className='grid grid-cols-[minmax(140px,1fr)_180px_220px_96px] items-center gap-4 py-4 lg:grid-cols-[minmax(180px,1fr)_210px_270px_120px]'>
+          <div>
+            <Skeleton variant='text' width='65%' height={26} animation='wave' />
+            <Skeleton variant='text' width='40%' height={20} animation='wave' />
+          </div>
+          <Skeleton variant='rounded' height={32} animation='wave' />
+          <div className='grid grid-cols-2 gap-3'>
+            <Skeleton variant='rounded' height={46} animation='wave' />
+            <Skeleton variant='rounded' height={46} animation='wave' />
+          </div>
+          <Skeleton variant='rounded' height={32} animation='wave' />
+        </div>
+      ))}
+    </div>
+  </div>
+)
+
 const AttendanceDrawer = ({
   open,
   date,
   attendanceStaff = [],
   defaultWorkHours,
   guard = {},
+  loading = false,
   locale,
   dictionary,
   onClose,
@@ -43,7 +84,12 @@ const AttendanceDrawer = ({
   const [entries, setEntries] = useState([])
   const [search, setSearch] = useState('')
   const [saving, setSaving] = useState(false)
-  const blockedMessage = guard.isFuture ? dictionary.messages.futureDateBlocked : guard.payrollLocked ? dictionary.messages.payrollLocked : ''
+
+  const blockedMessage = guard.isFuture
+    ? dictionary.messages.futureDateBlocked
+    : guard.payrollLocked && !guard.payrollOverride
+      ? dictionary.messages.payrollLocked
+      : ''
 
   useEffect(() => {
     if (!open) return
@@ -100,6 +146,7 @@ const AttendanceDrawer = ({
         body: JSON.stringify({
           date,
           locale,
+          payrollOverride: guard.payrollOverride === true,
           records: editableEntries.map(({ staff_id, status, check_in_time, check_out_time, notes }) => ({
             staff_id,
             status,
@@ -135,11 +182,11 @@ const AttendanceDrawer = ({
       onClose={saving ? undefined : onClose}
       PaperProps={{ className: 'is-full sm:is-[840px]' }}
     >
-      <div className='flex items-start justify-between gap-4 px-6 py-5'>
+      <div className='form-surface-header flex items-start justify-between gap-4 border-be border-divider px-4 py-5 sm:px-6'>
         <div>
           <Typography variant='h5'>{dictionary.actions.mark}</Typography>
           <Typography color='text.secondary'>
-            {date} · {dictionary.drawer.description}
+            {date} <span aria-hidden='true'>&middot;</span> {dictionary.drawer.description}
           </Typography>
         </div>
         <IconButton onClick={onClose} disabled={saving} aria-label={dictionary.actions.cancel}>
@@ -149,7 +196,7 @@ const AttendanceDrawer = ({
       <Divider />
 
       <div className='flex flex-1 flex-col overflow-hidden'>
-        <div className='space-y-4 px-6 py-5'>
+        <div className='space-y-4 px-4 py-5 sm:px-6'>
           {blockedMessage && <Alert severity='warning'>{blockedMessage}</Alert>}
           <CustomTextField
             fullWidth
@@ -165,18 +212,18 @@ const AttendanceDrawer = ({
           </Typography>
         </div>
 
-        <div className='flex flex-1 flex-col gap-4 overflow-y-auto px-6 pb-6'>
-          {visibleEntries.map(entry => {
+        <div className='flex flex-1 flex-col gap-3 overflow-y-auto px-4 pb-6 sm:px-6'>
+          {loading ? <AttendanceDrawerSkeleton /> : visibleEntries.map(entry => {
             const rowDisabled = controlsDisabled || entry.locked
             const showTimes = entry.status === 'PRESENT'
 
             return (
-              <div key={entry.staff_id} className='rounded-lg border border-divider bg-paper p-4 shadow-sm'>
-                <div className='flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between'>
-                  <div className='min-is-0 lg:is-[210px]'>
+              <div key={entry.staff_id} className='rounded-lg border border-divider p-4 md:rounded-none md:border-0 md:border-b md:p-0 md:py-4'>
+                <div className='flex flex-col gap-3 md:flex-row md:items-center md:justify-between md:gap-4'>
+                  <div className='min-is-0 md:is-[180px]'>
                     <Typography className='truncate font-medium'>{entry.full_name}</Typography>
                     <Typography variant='body2' color='text.secondary' className='truncate'>
-                      {entry.position || '—'}
+                      {entry.position || '-'}
                       {entry.locked ? ` · ${dictionary.status.LEAVE}` : ''}
                     </Typography>
                   </div>
@@ -186,14 +233,20 @@ const AttendanceDrawer = ({
                     value={entry.status}
                     disabled={rowDisabled}
                     onChange={(_, status) => changeStatus(entry, status)}
-                    className='self-start lg:self-auto'
+                    className='flex w-full md:w-auto'
                   >
-                    <ToggleButton color='success' value='PRESENT'>{dictionary.status.PRESENT}</ToggleButton>
-                    <ToggleButton color='error' value='ABSENT'>{dictionary.status.ABSENT}</ToggleButton>
-                    <ToggleButton color='info' value='LEAVE'>{dictionary.status.LEAVE}</ToggleButton>
+                    <ToggleButton color='success' value='PRESENT' className='flex-1'>
+                      {dictionary.status.PRESENT}
+                    </ToggleButton>
+                    <ToggleButton color='error' value='ABSENT' className='flex-1'>
+                      {dictionary.status.ABSENT}
+                    </ToggleButton>
+                    <ToggleButton color='info' value='LEAVE' className='flex-1'>
+                      {dictionary.status.LEAVE}
+                    </ToggleButton>
                   </ToggleButtonGroup>
-                  <div className='grid min-is-0 grid-cols-2 gap-3 lg:is-[270px]'>
-                    <LocalizedDateTimePicker
+                  <div className='grid min-is-0 grid-cols-2 gap-2 md:is-[270px] md:gap-3'>
+                    <NativeDateTimeInput
                       mode='time'
                       locale={locale}
                       size='small'
@@ -203,7 +256,7 @@ const AttendanceDrawer = ({
                       slotProps={{ inputLabel: { shrink: true } }}
                       onChange={event => updateEntry(entry.staff_id, { check_in_time: event.target.value })}
                     />
-                    <LocalizedDateTimePicker
+                    <NativeDateTimeInput
                       mode='time'
                       locale={locale}
                       size='small'
@@ -216,7 +269,7 @@ const AttendanceDrawer = ({
                   </div>
                 </div>
 
-                <div className='mt-3'>
+                <div className='mt-3 md:mt-2'>
                   {entry.noteOpen ? (
                     <div className='flex items-start gap-2'>
                       <CustomTextField
@@ -235,8 +288,10 @@ const AttendanceDrawer = ({
                     </div>
                   ) : (
                     <Button
-                      variant='text'
+                      variant='tonal'
+                      color='secondary'
                       size='small'
+                      className='w-full md:w-auto'
                       startIcon={<i className='tabler-note' />}
                       disabled={rowDisabled}
                       onClick={() => updateEntry(entry.staff_id, { noteOpen: true })}
@@ -249,7 +304,7 @@ const AttendanceDrawer = ({
             )
           })}
 
-          {visibleEntries.length === 0 && (
+          {!loading && visibleEntries.length === 0 && (
             <div className='flex flex-1 flex-col items-center justify-center gap-2 py-12 text-center'>
               <i className='tabler-user-search text-4xl text-textSecondary' />
               <Typography variant='h6'>{dictionary.drawer.noStaffFound}</Typography>
@@ -258,7 +313,7 @@ const AttendanceDrawer = ({
         </div>
 
         <Divider />
-        <div className='flex flex-wrap items-center justify-between gap-3 p-6'>
+        <div className='form-surface-actions flex flex-wrap items-center justify-between gap-3 p-4 sm:p-6'>
           <Typography variant='body2' color='text.secondary'>
             {editableEntries.length} {dictionary.drawer.readyToSave}
           </Typography>

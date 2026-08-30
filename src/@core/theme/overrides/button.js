@@ -263,7 +263,7 @@ const button = {
           {
             props: { variant: 'contained', color: 'primary' },
             style: {
-              color: 'var(--mui-palette-secondary-contrastText)',
+              color: '#FFFFFF !important',
               backgroundColor: 'var(--mui-palette-secondary-main)',
               '&:not(.Mui-disabled)': {
                 boxShadow: 'var(--mui-customShadows-secondary-sm)'
@@ -276,7 +276,7 @@ const button = {
                 boxShadow: '0 0 0 3px var(--mui-palette-secondary-mainOpacity)'
               },
               '&.Mui-disabled': {
-                color: 'var(--mui-palette-secondary-contrastText)',
+                color: '#FFFFFF !important',
                 backgroundColor: 'var(--mui-palette-secondary-main)'
               }
             }
@@ -284,7 +284,7 @@ const button = {
           {
             props: { variant: 'contained', color: 'secondary' },
             style: {
-              color: 'var(--mui-palette-secondary-contrastText)',
+              color: '#FFFFFF !important',
               backgroundColor: 'var(--mui-palette-secondary-main)',
               '&:not(.Mui-disabled)': {
                 boxShadow: 'var(--mui-customShadows-secondary-sm)'
@@ -297,7 +297,7 @@ const button = {
                 boxShadow: '0 0 0 3px var(--mui-palette-secondary-mainOpacity)'
               },
               '&.Mui-disabled': {
-                color: 'var(--mui-palette-secondary-contrastText)',
+                color: '#FFFFFF !important',
                 backgroundColor: 'var(--mui-palette-secondary-main)'
               }
             }

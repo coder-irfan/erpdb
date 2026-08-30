@@ -93,7 +93,6 @@ export const createStaffSchema = customMessages => {
     guarantor_phone: optionalText(messages, 50),
     guarantor_license: optionalText(messages, 150),
     join_date: joinDateValue(messages),
-    contract_period: optionalText(messages, 100),
     user_id: optional(
       nullable(union([literal(''), pipe(string(messages.userInvalid), trim(), nonEmpty(messages.userInvalid))])),
       null

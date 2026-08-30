@@ -16,7 +16,7 @@ import { toast } from 'sonner'
 import CustomTextField from '@core/components/mui/TextField'
 import { logTaskHours } from '@/actions/tasks'
 import LoadingButtonContent from '@/components/LoadingButtonContent'
-import LocalizedDateTimePicker from '@/components/inputs/LocalizedDateTimePicker'
+import NativeDateTimeInput from '@/components/inputs/NativeDateTimeInput'
 import { logTaskHoursSchema } from '@/schemas/tasks'
 import { toDateInputValue } from '@/utils/contractDuration'
 
@@ -74,7 +74,7 @@ const TaskHoursDialog = ({ open, task, locale, dictionary, onClose, onSaved }) =
           name='work_date'
           control={control}
           render={({ field }) => (
-            <LocalizedDateTimePicker
+            <NativeDateTimeInput
               {...field}
               locale={locale}
               label={dictionary.fields.workDate}

@@ -15,7 +15,7 @@ import CustomTextField from '@core/components/mui/TextField'
 import ReportStatsCards from '@/components/reports/ReportStatsCards'
 import DashboardTablePagination from '@/components/table/DashboardTablePagination'
 import TableFiltersPopover from '@/components/table/TableFiltersPopover'
-import LocalizedDateTimePicker from '@/components/inputs/LocalizedDateTimePicker'
+import NativeDateTimeInput from '@/components/inputs/NativeDateTimeInput'
 import { formatCurrency, toFiniteNumber } from '@/utils/formatCurrency'
 
 import FinanceReportCharts from './FinanceReportCharts'
@@ -385,7 +385,7 @@ const FinanceReportsView = ({ locale, dictionary, setup, generatedAt }) => {
                 <MenuItem value='this_year'>{dictionary.datePresets.thisYear}</MenuItem>
                 <MenuItem value='custom'>{dictionary.datePresets.custom}</MenuItem>
               </CustomTextField>
-              <LocalizedDateTimePicker
+              <NativeDateTimeInput
                 locale={locale}
                 label={dictionary.filters.startDate}
                 value={startDate}
@@ -396,7 +396,7 @@ const FinanceReportsView = ({ locale, dictionary, setup, generatedAt }) => {
                 }}
                 className='is-full'
               />
-              <LocalizedDateTimePicker
+              <NativeDateTimeInput
                 locale={locale}
                 label={dictionary.filters.endDate}
                 value={endDate}
@@ -523,7 +523,7 @@ const FinanceReportsView = ({ locale, dictionary, setup, generatedAt }) => {
             <Typography className='text-xl font-bold text-black'>{setup.company_name}</Typography>
             <Typography className='whitespace-pre-line text-sm text-black'>{setup.company_address}</Typography>
             <Typography className='text-sm text-black'>
-              {[setup.company_phone, setup.company_email].filter(Boolean).join(' · ')}
+              {[setup.company_phone, setup.company_email].filter(Boolean).join(' - ')}
             </Typography>
           </div>
         </div>
@@ -532,10 +532,10 @@ const FinanceReportsView = ({ locale, dictionary, setup, generatedAt }) => {
             {activeReport.label}
           </Typography>
           <Typography className='text-black'>
-            {formatDate(`${startDate}T00:00:00.000Z`)} — {formatDate(`${endDate}T00:00:00.000Z`)}
+            {formatDate(`${startDate}T00:00:00.000Z`)} <>&mdash;</> {formatDate(`${endDate}T00:00:00.000Z`)}
           </Typography>
           <Typography className='text-sm text-black'>
-            {dictionary.filters.currency}: {displayCurrency} · {dictionary.filters.exchangeRate}: {reportRate}
+            {dictionary.filters.currency}: {displayCurrency} <>&middot;</> {dictionary.filters.exchangeRate}: {reportRate}
           </Typography>
           <Typography className='text-xs text-black'>
             {dictionary.print.generated}: {formatDateTime(generatedAt)}

@@ -14,6 +14,7 @@ import { useForm, Controller } from 'react-hook-form'
 
 // Component Imports
 import CustomTextField from '@core/components/mui/TextField'
+import FormSectionCards from '@/components/forms/FormSectionCards'
 
 // Vars
 const initialData = {
@@ -90,7 +91,8 @@ const AddUserDrawer = props => {
       </div>
       <Divider />
       <div>
-        <form onSubmit={handleSubmit(data => onSubmit(data))} className='flex flex-col gap-6 p-6'>
+        <form onSubmit={handleSubmit(data => onSubmit(data))} className='form-surface-scroll flex flex-col gap-6 p-6'>
+          <FormSectionCards labels={['Account information', 'Organization and contact']}>
           <Controller
             name='fullName'
             control={control}
@@ -228,7 +230,8 @@ const AddUserDrawer = props => {
             value={formData.contact}
             onChange={e => setFormData({ ...formData, contact: e.target.value })}
           />
-          <div className='flex items-center gap-4'>
+          </FormSectionCards>
+          <div className='form-surface-actions -mx-6 -mb-6 flex items-center justify-end gap-4 px-6 py-3'>
             <Button variant='contained' type='submit'>
               Submit
             </Button>

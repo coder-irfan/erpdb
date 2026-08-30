@@ -16,6 +16,7 @@ import { toast } from 'sonner'
 import CustomTextField from '@core/components/mui/TextField'
 import { updateFinanceSalary } from '@/actions/financeSalary'
 import LoadingButtonContent from '@/components/LoadingButtonContent'
+import FormSectionCards from '@/components/forms/FormSectionCards'
 import { financeSalaryAdjustmentSchema } from '@/schemas/financeSalary'
 import { convertToBaseCurrency, formatCurrency, toFiniteNumber } from '@/utils/formatCurrency'
 
@@ -63,11 +64,12 @@ const FinanceSalaryAdjustmentDrawer = ({ open, salary, baseCurrency, locale, dic
 
   return (
     <Drawer anchor='right' open={open} onClose={isSubmitting ? undefined : onClose} slotProps={{ paper: { className: 'is-full sm:is-[620px]' } }}>
-      <div className='flex items-start justify-between gap-4 border-be border-divider p-5'>
+      <div className='form-surface-header flex items-start justify-between gap-4 border-be border-divider p-5'>
         <div><Typography variant='h5'>{dictionary.form.title}</Typography><Typography color='text.secondary'>{salary?.staff?.full_name}</Typography></div>
         <IconButton onClick={onClose} disabled={isSubmitting} aria-label={dictionary.actions.close}><i className='tabler-x' /></IconButton>
       </div>
-      <form className='flex flex-1 flex-col gap-5 overflow-y-auto p-5' onSubmit={handleSubmit(submit)} noValidate>
+      <form className='form-surface-scroll flex flex-1 flex-col gap-5 p-5' onSubmit={handleSubmit(submit)} noValidate>
+        <FormSectionCards labels={[dictionary.tabs?.general || 'Salary adjustment']}>
         <Typography color='text.secondary'>{dictionary.form.description}</Typography>
         <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
           {field('worked_days', dictionary.fields.workedDays, { type: 'number', inputProps: { min: 0, max: salary?.total_month_days, step: 0.5 } })}
@@ -89,7 +91,8 @@ const FinanceSalaryAdjustmentDrawer = ({ open, salary, baseCurrency, locale, dic
             </div>
           </CardContent>
         </Card>
-        <div className='mt-auto flex justify-end gap-3 pt-4'>
+        </FormSectionCards>
+        <div className='form-surface-actions -mx-5 -mb-5 mt-auto flex justify-end gap-3 px-5 py-3'>
           <Button variant='tonal' color='secondary' onClick={onClose} disabled={isSubmitting}>{dictionary.actions.cancel}</Button>
           <Button type='submit' variant='contained' disabled={isSubmitting}><LoadingButtonContent loading={isSubmitting} loadingLabel={dictionary.actions.saving}>{dictionary.actions.save}</LoadingButtonContent></Button>
         </div>

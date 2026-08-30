@@ -1,5 +1,11 @@
 const hasSuperAdminRole = session => session?.user?.roles?.includes('super_admin') === true
 const PAYROLL_PAYOUT_ROLES = new Set(['super_admin', 'admin', 'finance_manager'])
+const ATTENDANCE_PAYROLL_OVERRIDE_ROLES = new Set(['super_admin', 'hr_admin'])
+
+export const hasAttendancePayrollOverrideRole = session =>
+  (session?.user?.roles || []).some(role =>
+    ATTENDANCE_PAYROLL_OVERRIDE_ROLES.has(String(role).trim().toLowerCase().replace(/[\s-]+/g, '_'))
+  )
 
 export const hasPayrollPayoutRole = session =>
   (session?.user?.roles || []).some(role => PAYROLL_PAYOUT_ROLES.has(String(role).toLowerCase()))

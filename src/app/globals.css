@@ -89,6 +89,7 @@
   --primary-color: var(--mui-palette-primary-main);
   --background-color: var(--mui-palette-background-default);
   --background-color-rgb: var(--mui-palette-background-paperChannel);
+  --bg-card: var(--mui-palette-background-paper);
   --header-height: 54px;
   --header-z-index: var(--mui-zIndex-appBar);
   --footer-z-index: 10;
@@ -539,6 +540,30 @@ body,
   display: none;
 }
 
+/* Legacy solid-button utility classes must use the same readable label color as MUI contained buttons. */
+.btn-primary,
+.btn-secondary {
+  color: #ffffff !important;
+}
+
+/* Header Poppers use Paper directly, so they need a scoped dropdown surface instead of the MuiMenu override. */
+.topbar-dropdown {
+  background-color: var(--mui-palette-background-paper) !important;
+  color: var(--mui-palette-text-primary) !important;
+  border: 1px solid var(--mui-palette-divider) !important;
+  border-radius: var(--mui-shape-customBorderRadius-md);
+}
+
+.topbar-dropdown .MuiTypography-root,
+.topbar-dropdown .MuiMenuItem-root,
+.topbar-dropdown .MuiIconButton-root {
+  color: var(--mui-palette-text-primary) !important;
+}
+
+.topbar-dropdown .MuiMenuItem-root.Mui-selected {
+  color: var(--mui-palette-primary-main) !important;
+}
+
 /* Preserve horizontal table scrolling while removing native scrollbar chrome. */
 .overflow-x-auto:has(> table) {
   scrollbar-width: none;
@@ -547,4 +572,142 @@ body,
 
 .overflow-x-auto:has(> table)::-webkit-scrollbar {
   display: none;
+}
+
+/* Enterprise form surfaces: fixed chrome, one scroll region, and touch-safe controls. */
+.form-surface-header {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 20;
+  flex-shrink: 0;
+}
+
+.form-surface-scroll {
+  min-block-size: 0;
+  flex: 1 1 auto;
+  overflow-y: auto;
+}
+
+.form-surface-actions {
+  position: sticky;
+  inset-block-end: 0;
+  z-index: 20;
+  flex-shrink: 0;
+  border-block-start: 1px solid var(--mui-palette-divider);
+  padding-block: 0.75rem !important;
+}
+
+.form-section-card {
+  box-sizing: border-box;
+  inline-size: 100%;
+  max-inline-size: none;
+  min-inline-size: 0;
+  grid-column: 1 / -1 !important;
+  border: 1px solid var(--mui-palette-divider);
+  border-radius: 0.75rem;
+  background: var(--mui-palette-action-hover);
+  padding: 1rem;
+}
+
+.form-section-card > .grid > :is(div, section):has(> .grid) {
+  grid-column: 1 / -1;
+}
+
+.form-section-card > .grid > .MuiFormControl-root:has(textarea),
+.form-section-card > .grid > div:has([contenteditable='true']) {
+  grid-column: 1 / -1;
+}
+
+.form-section-card .MuiFormControl-root:has(textarea),
+.form-section-card div:has([contenteditable='true']) {
+  grid-column: 1 / -1;
+}
+
+.form-section-card .MuiFormControl-root,
+.form-section-card .MuiAutocomplete-root,
+.form-section-card [contenteditable='true'] {
+  inline-size: 100%;
+  max-inline-size: none;
+}
+
+.form-section-card .MuiFormControl-root:has(textarea),
+.form-section-card div:has([contenteditable='true']) {
+  inline-size: 100%;
+  max-inline-size: none;
+  grid-column: 1 / -1 !important;
+}
+
+/* Safety net for legacy feature drawers that have not opted into the named shell classes yet. */
+.MuiDrawer-paper:has(form) > :first-child:not(form) {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 20;
+  flex-shrink: 0;
+  border-block-end: 1px solid var(--mui-palette-divider);
+}
+
+.MuiDrawer-paper:has(form) form {
+  min-block-size: 0;
+}
+
+.MuiDialog-paper > form {
+  display: flex;
+  min-block-size: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.MuiDrawer-paper:has(form) form > div:last-child:has(button[type='submit']) {
+  position: sticky;
+  inset-block-end: 0;
+  z-index: 20;
+  flex-shrink: 0;
+  border-block-start: 1px solid var(--mui-palette-divider);
+  padding-block: 0.75rem !important;
+}
+
+.MuiDialog-paper > form > .MuiDialogActions-root {
+  padding-block: 0.75rem;
+}
+
+.MuiDialog-paper > form > .MuiDialogContent-root {
+  margin: 1rem;
+  border: 1px solid var(--mui-palette-divider);
+  border-radius: 0.75rem;
+  background: var(--mui-palette-action-hover);
+  padding: 1rem;
+}
+
+@media (min-width: 640px) {
+  .form-section-card {
+    padding: 1.25rem;
+  }
+}
+
+@media (max-width: 639px) {
+  .MuiDrawer-paper .MuiInputBase-root,
+  .MuiDialog-paper .MuiInputBase-root,
+  .MuiDrawer-paper .MuiButton-root,
+  .MuiDialog-paper .MuiButton-root {
+    min-block-size: 44px;
+  }
+
+  .MuiDrawer-paper form [class*='grid-cols-2'],
+  .MuiDrawer-paper form [class*='grid-cols-3'],
+  .MuiDrawer-paper form [class*='grid-cols-4'],
+  .MuiDialog-paper form [class*='grid-cols-2'],
+  .MuiDialog-paper form [class*='grid-cols-3'],
+  .MuiDialog-paper form [class*='grid-cols-4'] {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .form-surface-actions {
+    padding-block: 0.5rem !important;
+  }
+
+  .form-surface-actions > .MuiButton-root,
+  .form-surface-actions > button {
+    flex: 1 1 0;
+  }
 }

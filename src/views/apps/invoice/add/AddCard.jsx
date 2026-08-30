@@ -26,7 +26,7 @@ import Logo from '@components/layout/shared/Logo'
 import CustomTextField from '@core/components/mui/TextField'
 
 // Styled Component Imports
-import AppReactDatepicker from '@/libs/styles/AppReactDatepicker'
+import NativeDateInput from '@/components/inputs/NativeDateInput'
 
 const AddAction = ({ invoiceData }) => {
   // States
@@ -90,7 +90,7 @@ const AddAction = ({ invoiceData }) => {
                       <Typography className='min-is-[95px] mie-4' color='text.primary'>
                         Date Issued:
                       </Typography>
-                      <AppReactDatepicker
+                      <NativeDateInput
                         boxProps={{ className: 'is-full' }}
                         selected={issuedDate}
                         placeholderText='YYYY-MM-DD'
@@ -103,7 +103,7 @@ const AddAction = ({ invoiceData }) => {
                       <Typography className='min-is-[95px] mie-4' color='text.primary'>
                         Date Due:
                       </Typography>
-                      <AppReactDatepicker
+                      <NativeDateInput
                         boxProps={{ className: 'is-full' }}
                         selected={dueDate}
                         placeholderText='YYYY-MM-DD'

@@ -25,7 +25,6 @@ const CATEGORY_PATHS = {
   COUNTRY: '/[lang]/options/contract-management/countries',
   CONTRACT_TYPE_HRM: '/[lang]/options/contract-management/contract-types',
   CONTRACT_TYPE_CUSTOMER: '/[lang]/options/contract-management/contract-types',
-  CONTRACT_TYPE_FINANCE: '/[lang]/options/contract-management/contract-types',
   CONTRACT_TYPE_OTHER: '/[lang]/options/contract-management/contract-types',
   STAFF_POSITION: '/[lang]/options/hrm/positions',
   LEAVE_TYPE: '/[lang]/options/hrm/leave-types',

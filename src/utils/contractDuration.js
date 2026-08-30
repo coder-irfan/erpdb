@@ -55,14 +55,26 @@ export const calculateContractEndDate = (startDate, durationOption) => {
 
   if (duration.unit === 'YEAR') {
     const wholeYears = Math.trunc(duration.amount)
+    const originalDay = result.getUTCDate()
 
+    result.setUTCDate(1)
     result.setUTCFullYear(result.getUTCFullYear() + wholeYears)
-    if (duration.amount !== wholeYears) result.setUTCDate(result.getUTCDate() + Math.round((duration.amount - wholeYears) * 365))
+    result.setUTCDate(
+      Math.min(originalDay, new Date(Date.UTC(result.getUTCFullYear(), result.getUTCMonth() + 1, 0)).getUTCDate())
+    )
+    if (duration.amount !== wholeYears)
+      result.setUTCDate(result.getUTCDate() + Math.round((duration.amount - wholeYears) * 365))
   } else if (duration.unit === 'MONTH') {
     const wholeMonths = Math.trunc(duration.amount)
+    const originalDay = result.getUTCDate()
 
+    result.setUTCDate(1)
     result.setUTCMonth(result.getUTCMonth() + wholeMonths)
-    if (duration.amount !== wholeMonths) result.setUTCDate(result.getUTCDate() + Math.round((duration.amount - wholeMonths) * 30))
+    result.setUTCDate(
+      Math.min(originalDay, new Date(Date.UTC(result.getUTCFullYear(), result.getUTCMonth() + 1, 0)).getUTCDate())
+    )
+    if (duration.amount !== wholeMonths)
+      result.setUTCDate(result.getUTCDate() + Math.round((duration.amount - wholeMonths) * 30))
   } else {
     const days = duration.unit === 'WEEK' ? duration.amount * 7 : duration.amount
 
@@ -79,6 +91,29 @@ export const getRemainingDays = (endDate, now = new Date()) => {
   if (!end || !today) return 0
 
   return Math.ceil((end.getTime() - today.getTime()) / DAY_IN_MS)
+}
+
+export const getDateRangeDuration = (startDate, endDate) => {
+  const start = toUtcDateOnly(startDate)
+  const end = toUtcDateOnly(endDate)
+
+  if (!start || !end) return null
+
+  const totalDays = Math.round((end.getTime() - start.getTime()) / DAY_IN_MS)
+
+  if (totalDays < 0) return { isValid: false, months: 0, days: 0, totalDays }
+
+  let months = (end.getUTCFullYear() - start.getUTCFullYear()) * 12 + end.getUTCMonth() - start.getUTCMonth()
+  let monthAnchor = months > 0 ? calculateContractEndDate(start, { value: `${months} Months` }) : new Date(start)
+
+  if (monthAnchor > end) {
+    months -= 1
+    monthAnchor = months > 0 ? calculateContractEndDate(start, { value: `${months} Months` }) : new Date(start)
+  }
+
+  const days = Math.round((end.getTime() - monthAnchor.getTime()) / DAY_IN_MS)
+
+  return { isValid: true, months, days, totalDays }
 }
 
 export const formatDateRangeDuration = (startDate, endDate) => {

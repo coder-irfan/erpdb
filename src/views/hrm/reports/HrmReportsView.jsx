@@ -17,15 +17,16 @@ import Typography from '@mui/material/Typography'
 import { toast } from 'sonner'
 
 import CustomTextField from '@core/components/mui/TextField'
-import { updateStaffStatus } from '@/actions/hrm/staff'
+import { getStaffById, updateStaffStatus } from '@/actions/hrm/staff'
 import UserAvatar from '@/components/common/UserAvatar'
 import DashboardTablePagination from '@/components/table/DashboardTablePagination'
 import TableEmptyStateRow from '@/components/table/TableEmptyStateRow'
 import TableSkeletonRows from '@/components/table/TableSkeletonRows'
 import TableFiltersPopover from '@/components/table/TableFiltersPopover'
-import LocalizedDateTimePicker from '@/components/inputs/LocalizedDateTimePicker'
+import NativeDateTimeInput from '@/components/inputs/NativeDateTimeInput'
 import ResponsiveDataTable from '@/components/tables/ResponsiveDataTable'
 import { formatCurrency, toFiniteNumber } from '@/utils/formatCurrency'
+import { formatStatusLabel } from '@/utils/formatStatusLabel'
 import ContractFormDrawer from '@/views/contracts/ContractFormDrawer'
 
 import ReportStatsCards from '@/components/reports/ReportStatsCards'
@@ -91,6 +92,8 @@ const HrmReportsView = ({
   const [rowsPerPage, setRowsPerPage] = useState(10)
   const [dataVersion, setDataVersion] = useState(0)
   const [renewalValues, setRenewalValues] = useState(null)
+  const [renewalFormOptions, setRenewalFormOptions] = useState(contractFormOptions)
+  const [renewalLoading, setRenewalLoading] = useState(false)
   const [archiveTarget, setArchiveTarget] = useState(null)
   const [actionBusy, setActionBusy] = useState(false)
   const requestIdRef = useRef(0)
@@ -102,7 +105,7 @@ const HrmReportsView = ({
             dateStyle: 'medium',
             timeZone: 'UTC'
           }).format(new Date(value))
-        : '—',
+        : '-',
     [locale]
   )
 
@@ -234,7 +237,33 @@ const HrmReportsView = ({
     [dictionary.common.daysOverdue, dictionary.common.daysRemaining]
   )
 
-  const openRenewal = row => {
+  const openRenewal = async row => {
+    setRenewalLoading(true)
+
+    let staff
+
+    try {
+      const result = await getStaffById(row.staff_id, { locale })
+
+      if (!result.success) {
+        toast.error(result.error || dictionary.messages.loadFailed)
+
+        return
+      }
+
+      staff = result.data
+      setRenewalFormOptions(current => ({
+        ...current,
+        staff: [...current.staff.filter(item => item.id !== staff.id), staff]
+      }))
+    } catch {
+      toast.error(dictionary.messages.loadFailed)
+
+      return
+    } finally {
+      setRenewalLoading(false)
+    }
+
     const nextStart = new Date(row.end_date)
 
     nextStart.setUTCDate(nextStart.getUTCDate() + 1)
@@ -244,10 +273,10 @@ const HrmReportsView = ({
       contract_type_id: row.contract_type_id,
       template_id: row.template_id,
       contract_duration: row.duration_id,
-      position_title: row.position,
-      base_salary: row.base_salary,
-      currency: row.currency,
-      exchange_rate: row.exchange_rate,
+      position_title: staff.position || row.position,
+      base_salary: staff.salary || row.base_salary,
+      currency: staff.salary_currency || row.currency,
+      exchange_rate: staff.salary_exchange_rate || row.exchange_rate,
       start_date: toInputDate(nextStart),
       end_date: '',
       status_id: '',
@@ -394,7 +423,7 @@ const HrmReportsView = ({
           row.allowances,
           row.deductions,
           row.net_payout,
-          dictionary.status[row.status] || row.status_label,
+          formatStatusLabel(row.status, dictionary.status[row.status] || row.status_label),
           row.payment_method || ''
         ]
       }
@@ -522,7 +551,7 @@ const HrmReportsView = ({
     return (
       <div className='flex flex-wrap justify-end gap-1' data-row-action>
         {canManageContracts && (
-          <Button size='small' variant='tonal' startIcon={<i className='tabler-refresh' />} onClick={() => openRenewal(row)}>
+          <Button size='small' variant='tonal' disabled={renewalLoading} startIcon={<i className='tabler-refresh' />} onClick={() => openRenewal(row)}>
             {dictionary.actions.renewContract}
           </Button>
         )}
@@ -578,7 +607,7 @@ const HrmReportsView = ({
           size='small'
           variant='tonal'
           color={PAYROLL_STATUS_COLORS[row.status] || 'default'}
-          label={dictionary.status[row.status] || row.status_label}
+          label={formatStatusLabel(row.status, dictionary.status[row.status] || row.status_label)}
         />
       )
     }
@@ -658,7 +687,7 @@ const HrmReportsView = ({
           id: 'breakdown',
           label: dictionary.table.leaveBreakdown,
           render: row =>
-            row.leave_types.length ? row.leave_types.map(item => `${item.name}: ${item.days}`).join(', ') : '—'
+            row.leave_types.length ? row.leave_types.map(item => `${item.name}: ${item.days}`).join(', ') : '-'
         },
         { id: 'allowance', label: dictionary.table.allowance, render: row => row.allowance_days },
         { id: 'remaining', label: dictionary.table.remaining, render: row => row.remaining_days },
@@ -724,7 +753,7 @@ const HrmReportsView = ({
                       size='small'
                       variant='tonal'
                       color={PAYROLL_STATUS_COLORS[row.status] || 'default'}
-                      label={dictionary.status[row.status] || row.status_label}
+                      label={formatStatusLabel(row.status, dictionary.status[row.status] || row.status_label)}
                     />
                   </td>
                 </tr>
@@ -817,7 +846,7 @@ const HrmReportsView = ({
                         ? row.leave_types.map(item => (
                             <Chip key={item.name} size='small' variant='tonal' label={`${item.name}: ${item.days}`} />
                           ))
-                        : '—'}
+                        : '-'}
                     </div>
                   </td>
                   <td className='text-end'>
@@ -887,7 +916,7 @@ const HrmReportsView = ({
                     size='small'
                     variant='tonal'
                     color={row.renewal_status === 'EXPIRED' ? 'error' : row.renewal_status === 'DUE_SOON' ? 'warning' : 'info'}
-                    label={dictionary.status[row.renewal_status]}
+                    label={formatStatusLabel(row.renewal_status, dictionary.status[row.renewal_status])}
                   />
                 </td>
                 {(canManageContracts || canArchiveStaff) && <td className='text-end'>{contractActions(row)}</td>}
@@ -939,7 +968,7 @@ const HrmReportsView = ({
                 <MenuItem value='year_to_date'>{dictionary.datePresets.yearToDate}</MenuItem>
                 <MenuItem value='custom'>{dictionary.datePresets.custom}</MenuItem>
               </CustomTextField>
-              <LocalizedDateTimePicker
+              <NativeDateTimeInput
                 locale={locale}
                 label={dictionary.filters.startDate}
                 value={startDate}
@@ -950,7 +979,7 @@ const HrmReportsView = ({
                 }}
                 className='is-full'
               />
-              <LocalizedDateTimePicker
+              <NativeDateTimeInput
                 locale={locale}
                 label={dictionary.filters.endDate}
                 value={endDate}
@@ -1042,7 +1071,7 @@ const HrmReportsView = ({
             <Typography className='text-xl font-bold text-black'>{setup.company_name}</Typography>
             <Typography className='whitespace-pre-line text-sm text-black'>{setup.company_address}</Typography>
             <Typography className='text-sm text-black'>
-              {[setup.company_phone, setup.company_email].filter(Boolean).join(' · ')}
+              {[setup.company_phone, setup.company_email].filter(Boolean).join(' - ')}
             </Typography>
           </div>
         </div>
@@ -1051,7 +1080,7 @@ const HrmReportsView = ({
             {activeReport.label}
           </Typography>
           <Typography className='text-black'>
-            {formatDate(`${startDate}T00:00:00.000Z`)} — {formatDate(`${endDate}T00:00:00.000Z`)}
+            {formatDate(`${startDate}T00:00:00.000Z`)} <>&mdash;</> {formatDate(`${endDate}T00:00:00.000Z`)}
           </Typography>
           {selectedStaff && (
             <Typography className='text-sm text-black'>
@@ -1124,7 +1153,7 @@ const HrmReportsView = ({
         contract={null}
         initialValues={renewalValues}
         drawerTitle={dictionary.actions.renewContract}
-        formOptions={contractFormOptions}
+        formOptions={renewalFormOptions}
         locale={locale}
         dictionary={contractDictionary}
         contractContext='HRM'

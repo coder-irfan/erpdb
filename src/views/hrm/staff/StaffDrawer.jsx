@@ -16,7 +16,8 @@ import { toast } from 'sonner'
 
 import CustomTextField from '@core/components/mui/TextField'
 import LoadingButtonContent from '@/components/LoadingButtonContent'
-import LocalizedDateTimePicker from '@/components/inputs/LocalizedDateTimePicker'
+import FormSectionCards from '@/components/forms/FormSectionCards'
+import NativeDateTimeInput from '@/components/inputs/NativeDateTimeInput'
 import { createStaff, updateStaff } from '@/actions/hrm/staff'
 import { getOptionsByCategory } from '@/actions/options'
 import { createStaffSchema, STAFF_STATUSES } from '@/schemas/hrm/staff'
@@ -33,7 +34,6 @@ const DEFAULT_VALUES = {
   salary: '',
   salary_currency: 'AFN',
   join_date: '',
-  contract_period: '',
   user_id: '',
   status: 'ACTIVE',
   guarantor_name: '',
@@ -57,7 +57,6 @@ const getFormValues = (staff, baseCurrency) => {
     salary: staff.salary || '',
     salary_currency: staff.salary_currency || baseCurrency,
     join_date: staff.join_date?.slice(0, 10) || '',
-    contract_period: staff.contract_period || '',
     user_id: staff.user_id || '',
     status: staff.status || 'ACTIVE',
     guarantor_name: staff.guarantor_name || '',
@@ -173,7 +172,7 @@ const StaffDrawer = ({ open, staff, users, locale, dictionary, baseCurrency, onC
       onClose={handleClose}
       slotProps={{ paper: { className: 'is-full sm:is-[620px]' } }}
     >
-      <div className='flex items-start justify-between gap-4 border-be border-divider p-6'>
+      <div className='form-surface-header flex items-start justify-between gap-4 border-be border-divider p-6'>
         <div>
           <Typography variant='h5'>{staff ? dictionary.drawer.editTitle : dictionary.drawer.addTitle}</Typography>
           <Typography color='text.secondary'>{dictionary.drawer.description}</Typography>
@@ -184,7 +183,8 @@ const StaffDrawer = ({ open, staff, users, locale, dictionary, baseCurrency, onC
       </div>
 
       <form onSubmit={handleSubmit(submitForm)} noValidate className='flex min-bs-0 flex-1 flex-col'>
-        <div className='flex flex-1 flex-col gap-6 overflow-y-auto p-6'>
+        <div className='form-surface-scroll flex flex-1 flex-col gap-6 p-6'>
+          <FormSectionCards labels={[dictionary.sections.personal, dictionary.sections.employment, dictionary.sections.guarantor]}>
           <SectionTitle>{dictionary.sections.personal}</SectionTitle>
           <div className='grid grid-cols-1 gap-5 sm:grid-cols-2'>
             <CustomTextField fullWidth label={dictionary.fields.firstName} {...fieldProps('first_name')} />
@@ -265,8 +265,7 @@ const StaffDrawer = ({ open, staff, users, locale, dictionary, baseCurrency, onC
                 </CustomTextField>
               )}
             />
-            <LocalizedDateTimePicker fullWidth locale={locale} label={dictionary.fields.joinDate} {...fieldProps('join_date')} />
-            <CustomTextField fullWidth label={dictionary.fields.contractPeriod} {...fieldProps('contract_period')} />
+            <NativeDateTimeInput fullWidth locale={locale} label={dictionary.fields.joinDate} {...fieldProps('join_date')} />
             <Controller
               name='status'
               control={control}
@@ -330,9 +329,10 @@ const StaffDrawer = ({ open, staff, users, locale, dictionary, baseCurrency, onC
             label={dictionary.fields.educations}
             {...fieldProps('educations')}
           />
+          </FormSectionCards>
         </div>
 
-        <div className='flex justify-end gap-3 border-bs border-divider p-6'>
+        <div className='form-surface-actions flex justify-end gap-3 p-6'>
           <Button variant='tonal' color='secondary' onClick={handleClose} disabled={isSubmitting}>
             {dictionary.actions.cancel}
           </Button>

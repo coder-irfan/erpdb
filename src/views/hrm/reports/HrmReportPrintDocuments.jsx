@@ -1,5 +1,6 @@
 import PrintLayout from '@/components/print/PrintLayout'
 import { formatCurrency } from '@/utils/formatCurrency'
+import { formatStatusLabel } from '@/utils/formatStatusLabel'
 
 const DATE_LOCALES = { en: 'en-US', fa: 'fa-AF', ps: 'ps-AF' }
 
@@ -83,7 +84,7 @@ export const PayrollSummaryPrint = props => {
     <ReportLayout {...props} reportType='payroll'>
       <Table>
         <thead><tr><Head>{dictionary.table.staff}</Head><Head>{dictionary.table.position}</Head><Head>{dictionary.table.period}</Head><Head>{dictionary.table.baseSalary}</Head><Head>{dictionary.table.allowances}</Head><Head>{dictionary.table.deductions}</Head><Head>{dictionary.table.netPayout}</Head><Head>{dictionary.table.status}</Head></tr></thead>
-        <tbody>{rows.length ? rows.map((row, index) => <tr key={row.id} className={index % 2 ? 'bg-gray-50' : ''}><Cell>{row.staff_name}</Cell><Cell>{row.position}</Cell><Cell>{formatMonth(row.period, locale)}</Cell><Cell>{formatCurrency(row.base_salary, locale, row.currency)}</Cell><Cell>{formatCurrency(row.allowances, locale, row.currency)}</Cell><Cell>{formatCurrency(row.deductions, locale, row.currency)}</Cell><Cell className='font-semibold'>{formatCurrency(row.net_payout, locale, row.currency)}</Cell><Cell>{dictionary.status[row.status] || row.status_label}</Cell></tr>) : <Empty colSpan={8} message={dictionary.empty.description} />}</tbody>
+        <tbody>{rows.length ? rows.map((row, index) => <tr key={row.id} className={index % 2 ? 'bg-gray-50' : ''}><Cell>{row.staff_name}</Cell><Cell>{row.position}</Cell><Cell>{formatMonth(row.period, locale)}</Cell><Cell>{formatCurrency(row.base_salary, locale, row.currency)}</Cell><Cell>{formatCurrency(row.allowances, locale, row.currency)}</Cell><Cell>{formatCurrency(row.deductions, locale, row.currency)}</Cell><Cell className='font-semibold'>{formatCurrency(row.net_payout, locale, row.currency)}</Cell><Cell>{formatStatusLabel(row.status, dictionary.status[row.status] || row.status_label)}</Cell></tr>) : <Empty colSpan={8} message={dictionary.empty.description} />}</tbody>
       </Table>
     </ReportLayout>
   )
@@ -127,7 +128,7 @@ export const ContractExpirationReportPrint = props => {
     <ReportLayout {...props} reportType='contracts'>
       <Table>
         <thead><tr><Head>{dictionary.table.contractNumber}</Head><Head>{dictionary.table.staff}</Head><Head>{dictionary.table.position}</Head><Head>{dictionary.table.contractType}</Head><Head>{dictionary.table.endDate}</Head><Head>{dictionary.table.daysRemaining}</Head><Head>{dictionary.table.renewalStatus}</Head></tr></thead>
-        <tbody>{rows.length ? rows.map((row, index) => <tr key={row.id} className={index % 2 ? 'bg-gray-50' : ''}><Cell>{row.contract_number}</Cell><Cell>{row.staff_name}</Cell><Cell>{row.position}</Cell><Cell>{row.contract_type}</Cell><Cell>{formatDate(row.end_date, locale)}</Cell><Cell className={row.days_remaining < 0 ? 'font-bold text-red-700' : row.days_remaining <= 30 ? 'font-bold text-amber-700' : ''}>{expirationLabel(row)}</Cell><Cell>{dictionary.status[row.renewal_status] || row.renewal_status}</Cell></tr>) : <Empty colSpan={7} message={dictionary.empty.description} />}</tbody>
+        <tbody>{rows.length ? rows.map((row, index) => <tr key={row.id} className={index % 2 ? 'bg-gray-50' : ''}><Cell>{row.contract_number}</Cell><Cell>{row.staff_name}</Cell><Cell>{row.position}</Cell><Cell>{row.contract_type}</Cell><Cell>{formatDate(row.end_date, locale)}</Cell><Cell className={row.days_remaining < 0 ? 'font-bold text-red-700' : row.days_remaining <= 30 ? 'font-bold text-amber-700' : ''}>{expirationLabel(row)}</Cell><Cell>{formatStatusLabel(row.renewal_status, dictionary.status[row.renewal_status])}</Cell></tr>) : <Empty colSpan={7} message={dictionary.empty.description} />}</tbody>
       </Table>
     </ReportLayout>
   )

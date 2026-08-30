@@ -18,6 +18,7 @@ import { toast } from 'sonner'
 
 import CustomTextField from '@core/components/mui/TextField'
 import LoadingButtonContent from '@/components/LoadingButtonContent'
+import FormSectionCards from '@/components/forms/FormSectionCards'
 import { createFinanceLoanSchema } from '@/schemas/financeLoan'
 import { toDateInputValue } from '@/utils/contractDuration'
 import { convertToBaseCurrency, formatCurrency, toFiniteNumber } from '@/utils/formatCurrency'
@@ -115,7 +116,7 @@ const FinanceLoanFormDrawer = ({ open, initialLoanType = 'STAFF', options, local
       onClose={isSubmitting ? undefined : onClose}
       slotProps={{ paper: { className: 'is-full sm:is-[680px]' } }}
     >
-      <div className='flex items-start justify-between gap-4 border-be border-divider p-5'>
+      <div className='form-surface-header flex items-start justify-between gap-4 border-be border-divider p-5'>
         <div>
           <Typography variant='h5'>{dictionary.form.title}</Typography>
           <Typography color='text.secondary'>{dictionary.form.description}</Typography>
@@ -124,7 +125,8 @@ const FinanceLoanFormDrawer = ({ open, initialLoanType = 'STAFF', options, local
           <i className='tabler-x' />
         </IconButton>
       </div>
-      <form className='flex flex-1 flex-col gap-5 overflow-y-auto p-5' onSubmit={handleSubmit(submit)} noValidate>
+      <form className='form-surface-scroll flex flex-1 flex-col gap-5 p-5' onSubmit={handleSubmit(submit)} noValidate>
+        <FormSectionCards labels={[dictionary.tabs?.general || 'Loan information', dictionary.tabs?.terms || 'Repayment terms', dictionary.tabs?.schedule || 'Repayment schedule']}>
         <div className='rounded border border-primary/30 bg-primaryLighter p-4'>
           <Typography variant='h6'>{loanType === 'STAFF' ? 'Staff Loan & Salary Advance' : 'Corporate Debt & Liability'}</Typography>
           <Typography variant='body2' color='text.secondary'>{loanType === 'STAFF' ? 'Company → employee receivable' : 'Lender → company payable'}</Typography>
@@ -227,7 +229,8 @@ const FinanceLoanFormDrawer = ({ open, initialLoanType = 'STAFF', options, local
             <div className='max-h-72 overflow-auto'><table className='w-full text-sm'><thead><tr><th className='p-2 text-start'>#</th><th className='p-2 text-start'>Due</th><th className='p-2 text-end'>Principal</th><th className='p-2 text-end'>Interest</th><th className='p-2 text-end'>Payment</th><th className='p-2 text-end'>Balance</th></tr></thead><tbody>{amortization.map(row => <tr key={row.installment_number} className='border-bs border-divider'><td className='p-2'>{row.installment_number}</td><td className='p-2'>{toDateInputValue(row.due_date)}</td><td className='p-2 text-end'>{formatCurrency(row.principal_amount, locale, currency)}</td><td className='p-2 text-end'>{formatCurrency(row.interest_amount, locale, currency)}</td><td className='p-2 text-end font-semibold'>{formatCurrency(row.payment_amount, locale, currency)}</td><td className='p-2 text-end'>{formatCurrency(row.remaining_principal, locale, currency)}</td></tr>)}</tbody></table></div>
           </CardContent></Card>
         )}
-        <div className='mt-auto flex justify-end gap-3'>
+        </FormSectionCards>
+        <div className='form-surface-actions -mx-5 -mb-5 mt-auto flex justify-end gap-3 p-5'>
           <Button variant='tonal' color='secondary' disabled={isSubmitting} onClick={onClose}>
             {dictionary.actions.cancel}
           </Button>

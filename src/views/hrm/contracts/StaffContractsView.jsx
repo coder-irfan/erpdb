@@ -23,10 +23,11 @@ import DashboardTablePagination from '@/components/table/DashboardTablePaginatio
 import EntityActionsMenu from '@/components/table/EntityActionsMenu'
 import TableEmptyStateRow from '@/components/table/TableEmptyStateRow'
 import TableFiltersPopover from '@/components/table/TableFiltersPopover'
-import LocalizedDateTimePicker from '@/components/inputs/LocalizedDateTimePicker'
+import NativeDateTimeInput from '@/components/inputs/NativeDateTimeInput'
 import TableSkeletonRows from '@/components/table/TableSkeletonRows'
 import ResponsiveDataTable from '@/components/tables/ResponsiveDataTable'
 import { formatCurrency } from '@/utils/formatCurrency'
+import { formatStatusLabel } from '@/utils/formatStatusLabel'
 
 import StaffContractDetailDialog from './StaffContractDetailDialog'
 import StaffContractPrintPreviewModal from './StaffContractPrintPreviewModal'
@@ -45,7 +46,7 @@ const STATUS_COLORS = {
 }
 
 const formatDate = (value, locale) =>
-  value ? new Intl.DateTimeFormat(localeMap[locale] || 'en-US', { dateStyle: 'medium' }).format(new Date(value)) : '—'
+  value ? new Intl.DateTimeFormat(localeMap[locale] || 'en-US', { dateStyle: 'medium' }).format(new Date(value)) : '-'
 
 const StaffContractsView = ({
   initialResult,
@@ -266,7 +267,7 @@ const StaffContractsView = ({
                 <MenuItem value=''>{dictionary.filters.allStatuses}</MenuItem>
                 {formOptions.statuses.map(status => (
                   <MenuItem key={status.id} value={status.id}>
-                    {dictionary.status[status.value] || status.label}
+                    {formatStatusLabel(status.value, dictionary.status[status.value] || status.label)}
                   </MenuItem>
                 ))}
               </CustomTextField>
@@ -323,23 +324,23 @@ const StaffContractsView = ({
               size='small'
               variant='tonal'
               color={STATUS_COLORS[contract.status.value] || 'default'}
-              label={dictionary.status[contract.status.value] || contract.status.label}
+              label={formatStatusLabel(contract.status.value, dictionary.status[contract.status.value] || contract.status.label)}
             />
           )}
           renderMobileActions={renderContractActions}
           mobileMetadata={[
-            { id: 'position', label: dictionary.table.position, render: contract => contract.position_title },
+            { id: 'position', label: dictionary.table.position, render: contract => contract.staff?.position || '-' },
             { id: 'type', label: dictionary.table.contractType, render: contract => contract.contract_type.label },
             {
               id: 'salary',
               label: dictionary.table.salary,
-              render: contract => <DualCurrencyAmount amount={contract.base_salary} amountBase={contract.amount_base} currency={contract.currency || currencyCode} exchangeRate={contract.exchange_rate} locale={locale} />
+              render: contract => <DualCurrencyAmount amount={contract.base_salary} amountBase={contract.amount_base} currency={contract.currency || currencyCode} exchangeRate={contract.exchange_rate} locale={locale} className='font-bold' />
             },
             {
               id: 'period',
               label: dictionary.table.period,
               render: contract =>
-                `${formatDate(contract.start_date, locale)} — ${formatDate(contract.end_date, locale)}`
+                <>{formatDate(contract.start_date, locale)} <>&mdash;</> {formatDate(contract.end_date, locale)}</>
             }
           ]}
           emptyState={{
@@ -398,10 +399,10 @@ const StaffContractsView = ({
                           </QuickContact>
                         </Typography>
                       </td>
-                      <td>{contract.position_title}</td>
+                      <td>{contract.staff?.position || '-'}</td>
                       <td>{contract.contract_type.label}</td>
                       <td>
-                        <DualCurrencyAmount amount={contract.base_salary} amountBase={contract.amount_base} currency={contract.currency || currencyCode} exchangeRate={contract.exchange_rate} locale={locale} className='rounded bg-successLighter px-3 py-1' primaryClassName='text-success' />
+                        <DualCurrencyAmount amount={contract.base_salary} amountBase={contract.amount_base} currency={contract.currency || currencyCode} exchangeRate={contract.exchange_rate} locale={locale} className='font-bold' />
                       </td>
                       <td className='whitespace-nowrap'>
                         <Typography variant='body2'>{formatDate(contract.start_date, locale)}</Typography>
@@ -414,7 +415,7 @@ const StaffContractsView = ({
                           size='small'
                           variant='tonal'
                           color={STATUS_COLORS[contract.status.value] || 'default'}
-                          label={dictionary.status[contract.status.value] || contract.status.label}
+                          label={formatStatusLabel(contract.status.value, dictionary.status[contract.status.value] || contract.status.label)}
                         />
                       </td>
                       <td className='text-end'>{renderContractActions(contract)}</td>
@@ -468,7 +469,7 @@ const StaffContractsView = ({
         <DialogTitle>Terminate staff contract</DialogTitle>
         <DialogContent className='flex flex-col gap-4 pt-2'>
           <Typography color='text.secondary'>Termination freezes payroll, flags final settlement, archives the staff record, and revokes linked user sessions immediately.</Typography>
-          <LocalizedDateTimePicker locale={locale} label='Termination Date' value={terminationDate} onChange={event => setTerminationDate(event.target.value)} />
+          <NativeDateTimeInput locale={locale} label='Termination Date' value={terminationDate} onChange={event => setTerminationDate(event.target.value)} />
           <CustomTextField multiline minRows={3} label='Termination Reason' value={terminationReason} onChange={event => setTerminationReason(event.target.value)} />
         </DialogContent>
         <DialogActions>

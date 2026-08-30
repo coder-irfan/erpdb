@@ -10,6 +10,7 @@ import UserAvatar from '@/components/common/UserAvatar'
 import QuickContact from '@/components/common/QuickContact'
 import DetailDialog from '@/components/dialogs/DetailDialog'
 import { formatCurrency } from '@/utils/formatCurrency'
+import { formatStatusLabel } from '@/utils/formatStatusLabel'
 
 const localeMap = { en: 'en-US', fa: 'fa-AF', ps: 'ps-AF' }
 const STATUS_COLORS = { ACTIVE: 'success', EXPIRED: 'warning', TERMINATED: 'error', DRAFT: 'secondary' }
@@ -19,7 +20,6 @@ const formatDate = (value, locale) =>
 
 const DETAIL_TONES = {
   primary: 'border-primary/20 bg-primaryLighter text-primary',
-  success: 'border-success/20 bg-successLighter text-success',
   warning: 'border-warning/20 bg-secondaryLighter text-warning',
   info: 'border-info/20 bg-infoLighter text-info'
 }
@@ -68,7 +68,7 @@ const StaffContractDetailDialog = ({ contract, open, locale, dictionary, onClose
           <Chip
             variant='tonal'
             color={STATUS_COLORS[contract.status.value] || 'default'}
-            label={dictionary.status[contract.status.value] || contract.status.label}
+            label={formatStatusLabel(contract.status.value, dictionary.status[contract.status.value] || contract.status.label)}
           />
         </div>
       </div>
@@ -82,7 +82,7 @@ const StaffContractDetailDialog = ({ contract, open, locale, dictionary, onClose
           />
           <DetailItem
             label={dictionary.fields.position}
-            value={contract.position_title}
+            value={contract.staff?.position}
             icon='tabler-briefcase'
             tone='warning'
           />
@@ -94,9 +94,8 @@ const StaffContractDetailDialog = ({ contract, open, locale, dictionary, onClose
           />
           <DetailItem
             label={dictionary.fields.baseSalary}
-            value={formatCurrency(contract.base_salary, locale, contract.currency || dictionary.currencyCode || 'AFN')}
+            value={<span className='font-bold'>{formatCurrency(contract.base_salary, locale, contract.currency || dictionary.currencyCode || 'AFN')}</span>}
             icon='tabler-cash'
-            tone='success'
           />
           <DetailItem label={dictionary.fields.startDate} value={formatDate(contract.start_date, locale)} />
           <DetailItem label={dictionary.fields.endDate} value={formatDate(contract.end_date, locale)} />

@@ -24,7 +24,8 @@ import { editTask, deleteTask } from '@/redux-store/slices/kanban'
 // Component Imports
 import CustomAvatar from '@core/components/mui/Avatar'
 import CustomTextField from '@core/components/mui/TextField'
-import AppReactDatepicker from '@/libs/styles/AppReactDatepicker'
+import FormSectionCards from '@/components/forms/FormSectionCards'
+import NativeDateInput from '@/components/inputs/NativeDateInput'
 
 // Data Imports
 import { chipColor } from './TaskCard'
@@ -128,6 +129,7 @@ const KanbanDrawer = props => {
         </div>
         <div className='p-6'>
           <form className='flex flex-col gap-y-5' onSubmit={handleSubmit(updateTask)}>
+            <FormSectionCards labels={['Task information', 'Assignment and schedule', 'Attachments and comments']}>
             <Controller
               name='title'
               control={control}
@@ -142,7 +144,7 @@ const KanbanDrawer = props => {
               )}
             />
 
-            <AppReactDatepicker
+            <NativeDateInput
               selected={date ? new Date(date) : new Date()}
               id='basic-input'
               onChange={date => {
@@ -233,7 +235,8 @@ const KanbanDrawer = props => {
               rows={4}
               placeholder='Write a Comment....'
             />
-            <div className='flex gap-4'>
+            </FormSectionCards>
+            <div className='form-surface-actions flex justify-end gap-4 px-1 py-3'>
               <Button variant='contained' color='primary' type='submit'>
                 Update
               </Button>

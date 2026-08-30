@@ -13,6 +13,7 @@ import { toast } from 'sonner'
 
 import CustomTextField from '@core/components/mui/TextField'
 import LoadingButtonContent from '@/components/LoadingButtonContent'
+import FormSectionCards from '@/components/forms/FormSectionCards'
 import { createLeadSchema } from '@/schemas/crm/leads'
 
 const EMPTY_FORM = {
@@ -104,7 +105,7 @@ const LeadDrawer = ({ open, lead, options, baseCurrency, locale, dictionary, onC
       onClose={isSubmitting ? undefined : onClose}
       PaperProps={{ className: 'is-full sm:is-[560px]' }}
     >
-      <div className='flex items-start justify-between gap-4 border-be border-divider p-5'>
+      <div className='form-surface-header flex items-start justify-between gap-4 border-be border-divider p-5'>
         <div>
           <Typography variant='h5'>{lead ? dictionary.drawer.editTitle : dictionary.drawer.addTitle}</Typography>
           <Typography color='text.secondary'>{dictionary.drawer.description}</Typography>
@@ -113,7 +114,8 @@ const LeadDrawer = ({ open, lead, options, baseCurrency, locale, dictionary, onC
           <i className='tabler-x' />
         </IconButton>
       </div>
-      <form onSubmit={handleSubmit(submit)} className='flex flex-1 flex-col gap-5 overflow-y-auto p-5' noValidate>
+      <form onSubmit={handleSubmit(submit)} className='form-surface-scroll flex flex-1 flex-col gap-5 p-5' noValidate>
+        <FormSectionCards labels={[dictionary.tabs?.general || 'Lead information', dictionary.tabs?.pipeline || 'Pipeline and ownership']}>
         <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
           {field('title', dictionary.fields.title)}
           {field('company_name', dictionary.fields.company)}
@@ -226,7 +228,8 @@ const LeadDrawer = ({ open, lead, options, baseCurrency, locale, dictionary, onC
           })}
         </div>
         {field('notes', dictionary.fields.notes, { multiline: true, minRows: 4 })}
-        <div className='mt-auto flex justify-end gap-3 pt-4'>
+        </FormSectionCards>
+        <div className='form-surface-actions -mx-5 -mb-5 mt-auto flex justify-end gap-3 p-5'>
           <Button variant='tonal' color='secondary' disabled={isSubmitting} onClick={onClose}>
             {dictionary.actions.cancel}
           </Button>

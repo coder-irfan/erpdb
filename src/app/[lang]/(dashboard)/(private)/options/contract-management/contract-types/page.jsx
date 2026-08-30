@@ -11,7 +11,6 @@ import ContractOptionsView from '@/views/options/contracts/ContractOptionsView'
 const SECTIONS = [
   { category: CONTRACT_TYPE_DOMAINS.HRM, key: 'hrmTypes', icon: 'tabler-users' },
   { category: CONTRACT_TYPE_DOMAINS.CUSTOMER, key: 'customerTypes', icon: 'tabler-user-dollar' },
-  { category: CONTRACT_TYPE_DOMAINS.FINANCE, key: 'financeTypes', icon: 'tabler-receipt-dollar' },
   { category: CONTRACT_TYPE_DOMAINS.OTHERS, key: 'otherTypes', icon: 'tabler-building-store' }
 ]
 

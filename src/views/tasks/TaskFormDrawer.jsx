@@ -16,6 +16,7 @@ import { toast } from 'sonner'
 import CustomTextField from '@core/components/mui/TextField'
 import { createTask, updateTask } from '@/actions/tasks'
 import LoadingButtonContent from '@/components/LoadingButtonContent'
+import FormSectionCards from '@/components/forms/FormSectionCards'
 import RichTextEditor from '@/components/forms/RichTextEditor'
 import { createTaskSchema } from '@/schemas/tasks'
 import { toDateInputValue } from '@/utils/contractDuration'
@@ -133,7 +134,7 @@ const TaskFormDrawer = ({ open, task, options, defaultProjectId = '', locale, di
       onClose={isSubmitting ? undefined : onClose}
       PaperProps={{ className: 'is-full sm:is-[680px]' }}
     >
-      <div className='flex items-start justify-between gap-4 border-be border-divider p-5'>
+      <div className='form-surface-header flex items-start justify-between gap-4 border-be border-divider p-5'>
         <div>
           <Typography variant='h5'>{task ? dictionary.form.editTitle : dictionary.form.addTitle}</Typography>
           <Typography color='text.secondary'>{dictionary.form.description}</Typography>
@@ -142,7 +143,8 @@ const TaskFormDrawer = ({ open, task, options, defaultProjectId = '', locale, di
           <i className='tabler-x' />
         </IconButton>
       </div>
-      <form className='flex flex-1 flex-col gap-5 overflow-y-auto p-5' onSubmit={handleSubmit(submit)} noValidate>
+      <form className='form-surface-scroll flex flex-1 flex-col gap-5 p-5' onSubmit={handleSubmit(submit)} noValidate>
+        <FormSectionCards labels={[dictionary.tabs?.general || 'General information', dictionary.tabs?.planning || 'Planning and assignment']}>
         {field('title', dictionary.fields.title)}
         <Controller
           name='project_id'
@@ -170,7 +172,7 @@ const TaskFormDrawer = ({ open, task, options, defaultProjectId = '', locale, di
           name='description'
           control={control}
           render={({ field: input }) => (
-            <RichTextEditor {...input} value={input.value || ''} label={dictionary.fields.description} error={Boolean(errors.description)} helperText={errors.description?.message} />
+            <RichTextEditor className='sm:col-span-2' {...input} value={input.value || ''} label={dictionary.fields.description} error={Boolean(errors.description)} helperText={errors.description?.message} />
           )}
         />
         <Controller
@@ -218,7 +220,8 @@ const TaskFormDrawer = ({ open, task, options, defaultProjectId = '', locale, di
           })}
           {field('due_date', dictionary.fields.dueDate, { type: 'date', inputProps: { min: earliestDueDate }, slotProps: { inputLabel: { shrink: true } } })}
         </div>
-        <div className='mt-auto flex justify-end gap-3 pt-4'>
+        </FormSectionCards>
+        <div className='form-surface-actions -mx-5 -mb-5 mt-auto flex justify-end gap-3 p-5'>
           <Button variant='tonal' color='secondary' onClick={onClose} disabled={isSubmitting}>
             {dictionary.actions.cancel}
           </Button>

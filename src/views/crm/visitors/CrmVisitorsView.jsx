@@ -14,6 +14,7 @@ import ConfirmDeleteModal from '@/components/dialogs/ConfirmDeleteModal'
 import TableFiltersPopover from '@/components/table/TableFiltersPopover'
 
 import VisitorConvertDialog from './VisitorConvertDialog'
+import VisitorEmailDialog from './VisitorEmailDialog'
 import VisitorFormDrawer from './VisitorFormDrawer'
 import VisitorDetailDialog from './VisitorDetailDialog'
 import VisitorStatsCards from './VisitorStatsCards'
@@ -25,6 +26,8 @@ const EMPTY = {
   summary: { totalToday: 0, activeGuests: 0, completedToday: 0, convertedCount: 0 },
   options: { staff: [], purposes: [] }
 }
+
+const hasValidEmail = email => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email?.trim() || '')
 
 const CrmVisitorsView = ({ locale, dictionary, canWrite, canDelete }) => {
   const [searchInput, setSearchInput] = useState('')
@@ -40,6 +43,7 @@ const CrmVisitorsView = ({ locale, dictionary, canWrite, canDelete }) => {
   const [editingVisitor, setEditingVisitor] = useState(null)
   const [viewingVisitor, setViewingVisitor] = useState(null)
   const [convertTarget, setConvertTarget] = useState(null)
+  const [emailTarget, setEmailTarget] = useState(null)
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [busyId, setBusyId] = useState(null)
 
@@ -100,7 +104,7 @@ const CrmVisitorsView = ({ locale, dictionary, canWrite, canDelete }) => {
     }
   }
 
-  const convert = async email => {
+  const convert = async () => {
     if (!convertTarget) return
     setBusyId(convertTarget.id)
 
@@ -108,7 +112,7 @@ const CrmVisitorsView = ({ locale, dictionary, canWrite, canDelete }) => {
       const response = await fetch(`/api/crm/visitors/${convertTarget.id}/convert-lead?locale=${locale}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(email ? { email } : {})
+        body: JSON.stringify(convertTarget.email ? { email: convertTarget.email } : {})
       })
 
       const result = await response.json()
@@ -122,6 +126,21 @@ const CrmVisitorsView = ({ locale, dictionary, canWrite, canDelete }) => {
     } finally {
       setBusyId(null)
     }
+  }
+
+  const startConversion = visitor => {
+    if (hasValidEmail(visitor.email)) {
+      setConvertTarget(visitor)
+
+      return
+    }
+
+    setEmailTarget(visitor)
+  }
+
+  const continueWithEmail = email => {
+    setEmailTarget(null)
+    setConvertTarget(current => ({ ...(current || emailTarget), email }))
   }
 
   const remove = async () => {
@@ -254,7 +273,7 @@ const CrmVisitorsView = ({ locale, dictionary, canWrite, canDelete }) => {
             setPage(0)
           }}
           onCheckout={checkout}
-          onConvert={setConvertTarget}
+          onConvert={startConversion}
           onEdit={visitor => {
             setEditingVisitor(visitor)
             setFormOpen(true)
@@ -295,6 +314,13 @@ const CrmVisitorsView = ({ locale, dictionary, canWrite, canDelete }) => {
         dictionary={dictionary}
         onClose={() => setConvertTarget(null)}
         onConfirm={convert}
+      />
+      <VisitorEmailDialog
+        open={Boolean(emailTarget)}
+        visitor={emailTarget}
+        dictionary={dictionary}
+        onClose={() => setEmailTarget(null)}
+        onConfirm={continueWithEmail}
       />
       <ConfirmDeleteModal
         open={Boolean(deleteTarget)}

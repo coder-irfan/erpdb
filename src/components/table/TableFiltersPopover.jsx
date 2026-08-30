@@ -35,7 +35,7 @@ const TableFiltersPopover = ({ activeCount = 0, children, locale = 'en', onReset
         onClose={() => setAnchorElement(null)}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
         transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-        slotProps={{ paper: { className: 'mt-2 w-[min(360px,calc(100vw-2rem))] p-4' } }}
+        slotProps={{ paper: { className: 'mt-2 w-[min(360px,calc(100vw-2rem))] overflow-visible p-4' } }}
       >
         <div className='flex flex-col md:gap-4 gap-2'>
           {children}

@@ -111,7 +111,7 @@ const UserDropdown = ({ dictionary }) => {
               transformOrigin: placement === 'bottom-end' ? 'right top' : 'left top'
             }}
           >
-            <Paper className={settings.skin === 'bordered' ? 'border shadow-none' : 'shadow-lg'}>
+            <Paper className={`topbar-dropdown ${settings.skin === 'bordered' ? 'border shadow-none' : 'shadow-lg'}`}>
               <ClickAwayListener onClickAway={e => handleDropdownClose(e)}>
                 <MenuList>
                   <div className='flex items-center plb-2 pli-6 gap-2' tabIndex={-1}>

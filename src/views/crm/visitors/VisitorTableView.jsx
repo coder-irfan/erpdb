@@ -11,6 +11,7 @@ import EntityActionsMenu from '@/components/table/EntityActionsMenu'
 import TableEmptyStateRow from '@/components/table/TableEmptyStateRow'
 import TableSkeletonRows from '@/components/table/TableSkeletonRows'
 import ResponsiveDataTable from '@/components/tables/ResponsiveDataTable'
+import { formatStatusLabel } from '@/utils/formatStatusLabel'
 
 import tableStyles from '@core/styles/table.module.css'
 
@@ -120,7 +121,7 @@ const VisitorTableView = ({
             size='small'
             variant='tonal'
             color={visitor.status === 'CHECKED_IN' ? 'warning' : 'success'}
-            label={dictionary.status[visitor.status] || visitor.status}
+            label={formatStatusLabel(visitor.status, dictionary.status[visitor.status])}
           />
         )}
         renderMobileActions={renderActions}
@@ -265,7 +266,7 @@ const VisitorTableView = ({
                           size='small'
                           variant='tonal'
                           color={visitor.status === 'CHECKED_IN' ? 'warning' : 'success'}
-                          label={dictionary.status[visitor.status] || visitor.status}
+                          label={formatStatusLabel(visitor.status, dictionary.status[visitor.status])}
                         />
                         {visitor.converted_lead && (
                           <Chip

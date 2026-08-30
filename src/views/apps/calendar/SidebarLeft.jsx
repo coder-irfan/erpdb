@@ -10,7 +10,7 @@ import FormControlLabel from '@mui/material/FormControlLabel'
 import classnames from 'classnames'
 
 // Styled Component Imports
-import AppReactDatepicker from '@/libs/styles/AppReactDatepicker'
+import NativeDateInput from '@/components/inputs/NativeDateInput'
 
 // Slice Imports
 import { filterAllCalendarLabels, filterCalendarLabel, selectedEvent } from '@/redux-store/slices/calendar'
@@ -98,13 +98,9 @@ const SidebarLeft = props => {
           </Button>
         </div>
         <Divider className='is-full' />
-        <AppReactDatepicker
-          inline
+        <NativeDateInput
           onChange={date => calendarApi.gotoDate(date)}
-          boxProps={{
-            className: 'flex justify-center is-full',
-            sx: { '& .react-datepicker': { boxShadow: 'none !important', border: 'none !important' } }
-          }}
+          className='is-full'
         />
         <Divider className='is-full' />
 

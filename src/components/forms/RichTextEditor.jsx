@@ -25,7 +25,7 @@ const ToolButton = ({ label, icon, active, disabled, onClick }) => (
   </Button>
 )
 
-const RichTextEditor = ({ value = '', onChange, onBlur, label, error, helperText, disabled = false }) => {
+const RichTextEditor = ({ value = '', onChange, onBlur, label, error, helperText, disabled = false, className = '' }) => {
   const editor = useEditor({
     immediatelyRender: false,
     extensions: [StarterKit, TaskList, TaskItem.configure({ nested: true })],
@@ -65,7 +65,7 @@ const RichTextEditor = ({ value = '', onChange, onBlur, label, error, helperText
   }
 
   return (
-    <div>
+    <div className={className}>
       <Typography variant='body2' className={`mb-1 ${error ? 'text-error' : 'text-textSecondary'}`}>
         {label}
       </Typography>

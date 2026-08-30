@@ -17,14 +17,14 @@ import { hasActiveStaffContract } from '@/libs/hrmContractAccess'
 import { prisma } from '@/libs/prisma'
 import { updateTimesheetSchema } from '@/schemas/hrm/timesheets'
 import { getDictionary } from '@/utils/getDictionary'
-import { hasAnyPermission } from '@/utils/rbac'
+import { hasAnyPermission, hasAttendancePayrollOverrideRole } from '@/utils/rbac'
 
 const responseError = (error, status, code) => Response.json({ success: false, error, code }, { status })
 const localeFrom = value => (['en', 'fa', 'ps'].includes(value) ? value : 'en')
 
 export async function PUT(request, context) {
   const { id } = await context.params
-  const authorization = await authorizeAction(ATTENDANCE_WRITE_PERMISSIONS)
+  const authorization = await authorizeAction()
   let payload
 
   try {
@@ -43,7 +43,13 @@ export async function PUT(request, context) {
     )
   }
 
-  const canManage = hasAnyPermission(authorization.session, ['hrm:write'])
+  const canOverridePayrollLock = hasAttendancePayrollOverrideRole(authorization.session)
+
+  if (!canOverridePayrollLock && !hasAnyPermission(authorization.session, ATTENDANCE_WRITE_PERMISSIONS)) {
+    return responseError(dictionary.messages.forbidden, 403, 'FORBIDDEN')
+  }
+
+  const canManage = canOverridePayrollLock || hasAnyPermission(authorization.session, ['hrm:write'])
   const currentStaff = canManage ? null : await getCurrentStaff(authorization.session.user.id)
 
   if (!canManage && !currentStaff) return responseError(dictionary.messages.forbidden, 403, 'STAFF_PROFILE_REQUIRED')
@@ -66,8 +72,11 @@ export async function PUT(request, context) {
 
     const guard = await getAttendanceDateGuard(dateToString(existing.date))
 
+    const payrollOverride =
+      payload?.payrollOverride === true && canOverridePayrollLock
+
     if (guard.isFuture) return responseError(dictionary.messages.futureDateBlocked, 409, guard.code)
-    if (guard.payrollLocked) return responseError(dictionary.messages.payrollLocked, 409, guard.code)
+    if (guard.payrollLocked && !payrollOverride) return responseError(dictionary.messages.payrollLocked, 409, guard.code)
 
     if (!(await hasActiveStaffContract(prisma, { staffId: existing.staff_id, startDate: existing.date }))) {
       return responseError('Attendance is blocked outside an active contract period.', 409, 'CONTRACT_INACTIVE')
@@ -90,7 +99,13 @@ export async function PUT(request, context) {
           user_id: authorization.session.user.id,
           action: 'ATTENDANCE_UPDATED',
           module: 'HRM',
-          details: { timesheetId: id, staffId: updated.staff_id, date, status: updated.status }
+          details: {
+            timesheetId: id,
+            staffId: updated.staff_id,
+            date,
+            status: updated.status,
+            payrollOverride: guard.payrollLocked && payrollOverride
+          }
         }
       })
 
@@ -137,8 +152,12 @@ export async function DELETE(request, context) {
 
     const guard = await getAttendanceDateGuard(dateToString(existing.date))
 
+    const payrollOverride =
+      request.nextUrl.searchParams.get('payroll_override') === 'true' &&
+      hasAttendancePayrollOverrideRole(authorization.session)
+
     if (guard.isFuture) return responseError(dictionary.messages.futureDateBlocked, 409, guard.code)
-    if (guard.payrollLocked) return responseError(dictionary.messages.payrollLocked, 409, guard.code)
+    if (guard.payrollLocked && !payrollOverride) return responseError(dictionary.messages.payrollLocked, 409, guard.code)
 
     await prisma.$transaction(async transaction => {
       const deleted = await transaction.hrmstafftimesheet.delete({ where: { id }, select: { staff_id: true, date: true } })
@@ -148,7 +167,12 @@ export async function DELETE(request, context) {
           user_id: authorization.session.user.id,
           action: 'ATTENDANCE_DELETED',
           module: 'HRM',
-          details: { timesheetId: id, staffId: deleted.staff_id, date: dateToString(deleted.date) }
+          details: {
+            timesheetId: id,
+            staffId: deleted.staff_id,
+            date: dateToString(deleted.date),
+            payrollOverride: guard.payrollLocked && payrollOverride
+          }
         }
       })
     })

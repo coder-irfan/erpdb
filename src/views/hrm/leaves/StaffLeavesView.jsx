@@ -20,6 +20,7 @@ import TableEmptyStateRow from '@/components/table/TableEmptyStateRow'
 import TableFiltersPopover from '@/components/table/TableFiltersPopover'
 import TableSkeletonRows from '@/components/table/TableSkeletonRows'
 import ResponsiveDataTable from '@/components/tables/ResponsiveDataTable'
+import { formatStatusLabel } from '@/utils/formatStatusLabel'
 
 import LeaveStatsCards from './LeaveStatsCards'
 import StaffLeaveDrawer from './StaffLeaveDrawer'
@@ -308,7 +309,7 @@ const StaffLeavesView = ({ locale, dictionary }) => {
                 <MenuItem value=''>{dictionary.filters.allStatuses}</MenuItem>
                 {data.options.statuses.map(status => (
                   <MenuItem key={status.id} value={status.id}>
-                    {dictionary.status[status.value] || status.label}
+                    {formatStatusLabel(status.value, dictionary.status[status.value] || status.label)}
                   </MenuItem>
                 ))}
               </CustomTextField>
@@ -345,7 +346,7 @@ const StaffLeavesView = ({ locale, dictionary }) => {
               size='small'
               variant='tonal'
               color={STATUS_COLORS[leave.status.value] || 'default'}
-              label={dictionary.status[leave.status.value] || leave.status.label}
+              label={formatStatusLabel(leave.status.value, dictionary.status[leave.status.value] || leave.status.label)}
             />
           )}
           renderMobileActions={renderLeaveActions}
@@ -452,7 +453,7 @@ const StaffLeavesView = ({ locale, dictionary }) => {
                           size='small'
                           variant='tonal'
                           color={STATUS_COLORS[leave.status.value] || 'default'}
-                          label={dictionary.status[leave.status.value] || leave.status.label}
+                          label={formatStatusLabel(leave.status.value, dictionary.status[leave.status.value] || leave.status.label)}
                         />
                       </td>
                       <td>{leave.approved_by?.full_name || '—'}</td>

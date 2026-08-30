@@ -11,6 +11,7 @@ import Divider from '@mui/material/Divider'
 
 // Component Imports
 import CustomTextField from '@core/components/mui/TextField'
+import FormSectionCards from '@/components/forms/FormSectionCards'
 
 // Vars
 const initialData = {
@@ -59,6 +60,7 @@ const SendInvoiceDrawer = ({ open, handleClose }) => {
       <Divider />
       <div className='p-6'>
         <form onSubmit={handleSubmit} className='flex flex-col items-start gap-6'>
+          <FormSectionCards labels={['Recipients and subject', 'Message and attachment']}>
           <CustomTextField
             fullWidth
             label='From'
@@ -97,7 +99,8 @@ const SendInvoiceDrawer = ({ open, handleClose }) => {
             label='Invoice Attached'
             icon={<i className='tabler-link' />}
           />
-          <div className='flex items-center gap-4'>
+          </FormSectionCards>
+          <div className='form-surface-actions flex w-full items-center justify-end gap-4 px-1 py-3'>
             <Button variant='contained' color='primary' type='submit'>
               Send
             </Button>

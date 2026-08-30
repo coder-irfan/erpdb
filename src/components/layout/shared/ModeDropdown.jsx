@@ -77,7 +77,7 @@ const ModeDropdown = () => {
       >
         {({ TransitionProps, placement }) => (
           <Fade {...TransitionProps} style={{ transformOrigin: placement === 'bottom-end' ? 'left top' : 'right top' }}>
-            <Paper className={settings.skin === 'bordered' ? 'border shadow-none' : 'shadow-lg'}>
+            <Paper className={`topbar-dropdown ${settings.skin === 'bordered' ? 'border shadow-none' : 'shadow-lg'}`}>
               <ClickAwayListener onClickAway={handleClose}>
                 <MenuList onKeyDown={handleClose}>
                   <MenuItem

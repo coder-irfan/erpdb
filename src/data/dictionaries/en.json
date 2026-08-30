@@ -114,8 +114,7 @@
     "financeManagement": "Finance Management",
     "contractOptions": "Customers / Clients",
     "contractCountries": "Countries",
-    "contractList": "Customer Contracts",
-    "financeContracts": "Finance Contracts",
+    "contractList": "Clients",
     "otherContracts": "Others",
     "contractTypes": "Contract Types",
     "contractTemplates": "Contract Templates",
@@ -368,6 +367,11 @@
     "companyLogo": "Company Letterhead Logo",
     "signatoryStamp": "Authorized Signature / Stamp",
     "saveAll": "Save Company Settings",
+    "cancel": "Cancel",
+    "discard": "Discard",
+    "keepEditing": "Keep Editing",
+    "discardChangesTitle": "Discard Unsaved Settings",
+    "discardChangesMessage": "You have unsaved configuration changes. Are you sure you want to discard them and revert to saved settings?",
     "lightLogo": "Light Mode Logo",
     "lightLogoDescription": "Displayed on light backgrounds and in light mode.",
     "darkLogo": "Dark Mode Logo",
@@ -492,6 +496,8 @@
       "saveChanges": "Save Changes",
       "addNote": "Add Note / Reason",
       "saving": "Saving...",
+      "unlockAttendance": "Unlock Attendance for Edit",
+      "lockAttendance": "Disable Force Edit",
       "cancel": "Cancel"
     },
     "table": {
@@ -552,7 +558,15 @@
       "taxId": "License / TIN"
     },
     "export": {
-      "columns": ["Staff Name", "Position", "Status", "Check-In", "Check-Out", "Hours", "Notes"]
+      "columns": [
+        "Staff Name",
+        "Position",
+        "Status",
+        "Check-In",
+        "Check-Out",
+        "Hours",
+        "Notes"
+      ]
     },
     "messages": {
       "created": "Attendance saved successfully.",
@@ -568,7 +582,9 @@
       "loadFailed": "Attendance records could not be loaded.",
       "operationFailed": "The operation could not be completed. Please try again.",
       "futureDateBlocked": "Attendance cannot be recorded for future dates. Use Leave Requests for planned absences.",
-      "payrollLocked": "Attendance is locked because payroll for this month has been finalized.",
+      "payrollLocked": "Payroll for this month has been finalized. Timesheet entries are read-only.",
+      "payrollLockedAdmin": "Payroll for this month has been finalized. Unlock attendance only for an authorized correction.",
+      "payrollOverrideActive": "Administrative override is active for this payroll period.",
       "unauthenticated": "Sign in to access attendance.",
       "forbidden": "You do not have permission to access attendance.",
       "deleteTitle": "Delete Attendance Entry",

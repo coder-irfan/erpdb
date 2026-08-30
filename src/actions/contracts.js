@@ -17,7 +17,7 @@ import { compileCustomerContractTemplate } from '@/libs/customerContractTemplate
 import { prisma } from '@/libs/prisma'
 import { nextSequentialNumber, withSequentialNumberRetry } from '@/libs/sequentialNumbers'
 import { createContractSchema } from '@/schemas/contracts'
-import { calculateContractEndDate, getRemainingDays, toUtcDateOnly } from '@/utils/contractDuration'
+import { formatDateRangeDuration, getRemainingDays, toUtcDateOnly } from '@/utils/contractDuration'
 import { SYSTEM_BASE_CURRENCY, convertToBaseCurrency, toFiniteNumber } from '@/utils/formatCurrency'
 import { getDictionary } from '@/utils/getDictionary'
 
@@ -27,7 +27,7 @@ const DELETE_PERMISSIONS = ['contracts:delete']
 const DEFAULT_PAGE_SIZE = 10
 const MAX_PAGE_SIZE = 100
 const DRAFT_VALUES = ['DRAFT', 'PENDING', 'PENDING_APPROVAL', 'PENDING_SIGNATURE']
-const CONTRACT_CONTEXTS = ['CUSTOMER', 'FINANCE', 'OTHERS']
+const CONTRACT_CONTEXTS = ['CUSTOMER', 'OTHERS']
 
 const normalizeLocale = locale => (i18n.locales.includes(locale) ? locale : i18n.defaultLocale)
 const normalizeId = value => (typeof value === 'string' ? value.trim() : '')
@@ -139,12 +139,7 @@ const normalizeContract = (contract, durationOptions = new Map()) => ({
   exchange_rate: contract.exchange_rate.toFixed(4),
   amount_base: contract.amount_base.toFixed(2),
   percentage: contract.percentage?.toFixed(2) ?? null,
-  amount_usd: convertToBaseCurrency(
-    contract.total_amount,
-    contract.currency,
-    contract.exchange_rate,
-    'USD'
-  ).toFixed(2),
+  amount_usd: convertToBaseCurrency(contract.total_amount, contract.currency, contract.exchange_rate, 'USD').toFixed(2),
   signed_date: contract.signed_date?.toISOString() ?? null,
   start_date: contract.start_date.toISOString(),
   end_date: contract.end_date.toISOString(),
@@ -200,7 +195,6 @@ const validateRelations = async (values, currentContract = null) => {
   const countryCategory = values.target_category === 'OTHERS' ? 'COUNTRY' : 'CONTRACT_COUNTRY'
 
   const categories = [
-    ['duration', values.contract_duration, 'CONTRACT_DURATION', currentContract?.contract_duration],
     ['status', values.status_id, 'CONTRACT_STATUS', currentContract?.status_id],
     ['country', values.country_id, countryCategory, currentContract?.country_id],
     ['level', values.level_id, 'CONTRACT_LEVEL', currentContract?.level_id]
@@ -291,7 +285,6 @@ const validationPayload = (payload, contractContext) => ({
   title: payload?.title,
   contract_type_id: payload?.contract_type_id,
   template_id: payload?.template_id || '',
-  contract_duration: payload?.contract_duration,
   total_amount: String(payload?.total_amount ?? ''),
   currency: payload?.currency,
   exchange_rate: String(payload?.exchange_rate ?? ''),
@@ -314,7 +307,6 @@ const prepareContractData = async (values, translations, currentContract = null)
     (!isOther && !relations.client) ||
     !relations.contractType ||
     (isCustomer && !relations.template) ||
-    (!isOther && !relations.duration) ||
     !relations.status
   ) {
     return { success: false, error: translations.validation.invalidOption }
@@ -341,14 +333,17 @@ const prepareContractData = async (values, translations, currentContract = null)
     return { success: false, error: translations.validation.invalidOption }
   }
 
-  const endDate = isOther
-    ? toUtcDateOnly(values.end_date)
-    : calculateContractEndDate(values.start_date, relations.duration)
+  const startDate = toUtcDateOnly(values.start_date)
+
+  const endDate = toUtcDateOnly(values.end_date)
 
   const amount = toFiniteNumber(values.total_amount)
   const exchangeRate = toFiniteNumber(values.exchange_rate)
 
-  if (!endDate) return { success: false, error: translations.validation.durationInvalid }
+  if (!startDate || !endDate || endDate < startDate) {
+    return { success: false, error: translations.validation.durationInvalid }
+  }
+
   if (amount <= 0) return { success: false, error: translations.validation.amountInvalid }
   if (exchangeRate <= 0) return { success: false, error: translations.validation.exchangeRateInvalid }
 
@@ -364,7 +359,7 @@ const prepareContractData = async (values, translations, currentContract = null)
       title: values.title,
       status_id: values.status_id,
       total_amount: new Prisma.Decimal(amount),
-      contract_duration: values.contract_duration || null,
+      contract_duration: null,
       contract_type_id: values.contract_type_id,
       template_id: isCustomer ? values.template_id : null,
       country_id: values.country_id || null,
@@ -372,7 +367,7 @@ const prepareContractData = async (values, translations, currentContract = null)
       currency: values.currency,
       exchange_rate: new Prisma.Decimal(exchangeRate),
       amount_base: new Prisma.Decimal(amountBase),
-      start_date: toUtcDateOnly(values.start_date),
+      start_date: startDate,
       end_date: endDate,
       auto_renew: values.auto_renew,
       account_manager_id: values.account_manager_id || null,
@@ -406,16 +401,14 @@ const compileCustomerContent = (prepared, contractNumber) => {
     setup: prepared.relations.setup,
     contractNumber,
     contractType: prepared.relations.contractType,
-    durationLabel: prepared.relations.duration?.label
+    durationLabel: formatDateRangeDuration(prepared.data.start_date, prepared.data.end_date)
   })
 }
 
-const validateActiveEndDate = (statusValue, endDate) =>
-  statusValue !== 'ACTIVE' || endDate > toUtcDateOnly(new Date())
+const validateActiveEndDate = (statusValue, endDate) => statusValue !== 'ACTIVE' || endDate > toUtcDateOnly(new Date())
 
 const revalidateContracts = () => {
   revalidatePath('/[lang]/contracts', 'page')
-  revalidatePath('/[lang]/contracts/finance', 'page')
   revalidatePath('/[lang]/contracts/others', 'page')
   revalidatePath('/[lang]/crm/clients', 'page')
 }
@@ -554,64 +547,60 @@ export const getContractFormOptions = async (payload = {}) => {
   if (!context.authorized) return { success: false, code: context.code, error: context.error }
 
   try {
-    const [clients, vendors, leads, invoices, staff, options, contractTypes, templates, clauses, statuses, setup] = await Promise.all([
-      prisma.crmclient.findMany({
-        where: { status: 'ACTIVE', NOT: { email: { endsWith: '.invalid' } } },
-        select: { id: true, company_name: true, primary_contact_name: true, email: true },
-        orderBy: { company_name: 'asc' },
-        take: 500
-      }),
-      prisma.contractvendor.findMany({
-        where: { is_active: true },
-        select: { id: true, company_name: true, contact_name: true, email: true, phone: true, address: true },
-        orderBy: { company_name: 'asc' },
-        take: 500
-      }),
-      prisma.crmlead.findMany({
-        select: { id: true, title: true, company_name: true, contact_name: true, email: true },
-        orderBy: { created_at: 'desc' },
-        take: 500
-      }),
-      prisma.contractinvoice.findMany({
-        select: { id: true, invoice_number: true, client_id: true, amount: true, currency: true, issued_date: true },
-        orderBy: { created_at: 'desc' },
-        take: 500
-      }),
-      prisma.hrmstaff.findMany({
-        where: { status: 'ACTIVE' },
-        select: { id: true, first_name: true, last_name: true, position: true, email: true },
-        orderBy: [{ first_name: 'asc' }, { last_name: 'asc' }]
-      }),
-      prisma.option.findMany({
-        where: {
-          category: { in: ['CONTRACT_TYPE', 'CONTRACT_DURATION', 'CONTRACT_COUNTRY', 'COUNTRY', 'CONTRACT_LEVEL'] },
-          is_active: true
-        },
-        select: {
-          id: true,
-          category: true,
-          label: true,
-          value: true,
-          description: true,
-          is_default: true,
-          color_code: true
-        },
-        orderBy: [{ category: 'asc' }, { sort_order: 'asc' }, { label: 'asc' }]
-      }),
-      getContractTypeOptions(),
-      prisma.option.findMany({
-        where: { category: 'CONTRACT_POLICY', is_active: true },
-        select: { id: true, label: true, value: true, description: true },
-        orderBy: [{ sort_order: 'asc' }, { label: 'asc' }]
-      }),
-      prisma.option.findMany({
-        where: { category: 'CONTRACT_CLAUSE', is_active: true },
-        select: { id: true, label: true, value: true, description: true, is_default: true, sort_order: true },
-        orderBy: [{ sort_order: 'asc' }, { label: 'asc' }]
-      }),
-      getContractStatusOptions(),
-      getCompanySetupRecord()
-    ])
+    const [clients, vendors, leads, staff, options, contractTypes, templates, clauses, statuses, setup] =
+      await Promise.all([
+        prisma.crmclient.findMany({
+          where: { status: 'ACTIVE', NOT: { email: { endsWith: '.invalid' } } },
+          select: { id: true, company_name: true, primary_contact_name: true, email: true },
+          orderBy: { company_name: 'asc' },
+          take: 500
+        }),
+        prisma.contractvendor.findMany({
+          where: { is_active: true },
+          select: { id: true, company_name: true, contact_name: true, email: true, phone: true, address: true },
+          orderBy: { company_name: 'asc' },
+          take: 500
+        }),
+        prisma.crmlead.findMany({
+          select: { id: true, title: true, company_name: true, contact_name: true, email: true },
+          orderBy: { created_at: 'desc' },
+          take: 500
+        }),
+        prisma.hrmstaff.findMany({
+          where: { status: 'ACTIVE' },
+          select: { id: true, first_name: true, last_name: true, position: true, email: true },
+          orderBy: [{ first_name: 'asc' }, { last_name: 'asc' }]
+        }),
+        prisma.option.findMany({
+          where: {
+            category: { in: ['CONTRACT_TYPE', 'CONTRACT_DURATION', 'CONTRACT_COUNTRY', 'COUNTRY', 'CONTRACT_LEVEL'] },
+            is_active: true
+          },
+          select: {
+            id: true,
+            category: true,
+            label: true,
+            value: true,
+            description: true,
+            is_default: true,
+            color_code: true
+          },
+          orderBy: [{ category: 'asc' }, { sort_order: 'asc' }, { label: 'asc' }]
+        }),
+        getContractTypeOptions(),
+        prisma.option.findMany({
+          where: { category: 'CONTRACT_POLICY', is_active: true },
+          select: { id: true, label: true, value: true, description: true },
+          orderBy: [{ sort_order: 'asc' }, { label: 'asc' }]
+        }),
+        prisma.option.findMany({
+          where: { category: 'CONTRACT_CLAUSE', is_active: true },
+          select: { id: true, label: true, value: true, description: true, is_default: true, sort_order: true },
+          orderBy: [{ sort_order: 'asc' }, { label: 'asc' }]
+        }),
+        getContractStatusOptions(),
+        getCompanySetupRecord()
+      ])
 
     return {
       success: true,
@@ -619,11 +608,6 @@ export const getContractFormOptions = async (payload = {}) => {
         clients,
         vendors,
         leads,
-        invoices: invoices.map(invoice => ({
-          ...invoice,
-          amount: invoice.amount.toFixed(2),
-          issued_date: invoice.issued_date.toISOString()
-        })),
         staff: staff.map(person => ({ ...person, full_name: `${person.first_name} ${person.last_name}`.trim() })),
         options: Object.fromEntries(
           ['CONTRACT_TYPE', 'CONTRACT_DURATION', 'CONTRACT_COUNTRY', 'COUNTRY', 'CONTRACT_LEVEL']
@@ -720,44 +704,51 @@ export const createContract = async (payload = {}, moduleContext = 'CUSTOMER') =
   }
 
   try {
-    const contract = await withSequentialNumberRetry(() => prisma.$transaction(async transaction => {
-      const contractNumber = await nextSequentialNumber(transaction, 'contract', {
-        prefix: `CON-${new Date().getUTCFullYear()}-`,
-        digits: 4
-      })
+    const contract = await withSequentialNumberRetry(() =>
+      prisma.$transaction(
+        async transaction => {
+          const contractNumber = await nextSequentialNumber(transaction, 'contract', {
+            prefix: `CON-${new Date().getUTCFullYear()}-`,
+            digits: 4
+          })
 
-      const vendor =
-        validation.output.target_category === 'OTHERS'
-          ? await upsertContractVendor(transaction, validation.output)
-          : null
+          const vendor =
+            validation.output.target_category === 'OTHERS'
+              ? await upsertContractVendor(transaction, validation.output)
+              : null
 
-      const contractData = {
-        ...prepared.data,
-        vendor_id: vendor?.id || null,
-        ...(validation.output.target_category === 'CUSTOMER'
-          ? { content_html: compileCustomerContent(prepared, contractNumber) }
-          : {})
-      }
-
-      const created = await transaction.contract.create({ data: { ...contractData, contract_number: contractNumber } })
-
-      await transaction.auditlog.create({
-        data: {
-          user_id: context.session.user.id,
-          action: 'CONTRACT_CREATED',
-          module: 'CONTRACTS',
-          details: {
-            contractId: created.id,
-            contractNumber,
-            clientId: created.client_id,
-            vendorId: created.vendor_id,
-            internalOwnerId: created.account_manager_id
+          const contractData = {
+            ...prepared.data,
+            vendor_id: vendor?.id || null,
+            ...(validation.output.target_category === 'CUSTOMER'
+              ? { content_html: compileCustomerContent(prepared, contractNumber) }
+              : {})
           }
-        }
-      })
 
-      return created
-    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable }))
+          const created = await transaction.contract.create({
+            data: { ...contractData, contract_number: contractNumber }
+          })
+
+          await transaction.auditlog.create({
+            data: {
+              user_id: context.session.user.id,
+              action: 'CONTRACT_CREATED',
+              module: 'CONTRACTS',
+              details: {
+                contractId: created.id,
+                contractNumber,
+                clientId: created.client_id,
+                vendorId: created.vendor_id,
+                internalOwnerId: created.account_manager_id
+              }
+            }
+          })
+
+          return created
+        },
+        { isolationLevel: Prisma.TransactionIsolationLevel.Serializable }
+      )
+    )
 
     revalidateContracts()
 

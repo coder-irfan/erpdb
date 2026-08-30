@@ -1,4 +1,5 @@
 import PrintLayout from '@/components/print/PrintLayout'
+import { formatStatusLabel } from '@/utils/formatStatusLabel'
 
 const DATE_LOCALES = { en: 'en-US', fa: 'fa-AF', ps: 'ps-AF' }
 
@@ -128,7 +129,7 @@ const IndividualTimesheetPrintDocument = ({ staff, records, period, locale, dict
                     <td className='border border-gray-300 px-2 py-1'>{formatDay(record.date, locale)}</td>
                     <td className='border border-gray-300 px-2 py-1'>{formatTimeRange(record)}</td>
                     <td className='border border-gray-300 px-2 py-1'>
-                      {dictionary.status[record.status] || record.status}
+                      {formatStatusLabel(record.status, dictionary.status[record.status])}
                     </td>
                     <td className='border border-gray-300 px-2 py-1 text-end'>
                       {record.hours_worked ? `${Number(record.hours_worked).toFixed(2)} ${dictionary.hoursShort}` : '—'}

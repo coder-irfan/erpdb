@@ -13,6 +13,7 @@ import { toast } from 'sonner'
 
 import CustomTextField from '@core/components/mui/TextField'
 import LoadingButtonContent from '@/components/LoadingButtonContent'
+import FormSectionCards from '@/components/forms/FormSectionCards'
 import { createClientSchema } from '@/schemas/crm/clients'
 
 const EMPTY = {
@@ -98,7 +99,7 @@ const ClientFormDrawer = ({ open, client, staff, locale, dictionary, onClose, on
       onClose={isSubmitting ? undefined : onClose}
       PaperProps={{ className: 'is-full sm:is-[600px]' }}
     >
-      <div className='flex items-start justify-between gap-4 border-be border-divider p-5'>
+      <div className='form-surface-header flex items-start justify-between gap-4 border-be border-divider p-5'>
         <div>
           <Typography variant='h5'>{client ? dictionary.form.editTitle : dictionary.form.addTitle}</Typography>
           <Typography color='text.secondary'>{dictionary.form.description}</Typography>
@@ -107,7 +108,8 @@ const ClientFormDrawer = ({ open, client, staff, locale, dictionary, onClose, on
           <i className='tabler-x' />
         </IconButton>
       </div>
-      <form onSubmit={handleSubmit(submit)} className='flex flex-1 flex-col gap-5 overflow-y-auto p-5' noValidate>
+      <form onSubmit={handleSubmit(submit)} className='form-surface-scroll flex flex-1 flex-col gap-5 p-5' noValidate>
+        <FormSectionCards labels={[dictionary.tabs?.general || 'Client information', dictionary.tabs?.relationship || 'Relationship management']}>
         <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
           {field('company_name', dictionary.fields.company)}
           {field('primary_contact_name', dictionary.fields.contact)}
@@ -162,7 +164,8 @@ const ClientFormDrawer = ({ open, client, staff, locale, dictionary, onClose, on
         </div>
         {field('address', dictionary.fields.address, { multiline: true, minRows: 3 })}
         {field('notes', dictionary.fields.notes, { multiline: true, minRows: 3 })}
-        <div className='mt-auto flex justify-end gap-3 pt-4'>
+        </FormSectionCards>
+        <div className='form-surface-actions -mx-5 -mb-5 mt-auto flex justify-end gap-3 p-5'>
           <Button variant='tonal' color='secondary' onClick={onClose} disabled={isSubmitting}>
             {dictionary.actions.cancel}
           </Button>

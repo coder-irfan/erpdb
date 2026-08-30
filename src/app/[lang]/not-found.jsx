@@ -9,7 +9,7 @@ const NotFound = () => {
 
   return (
     <SystemPage
-      icon={props => <FileQuestion {...props} className='size-16 text-primary/70' />}
+      icon={props => <FileQuestion {...props} className='size-16 text-primary' />}
       title={dictionary.notFound.title}
       description={dictionary.notFound.description}
     >

@@ -9,11 +9,21 @@ const drawer = skin => ({
       })
     },
     styleOverrides: {
-      paper: {
+      paper: ({ theme }) => ({
+        display: 'flex',
+        flexDirection: 'column',
+        maxHeight: '100dvh',
+        overflow: 'hidden',
         ...(skin !== 'bordered' && {
           boxShadow: 'var(--mui-customShadows-lg)'
-        })
-      }
+        }),
+        [theme.breakpoints.down('sm')]: {
+          width: '100% !important',
+          height: '100dvh',
+          maxHeight: '100dvh',
+          borderRadius: 0
+        }
+      })
     }
   }
 })

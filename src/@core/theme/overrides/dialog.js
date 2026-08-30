@@ -5,6 +5,8 @@ const dialog = skin => ({
     },
     styleOverrides: {
       paper: ({ theme }) => ({
+        display: 'flex',
+        flexDirection: 'column',
         borderRadius: 'var(--mui-shape-customBorderRadius-lg)',
         overflow: 'hidden',
         ...(skin !== 'bordered'
@@ -27,7 +29,6 @@ const dialog = skin => ({
               position: 'sticky',
               top: 0,
               zIndex: 1,
-              backgroundColor: 'var(--mui-palette-background-paper)',
               padding: theme.spacing(4)
             },
             '& .MuiDialogContent-root': {
@@ -57,6 +58,11 @@ const dialog = skin => ({
     styleOverrides: {
       root: ({ theme }) => ({
         padding: theme.spacing(6),
+        position: 'sticky',
+        top: 0,
+        zIndex: 2,
+        flexShrink: 0,
+        borderBottom: '1px solid var(--mui-palette-divider)',
         '& + .MuiDialogActions-root': {
           paddingTop: 0
         }
@@ -67,6 +73,8 @@ const dialog = skin => ({
     styleOverrides: {
       root: ({ theme }) => ({
         padding: theme.spacing(6),
+        flex: '1 1 auto',
+        overflowY: 'auto',
         '& + .MuiDialogContent-root, & + .MuiDialogActions-root': {
           paddingTop: 0
         }
@@ -77,6 +85,11 @@ const dialog = skin => ({
     styleOverrides: {
       root: ({ theme }) => ({
         padding: theme.spacing(6),
+        position: 'sticky',
+        bottom: 0,
+        zIndex: 2,
+        flexShrink: 0,
+        borderTop: '1px solid var(--mui-palette-divider)',
         '& .MuiButtonBase-root:not(:first-of-type)': {
           marginInlineStart: theme.spacing(4)
         },
