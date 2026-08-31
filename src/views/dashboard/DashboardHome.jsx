@@ -1,6 +1,6 @@
 'use client'
 
-import { useId, useMemo, useState } from 'react'
+import { useId, useMemo, useRef, useState } from 'react'
 
 import Link from 'next/link'
 
@@ -14,6 +14,7 @@ import Select from '@mui/material/Select'
 import Skeleton from '@mui/material/Skeleton'
 import Typography from '@mui/material/Typography'
 
+import CustomTextField from '@core/components/mui/TextField'
 import {
   Area,
   AreaChart,
@@ -35,6 +36,7 @@ import UserAvatar from '@/components/common/UserAvatar'
 import DualCurrencyAmount from '@/components/currency/DualCurrencyAmount'
 import DashboardSkeleton from '@/views/dashboard/DashboardSkeleton'
 import { formatAfghanDate, formatAfghanTime, getAppLocale } from '@/utils/afghanDate'
+import { DASHBOARD_PERIOD_KEYS, DASHBOARD_PERIOD_OPTIONS, getDashboardPresetDates } from '@/utils/dashboardPeriod'
 import { formatCurrency } from '@/utils/formatCurrency'
 
 const COLORS = {
@@ -142,7 +144,7 @@ const MiniSparkline = ({ values, color, variant = 'area' }) => {
   )
 }
 
-const KpiCard = ({ title, value, hint, trend, series, color = 'primary', icon, variant }) => (
+const KpiCard = ({ title, value, hint, trend, series, color = 'primary', icon, variant, inverseTrend = false }) => (
   <Card className='h-[154px] border border-divider/70 shadow-sm'>
     <CardContent className='flex h-full flex-col p-4'>
       <div className='flex items-start justify-between gap-3'>
@@ -165,7 +167,9 @@ const KpiCard = ({ title, value, hint, trend, series, color = 'primary', icon, v
           {typeof trend === 'number' && (
             <span
               className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-bold ${
-                trend >= 0 ? 'bg-successLight text-success' : 'bg-errorLight text-error'
+                (inverseTrend ? trend <= 0 : trend >= 0)
+                  ? 'bg-successLight text-success'
+                  : 'bg-errorLight text-error'
               }`}
             >
               {trend >= 0 ? '+' : ''}
@@ -186,9 +190,9 @@ const KpiCard = ({ title, value, hint, trend, series, color = 'primary', icon, v
 
 const KpiStrip = ({ items }) => (
   <div className='no-scrollbar overflow-x-auto'>
-    <div className='grid min-is-max grid-cols-4 gap-4 lg:min-is-0'>
+    <div className='grid min-is-max grid-flow-col auto-cols-[285px] gap-4'>
       {items.map(({ key, ...item }) => (
-        <div key={key} className='is-[265px] lg:is-auto'>
+        <div key={key} className='is-[285px] shrink-0'>
           <KpiCard key={key} {...item} />
         </div>
       ))}
@@ -211,9 +215,12 @@ const tooltipStyle = {
   boxShadow: 'var(--mui-customShadows-md)'
 }
 
-const CashFlowChart = ({ data, currency, locale, dictionary, loading, periodControl }) => (
+const tooltipTextStyle = { color: 'var(--mui-palette-text-primary)' }
+const legendStyle = { color: 'var(--mui-palette-text-secondary)' }
+
+const CashFlowChart = ({ data, currency, locale, dictionary, loading }) => (
   <Card className='h-full border border-divider/70 shadow-sm'>
-    <PanelHeader title={dictionary.cashFlow.title} subtitle={dictionary.cashFlow.subtitle} action={periodControl} />
+    <PanelHeader title={dictionary.cashFlow.title} subtitle={dictionary.cashFlow.subtitle} />
     {loading ? (
       <ChartLoading />
     ) : data?.some(row => row.income || row.expense) ? (
@@ -247,12 +254,15 @@ const CashFlowChart = ({ data, currency, locale, dictionary, loading, periodCont
             />
             <ChartTooltip
               contentStyle={tooltipStyle}
+              labelStyle={tooltipTextStyle}
+              itemStyle={tooltipTextStyle}
               formatter={(value, name) => [
                 formatCurrency(value, locale, currency),
                 name === 'income' ? dictionary.cashFlow.income : dictionary.cashFlow.expenses
               ]}
             />
             <Legend
+              wrapperStyle={legendStyle}
               formatter={name => (name === 'income' ? dictionary.cashFlow.income : dictionary.cashFlow.expenses)}
             />
             <Area type='monotone' dataKey='income' stroke={COLORS.primary} strokeWidth={2.5} fill='url(#cashIncome)' />
@@ -320,6 +330,8 @@ const DistributionChart = ({ finance, currency, locale, dictionary }) => {
                 </Pie>
                 <ChartTooltip
                   contentStyle={tooltipStyle}
+                  labelStyle={tooltipTextStyle}
+                  itemStyle={tooltipTextStyle}
                   formatter={value => formatCurrency(value, locale, currency)}
                 />
               </PieChart>
@@ -587,6 +599,14 @@ const InventoryCard = ({ items, dictionary, locale }) => (
 const DashboardHome = ({ initialData, dictionary }) => {
   const [data, setData] = useState(initialData)
   const [isPending, setIsPending] = useState(false)
+  const [periodKey, setPeriodKey] = useState(initialData.period?.key || DASHBOARD_PERIOD_KEYS.THIS_MONTH)
+
+  const [customRange, setCustomRange] = useState({
+    startDate: initialData.period?.startDate || '',
+    endDate: initialData.period?.endDate || ''
+  })
+
+  const requestId = useRef(0)
   const formatters = useFormatters(data.locale)
   const currency = data.company.currency
   const finance = data.finance
@@ -595,33 +615,58 @@ const DashboardHome = ({ initialData, dictionary }) => {
   const workforce = data.workforce
   const personal = data.personal
 
-  const refresh = async months => {
+  const refresh = async filter => {
+    const activeRequestId = ++requestId.current
+
     setIsPending(true)
 
     try {
-      const result = await getDashboardData({ locale: data.locale, months })
+      const result = await getDashboardData({ locale: data.locale, ...filter })
 
-      if (result.success) setData(result.data)
+      if (activeRequestId === requestId.current && result.success) {
+        setData(result.data)
+
+        if (result.data.period.key !== DASHBOARD_PERIOD_KEYS.CUSTOM) {
+          setCustomRange({ startDate: result.data.period.startDate || '', endDate: result.data.period.endDate || '' })
+        }
+      }
     } finally {
-      setIsPending(false)
+      if (activeRequestId === requestId.current) setIsPending(false)
     }
   }
 
-  if (isPending) return <DashboardSkeleton label={dictionary.common.refreshing || dictionary.common.refresh} />
+  const filterFor = key => {
+    if (key === DASHBOARD_PERIOD_KEYS.CUSTOM) return { period: key, ...customRange }
 
-  const periodControl = (
-    <Select
-      size='small'
-      value={data.period}
-      onChange={event => refresh(Number(event.target.value))}
-      disabled={isPending}
-      className='h-8 min-is-[132px] text-xs'
-      aria-label={dictionary.period.label}
-    >
-      <MenuItem value={6}>{dictionary.period.six}</MenuItem>
-      <MenuItem value={12}>{dictionary.period.twelve}</MenuItem>
-    </Select>
-  )
+    return { period: key, ...getDashboardPresetDates(key) }
+  }
+
+  const changePeriod = event => {
+    const nextPeriod = event.target.value
+
+    setPeriodKey(nextPeriod)
+
+    if (nextPeriod !== DASHBOARD_PERIOD_KEYS.CUSTOM) refresh(filterFor(nextPeriod))
+  }
+
+  const changeCustomDate = field => event => {
+    const nextRange = { ...customRange, [field]: event.target.value }
+
+    setCustomRange(nextRange)
+
+    if (nextRange.startDate && nextRange.endDate && nextRange.startDate <= nextRange.endDate) {
+      refresh({ period: DASHBOARD_PERIOD_KEYS.CUSTOM, ...nextRange })
+    }
+  }
+
+  if (isPending) {
+    return (
+      <DashboardSkeleton
+        label={dictionary.common.refreshing || dictionary.common.refresh}
+        showCustomRange={periodKey === DASHBOARD_PERIOD_KEYS.CUSTOM}
+      />
+    )
+  }
 
   const executiveKpis = [
     finance && {
@@ -646,6 +691,18 @@ const DashboardHome = ({ initialData, dictionary }) => {
       color: 'primary',
       icon: 'tabler-cash-banknote',
       variant: 'bar'
+    },
+    finance && {
+      key: 'expenses',
+      title: dictionary.kpis.expenses,
+      value: formatCurrency(finance.kpis.expenses, data.locale, currency),
+      hint: dictionary.kpis.expensesHint,
+      trend: finance.kpis.expenseGrowth,
+      series: finance.kpis.expenseSparkline,
+      color: 'error',
+      icon: 'tabler-receipt-2',
+      variant: 'bar',
+      inverseTrend: true
     },
     pipeline && {
       key: 'pipeline',
@@ -701,9 +758,9 @@ const DashboardHome = ({ initialData, dictionary }) => {
         {
           key: 'hours',
           title: dictionary.personal.hours,
-          value: `${formatters.number(personal.monthHours)}h`,
-          hint: dictionary.personal.thisMonth,
-          series: [0, personal.monthHours],
+          value: `${formatters.number(personal.periodHours)}h`,
+          hint: dictionary.personal.selectedPeriod,
+          series: [0, personal.periodHours],
           color: 'info',
           icon: 'tabler-clock-hour-4'
         },
@@ -745,15 +802,53 @@ const DashboardHome = ({ initialData, dictionary }) => {
             </Typography>
           </div>
         </div>
-        <Button
-          variant='tonal'
-          size='small'
-          disabled={isPending}
-          startIcon={<i className={`tabler-refresh ${isPending ? 'animate-spin' : ''}`} />}
-          onClick={() => refresh(data.period)}
-        >
-          {dictionary.common.refresh}
-        </Button>
+        <div className='flex flex-wrap items-center justify-end gap-2'>
+          <Select
+            size='small'
+            value={periodKey}
+            onChange={changePeriod}
+            disabled={isPending}
+            className='h-8 min-is-[148px] text-xs'
+            aria-label={dictionary.period.label}
+          >
+            {DASHBOARD_PERIOD_OPTIONS.map(option => (
+              <MenuItem key={option} value={option}>
+                {dictionary.period[option]}
+              </MenuItem>
+            ))}
+          </Select>
+          {periodKey === DASHBOARD_PERIOD_KEYS.CUSTOM && (
+            <>
+              <CustomTextField
+                type='date'
+                size='small'
+                value={customRange.startDate}
+                onChange={changeCustomDate('startDate')}
+                aria-label={dictionary.period.startDate}
+                className='is-[142px] [&_.MuiInputBase-root]:h-8 [&_input]:text-xs'
+              />
+              <CustomTextField
+                type='date'
+                size='small'
+                value={customRange.endDate}
+                onChange={changeCustomDate('endDate')}
+                inputProps={{ min: customRange.startDate || undefined }}
+                aria-label={dictionary.period.endDate}
+                className='is-[142px] [&_.MuiInputBase-root]:h-8 [&_input]:text-xs'
+              />
+            </>
+          )}
+          <Button
+            variant='tonal'
+            size='small'
+            disabled={isPending}
+            className='h-8 whitespace-nowrap'
+            startIcon={<i className={`tabler-refresh ${isPending ? 'animate-spin' : ''}`} />}
+            onClick={() => refresh(filterFor(periodKey))}
+          >
+            {dictionary.common.refresh}
+          </Button>
+        </div>
       </header>
 
       {kpis.length ? <KpiStrip items={kpis} /> : null}
@@ -766,7 +861,6 @@ const DashboardHome = ({ initialData, dictionary }) => {
             locale={data.locale}
             dictionary={dictionary}
             loading={isPending}
-            periodControl={periodControl}
           />
           <DistributionChart finance={finance} currency={currency} locale={data.locale} dictionary={dictionary} />
         </section>

@@ -19,8 +19,7 @@ import DualCurrencyAmount from '@/components/currency/DualCurrencyAmount'
 import DetailSkeleton from '@/components/dialogs/DetailSkeleton'
 import { toDateInputValue } from '@/utils/contractDuration'
 import { formatCurrency } from '@/utils/formatCurrency'
-
-const isImageReceipt = url => /\.(?:avif|bmp|gif|jpe?g|png|svg|webp)$/i.test(url || '')
+import { isImageUpload, resolveUploadUrl } from '@/utils/uploadUrl'
 
 const InfoItem = ({ label, value, accent = '' }) => (
   <div className='min-is-0'>
@@ -35,6 +34,8 @@ const FinanceExpenseDetailModal = ({ open, expenseId, locale, baseCurrency, dict
   const [expense, setExpense] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [receiptPreviewOpen, setReceiptPreviewOpen] = useState(false)
+  const receiptUrl = resolveUploadUrl(expense?.receipt_url)
 
   useEffect(() => {
     if (!open || !expenseId) return
@@ -150,14 +151,17 @@ const FinanceExpenseDetailModal = ({ open, expenseId, locale, baseCurrency, dict
                 <CardContent>
                   <div className='mb-3 flex flex-wrap items-center justify-between gap-3'>
                     <Typography variant='h6'>{dictionary.detail.receipt}</Typography>
-                    <Button component='a' href={expense.receipt_url} target='_blank' rel='noopener noreferrer' variant='tonal' startIcon={<i className='tabler-download' />}>
+                    <Button component='a' href={receiptUrl} target='_blank' rel='noopener noreferrer' variant='tonal' startIcon={<i className='tabler-download' />}>
                       {dictionary.actions.download}
                     </Button>
                   </div>
-                  {isImageReceipt(expense.receipt_url) ? (
-                    <a href={expense.receipt_url} target='_blank' rel='noopener noreferrer' className='block'>
-                      <img src={expense.receipt_url} alt={dictionary.upload.previewAlt} className='max-bs-[320px] max-is-full rounded border border-divider object-contain' />
-                    </a>
+                  {isImageUpload(receiptUrl) ? (
+                    <button type='button' className='group relative block w-full cursor-zoom-in' onClick={() => setReceiptPreviewOpen(true)}>
+                      <img src={receiptUrl} alt={dictionary.upload.previewAlt} className='mx-auto max-bs-[320px] max-is-full rounded border border-divider object-contain' />
+                      <span className='absolute bottom-3 end-3 flex size-9 items-center justify-center rounded-full bg-backgroundPaper/90 text-textPrimary shadow'>
+                        <i className='tabler-zoom-in text-xl' />
+                      </span>
+                    </button>
                   ) : (
                     <div className='flex items-center gap-3 rounded border border-divider p-4'>
                       <i className='tabler-file-download text-3xl text-primary' />
@@ -175,6 +179,17 @@ const FinanceExpenseDetailModal = ({ open, expenseId, locale, baseCurrency, dict
           </div>
         ) : null}
       </DialogContent>
+      <Dialog open={receiptPreviewOpen} onClose={() => setReceiptPreviewOpen(false)} fullWidth maxWidth='lg'>
+        <DialogTitle className='flex items-center justify-between gap-3'>
+          <Typography variant='h5'>{dictionary.detail.receipt}</Typography>
+          <IconButton onClick={() => setReceiptPreviewOpen(false)} aria-label={dictionary.actions.close}>
+            <i className='tabler-x' />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent dividers className='flex min-bs-[70vh] items-center justify-center bg-actionHover p-3'>
+          <img src={receiptUrl} alt={dictionary.upload.previewAlt} className='max-h-[78vh] max-w-full object-contain' />
+        </DialogContent>
+      </Dialog>
     </Dialog>
   )
 }

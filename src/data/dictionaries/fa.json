@@ -614,6 +614,8 @@
       "currency": "ارز",
       "startDate": "تاریخ شروع",
       "endDate": "تاریخ پایان",
+      "probationDays": "دوره آزمایشی (روز)",
+      "noticePeriodDays": "مدت اطلاع قبلی (روز)",
       "status": "وضعیت",
       "email": "ایمیل",
       "phone": "تلفن",
@@ -2520,6 +2522,10 @@
       "addTitle": "ایجاد قرارداد",
       "editTitle": "ویرایش قرارداد",
       "description": "توافق مشتری، مدت، ارزش و مسئول قرارداد را مدیریت کنید.",
+      "moduleDescription": "جزئیات قرارداد و شرایط استخدام مطابق بخش انتخاب‌شده تنظیم می‌شود.",
+      "generalSection": "اطلاعات قرارداد",
+      "termsSection": "شرایط و طرف‌ها",
+      "financialSection": "شرایط مالی",
       "endDateHelp": "از مدت انتخاب‌شده خودکار محاسبه می‌شود.",
       "selectDurationHelp": "ابتدا تاریخ شروع و مدت را انتخاب کنید."
     },
@@ -2531,6 +2537,13 @@
       "amount": "مبلغ",
       "currency": "ارز",
       "exchangeRate": "نرخ تبادله USD/AFN",
+      "staffMember": "کارمند",
+      "contractType": "نوع قرارداد",
+      "template": "شرایط توافق‌شده / قالب",
+      "positionTitle": "عنوان وظیفه",
+      "baseSalary": "معاش اساسی",
+      "probationDays": "دوره آزمایشی (روز)",
+      "noticePeriodDays": "مدت اطلاع قبلی (روز)",
       "startDate": "تاریخ شروع",
       "endDate": "تاریخ پایان",
       "status": "وضعیت",
@@ -2542,6 +2555,9 @@
     },
     "placeholders": {
       "client": "مشتری را جستجو و انتخاب کنید",
+      "staffMember": "کارمند را انتخاب کنید",
+      "contractType": "نوع قرارداد منابع بشری را انتخاب کنید",
+      "template": "قالب توافق‌نامه را انتخاب کنید",
       "serviceType": "نوع خدمت را انتخاب کنید",
       "duration": "مدت را انتخاب کنید",
       "status": "وضعیت را انتخاب کنید",
@@ -3027,8 +3043,8 @@
     "actions": {
       "generate": "ایجاد معاشات برای {month}",
       "generating": "در حال ایجاد معاشات...",
-      "view": "مشاهده فیش معاش",
-      "edit": "ویرایش تعدیلات معاش",
+      "view": "مشاهده جزئیات",
+      "edit": "افزودن امتیاز / تعدیل معاش",
       "markPaid": "علامت‌گذاری پرداخت‌شده",
       "delete": "حذف رکورد",
       "cancel": "لغو",
@@ -3296,6 +3312,25 @@
       "repaymentBlocked": "این قرضه مانده ندارد.",
       "deleteBlocked": "قرضه دارای بازپرداخت قابل حذف نیست.",
       "operationFailed": "عملیات قرضه تکمیل نشد."
+    }
+  },
+  "shared": {
+    "actions": {
+      "confirm": "تأیید",
+      "cancel": "لغو",
+      "delete": "حذف"
+    },
+    "delete": {
+      "title": "تأیید حذف",
+      "description": "آیا مطمئن هستید که می‌خواهید این مورد را حذف کنید؟ این عمل قابل بازگشت نیست."
+    },
+    "confirmation": {
+      "status": {
+        "title": "تأیید تغییر وضعیت",
+        "message": "وضعیت این مورد به «{status}» تغییر کند؟",
+        "confirm": "تغییر وضعیت",
+        "cancel": "لغو"
+      }
     }
   },
   "systemPages": {

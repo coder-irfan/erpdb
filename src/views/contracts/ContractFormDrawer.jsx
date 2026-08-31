@@ -312,7 +312,9 @@ const ContractFormDrawer = ({
           <Typography variant='h5'>
             {drawerTitle || (contract ? dictionary.form.editTitle : dictionary.form.addTitle)}
           </Typography>
-          <Typography color='text.secondary'>Contract details are tailored to this module.</Typography>
+          <Typography color='text.secondary'>
+            {dictionary.form.moduleDescription || dictionary.form.description}
+          </Typography>
         </div>
         <IconButton onClick={onClose} disabled={isSubmitting}>
           <i className='tabler-x' />
@@ -325,24 +327,37 @@ const ContractFormDrawer = ({
       >
         <FormSectionCards
           labels={[
-            dictionary.tabs?.general || 'Contract information',
-            dictionary.tabs?.terms || 'Terms and parties',
-            dictionary.tabs?.financial || 'Financial terms'
+            dictionary.form.generalSection,
+            dictionary.form.termsSection,
+            dictionary.form.financialSection
           ]}
         >
           {targetCategory === 'HRM' && (
             <>
               {selectField(
                 'staff_id',
-                'Staff Member',
+                dictionary.fields.staffMember,
                 formOptions.staff.map(person => ({ ...person, label: person.full_name })),
-                'Select staff member'
+                dictionary.placeholders.staffMember
               )}
               <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
-                {selectField('contract_type_id', 'Contract Type', typeOptions, 'Select HRM type')}
-                {selectField('template_id', 'Agreed Terms / Template', formOptions.templates || [], 'Select template')}
-                {field('position_title', 'Position Title')}
-                {field('base_salary', 'Base Salary', { type: 'number', inputProps: { min: 0.01, step: '0.01' } })}
+                {selectField(
+                  'contract_type_id',
+                  dictionary.fields.contractType,
+                  typeOptions,
+                  dictionary.placeholders.contractType
+                )}
+                {selectField(
+                  'template_id',
+                  dictionary.fields.template,
+                  formOptions.templates || [],
+                  dictionary.placeholders.template
+                )}
+                {field('position_title', dictionary.fields.positionTitle)}
+                {field('base_salary', dictionary.fields.baseSalary, {
+                  type: 'number',
+                  inputProps: { min: 0.01, step: '0.01' }
+                })}
                 {field('start_date', dictionary.fields.startDate, {
                   type: 'date',
                   slotProps: { inputLabel: { shrink: true } }
@@ -359,11 +374,11 @@ const ContractFormDrawer = ({
                     onEndDateChange={value => setValue('end_date', value, { shouldDirty: true, shouldValidate: true })}
                   />
                 </div>
-                {field('probation_days', 'Probation Period (Days)', {
+                {field('probation_days', dictionary.fields.probationDays, {
                   type: 'number',
                   inputProps: { min: 1, step: '1' }
                 })}
-                {field('notice_period_days', 'Notice Period (Days)', {
+                {field('notice_period_days', dictionary.fields.noticePeriodDays, {
                   type: 'number',
                   inputProps: { min: 1, step: '1' }
                 })}

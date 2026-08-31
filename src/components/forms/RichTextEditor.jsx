@@ -4,25 +4,29 @@ import { useEffect } from 'react'
 
 import Button from '@mui/material/Button'
 import FormHelperText from '@mui/material/FormHelperText'
+import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
 import { TaskItem, TaskList } from '@tiptap/extension-list'
 import { EditorContent, useEditor } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 
 const ToolButton = ({ label, icon, active, disabled, onClick, compact = false }) => (
-  <Button
-    type='button'
-    size='small'
-    color={active ? 'primary' : 'secondary'}
-    variant={active ? 'tonal' : 'text'}
-    disabled={disabled}
-    aria-label={label}
-    title={label}
-    onClick={onClick}
-    className={compact ? 'min-is-0 is-7 bs-7 p-0 sm:is-8 sm:bs-8 sm:p-1' : 'min-is-0 px-2'}
-  >
-    <i className={`${icon}${compact ? ' text-[0.875rem] sm:text-base' : ''}`} />
-  </Button>
+  <Tooltip title={label}>
+    <span>
+      <Button
+        type='button'
+        size='small'
+        color={active ? 'primary' : 'secondary'}
+        variant={active ? 'tonal' : 'text'}
+        disabled={disabled}
+        aria-label={label}
+        onClick={onClick}
+        className={compact ? 'min-is-0 is-7 bs-7 p-0 sm:is-8 sm:bs-8 sm:p-1' : 'min-is-0 px-2'}
+      >
+        <i className={`${icon}${compact ? ' text-[0.875rem] sm:text-base' : ''}`} />
+      </Button>
+    </span>
+  </Tooltip>
 )
 
 const RichTextEditor = ({ value = '', onChange, onBlur, label, error, helperText, disabled = false, className = '', compact = false }) => {

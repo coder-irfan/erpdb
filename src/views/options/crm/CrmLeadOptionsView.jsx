@@ -29,7 +29,6 @@ import ResponsiveDataTable from '@/components/tables/ResponsiveDataTable'
 import tableStyles from '@core/styles/table.module.css'
 
 const SECTIONS = [
-  { category: 'LEAD_STATUS', key: 'statuses', icon: 'tabler-progress-check' },
   { category: 'LEAD_SOURCE', key: 'sources', icon: 'tabler-affiliate' }
 ]
 

@@ -29,6 +29,7 @@ import TableFiltersPopover from '@/components/table/TableFiltersPopover'
 import { formatCurrency } from '@/utils/formatCurrency'
 
 import FinanceSalaryAdjustmentDrawer from './FinanceSalaryAdjustmentDrawer'
+import FinanceSalaryDetailModal from './FinanceSalaryDetailModal'
 import FinanceSalaryPayslipModal from './FinanceSalaryPayslipModal'
 import FinanceSalaryStatsCards from './FinanceSalaryStatsCards'
 import FinanceSalaryTable from './FinanceSalaryTable'
@@ -70,6 +71,7 @@ const FinanceSalaryView = ({ locale, dictionary, canWrite, canDelete, canExecute
   const [generating, setGenerating] = useState(false)
   const [editing, setEditing] = useState(null)
   const [detailId, setDetailId] = useState(null)
+  const [printId, setPrintId] = useState(null)
   const [detailRefresh, setDetailRefresh] = useState(0)
   const [payTarget, setPayTarget] = useState(null)
   const [deleteTarget, setDeleteTarget] = useState(null)
@@ -277,6 +279,7 @@ const FinanceSalaryView = ({ locale, dictionary, canWrite, canDelete, canExecute
             setPage(0)
           }}
           onView={salary => setDetailId(salary.id)}
+          onPrint={salary => setPrintId(salary.id)}
           onEdit={setEditing}
           onPay={setPayTarget}
           onDelete={setDeleteTarget}
@@ -292,7 +295,7 @@ const FinanceSalaryView = ({ locale, dictionary, canWrite, canDelete, canExecute
         onClose={() => setEditing(null)}
         onSaved={refresh}
       />
-      <FinanceSalaryPayslipModal
+      <FinanceSalaryDetailModal
         open={Boolean(detailId)}
         salaryId={detailId}
         locale={locale}
@@ -300,11 +303,20 @@ const FinanceSalaryView = ({ locale, dictionary, canWrite, canDelete, canExecute
         refreshKey={detailRefresh}
         onClose={() => setDetailId(null)}
       />
+      <FinanceSalaryPayslipModal
+        open={Boolean(printId)}
+        salaryId={printId}
+        locale={locale}
+        dictionary={dictionary}
+        refreshKey={detailRefresh}
+        onClose={() => setPrintId(null)}
+      />
       <Dialog
         open={Boolean(payTarget)}
         onClose={busyId ? undefined : () => setPayTarget(null)}
         fullWidth
         maxWidth={isEarlyPayment ? 'sm' : 'xs'}
+        PaperProps={{ className: 'confirmation-dialog' }}
       >
         <DialogTitle>{isEarlyPayment ? dictionary.pay.earlyTitle : dictionary.pay.title}</DialogTitle>
         <DialogContent dividers>

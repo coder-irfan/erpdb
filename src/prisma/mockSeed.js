@@ -42,6 +42,9 @@ const findWorkingBlock = (startOffset, length, holidayKeys) => {
 const clearMockData = async transaction => {
   const seededId = { startsWith: SEED_PREFIX }
 
+  await transaction.notificationstate.deleteMany({ where: { notification_id: seededId } })
+  await transaction.notificationrole.deleteMany({ where: { notification_id: seededId } })
+  await transaction.notification.deleteMany({ where: { id: seededId } })
   await transaction.auditlog.deleteMany({ where: { id: seededId } })
   await transaction.account.deleteMany({ where: { id: seededId } })
   await transaction.session.deleteMany({ where: { id: seededId } })
@@ -1216,7 +1219,9 @@ const seedInvoicesAndFinance = async (transaction, options) => {
     data: expenseData.map((expense, index) => ({
       id: `seed-expense-${String(index + 1).padStart(2, '0')}`,
       voucher_number: `EXP-2026-${String(index + 1).padStart(3, '0')}`,
-      vendor_payee: ['Kabul Property Management', 'Kabul Electric', 'Cloud Software Vendor', 'Office Supplies Vendor'][index % 4],
+      vendor_payee: ['Kabul Property Management', 'Kabul Electric', 'Cloud Software Vendor', 'Office Supplies Vendor'][
+        index % 4
+      ],
       approval_status: 'PAID',
       approved_at: monthDate(-(index % 6), 3 + (index % 20)),
       paid_at: monthDate(-(index % 6), 4 + (index % 20)),
@@ -1616,6 +1621,86 @@ const seedAuditLogs = async transaction => {
   })
 }
 
+const seedNotifications = async transaction => {
+  const notificationData = [
+    {
+      id: 'seed-notification-admin-01',
+      dedupe_key: 'seed-notification-admin-01',
+      category: 'SYSTEM',
+      priority: 'CRITICAL',
+      title_en: 'Welcome to the notification center',
+      title_fa: 'به مرکز اطلاعیه‌ها خوش آمدید',
+      title_ps: 'د خبرتیاوو مرکز ته ښه راغلاست',
+      description_en: 'This direct notification demonstrates the collapsed three-card alert stack.',
+      description_fa: 'این اطلاعیه مستقیم، نمای چیدمان سه‌کارته اعلان‌ها را نشان می‌دهد.',
+      description_ps: 'دا مستقیمه خبرتیا د درې کارته خبرتیاوو ټولګه ښيي.',
+      action_url: '/notifications',
+      target_user_id: 'seed-user-admin',
+      created_at: relativeDate(0)
+    },
+    {
+      id: 'seed-notification-finance-01',
+      dedupe_key: 'seed-notification-finance-01',
+      category: 'FINANCE',
+      priority: 'URGENT',
+      title_en: 'Finance review required',
+      title_fa: 'بررسی مالی لازم است',
+      title_ps: 'مالي بیاکتنه اړینه ده',
+      description_en: 'A pending finance item is ready for the finance team to review.',
+      description_fa: 'یک مورد مالی در انتظار بررسی تیم مالی است.',
+      description_ps: 'یوه پاتې مالي موضوع د مالي ټیم د بیاکتنې لپاره چمتو ده.',
+      action_url: '/finance/expenses',
+      created_at: relativeDate(-1)
+    },
+    {
+      id: 'seed-notification-hr-01',
+      dedupe_key: 'seed-notification-hr-01',
+      category: 'HRM',
+      priority: 'WARNING',
+      title_en: 'Staff record needs attention',
+      title_fa: 'رکورد کارمند نیاز به توجه دارد',
+      title_ps: 'د کارکوونکي ریکارډ پاملرنې ته اړتیا لري',
+      description_en: 'Review the current staff records and contracts.',
+      description_fa: 'رکوردها و قراردادهای فعلی کارکنان را بررسی کنید.',
+      description_ps: 'د کارکوونکو اوسني ریکارډونه او قراردادونه بیاکتنه کړئ.',
+      action_url: '/hrm/staff',
+      created_at: relativeDate(-2)
+    },
+    {
+      id: 'seed-notification-inventory-01',
+      dedupe_key: 'seed-notification-inventory-01',
+      category: 'INVENTORY',
+      priority: 'WARNING',
+      title_en: 'Inventory threshold reached',
+      title_fa: 'موجودی به حد هشدار رسیده است',
+      title_ps: 'زېرمه د خبرتیا حد ته رسېدلې ده',
+      description_en: 'Review items that are at or below their reorder level.',
+      description_fa: 'اقلامی را که به سطح سفارش یا پایین‌تر رسیده‌اند بررسی کنید.',
+      description_ps: 'هغه توکي بیاکتنه کړئ چې د بیا فرمایش کچې ته یا ترې لاندې دي.',
+      action_url: '/finance/inventory',
+      created_at: relativeDate(-3)
+    }
+  ]
+
+  const roles = await transaction.role.findMany({
+    where: { name: { in: ['super_admin', 'finance_manager', 'hr_manager', 'inventory_manager'] } },
+    select: { id: true, name: true }
+  })
+
+  const roleIdByName = new Map(roles.map(role => [role.name, role.id]))
+
+  await transaction.notification.createMany({ data: notificationData })
+  await transaction.notificationrole.createMany({
+    data: [
+      ['seed-notification-finance-01', 'finance_manager'],
+      ['seed-notification-hr-01', 'hr_manager'],
+      ['seed-notification-inventory-01', 'inventory_manager']
+    ].flatMap(([notificationId, roleName]) =>
+      roleIdByName.get(roleName) ? [{ notification_id: notificationId, role_id: roleIdByName.get(roleName) }] : []
+    )
+  })
+}
+
 export const seedMockData = async (prisma, { passwordHash }) => {
   await prisma.$transaction(
     async transaction => {
@@ -1631,6 +1716,7 @@ export const seedMockData = async (prisma, { passwordHash }) => {
       await seedLoansAndPayroll(transaction, options, attendanceRows, holidays, leaveDefinitions)
       await seedInventory(transaction, options)
       await seedAuditLogs(transaction)
+      await seedNotifications(transaction)
     },
     { timeout: 120_000 }
   )

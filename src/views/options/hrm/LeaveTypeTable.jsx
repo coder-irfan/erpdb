@@ -7,6 +7,7 @@ import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import Chip from '@mui/material/Chip'
+import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
 import { toast } from 'sonner'
 
@@ -262,13 +263,11 @@ const LeaveTypeTable = ({ initialResult, initialError, canCreate, canUpdate, can
                       </Typography>
                     </td>
                     <td>
-                      <Typography
-                        color='text.secondary'
-                        className='max-is-[440px] truncate'
-                        title={option.description || ''}
-                      >
-                        {option.description || dictionary.common.noDescription}
-                      </Typography>
+                      <Tooltip title={option.description || dictionary.common.noDescription}>
+                        <Typography color='text.secondary' className='max-is-[440px] truncate'>
+                          {option.description || dictionary.common.noDescription}
+                        </Typography>
+                      </Tooltip>
                     </td>
                     <td>{option.allowed_days_per_year ?? 0} days</td>
                     <td>

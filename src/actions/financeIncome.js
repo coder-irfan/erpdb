@@ -72,8 +72,7 @@ const contractSelect = {
   total_amount: true,
   currency: true,
   start_date: true,
-  end_date: true,
-  status: { select: optionSelect }
+  end_date: true
 }
 
 const invoiceSelect = {
@@ -88,8 +87,7 @@ const invoiceSelect = {
   exchange_rate: true,
   fx_snapshot_at: true,
   issued_date: true,
-  due_date: true,
-  status: { select: optionSelect }
+  due_date: true
 }
 
 const incomeSelect = {
@@ -121,7 +119,6 @@ const incomeSelect = {
   contract: { select: contractSelect },
   invoice: { select: invoiceSelect },
   received_by: { select: staffSelect },
-  income_type: { select: optionSelect },
   payment_method: { select: optionSelect }
 }
 
@@ -131,8 +128,18 @@ const iso = value => value?.toISOString() || null
 const numberString = (value, scale = 2) => (value == null ? null : toFiniteNumber(value).toFixed(scale))
 const withFullName = staff => (staff ? { ...staff, full_name: `${staff.first_name} ${staff.last_name}`.trim() } : null)
 
-const normalizeIncome = income => ({
+const missingIncomeType = incomeTypeId => ({
+  id: incomeTypeId || null,
+  label: 'Uncategorized',
+  value: 'UNCATEGORIZED',
+  color_code: 'secondary',
+  is_default: false,
+  requires_invoice: false
+})
+
+const normalizeIncome = (income, incomeTypesById = new Map()) => ({
   ...income,
+  income_type: incomeTypesById.get(income.income_type_id) || missingIncomeType(income.income_type_id),
   total_amount: numberString(income.total_amount),
   paid_amount: numberString(income.paid_amount),
   remind_amount: numberString(income.remind_amount),
@@ -406,27 +413,22 @@ export const getFinanceIncomes = async (payload = {}) => {
   const status = STATUSES.has(payload.status) ? payload.status : ''
 
   const where = {
-    AND: [
-      clientId ? { client_id: clientId } : {},
-      projectId ? { project_id: projectId } : {},
-      typeId ? { income_type_id: typeId } : {},
-      status ? { status } : {},
-      search
-        ? {
-            OR: [
-              { name: { contains: search } },
-              { pay_details: { contains: search } },
-              { client: { is: { company_name: { contains: search } } } },
-              { project: { is: { title: { contains: search } } } }
-            ]
-          }
-        : {}
-    ]
+    ...(clientId && { client_id: clientId }),
+    ...(projectId && { project_id: projectId }),
+    ...(typeId && { income_type_id: typeId }),
+    ...(status && { status }),
+    ...(search && {
+      OR: [
+        { name: { contains: search } },
+        { pay_details: { contains: search } },
+        { client: { is: { company_name: { contains: search } } } },
+        { project: { is: { title: { contains: search } } } }
+      ]
+    })
   }
 
   try {
-    const [setup, totalCount, incomes, summaryRows] = await Promise.all([
-      getCompanySetupRecord(),
+    const [totalCount, incomes, summaryRows, incomeTypes] = await Promise.all([
       prisma.financeincome.count({ where }),
       prisma.financeincome.findMany({
         where,
@@ -445,8 +447,14 @@ export const getFinanceIncomes = async (payload = {}) => {
           remind_date: true,
           status: true
         }
+      }),
+      prisma.option.findMany({
+        where: { category: 'INCOME_TYPE' },
+        select: optionSelect
       })
     ])
+
+    const incomeTypesById = new Map(incomeTypes.map(incomeType => [incomeType.id, incomeType]))
 
     const baseCurrency = SYSTEM_BASE_CURRENCY
     const today = toUtcDateOnly(new Date())
@@ -472,7 +480,7 @@ export const getFinanceIncomes = async (payload = {}) => {
     return {
       success: true,
       data: {
-        incomes: incomes.map(normalizeIncome),
+        incomes: incomes.map(income => normalizeIncome(income, incomeTypesById)),
         totalCount,
         page,
         baseCurrency: SYSTEM_BASE_CURRENCY,
@@ -567,14 +575,19 @@ export const getFinanceIncomeDetail = async (id, payload = {}) => {
   if (!context.authorized) return { success: false, code: context.code, error: context.error }
 
   try {
-    const income = await prisma.financeincome.findUnique({
-      where: { id: normalizeId(id) },
-      select: incomeSelect
-    })
+    const incomeId = normalizeId(id)
+    const income = await prisma.financeincome.findUnique({ where: { id: incomeId }, select: incomeSelect })
 
     if (!income) return { success: false, code: 'NOT_FOUND', error: context.translations.messages.notFound }
 
-    return { success: true, data: normalizeIncome(income) }
+    const incomeType = income.income_type_id
+      ? await prisma.option.findUnique({ where: { id: income.income_type_id }, select: optionSelect })
+      : null
+
+    return {
+      success: true,
+      data: normalizeIncome(income, new Map(incomeType ? [[incomeType.id, incomeType]] : []))
+    }
   } catch {
     return { success: false, code: 'INCOME_DETAIL_LOAD_FAILED', error: context.translations.messages.detailLoadFailed }
   }

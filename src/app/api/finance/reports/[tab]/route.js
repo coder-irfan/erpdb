@@ -136,16 +136,17 @@ const getIncomeReport = async ({ start, end, displayCurrency, reportRate }) => {
 }
 
 const getExpenseReport = async ({ start, end, displayCurrency, reportRate }) => {
-  const [records, pendingCount] = await Promise.all([
-    prisma.financeexpense.findMany({
-      where: { approval_status: 'PAID', expense_date: { gte: start, lte: end } },
-      select: {
+  const records = await prisma.financeexpense.findMany({
+    where: { expense_date: { gte: start, lte: end } },
+    select: {
         id: true,
         details: true,
         expense_date: true,
         sub_total: true,
         currency: true,
         exchange_rate: true,
+        approval_status: true,
+        vendor_payee: true,
         expense_type: { select: { label: true, value: true } },
         payment_method: { select: { label: true, value: true } },
         project: { select: { project_code: true, title: true } },
@@ -159,39 +160,42 @@ const getExpenseReport = async ({ start, end, displayCurrency, reportRate }) => 
             user: { select: { image: true } }
           }
         }
-      },
-      orderBy: { expense_date: 'desc' }
-    }),
-    prisma.financeexpense.count({
-      where: { approval_status: { not: 'PAID' }, expense_date: { gte: start, lte: end } }
-    })
-  ])
+    },
+    orderBy: { expense_date: 'desc' }
+  })
 
   let totalUsd = 0
+  let pendingUsd = 0
   const categoryTotals = new Map()
   const monthlyTotals = new Map()
 
   const rows = records.map(record => {
     const converted = convertAmount(record.sub_total, record.currency, record.exchange_rate, displayCurrency, reportRate)
-    const category = optionName(record.expense_type)
+    const category = optionName(record.expense_type) || 'Uncategorized'
+    const isRecorded = ['APPROVED', 'PAID'].includes(record.approval_status)
 
-    totalUsd += converted.usd
     categoryTotals.set(category, (categoryTotals.get(category) || 0) + converted.usd)
     addToMap(monthlyTotals, dateKey(record.expense_date).slice(0, 7), converted.display)
+
+    if (isRecorded) {
+      totalUsd += converted.usd
+    } else if (record.approval_status === 'PENDING_APPROVAL') {
+      pendingUsd += converted.usd
+    }
 
     return {
       id: record.id,
       date: dateKey(record.expense_date),
       title: record.details,
       category,
-      payee: staffName(record.spent_by) || record.project?.title || '',
+      payee: record.vendor_payee || staffName(record.spent_by) || record.project?.title || '',
       staff: reportStaff(record.spent_by),
       amount_local: money(record.sub_total),
       amount_display: converted.display,
       currency: record.currency,
       exchange_rate: money(record.exchange_rate),
       payment_method: optionName(record.payment_method),
-      status: 'RECORDED'
+      status: record.approval_status
     }
   })
 
@@ -201,8 +205,9 @@ const getExpenseReport = async ({ start, end, displayCurrency, reportRate }) => 
     summary: {
       operational_expense: money(usdToDisplay(totalUsd, displayCurrency, reportRate)),
       top_expense_category: topCategory,
-      approved_count: rows.length,
-      pending_count: pendingCount
+      approved_count: records.length,
+      pending_count: records.filter(record => record.approval_status === 'PENDING_APPROVAL').length,
+      pending_expense: money(usdToDisplay(pendingUsd, displayCurrency, reportRate))
     },
     rows,
     charts: {

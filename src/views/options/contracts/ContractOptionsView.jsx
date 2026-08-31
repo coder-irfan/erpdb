@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
@@ -112,7 +112,6 @@ export const CONTRACT_OPTION_SECTIONS = [
 ]
 
 export const INVOICE_OPTION_SECTIONS = [
-  { category: 'INVOICE_STATUS', key: 'invoiceStatuses', icon: 'tabler-receipt' },
   { category: 'PAYMENT_METHOD', key: 'paymentMethods', icon: 'tabler-credit-card' }
 ]
 

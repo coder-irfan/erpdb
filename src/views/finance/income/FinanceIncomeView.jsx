@@ -96,25 +96,10 @@ const FinanceIncomeView = ({ locale, dictionary, canWrite, canDelete, setup }) =
   }, [clientId, dictionary.messages.loadFailed, locale, page, projectId, rowsPerPage, search, status, typeId])
 
   const loadOptions = useCallback(async () => {
-    const [result, categoryResponse] = await Promise.all([
-      getFinanceIncomeFormOptions({ locale }),
-      fetch('/api/options/finance/income-categories', { cache: 'no-store' }).catch(() => null)
-    ])
+    const result = await getFinanceIncomeFormOptions({ locale })
 
     if (!result.success) return toast.error(result.error || dictionary.messages.optionsLoadFailed)
-    if (!categoryResponse) return setOptions(result.data)
-
-    try {
-      const categoryResult = await categoryResponse.json()
-
-      setOptions({
-        ...result.data,
-        incomeTypes:
-          categoryResponse.ok && categoryResult.success ? categoryResult.data.options : result.data.incomeTypes
-      })
-    } catch {
-      setOptions(result.data)
-    }
+    setOptions(result.data)
   }, [dictionary.messages.optionsLoadFailed, locale])
 
   useEffect(() => { loadData() }, [loadData])

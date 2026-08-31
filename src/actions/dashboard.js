@@ -1,14 +1,16 @@
 'use server'
 
 import { i18n } from '@/configs/i18n'
+import { SYSTEM_STATUS_VALUES } from '@/data/systemStatuses'
 import { authorizeAction } from '@/libs/actionAuthorization'
 import { getCompanySetupRecord } from '@/libs/companySetup'
 import { ACTIVE_OPERATIONAL_STATUSES, CLOSED_LOAN_STATUSES } from '@/libs/financialStatuses'
 import { prisma } from '@/libs/prisma'
+import { formatAfghanDate, formatAfghanMonthYear } from '@/utils/afghanDate'
+import { resolveDashboardPeriod } from '@/utils/dashboardPeriod'
 import { hasPermission } from '@/utils/rbac'
-import { formatAfghanMonth } from '@/utils/afghanDate'
 
-const PERIODS = new Set([6, 12])
+const DAY_IN_MS = 86_400_000
 const CLOSED_LEADS = ['WON', 'LOST', 'CONVERTED', 'CLOSED']
 const CLOSED_CONTRACTS = ['EXPIRED', 'TERMINATED', 'CANCELLED', 'COMPLETED']
 const ACTIVE_PROJECTS = ACTIVE_OPERATIONAL_STATUSES
@@ -36,13 +38,30 @@ const serializeForClient = value => {
 }
 
 const startOfMonth = date => new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1))
+const startOfYear = date => new Date(Date.UTC(date.getUTCFullYear(), 0, 1))
 const startOfDay = date => new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()))
 const addMonths = (date, amount) => new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + amount, 1))
+const addYears = (date, amount) => new Date(Date.UTC(date.getUTCFullYear() + amount, 0, 1))
 
 const addDays = (date, amount) =>
   new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate() + amount))
 
 const monthKey = date => `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}`
+const dayKey = date => date.toISOString().slice(0, 10)
+const yearKey = date => String(date.getUTCFullYear())
+
+const dateWindow = (start, endExclusive) => ({
+  ...(start && { gte: start }),
+  ...(endExclusive && { lt: endExclusive })
+})
+
+const rangeWindow = range => dateWindow(range.start, range.endExclusive)
+const previousRangeWindow = range => dateWindow(range.previousStart, range.previousEndExclusive)
+
+const monthWindow = (start, endExclusive) => ({
+  ...(start && { gte: monthKey(start) }),
+  ...(endExclusive && { lte: monthKey(addDays(endExclusive, -1)) })
+})
 
 const growth = (current, previous) => {
   if (!previous) return current ? 100 : 0
@@ -62,20 +81,42 @@ const outstandingBase = row => {
   return total > 0 ? toNumber(row.amount_base) * Math.min(1, Math.max(0, toNumber(row.remind_amount) / total)) : 0
 }
 
-const buildMonthBuckets = (rangeStart, months, locale) =>
-  Array.from({ length: months }, (_, index) => {
-    const date = addMonths(rangeStart, index)
+const buildPeriodBuckets = ({ range, dates = [], locale }) => {
+  const validDates = dates.filter(date => date instanceof Date && !Number.isNaN(date.getTime()))
 
-    return {
-      key: monthKey(date),
-      month: formatAfghanMonth(date, locale, { short: true, timeZone: 'UTC' }),
+  const earliestTimestamp = validDates.reduce(
+    (minimum, date) => Math.min(minimum, date.getTime()),
+    Number.POSITIVE_INFINITY
+  )
+
+  const earliest = Number.isFinite(earliestTimestamp) ? new Date(earliestTimestamp) : null
+  const endExclusive = range.endExclusive
+  const start = range.start || earliest || addMonths(startOfMonth(endExclusive), -11)
+  const spanDays = Math.max(1, Math.ceil((endExclusive.getTime() - start.getTime()) / DAY_IN_MS))
+  const unit = spanDays <= 62 ? 'DAY' : spanDays <= 1095 ? 'MONTH' : 'YEAR'
+  const first = unit === 'DAY' ? startOfDay(start) : unit === 'MONTH' ? startOfMonth(start) : startOfYear(start)
+  const keyFor = unit === 'DAY' ? dayKey : unit === 'MONTH' ? monthKey : yearKey
+  const buckets = []
+
+  for (let cursor = first; cursor < endExclusive; cursor = unit === 'DAY' ? addDays(cursor, 1) : unit === 'MONTH' ? addMonths(cursor, 1) : addYears(cursor, 1)) {
+    buckets.push({
+      key: keyFor(cursor),
+      month:
+        unit === 'DAY'
+          ? formatAfghanDate(cursor, locale, { dateStyle: 'short', timeZone: 'UTC' })
+          : unit === 'MONTH'
+            ? formatAfghanMonthYear(cursor, locale, { short: true, timeZone: 'UTC' })
+            : yearKey(cursor),
       income: 0,
       expense: 0,
       salary: 0,
       net: 0,
       value: 0
-    }
-  })
+    })
+  }
+
+  return { buckets, keyFor }
+}
 
 const getCapabilities = session => {
   const roles = new Set(session.user.roles || [])
@@ -102,61 +143,76 @@ const getCapabilities = session => {
   }
 }
 
-const loadFinanceAnalytics = async ({ rangeStart, months, locale }) => {
-  const currentMonth = monthKey(startOfMonth(new Date()))
-  const previousMonth = monthKey(addMonths(startOfMonth(new Date()), -1))
+const loadFinanceAnalytics = async ({ range, locale }) => {
+  const incomeSelect = {
+    created_at: true,
+    income_type_id: true,
+    status: true,
+    total_amount: true,
+    paid_amount: true,
+    remind_amount: true,
+    amount_base: true
+  }
 
-  const [
-    totalIncome,
-    totalExpense,
-    totalSalary,
-    paidIncome,
-    partialIncome,
-    trendIncome,
-    trendExpense,
-    trendSalary,
-    incomeGroups,
-    expenseGroups
-  ] = await Promise.all([
-    prisma.financeincome.aggregate({ _sum: { amount_base: true } }),
-    prisma.financeexpense.aggregate({ where: { approval_status: 'PAID' }, _sum: { amount_base: true } }),
-    prisma.financesalary.aggregate({ _sum: { amount_base: true } }),
-    prisma.financeincome.aggregate({ where: { status: 'PAID' }, _sum: { amount_base: true } }),
-    prisma.financeincome.findMany({
-      where: { status: { not: 'PAID' } },
-      select: { total_amount: true, paid_amount: true, remind_amount: true, amount_base: true }
-    }),
-    prisma.financeincome.findMany({
-      where: { created_at: { gte: rangeStart } },
-      select: { created_at: true, amount_base: true, total_amount: true, paid_amount: true }
-    }),
+  const expenseSelect = { expense_date: true, expense_type_id: true, amount_base: true }
+  const salarySelect = { timesheet_month: true, amount_base: true }
+
+  const [income, expenses, salaries, previousIncome, previousExpenses, previousSalaries] = await Promise.all([
+    prisma.financeincome.findMany({ where: { created_at: rangeWindow(range) }, select: incomeSelect }),
     prisma.financeexpense.findMany({
-      where: { approval_status: 'PAID', expense_date: { gte: rangeStart } },
-      select: { expense_date: true, amount_base: true }
+      where: { approval_status: 'PAID', expense_date: rangeWindow(range) },
+      select: expenseSelect
     }),
     prisma.financesalary.findMany({
-      where: { timesheet_month: { gte: monthKey(rangeStart) } },
-      select: { timesheet_month: true, amount_base: true }
+      where: { timesheet_month: monthWindow(range.start, range.endExclusive) },
+      select: salarySelect
     }),
-    prisma.financeincome.groupBy({ by: ['income_type_id'], _sum: { amount_base: true } }),
-    prisma.financeexpense.groupBy({ where: { approval_status: 'PAID' }, by: ['expense_type_id'], _sum: { amount_base: true } })
+    range.previousStart
+      ? prisma.financeincome.findMany({
+          where: { created_at: previousRangeWindow(range) },
+          select: incomeSelect
+        })
+      : [],
+    range.previousStart
+      ? prisma.financeexpense.findMany({
+          where: { approval_status: 'PAID', expense_date: previousRangeWindow(range) },
+          select: expenseSelect
+        })
+      : [],
+    range.previousStart
+      ? prisma.financesalary.findMany({
+          where: { timesheet_month: monthWindow(range.previousStart, range.previousEndExclusive) },
+          select: salarySelect
+        })
+      : []
   ])
 
-  const buckets = buildMonthBuckets(rangeStart, months, locale)
+  const salaryDates = salaries.map(row => new Date(`${row.timesheet_month}-01T00:00:00.000Z`))
+
+  const { buckets, keyFor } = buildPeriodBuckets({
+    range,
+    dates: [
+      ...income.map(row => row.created_at),
+      ...expenses.map(row => row.expense_date),
+      ...salaryDates
+    ],
+    locale
+  })
+
   const bucketMap = new Map(buckets.map(bucket => [bucket.key, bucket]))
 
-  trendIncome.forEach(row => {
-    const bucket = bucketMap.get(monthKey(row.created_at))
+  income.forEach(row => {
+    const bucket = bucketMap.get(keyFor(row.created_at))
 
     if (bucket) bucket.income += toNumber(row.amount_base)
   })
-  trendExpense.forEach(row => {
-    const bucket = bucketMap.get(monthKey(row.expense_date))
+  expenses.forEach(row => {
+    const bucket = bucketMap.get(keyFor(row.expense_date))
 
     if (bucket) bucket.expense += toNumber(row.amount_base)
   })
-  trendSalary.forEach(row => {
-    const bucket = bucketMap.get(row.timesheet_month)
+  salaries.forEach((row, index) => {
+    const bucket = bucketMap.get(keyFor(salaryDates[index]))
 
     if (bucket) bucket.salary += toNumber(row.amount_base)
   })
@@ -170,104 +226,152 @@ const loadFinanceAnalytics = async ({ rangeStart, months, locale }) => {
     net: round(bucket.income - bucket.expense - bucket.salary)
   }))
 
-  const incomeTypeIds = incomeGroups.map(group => group.income_type_id)
-  const expenseTypeIds = expenseGroups.map(group => group.expense_type_id)
+  const incomeTotals = rows => ({
+    total: rows.reduce((sum, row) => sum + toNumber(row.amount_base), 0),
+    collected: rows.reduce(
+      (sum, row) => sum + (row.status === 'PAID' ? toNumber(row.amount_base) : paidBase(row)),
+      0
+    ),
+    pending: rows.reduce((sum, row) => sum + (row.status === 'PAID' ? 0 : outstandingBase(row)), 0)
+  })
+
+  const sumAmount = rows => rows.reduce((sum, row) => sum + toNumber(row.amount_base), 0)
+  const currentIncome = incomeTotals(income)
+  const previousIncomeTotals = incomeTotals(previousIncome)
+  const currentExpense = sumAmount(expenses) + sumAmount(salaries)
+  const previousExpense = sumAmount(previousExpenses) + sumAmount(previousSalaries)
+  const currentNet = currentIncome.total - currentExpense
+  const previousNet = previousIncomeTotals.total - previousExpense
+  const incomeGroups = new Map()
+  const expenseGroups = new Map()
+
+  income.forEach(row => incomeGroups.set(row.income_type_id, toNumber(incomeGroups.get(row.income_type_id)) + toNumber(row.amount_base)))
+  expenses.forEach(row => expenseGroups.set(row.expense_type_id, toNumber(expenseGroups.get(row.expense_type_id)) + toNumber(row.amount_base)))
 
   const options = await prisma.option.findMany({
-    where: { id: { in: [...incomeTypeIds, ...expenseTypeIds] } },
+    where: { id: { in: [...incomeGroups.keys(), ...expenseGroups.keys()] } },
     select: { id: true, label: true, value: true, color_code: true }
   })
 
   const optionMap = new Map(options.map(option => [option.id, option]))
-  const collected = toNumber(paidIncome._sum.amount_base) + partialIncome.reduce((sum, row) => sum + paidBase(row), 0)
-  const pending = partialIncome.reduce((sum, row) => sum + outstandingBase(row), 0)
-  const allIncome = toNumber(totalIncome._sum.amount_base)
-  const allExpense = toNumber(totalExpense._sum.amount_base)
-  const allSalary = toNumber(totalSalary._sum.amount_base)
-  const current = cashFlow.find(row => row.key === currentMonth) || { net: 0, income: 0 }
-  const previous = cashFlow.find(row => row.key === previousMonth) || { net: 0, income: 0 }
 
   return {
     kpis: {
-      netProfit: round(allIncome - allExpense - allSalary),
-      netGrowth: growth(current.net, previous.net),
-      revenue: round(collected),
-      pendingRevenue: round(pending),
-      revenueGrowth: growth(current.income, previous.income),
+      netProfit: round(currentNet),
+      netGrowth: range.previousStart ? growth(currentNet, previousNet) : null,
+      revenue: round(currentIncome.collected),
+      pendingRevenue: round(currentIncome.pending),
+      revenueGrowth: range.previousStart ? growth(currentIncome.collected, previousIncomeTotals.collected) : null,
+      expenses: round(currentExpense),
+      expenseGrowth: range.previousStart ? growth(currentExpense, previousExpense) : null,
       netSparkline: cashFlow.map(row => row.net),
-      revenueSparkline: cashFlow.map(row => row.income)
+      revenueSparkline: cashFlow.map(row => row.income),
+      expenseSparkline: cashFlow.map(row => row.expense)
     },
     cashFlow,
-    incomeDistribution: incomeGroups
-      .map(group => ({
-        id: group.income_type_id,
-        label: optionMap.get(group.income_type_id)?.label || 'Other income',
-        value: round(group._sum.amount_base),
-        color: optionMap.get(group.income_type_id)?.color_code || 'primary'
+    incomeDistribution: [...incomeGroups.entries()]
+      .map(([id, value]) => ({
+        id,
+        label: optionMap.get(id)?.label || 'Other income',
+        value: round(value),
+        color: optionMap.get(id)?.color_code || 'primary'
       }))
       .filter(item => item.value > 0)
       .sort((left, right) => right.value - left.value),
     expenseDistribution: [
-      ...expenseGroups.map(group => ({
-        id: group.expense_type_id,
-        label: optionMap.get(group.expense_type_id)?.label || 'Operations',
-        value: round(group._sum.amount_base),
-        color: optionMap.get(group.expense_type_id)?.color_code || 'warning'
+      ...[...expenseGroups.entries()].map(([id, value]) => ({
+        id,
+        label: optionMap.get(id)?.label || 'Operations',
+        value: round(value),
+        color: optionMap.get(id)?.color_code || 'warning'
       })),
-      ...(allSalary > 0 ? [{ id: 'PAYROLL', label: 'Payroll', value: round(allSalary), color: 'info' }] : [])
+      ...(sumAmount(salaries) > 0
+        ? [{ id: 'PAYROLL', label: 'Payroll', value: round(sumAmount(salaries)), color: 'info' }]
+        : [])
     ]
       .filter(item => item.value > 0)
       .sort((left, right) => right.value - left.value)
   }
 }
 
-const loadPipelineAnalytics = async ({ rangeStart, months, locale, today, canViewLeads, canViewContracts }) => {
-  const leadWhere = { status: { is: { value: { notIn: CLOSED_LEADS } } } }
+const loadPipelineAnalytics = async ({ range, locale, today, canViewLeads, canViewContracts }) => {
+  const leadPeriodWhere = { created_at: rangeWindow(range) }
+
+  const leadWhere = {
+    ...leadPeriodWhere,
+    status: { is: { value: { notIn: CLOSED_LEADS } } }
+  }
 
   const contractWhere = {
+    created_at: rangeWindow(range),
     end_date: { gte: today },
     status: { is: { value: { notIn: CLOSED_CONTRACTS } } }
   }
 
-  const [leads, contracts, funnelGroups, leadStatuses] = await Promise.all([
+  const previousLeadWhere = {
+    created_at: previousRangeWindow(range),
+    status: { is: { value: { notIn: CLOSED_LEADS } } }
+  }
+
+  const previousContractWhere = {
+    created_at: previousRangeWindow(range),
+    status: { is: { value: { notIn: CLOSED_CONTRACTS } } }
+  }
+
+  const [leads, contracts, previousLeads, previousContracts, funnelGroups, leadStatuses] = await Promise.all([
     canViewLeads ? prisma.crmlead.findMany({ where: leadWhere, select: { amount_base: true, created_at: true } }) : [],
     canViewContracts
       ? prisma.contract.findMany({ where: contractWhere, select: { amount_base: true, created_at: true } })
       : [],
+    canViewLeads && range.previousStart
+      ? prisma.crmlead.findMany({ where: previousLeadWhere, select: { amount_base: true } })
+      : [],
+    canViewContracts && range.previousStart
+      ? prisma.contract.findMany({ where: previousContractWhere, select: { amount_base: true } })
+      : [],
     canViewLeads
-      ? prisma.crmlead.groupBy({ by: ['status_id'], _count: { _all: true }, _sum: { amount_base: true } })
+      ? prisma.crmlead.groupBy({
+          where: leadPeriodWhere,
+          by: ['status_id'],
+          _count: { _all: true },
+          _sum: { amount_base: true }
+        })
       : [],
     canViewLeads
       ? prisma.option.findMany({
-          where: { category: 'LEAD_STATUS', is_active: true },
+          where: { category: 'LEAD_STATUS', value: { in: SYSTEM_STATUS_VALUES.LEAD_STATUS }, is_active: true },
           orderBy: [{ sort_order: 'asc' }, { label: 'asc' }],
           select: { id: true, label: true, value: true, color_code: true }
         })
       : []
   ])
 
-  const buckets = buildMonthBuckets(rangeStart, months, locale)
+  const { buckets, keyFor } = buildPeriodBuckets({
+    range,
+    dates: [...leads.map(row => row.created_at), ...contracts.map(row => row.created_at)],
+    locale
+  })
 
   const bucketMap = new Map(buckets.map(bucket => [bucket.key, bucket]))
 
   ;[...leads, ...contracts].forEach(row => {
-    const bucket = bucketMap.get(monthKey(row.created_at))
+    const bucket = bucketMap.get(keyFor(row.created_at))
 
     if (bucket) bucket.value += toNumber(row.amount_base)
   })
 
   const statusMap = new Map(funnelGroups.map(group => [group.status_id, group]))
   const sparkline = buckets.map(bucket => round(bucket.value))
+  const pipelineValue = rows => rows.reduce((sum, row) => sum + toNumber(row.amount_base), 0)
+  const currentValue = pipelineValue(leads) + pipelineValue(contracts)
+  const previousValue = pipelineValue(previousLeads) + pipelineValue(previousContracts)
 
   return {
-    value: round(
-      leads.reduce((sum, row) => sum + toNumber(row.amount_base), 0) +
-        contracts.reduce((sum, row) => sum + toNumber(row.amount_base), 0)
-    ),
+    value: round(currentValue),
     dealCount: leads.length + contracts.length,
     leadCount: leads.length,
     contractCount: contracts.length,
-    growth: growth(sparkline.at(-1) || 0, sparkline.at(-2) || 0),
+    growth: range.previousStart ? growth(currentValue, previousValue) : null,
     sparkline,
     funnel: leadStatuses.map(status => ({
       id: status.id,
@@ -280,54 +384,50 @@ const loadPipelineAnalytics = async ({ rangeStart, months, locale, today, canVie
   }
 }
 
-const loadWorkforceSnapshot = async today => {
-  const historyStart = addDays(today, -13)
-
-  const [active, checkedIn, history] = await Promise.all([
+const loadWorkforceSnapshot = async ({ range, locale }) => {
+  const [active, history] = await Promise.all([
     prisma.hrmstaff.count({ where: { status: 'ACTIVE' } }),
-    prisma.hrmstafftimesheet.count({ where: { date: today, check_in_time: { not: null } } }),
     prisma.hrmstafftimesheet.findMany({
-      where: { date: { gte: historyStart, lte: today }, check_in_time: { not: null } },
-      select: { date: true }
+      where: { date: rangeWindow(range), check_in_time: { not: null } },
+      select: { date: true, staff_id: true }
     })
   ])
 
-  const days = Array.from({ length: 14 }, (_, index) => {
-    const date = addDays(historyStart, index)
-
-    return { key: date.toISOString().slice(0, 10), value: 0 }
-  })
-
-  const dayMap = new Map(days.map(day => [day.key, day]))
+  const { buckets, keyFor } = buildPeriodBuckets({ range, dates: history.map(row => row.date), locale })
+  const bucketMap = new Map(buckets.map(bucket => [bucket.key, bucket]))
 
   history.forEach(row => {
-    const bucket = dayMap.get(row.date.toISOString().slice(0, 10))
+    const bucket = bucketMap.get(keyFor(row.date))
 
     if (bucket) bucket.value += 1
   })
+
+  const checkedIn = new Set(history.map(row => row.staff_id)).size
 
   return {
     active,
     checkedIn,
     attendanceRate: active ? round((checkedIn / active) * 100) : 0,
-    sparkline: days.map(day => day.value)
+    sparkline: buckets.map(bucket => bucket.value)
   }
 }
 
-const loadOperationsAnalytics = async ({ projectWhere, rangeStart, months, locale, today, canViewAttendance }) => {
+const loadOperationsAnalytics = async ({ projectWhere, range, locale, canViewAttendance }) => {
+  const createdInRange = { created_at: rangeWindow(range) }
+
   const activeWhere = {
-    AND: [projectWhere, { status: { is: { value: { in: ACTIVE_PROJECTS } } } }]
+    AND: [projectWhere, createdInRange, { status: { is: { value: { in: ACTIVE_PROJECTS } } } }]
   }
 
   const taskScope = { project: { is: projectWhere } }
 
   const pendingTaskWhere = {
-    AND: [taskScope, { status: { is: { value: { notIn: CLOSED_TASKS } } } }]
+    AND: [taskScope, createdInRange, { status: { is: { value: { notIn: CLOSED_TASKS } } } }]
   }
 
   const attendanceWhere = canViewAttendance
     ? {
-        date: today,
+        date: rangeWindow(range),
         check_in_time: { not: null },
         ...(Object.keys(projectWhere).length ? { project: { is: projectWhere } } : {})
       }
@@ -350,26 +450,36 @@ const loadOperationsAnalytics = async ({ projectWhere, rangeStart, months, local
         actual_hours: true,
         client: { select: { company_name: true } },
         priority: { select: { label: true, value: true, color_code: true } },
-        tasks: { select: { status: { select: { value: true } } } },
-        timesheets: { select: { hours_worked: true } }
+        tasks: {
+          where: { created_at: rangeWindow(range) },
+          select: { status: { select: { value: true } } }
+        },
+        timesheets: {
+          where: { date: rangeWindow(range) },
+          select: { hours_worked: true }
+        }
       }
     }),
     prisma.project.findMany({
-      where: { AND: [projectWhere, { created_at: { gte: rangeStart } }] },
+      where: { AND: [projectWhere, createdInRange] },
       select: { created_at: true }
     }),
     prisma.task.findMany({
-      where: { AND: [taskScope, { created_at: { gte: rangeStart } }] },
+      where: { AND: [taskScope, createdInRange] },
       select: { created_at: true }
     })
   ])
 
-  const buckets = buildMonthBuckets(rangeStart, months, locale)
+  const { buckets, keyFor } = buildPeriodBuckets({
+    range,
+    dates: [...activityProjects.map(row => row.created_at), ...activityTasks.map(row => row.created_at)],
+    locale
+  })
 
   const bucketMap = new Map(buckets.map(bucket => [bucket.key, bucket]))
 
   ;[...activityProjects, ...activityTasks].forEach(row => {
-    const bucket = bucketMap.get(monthKey(row.created_at))
+    const bucket = bucketMap.get(keyFor(row.created_at))
 
     if (bucket) bucket.value += 1
   })
@@ -583,18 +693,24 @@ const loadUrgentActions = async ({ capabilities, today, staffId }) => {
   }
 }
 
-const loadPersonalSnapshot = async ({ staffId, today, monthStart }) => {
+const loadPersonalSnapshot = async ({ staffId, today, range }) => {
   if (!staffId) return null
 
   const assignedTask = { assignees: { some: { staff_id: staffId } } }
+  const taskRange = { created_at: rangeWindow(range) }
 
   const [openTasks, overdueTasks, attendance, hours, loan] = await Promise.all([
     prisma.task.count({
-      where: { AND: [assignedTask, { status: { is: { value: { notIn: CLOSED_TASKS } } } }] }
+      where: { AND: [assignedTask, taskRange, { status: { is: { value: { notIn: CLOSED_TASKS } } } }] }
     }),
     prisma.task.count({
       where: {
-        AND: [assignedTask, { due_date: { lt: today } }, { status: { is: { value: { notIn: CLOSED_TASKS } } } }]
+        AND: [
+          assignedTask,
+          taskRange,
+          { due_date: { lt: today } },
+          { status: { is: { value: { notIn: CLOSED_TASKS } } } }
+        ]
       }
     }),
     prisma.hrmstafftimesheet.findFirst({
@@ -602,7 +718,7 @@ const loadPersonalSnapshot = async ({ staffId, today, monthStart }) => {
       select: { status: true, check_in_time: true, check_out_time: true, hours_worked: true }
     }),
     prisma.hrmstafftimesheet.aggregate({
-      where: { staff_id: staffId, date: { gte: monthStart } },
+      where: { staff_id: staffId, date: rangeWindow(range) },
       _sum: { hours_worked: true }
     }),
     prisma.financeloan.findMany({
@@ -626,7 +742,7 @@ const loadPersonalSnapshot = async ({ staffId, today, monthStart }) => {
           hours_worked: round(attendance.hours_worked)
         }
       : null,
-    monthHours: round(hours._sum.hours_worked),
+    periodHours: round(hours._sum.hours_worked),
     loans: {
       count: loan.length,
       balance: round(
@@ -650,11 +766,9 @@ export const getDashboardData = async (payload = {}) => {
   if (!authorization.authorized) return { success: false, code: authorization.code, error: authorization.error }
 
   const locale = i18n.locales.includes(payload.locale) ? payload.locale : i18n.defaultLocale
-  const months = PERIODS.has(Number(payload.months)) ? Number(payload.months) : 12
   const now = new Date()
   const today = startOfDay(now)
-  const monthStart = startOfMonth(now)
-  const rangeStart = addMonths(monthStart, -(months - 1))
+  const range = resolveDashboardPeriod(payload, now)
   const session = authorization.session
   const capabilities = getCapabilities(session)
 
@@ -687,11 +801,10 @@ export const getDashboardData = async (payload = {}) => {
         : noRecords
 
     const [finance, pipeline, operations, workforce, urgent, personal] = await Promise.all([
-      capabilities.finance ? loadFinanceAnalytics({ rangeStart, months, locale }) : null,
+      capabilities.finance ? loadFinanceAnalytics({ range, locale }) : null,
       capabilities.pipeline
         ? loadPipelineAnalytics({
-            rangeStart,
-            months,
+            range,
             locale,
             today,
             canViewLeads: capabilities.crm,
@@ -701,23 +814,27 @@ export const getDashboardData = async (payload = {}) => {
       capabilities.projects
         ? loadOperationsAnalytics({
             projectWhere,
-            rangeStart,
-            months,
+            range,
             locale,
-            today,
             canViewAttendance: capabilities.hrm || capabilities.isProjectManager
           })
         : null,
-      capabilities.hrm ? loadWorkforceSnapshot(today) : null,
+      capabilities.hrm ? loadWorkforceSnapshot({ range, locale }) : null,
       loadUrgentActions({ capabilities, today, staffId: staff?.id }),
-      capabilities.staffOnly ? loadPersonalSnapshot({ staffId: staff?.id, today, monthStart }) : null
+      capabilities.staffOnly ? loadPersonalSnapshot({ staffId: staff?.id, today, range }) : null
     ])
 
     const data = {
       success: true,
       data: {
         locale,
-        period: months,
+        period: {
+          key: range.key,
+          startDate: range.startDate,
+          endDate: range.endDate,
+          previousStartDate: range.previousStartDate,
+          previousEndDate: range.previousEndDate
+        },
         generatedAt: now.toISOString(),
         company: { name: setup.company_name, currency: 'AFN' },
         user: {

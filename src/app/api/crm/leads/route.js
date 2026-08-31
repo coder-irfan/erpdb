@@ -3,6 +3,7 @@ import sanitizeHtml from 'sanitize-html'
 import { safeParse } from 'valibot'
 
 import { authorizeAction } from '@/libs/actionAuthorization'
+import { SYSTEM_STATUS_VALUES } from '@/data/systemStatuses'
 import { getCompanySetupRecord } from '@/libs/companySetup'
 import {
   CRM_READ_PERMISSIONS,
@@ -18,6 +19,7 @@ import { SYSTEM_BASE_CURRENCY, convertToBaseCurrency, toFiniteNumber } from '@/u
 import { getDictionary } from '@/utils/getDictionary'
 
 const MAX_PAGE_SIZE = 200
+const LEAD_STATUS_VALUES = SYSTEM_STATUS_VALUES.LEAD_STATUS
 const localeFrom = value => (['en', 'fa', 'ps'].includes(value) ? value : 'en')
 const errorResponse = (error, status, code) => Response.json({ success: false, error, code }, { status })
 
@@ -85,7 +87,7 @@ export async function GET(request) {
           status: { select: { value: true } }
         }
       }),
-      prisma.option.findMany({ where: { category: 'LEAD_STATUS', is_active: true }, select: { id: true, label: true, value: true, color_code: true }, orderBy: { sort_order: 'asc' } }),
+      prisma.option.findMany({ where: { category: 'LEAD_STATUS', value: { in: LEAD_STATUS_VALUES }, is_active: true }, select: { id: true, label: true, value: true, color_code: true }, orderBy: { sort_order: 'asc' } }),
       prisma.option.findMany({ where: { category: 'LEAD_SOURCE', is_active: true }, select: { id: true, label: true, value: true, color_code: true }, orderBy: { sort_order: 'asc' } }),
       prisma.hrmstaff.findMany({ where: { status: 'ACTIVE' }, select: { id: true, first_name: true, last_name: true, position: true }, orderBy: [{ first_name: 'asc' }, { last_name: 'asc' }] })
     ])
@@ -149,7 +151,7 @@ export async function POST(request) {
 
     const [source, status, assignedStaff, currentStaffId, setup] = await Promise.all([
       prisma.option.findFirst({ where: { id: values.source_id, category: 'LEAD_SOURCE', is_active: true }, select: { id: true } }),
-      prisma.option.findFirst({ where: { id: values.status_id, category: 'LEAD_STATUS', is_active: true }, select: { id: true } }),
+      prisma.option.findFirst({ where: { id: values.status_id, category: 'LEAD_STATUS', value: { in: LEAD_STATUS_VALUES }, is_active: true }, select: { id: true } }),
       values.assigned_to_id ? prisma.hrmstaff.findFirst({ where: { id: values.assigned_to_id, status: 'ACTIVE' }, select: { id: true } }) : null,
       getCurrentStaffId(authorization.session.user.id),
       getCompanySetupRecord()

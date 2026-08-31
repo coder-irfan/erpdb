@@ -1,7 +1,5 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-
 import Alert from '@mui/material/Alert'
 import Button from '@mui/material/Button'
 import Dialog from '@mui/material/Dialog'
@@ -10,33 +8,19 @@ import DialogTitle from '@mui/material/DialogTitle'
 import IconButton from '@mui/material/IconButton'
 import Typography from '@mui/material/Typography'
 
-import { getFinanceSalaryDetail } from '@/actions/financeSalary'
 import DetailSkeleton from '@/components/dialogs/DetailSkeleton'
+import useFinanceSalaryDetail from '@/hooks/useFinanceSalaryDetail'
 
 import SalaryPayslipPrintDocument from './SalaryPayslipPrintDocument'
 
 const FinanceSalaryPayslipModal = ({ open, salaryId, locale, dictionary, refreshKey, onClose }) => {
-  const [data, setData] = useState(null)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-
-  useEffect(() => {
-    if (!open || !salaryId) return
-    let active = true
-
-    setLoading(true)
-    setError('')
-    getFinanceSalaryDetail(salaryId, { locale }).then(result => {
-      if (!active) return
-      if (result.success) setData(result.data)
-      else setError(result.error || dictionary.messages.detailLoadFailed)
-      setLoading(false)
-    })
-
-    return () => {
-      active = false
-    }
-  }, [dictionary.messages.detailLoadFailed, locale, open, refreshKey, salaryId])
+  const { data, loading, error } = useFinanceSalaryDetail({
+    open,
+    salaryId,
+    locale,
+    refreshKey,
+    fallbackError: dictionary.messages.detailLoadFailed
+  })
 
   const salary = data?.salary
   const company = data?.company
@@ -45,7 +29,7 @@ const FinanceSalaryPayslipModal = ({ open, salaryId, locale, dictionary, refresh
     <Dialog open={open} onClose={onClose} fullWidth maxWidth='md'>
       <DialogTitle className='finance-payslip-toolbar flex items-center justify-between gap-4'>
         <div>
-          <Typography variant='h5'>{dictionary.payslip.title}</Typography>
+          <Typography variant='h5'>{dictionary.actions.print}</Typography>
           <Typography color='text.secondary'>{salary?.staff?.full_name || dictionary.common.notAvailable}</Typography>
         </div>
         <div className='flex items-center gap-2'>

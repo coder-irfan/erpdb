@@ -85,8 +85,18 @@ const ApexChartWrapper = styled(Box)(({ theme }) => ({
     },
     '& .apexcharts-text, & .apexcharts-tooltip-text, & .apexcharts-datalabel-label, & .apexcharts-datalabel, & .apexcharts-xaxistooltip-text, & .apexcharts-yaxistooltip-text, & .apexcharts-legend-text':
       {
-        fontFamily: `${theme.typography.fontFamily} !important`
+        fontFamily: `${theme.typography.fontFamily} !important`,
+        color: 'var(--mui-palette-text-secondary) !important'
       },
+    '& .apexcharts-xaxis-label, & .apexcharts-yaxis-label, & .apexcharts-legend-text': {
+      fill: 'var(--mui-palette-text-secondary) !important'
+    },
+    '& .apexcharts-datalabel-label, & .apexcharts-datalabel-value': {
+      fill: 'var(--mui-palette-text-primary) !important'
+    },
+    '& .apexcharts-toolbar svg': {
+      fill: 'var(--mui-palette-text-secondary)'
+    },
     '& .apexcharts-pie-label': {
       filter: 'none'
     },

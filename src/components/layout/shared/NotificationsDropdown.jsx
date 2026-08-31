@@ -96,6 +96,12 @@ const NotificationDropdown = ({ dictionary: providedDictionary }) => {
     if (notification.actionUrl) router.push(getLocalizedUrl(notification.actionUrl, locale))
   }
 
+  const viewAllNotifications = async () => {
+    await markAllRead()
+    setOpen(false)
+    router.push(getLocalizedUrl('/notifications', locale))
+  }
+
   return (
     <>
       <IconButton
@@ -172,7 +178,7 @@ const NotificationDropdown = ({ dictionary: providedDictionary }) => {
                       )
                     })}
                   </ScrollWrapper>
-                  {unreadCount > 0 && <><Divider /><div className='p-3'><Button fullWidth size='small' variant='tonal' onClick={markAllRead}>{dictionary.markAllRead}</Button></div></>}
+                  {notifications.length > 0 && <><Divider /><div className='p-3'><Button fullWidth size='small' variant='tonal' onClick={viewAllNotifications}>{dictionary.viewAll}</Button></div></>}
                 </div>
               </ClickAwayListener>
             </Paper>

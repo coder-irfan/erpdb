@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic'
 const DashboardPage = async ({ params }) => {
   const routeParams = await params
   const locale = i18n.locales.includes(routeParams.lang) ? routeParams.lang : i18n.defaultLocale
-  const result = await getDashboardData({ locale, months: 12 })
+  const result = await getDashboardData({ locale, period: 'THIS_MONTH' })
 
   if (!result.success) throw new Error(result.error)
 

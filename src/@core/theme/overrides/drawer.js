@@ -12,6 +12,7 @@ const drawer = skin => ({
       paper: ({ theme }) => ({
         display: 'flex',
         flexDirection: 'column',
+        border: '1px solid var(--mui-palette-divider)',
         maxHeight: '100dvh',
         overflow: 'hidden',
         ...(skin !== 'bordered' && {

@@ -14,6 +14,7 @@ import Dialog from '@mui/material/Dialog'
 import DialogContent from '@mui/material/DialogContent'
 import DialogTitle from '@mui/material/DialogTitle'
 import IconButton from '@mui/material/IconButton'
+import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
 import { toast } from 'sonner'
 
@@ -248,9 +249,11 @@ const ContractPolicyTable = ({ initialResult, initialError, canCreate, canUpdate
                         </Typography>
                       </td>
                       <td>
-                        <Typography color='text.secondary' className='max-is-[440px] truncate' title={description}>
-                          {description || dictionary.common.noDescription}
-                        </Typography>
+                        <Tooltip title={description || dictionary.common.noDescription}>
+                          <Typography color='text.secondary' className='max-is-[440px] truncate'>
+                            {description || dictionary.common.noDescription}
+                          </Typography>
+                        </Tooltip>
                       </td>
                       <td>
                         <Chip

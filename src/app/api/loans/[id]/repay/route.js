@@ -1,1 +1,1 @@
-export { POST } from '@/app/api/finance/loans/[id]/repay/route'
+export { PATCH } from '@/app/api/finance/loans/[id]/repay/route'

@@ -7,6 +7,7 @@ const dialog = skin => ({
       paper: ({ theme }) => ({
         display: 'flex',
         flexDirection: 'column',
+        border: '1px solid var(--mui-palette-divider)',
         borderRadius: 'var(--mui-shape-customBorderRadius-lg)',
         overflow: 'hidden',
         ...(skin !== 'bordered'
@@ -17,7 +18,7 @@ const dialog = skin => ({
               boxShadow: 'none'
             }),
         [theme.breakpoints.down('sm')]: {
-          '&.MuiDialog-paperFullWidth': {
+          '&.MuiDialog-paperFullWidth:not(.confirmation-dialog)': {
             width: '100%',
             maxWidth: 'none',
             height: '100dvh',
@@ -41,6 +42,15 @@ const dialog = skin => ({
               color: 'var(--mui-palette-error-main)',
               backgroundColor: 'var(--mui-palette-error-lighterOpacity)'
             }
+          },
+          '&.confirmation-dialog': {
+            width: 'calc(100% - 32px)',
+            maxWidth: 444,
+            height: 'auto',
+            maxHeight: 'calc(100dvh - 32px)',
+            minHeight: 0,
+            margin: theme.spacing(2),
+            borderRadius: 'var(--mui-shape-customBorderRadius-lg)'
           }
         }
       }),

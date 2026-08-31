@@ -6,19 +6,29 @@ import DialogContent from '@mui/material/DialogContent'
 import Typography from '@mui/material/Typography'
 
 import LoadingButtonContent from '@/components/LoadingButtonContent'
+import { getSharedDictionary } from '@/data/dictionaries/shared'
 
 const ConfirmationComponent = ({
   open,
   title,
   message,
-  confirmText = 'Confirm',
-  cancelText = 'Cancel',
+  confirmText,
+  cancelText,
+  locale = 'en',
   loading = false,
   color = 'primary',
   onConfirm,
   onClose
-}) => (
-  <Dialog open={open} onClose={loading ? undefined : onClose} fullWidth maxWidth='xs'>
+}) => {
+  const shared = getSharedDictionary(locale)
+
+  return <Dialog
+    open={open}
+    onClose={loading ? undefined : onClose}
+    fullWidth
+    maxWidth='xs'
+    PaperProps={{ className: 'confirmation-dialog' }}
+  >
     <DialogContent className='flex flex-col items-center px-5 pb-6 pt-7 text-center sm:px-8 sm:pb-8'>
       <div className='mb-4 flex size-14 items-center justify-center rounded-full bg-warningLighter text-warning'>
         <i className='tabler-alert-triangle text-3xl' />
@@ -26,13 +36,13 @@ const ConfirmationComponent = ({
       <Typography variant='h5' className='font-semibold'>{title}</Typography>
       <Typography color='text.secondary' className='mt-2 max-is-[380px] leading-relaxed'>{message}</Typography>
       <div className='mt-6 grid w-full grid-cols-2 gap-3'>
-        <Button variant='tonal' color='secondary' onClick={onClose} disabled={loading}>{cancelText}</Button>
+        <Button variant='tonal' color='secondary' onClick={onClose} disabled={loading}>{cancelText || shared.actions.cancel}</Button>
         <Button variant='contained' color={color} onClick={onConfirm} disabled={loading} autoFocus>
-          <LoadingButtonContent loading={loading} loadingLabel={confirmText}>{confirmText}</LoadingButtonContent>
+          <LoadingButtonContent loading={loading} loadingLabel={confirmText || shared.actions.confirm}>{confirmText || shared.actions.confirm}</LoadingButtonContent>
         </Button>
       </div>
     </DialogContent>
   </Dialog>
-)
+}
 
 export default ConfirmationComponent

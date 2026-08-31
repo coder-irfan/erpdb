@@ -73,11 +73,11 @@ const rowCategory = (tab, row) => {
 }
 
 const FinanceReportsView = ({ locale, dictionary, setup, generatedAt }) => {
-  const initialRange = getPresetRange('this_month')
+  const initialRange = getPresetRange('this_year')
   const initialCurrency = 'AFN'
   const initialRate = String(toFiniteNumber(setup.usd_afn_exchange_rate) || 65)
   const [reportType, setReportType] = useState('income')
-  const [datePreset, setDatePreset] = useState('this_month')
+  const [datePreset, setDatePreset] = useState('this_year')
   const [startDate, setStartDate] = useState(initialRange.start)
   const [endDate, setEndDate] = useState(initialRange.end)
   const [displayCurrency, setDisplayCurrency] = useState(initialCurrency)
@@ -206,7 +206,7 @@ const FinanceReportsView = ({ locale, dictionary, setup, generatedAt }) => {
 
   const activeFilterCount =
     Number(Boolean(search.trim())) +
-    Number(datePreset !== 'this_month') +
+    Number(datePreset !== 'this_year') +
     Number(Boolean(category)) +
     Number(displayCurrency !== initialCurrency)
 

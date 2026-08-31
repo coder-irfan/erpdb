@@ -55,7 +55,7 @@ const ListPanelSkeleton = () => (
   </DashboardPanelSkeleton>
 )
 
-const DashboardSkeleton = ({ label = 'Loading dashboard' }) => (
+const DashboardSkeleton = ({ label = 'Loading dashboard', showCustomRange = false }) => (
   <div className='flex flex-col gap-5' aria-busy='true' aria-live='polite' aria-label={label}>
     <header className='flex flex-wrap items-center justify-between gap-4'>
       <div className='flex min-is-0 items-center gap-3'>
@@ -65,11 +65,20 @@ const DashboardSkeleton = ({ label = 'Loading dashboard' }) => (
           <Skeleton animation={shimmer} variant='text' width={244} height={20} />
         </div>
       </div>
-      <Skeleton animation={shimmer} variant='rounded' width={132} height={32} className='rounded-lg' />
+      <div className='flex flex-wrap items-center justify-end gap-2'>
+        <Skeleton animation={shimmer} variant='rounded' width={148} height={32} className='rounded-lg' />
+        {showCustomRange && (
+          <>
+            <Skeleton animation={shimmer} variant='rounded' width={142} height={32} className='rounded-lg' />
+            <Skeleton animation={shimmer} variant='rounded' width={142} height={32} className='rounded-lg' />
+          </>
+        )}
+        <Skeleton animation={shimmer} variant='rounded' width={96} height={32} className='rounded-lg' />
+      </div>
     </header>
     <div className='no-scrollbar overflow-x-auto pb-1'>
-      <div className='grid min-is-max grid-cols-4 gap-4 lg:min-is-0'>
-        {Array.from({ length: 4 }, (_, index) => <div key={index} className='is-[260px] lg:is-auto'><KpiSkeleton /></div>)}
+      <div className='grid min-is-max grid-flow-col auto-cols-[285px] gap-4'>
+        {Array.from({ length: 5 }, (_, index) => <div key={index} className='is-[285px] shrink-0'><KpiSkeleton /></div>)}
       </div>
     </div>
     <section className='grid grid-cols-1 gap-4 xl:grid-cols-2'><DashboardPanelSkeleton /><DashboardPanelSkeleton /></section>

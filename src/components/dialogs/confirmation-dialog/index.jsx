@@ -34,7 +34,7 @@ const ConfirmationDialog = ({ open, setOpen, type }) => {
 
   return (
     <>
-      <Dialog fullWidth maxWidth='xs' open={open} onClose={() => setOpen(false)} closeAfterTransition={false}>
+      <Dialog fullWidth maxWidth='xs' open={open} onClose={() => setOpen(false)} closeAfterTransition={false} PaperProps={{ className: 'confirmation-dialog' }}>
         <DialogContent className='flex items-center flex-col text-center sm:pbs-16 sm:pbe-6 sm:pli-16'>
           <i className='tabler-alert-circle text-[88px] mbe-6 text-warning' />
           <Wrapper
@@ -83,7 +83,7 @@ const ConfirmationDialog = ({ open, setOpen, type }) => {
       </Dialog>
 
       {/* Delete Account Dialog */}
-      <Dialog open={secondDialog} onClose={handleSecondDialogClose} closeAfterTransition={false}>
+      <Dialog open={secondDialog} onClose={handleSecondDialogClose} closeAfterTransition={false} PaperProps={{ className: 'confirmation-dialog' }}>
         <DialogContent className='flex items-center flex-col text-center sm:pbs-16 sm:pbe-6 sm:pli-16'>
           <i
             className={classnames('text-[88px] mbe-6', {

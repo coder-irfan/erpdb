@@ -34,6 +34,8 @@ const getDefaultValues = (contract, statuses, baseCurrency) => ({
   currency: contract?.currency || baseCurrency,
   start_date: toInputDate(contract?.start_date) || new Date().toISOString().slice(0, 10),
   end_date: toInputDate(contract?.end_date),
+  probation_days: String(contract?.probation_days ?? 90),
+  notice_period_days: String(contract?.notice_period_days ?? 30),
   document_url: contract?.document_url || '',
   status_id: contract?.status_id || statuses.find(status => status.value === 'DRAFT')?.id || statuses[0]?.id || ''
 })
@@ -290,6 +292,26 @@ const StaffContractDrawer = ({ open, contract, options, locale, dictionary, onCl
               onEndDateChange={value => setValue('end_date', value, { shouldDirty: true, shouldValidate: true })}
             />
           </div>
+          <CustomTextField
+            fullWidth
+            required
+            type='number'
+            slotProps={{ htmlInput: { min: 0, step: 1 } }}
+            label={dictionary.fields.probationDays}
+            error={Boolean(errors.probation_days)}
+            helperText={errors.probation_days?.message}
+            {...register('probation_days')}
+          />
+          <CustomTextField
+            fullWidth
+            required
+            type='number'
+            slotProps={{ htmlInput: { min: 0, step: 1 } }}
+            label={dictionary.fields.noticePeriodDays}
+            error={Boolean(errors.notice_period_days)}
+            helperText={errors.notice_period_days?.message}
+            {...register('notice_period_days')}
+          />
         </div>
         <Controller
           name='status_id'

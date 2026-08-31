@@ -29,7 +29,6 @@ import ResponsiveDataTable from '@/components/tables/ResponsiveDataTable'
 import tableStyles from '@core/styles/table.module.css'
 
 const SECTIONS = [
-  { category: 'PAYROLL_STATUS', key: 'statuses', icon: 'tabler-progress-check' },
   { category: 'PAYROLL_PAYMENT_METHOD', key: 'paymentMethods', icon: 'tabler-credit-card' }
 ]
 

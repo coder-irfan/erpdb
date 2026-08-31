@@ -43,7 +43,16 @@ const getContext = async (payload, permissions) => {
 
   const session = authorization.session
   const globalRead = hasPermission(session, 'tasks:read') || hasPermission(session, 'tasks:write') || hasPermission(session, 'tasks:delete')
-  const staff = await prisma.hrmstaff.findUnique({ where: { user_id: session.user.id }, select: { id: true, first_name: true, last_name: true } })
+
+  const staff = await prisma.hrmstaff.findFirst({
+    where: {
+      OR: [
+        { user_id: session.user.id },
+        ...(session.user.email ? [{ email: session.user.email }] : [])
+      ]
+    },
+    select: { id: true, first_name: true, last_name: true }
+  })
 
   return { authorized: true, session, locale, translations, staffId: staff?.id || null, globalRead, canManage: hasPermission(session, 'tasks:write'), canDelete: hasPermission(session, 'tasks:delete') }
 }

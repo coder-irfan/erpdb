@@ -3,25 +3,35 @@ import { toUtcDateOnly } from '@/utils/utcDate'
 export { toUtcDateOnly } from '@/utils/utcDate'
 
 const DAY_IN_MS = 24 * 60 * 60 * 1000
+const DURATION_PATTERN = /(?<![-\d.,])(\d+(?:[.,]\d+)?)\s*(years?|yrs?|y|months?|mos?|mo|weeks?|wks?|w|days?|d)\b/i
+
+const durationSources = option => {
+  if (typeof option === 'string' || typeof option === 'number') return [option]
+  if (!option || typeof option !== 'object') return []
+
+  return [
+    option.amount && option.unit ? `${option.amount} ${option.unit}` : null,
+    option.label,
+    option.value,
+    option.description
+  ].filter(value => value !== null && value !== undefined && value !== '')
+}
 
 export const parseDurationOption = option => {
-  const source = [option?.label, option?.value, option?.description]
-    .filter(Boolean)
-    .join(' ')
-    .replaceAll('_', ' ')
-    .replaceAll('-', ' ')
-
-  const match = source.match(/(\d+(?:\.\d+)?)\s*(years?|yrs?|months?|mos?|weeks?|wks?|days?)/i)
+  const match = durationSources(option)
+    .map(source => String(source).trim().replaceAll('_', ' ').replace(/(?<=\d)-(?=[a-z])/gi, ' '))
+    .map(source => source.match(DURATION_PATTERN))
+    .find(Boolean)
 
   if (!match) return null
 
-  const amount = Number(match[1])
+  const amount = Number(match[1].replace(',', '.'))
   const unit = match[2].toLowerCase()
 
   if (!Number.isFinite(amount) || amount <= 0) return null
-  if (unit.startsWith('year') || unit.startsWith('yr')) return { amount, unit: 'YEAR' }
-  if (unit.startsWith('month') || unit.startsWith('mo')) return { amount, unit: 'MONTH' }
-  if (unit.startsWith('week') || unit.startsWith('wk')) return { amount, unit: 'WEEK' }
+  if (unit === 'y' || unit.startsWith('year') || unit.startsWith('yr')) return { amount, unit: 'YEAR' }
+  if (unit === 'mo' || unit.startsWith('month') || unit.startsWith('mos')) return { amount, unit: 'MONTH' }
+  if (unit === 'w' || unit.startsWith('week') || unit.startsWith('wk')) return { amount, unit: 'WEEK' }
 
   return { amount, unit: 'DAY' }
 }
@@ -81,7 +91,7 @@ export const calculateContractEndDate = (startDate, durationOption) => {
     result.setUTCDate(result.getUTCDate() + Math.round(days))
   }
 
-  return result
+  return Number.isNaN(result.getTime()) ? null : result
 }
 
 export const getRemainingDays = (endDate, now = new Date()) => {

@@ -7,6 +7,7 @@ import slugify from 'slugify'
 import { safeParse } from 'valibot'
 
 import { i18n } from '@/configs/i18n'
+import { getSystemStatusValues, isSystemStatusCategory } from '@/data/systemStatuses'
 import { authorizeAction } from '@/libs/actionAuthorization'
 import { prisma } from '@/libs/prisma'
 import { createOptionSchema, OPTION_CATEGORY_PATTERN } from '@/schemas/options'
@@ -42,6 +43,14 @@ const CATEGORY_PATHS = {
 const normalizeLocale = locale => (i18n.locales.includes(locale) ? locale : i18n.defaultLocale)
 const normalizeId = value => (typeof value === 'string' ? value.trim() : '')
 const isValidCategory = category => typeof category === 'string' && OPTION_CATEGORY_PATTERN.test(category)
+
+const immutableStatusError = translations => ({
+  success: false,
+  code: 'SYSTEM_STATUS_IMMUTABLE',
+  error:
+    translations.messages.systemStatusImmutable ||
+    'System workflow statuses are fixed by the application and cannot be changed from options.'
+})
 
 const getReadPermissions = category => [
   ...OPTIONS_READ_PERMISSIONS,
@@ -231,7 +240,11 @@ export const getOptionsByCategory = async (category, payload = {}) => {
 
   try {
     const options = await prisma.option.findMany({
-      where: { category, is_active: true },
+      where: {
+        category,
+        is_active: true,
+        ...(isSystemStatusCategory(category) && { value: { in: getSystemStatusValues(category) } })
+      },
       orderBy: { label: 'asc' }
     })
 
@@ -264,6 +277,7 @@ export const getOptionsListPaginated = async (payload = {}) => {
 
   const where = {
     category,
+    ...(isSystemStatusCategory(category) && { value: { in: getSystemStatusValues(category) } }),
     ...(search && {
       OR: [
         { label: { contains: search } },
@@ -320,6 +334,8 @@ export const createOption = async (payload = {}) => {
       error: validation.issues[0]?.message || context.translations.validation.invalidSubmission
     }
   }
+
+  if (isSystemStatusCategory(validation.output.category)) return immutableStatusError(context.translations)
 
   try {
     const duplicate = await prisma.option.findFirst({
@@ -398,6 +414,8 @@ export const updateOption = async (id, payload = {}) => {
     }
   }
 
+  if (isSystemStatusCategory(validation.output.category)) return immutableStatusError(context.translations)
+
   try {
     const [currentOption, duplicate] = await Promise.all([
       prisma.option.findUnique({ where: { id: optionId }, select: { id: true, category: true } }),
@@ -473,11 +491,16 @@ export const toggleOptionStatus = async (id, isActive, payload = {}) => {
   }
 
   try {
-    const currentOption = await prisma.option.findUnique({ where: { id: optionId }, select: { id: true } })
+    const currentOption = await prisma.option.findUnique({
+      where: { id: optionId },
+      select: { id: true, category: true }
+    })
 
     if (!currentOption) {
       return { success: false, code: 'OPTION_NOT_FOUND', error: context.translations.messages.notFound }
     }
+
+    if (isSystemStatusCategory(currentOption.category)) return immutableStatusError(context.translations)
 
     const option = await prisma.$transaction(async transaction => {
       const updatedOption = await transaction.option.update({ where: { id: optionId }, data: { is_active: isActive } })
@@ -525,6 +548,8 @@ export const deleteOption = async (id, payload = {}) => {
     if (!option) {
       return { success: false, code: 'OPTION_NOT_FOUND', error: context.translations.messages.notFound }
     }
+
+    if (isSystemStatusCategory(option.category)) return immutableStatusError(context.translations)
 
     const relationCount = Object.values(option._count).reduce((total, count) => total + count, 0)
 

@@ -1,7 +1,10 @@
 import { authorizeAction } from '@/libs/actionAuthorization'
+import { SYSTEM_STATUS_VALUES } from '@/data/systemStatuses'
 import { CRM_WRITE_PERMISSIONS, getCurrentStaffId } from '@/libs/crmLeads'
 import { prisma } from '@/libs/prisma'
 import { getDictionary } from '@/utils/getDictionary'
+
+const LEAD_STATUS_VALUES = SYSTEM_STATUS_VALUES.LEAD_STATUS
 
 export async function PATCH(request, context) {
   const { id } = await context.params
@@ -15,7 +18,7 @@ export async function PATCH(request, context) {
   try {
     const [lead, status, staffId] = await Promise.all([
       prisma.crmlead.findUnique({ where: { id }, select: { id: true, status_id: true, assigned_to_id: true } }),
-      prisma.option.findFirst({ where: { id: payload.status_id, category: 'LEAD_STATUS', is_active: true }, select: { id: true, label: true } }),
+      prisma.option.findFirst({ where: { id: payload.status_id, category: 'LEAD_STATUS', value: { in: LEAD_STATUS_VALUES }, is_active: true }, select: { id: true, label: true } }),
       getCurrentStaffId(authorization.session.user.id)
     ])
 

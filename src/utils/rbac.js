@@ -1,14 +1,22 @@
-const hasSuperAdminRole = session => session?.user?.roles?.includes('super_admin') === true
+const normalizeRole = role => String(role || '').trim().toLowerCase().replace(/[\s-]+/g, '_')
+
+const hasSuperAdminRole = session =>
+  (session?.user?.roles || []).some(role => normalizeRole(role) === 'super_admin')
+
 const PAYROLL_PAYOUT_ROLES = new Set(['super_admin', 'admin', 'finance_manager'])
 const ATTENDANCE_PAYROLL_OVERRIDE_ROLES = new Set(['super_admin', 'hr_admin'])
+const ADMINISTRATIVE_ROLES = new Set(['super_admin', 'administrator', 'admin'])
+
+export const hasAdministrativeRole = session =>
+  (session?.user?.roles || []).some(role => ADMINISTRATIVE_ROLES.has(normalizeRole(role)))
 
 export const hasAttendancePayrollOverrideRole = session =>
   (session?.user?.roles || []).some(role =>
-    ATTENDANCE_PAYROLL_OVERRIDE_ROLES.has(String(role).trim().toLowerCase().replace(/[\s-]+/g, '_'))
+    ATTENDANCE_PAYROLL_OVERRIDE_ROLES.has(normalizeRole(role))
   )
 
 export const hasPayrollPayoutRole = session =>
-  (session?.user?.roles || []).some(role => PAYROLL_PAYOUT_ROLES.has(String(role).toLowerCase()))
+  (session?.user?.roles || []).some(role => PAYROLL_PAYOUT_ROLES.has(normalizeRole(role)))
 
 const permissionAliases = {
   'finance_salary:read': ['hrm_payroll:read'],

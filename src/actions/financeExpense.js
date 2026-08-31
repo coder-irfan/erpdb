@@ -15,6 +15,7 @@ import { prisma } from '@/libs/prisma'
 import { createFinanceExpenseSchema } from '@/schemas/financeExpense'
 import { toUtcDateOnly } from '@/utils/contractDuration'
 import { SYSTEM_BASE_CURRENCY, convertToBaseCurrency, effectiveAfnExchangeRate, normalizeToAfn, toFiniteNumber } from '@/utils/formatCurrency'
+import { hasAdministrativeRole, hasAnyPermission } from '@/utils/rbac'
 
 const READ_PERMISSIONS = ['finance:read', 'finance_expense:read']
 const WRITE_PERMISSIONS = ['finance:write', 'finance_expense:write']
@@ -466,18 +467,43 @@ const getActiveStaffForUser = userId => prisma.hrmstaff.findFirst({
   select: { id: true }
 })
 
-const canApproveExpenseScope = (session, expense, staffId) => {
-  const roles = new Set((session.user.roles || []).map(role => String(role).toLowerCase()))
+const normalizeRole = role => String(role || '').trim().toLowerCase().replace(/[\s-]+/g, '_')
 
-  if (['super_admin', 'admin', 'finance_manager'].some(role => roles.has(role))) return true
+const hasOrganizationApprovalAccess = session => {
+  const roles = new Set((session?.user?.roles || []).map(normalizeRole))
+  const permissions = new Set(session?.user?.permissions || [])
+
+  return (
+    hasAdministrativeRole(session) ||
+    roles.has('finance_manager') ||
+    ['setup:manage', 'settings:manage', 'settings_roles:manage'].some(permission => permissions.has(permission))
+  )
+}
+
+const canApproveExpenseScope = (session, expense, staffId) => {
+  if (hasOrganizationApprovalAccess(session)) return true
+
+  const roles = new Set((session?.user?.roles || []).map(normalizeRole))
 
   return roles.has('project_manager') && Boolean(
     expense.project_id && staffId && expense.project?.project_manager_id === staffId
   )
 }
 
+const getExpenseApprovalContext = async payload => {
+  const context = await getContext(payload, [])
+
+  if (!context.authorized) return context
+
+  if (hasOrganizationApprovalAccess(context.session) || hasAnyPermission(context.session, APPROVE_PERMISSIONS)) {
+    return context
+  }
+
+  return { ...context, authorized: false, code: 'FORBIDDEN', error: context.translations.messages.forbidden }
+}
+
 export const approveFinanceExpense = async (id, payload = {}) => {
-  const context = await getContext(payload, APPROVE_PERMISSIONS)
+  const context = await getExpenseApprovalContext(payload)
 
   if (!context.authorized) return { success: false, code: context.code, error: context.error }
   const expenseId = normalizeId(id)
@@ -498,7 +524,7 @@ export const approveFinanceExpense = async (id, payload = {}) => {
 
     if (!expense) return { success: false, code: 'NOT_FOUND', error: context.translations.messages.notFound }
 
-    if (!staff || !canApproveExpenseScope(context.session, expense, staff.id)) {
+    if (!canApproveExpenseScope(context.session, expense, staff?.id)) {
       return { success: false, code: 'FORBIDDEN', error: context.translations.messages.approvalForbidden }
     }
 
@@ -511,14 +537,19 @@ export const approveFinanceExpense = async (id, payload = {}) => {
     await prisma.$transaction([
       prisma.financeexpense.update({
         where: { id: expense.id },
-        data: { approval_status: 'APPROVED', approved_by_id: staff.id, approved_at: approvedAt, rejection_reason: null }
+        data: { approval_status: 'APPROVED', approved_by_id: staff?.id || null, approved_at: approvedAt, rejection_reason: null }
       }),
       prisma.auditlog.create({
         data: {
           user_id: context.session.user.id,
           action: 'FINANCE_EXPENSE_APPROVED',
           module: 'FINANCE',
-          details: { expenseId: expense.id, approvedByStaffId: staff.id, approvedAt: approvedAt.toISOString() }
+          details: {
+            expenseId: expense.id,
+            approvedByStaffId: staff?.id || null,
+            approvedByUserId: context.session.user.id,
+            approvedAt: approvedAt.toISOString()
+          }
         }
       })
     ])
@@ -532,7 +563,7 @@ export const approveFinanceExpense = async (id, payload = {}) => {
 }
 
 export const rejectFinanceExpense = async (id, payload = {}) => {
-  const context = await getContext(payload, APPROVE_PERMISSIONS)
+  const context = await getExpenseApprovalContext(payload)
 
   if (!context.authorized) return { success: false, code: context.code, error: context.error }
   const expenseId = normalizeId(id)
@@ -554,7 +585,7 @@ export const rejectFinanceExpense = async (id, payload = {}) => {
 
     if (!expense) return { success: false, code: 'NOT_FOUND', error: context.translations.messages.notFound }
 
-    if (!staff || !canApproveExpenseScope(context.session, expense, staff.id)) {
+    if (!canApproveExpenseScope(context.session, expense, staff?.id)) {
       return { success: false, code: 'FORBIDDEN', error: context.translations.messages.approvalForbidden }
     }
 
@@ -565,14 +596,19 @@ export const rejectFinanceExpense = async (id, payload = {}) => {
     await prisma.$transaction([
       prisma.financeexpense.update({
         where: { id: expense.id },
-        data: { approval_status: 'REJECTED', rejection_reason: reason || null, approved_by_id: staff.id, approved_at: new Date() }
+        data: { approval_status: 'REJECTED', rejection_reason: reason || null, approved_by_id: staff?.id || null, approved_at: new Date() }
       }),
       prisma.auditlog.create({
         data: {
           user_id: context.session.user.id,
           action: 'FINANCE_EXPENSE_REJECTED',
           module: 'FINANCE',
-          details: { expenseId: expense.id, rejectedByStaffId: staff.id, reason: reason || null }
+          details: {
+            expenseId: expense.id,
+            rejectedByStaffId: staff?.id || null,
+            rejectedByUserId: context.session.user.id,
+            reason: reason || null
+          }
         }
       })
     ])

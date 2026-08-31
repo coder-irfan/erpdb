@@ -2,22 +2,34 @@ const translations = {
   en: {
     title: 'Dashboard overview',
     subtitle: 'Welcome back, {name}. Here is the latest operational picture.',
-    period: { label: 'Reporting period', six: 'Last 6 months', twelve: 'Last 12 months' },
+    period: {
+      label: 'Reporting period',
+      THIS_MONTH: 'This Month',
+      LAST_MONTH: 'Last Month',
+      THIS_QUARTER: 'This Quarter',
+      THIS_YEAR: 'This Year',
+      ALL_TIME: 'All Time',
+      CUSTOM: 'Custom Range',
+      startDate: 'Start date',
+      endDate: 'End date'
+    },
     kpis: {
       netProfit: 'Net profit / cash flow',
       netProfitHint: 'Income minus expenses and payroll',
       revenue: 'Total revenue / income',
       revenueHint: '{amount} still outstanding',
+      expenses: 'Expenses',
+      expensesHint: 'Operating expenses and payroll',
       pipeline: 'Active pipeline value',
       pipelineHint: '{count} active leads and contracts',
       operations: 'Active work & operations',
-      operationsHint: '{checked} workforce check-ins today',
+      operationsHint: '{checked} workforce check-ins in this period',
       workforce: 'Workforce attendance',
       workforceHint: '{rate}% of active staff checked in'
     },
     cashFlow: {
-      title: 'Monthly cash flow trend',
-      subtitle: 'Income compared with operating expenses and payroll',
+      title: 'Cash flow trend',
+      subtitle: 'Income compared with operating expenses and payroll for the selected period',
       income: 'Total income',
       expenses: 'Expenses & salaries'
     },
@@ -67,6 +79,7 @@ const translations = {
       needsAttention: 'Assignments needing attention',
       hours: 'Logged hours',
       thisMonth: 'Your total for this month',
+      selectedPeriod: 'Your total for the selected period',
       loan: 'Loan balance',
       loanHint: '{count} active loans',
       noStaff: 'Your user account is not connected to a staff profile.'
@@ -83,22 +96,34 @@ const translations = {
   fa: {
     title: 'نمای کلی دشبورد',
     subtitle: 'خوش آمدید، {name}. آخرین وضعیت عملیاتی دشبورد را ببینید.',
-    period: { label: 'دوره گزارش', six: '۶ ماه گذشته', twelve: '۱۲ ماه گذشته' },
+    period: {
+      label: 'دوره گزارش',
+      THIS_MONTH: 'این ماه',
+      LAST_MONTH: 'ماه گذشته',
+      THIS_QUARTER: 'این ربع',
+      THIS_YEAR: 'امسال',
+      ALL_TIME: 'تمام زمان',
+      CUSTOM: 'محدوده دلخواه',
+      startDate: 'تاریخ شروع',
+      endDate: 'تاریخ پایان'
+    },
     kpis: {
       netProfit: 'سود خالص / جریان نقدی',
       netProfitHint: 'درآمد منهای مصارف و معاشات',
       revenue: 'مجموع درآمد',
       revenueHint: '{amount} هنوز قابل دریافت است',
+      expenses: 'مصارف',
+      expensesHint: 'مصارف عملیاتی و معاشات',
       pipeline: 'ارزش پایپ‌لاین فعال',
       pipelineHint: '{count} سرنخ و قرارداد فعال',
       operations: 'کار و عملیات فعال',
-      operationsHint: '{checked} حضور ثبت‌شده امروز',
+      operationsHint: '{checked} حضور ثبت‌شده در این دوره',
       workforce: 'حضور نیروی کار',
       workforceHint: '{rate}% کارمندان فعال حاضر شده‌اند'
     },
     cashFlow: {
-      title: 'روند ماهانه جریان نقدی',
-      subtitle: 'مقایسه درآمد با مصارف عملیاتی و معاشات',
+      title: 'روند جریان نقدی',
+      subtitle: 'مقایسه درآمد با مصارف عملیاتی و معاشات در دوره انتخاب‌شده',
       income: 'مجموع درآمد',
       expenses: 'مصارف و معاشات'
     },
@@ -148,6 +173,7 @@ const translations = {
       needsAttention: 'وظایف نیازمند توجه',
       hours: 'ساعات ثبت‌شده',
       thisMonth: 'مجموع شما در این ماه',
+      selectedPeriod: 'مجموع شما در دوره انتخاب‌شده',
       loan: 'باقی‌مانده قرضه',
       loanHint: '{count} قرضه فعال',
       noStaff: 'حساب کاربری شما به پروفایل کارمند وصل نیست.'
@@ -157,22 +183,34 @@ const translations = {
   ps: {
     title: 'د ادارې عمومي لید',
     subtitle: 'ښه راغلاست، {name}. د ادارې وروستی عملیاتي حالت وګورئ.',
-    period: { label: 'د راپور موده', six: 'وروستۍ ۶ میاشتې', twelve: 'وروستۍ ۱۲ میاشتې' },
+    period: {
+      label: 'د راپور موده',
+      THIS_MONTH: 'دا میاشت',
+      LAST_MONTH: 'تېره میاشت',
+      THIS_QUARTER: 'دا ربع',
+      THIS_YEAR: 'دا کال',
+      ALL_TIME: 'ټول وخت',
+      CUSTOM: 'ځانګړې موده',
+      startDate: 'د پیل نېټه',
+      endDate: 'د پای نېټه'
+    },
     kpis: {
       netProfit: 'خالصه ګټه / نغدي جریان',
       netProfitHint: 'عاید منفي لګښتونه او معاشونه',
       revenue: 'ټول عاید',
       revenueHint: '{amount} لا پاتې دی',
+      expenses: 'لګښتونه',
+      expensesHint: 'عملیاتي لګښتونه او معاشونه',
       pipeline: 'د فعال پایپ‌لاین ارزښت',
       pipelineHint: '{count} فعال لیډونه او قراردادونه',
       operations: 'فعال کار او عملیات',
-      operationsHint: 'نن {checked} حاضري ثبت شوې',
+      operationsHint: '{checked} د دې مودې حاضري',
       workforce: 'د کارکوونکو حاضري',
       workforceHint: '{rate}% فعال کارکوونکي حاضر دي'
     },
     cashFlow: {
-      title: 'میاشتنی نغدي جریان',
-      subtitle: 'عاید د عملیاتي لګښتونو او معاشونو په پرتله',
+      title: 'د نغدي جریان بهیر',
+      subtitle: 'د ټاکل شوې مودې عاید، عملیاتي لګښتونه او معاشونه',
       income: 'ټول عاید',
       expenses: 'لګښتونه او معاشونه'
     },
@@ -222,6 +260,7 @@ const translations = {
       needsAttention: 'پاملرنې ته اړتیا لرونکې دندې',
       hours: 'ثبت شوي ساعتونه',
       thisMonth: 'ستاسو د دې میاشتې مجموعه',
+      selectedPeriod: 'ستاسو د ټاکل شوې مودې مجموعه',
       loan: 'د پور بیلانس',
       loanHint: '{count} فعال پورونه',
       noStaff: 'ستاسو حساب د کارکوونکي له پروفایل سره نه دی تړلی.'

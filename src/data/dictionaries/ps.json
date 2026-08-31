@@ -614,6 +614,8 @@
       "currency": "اسعار",
       "startDate": "د پیل نېټه",
       "endDate": "د پای نېټه",
+      "probationDays": "د آزمایښتي مودې ورځې",
+      "noticePeriodDays": "د مخکینۍ خبرتیا ورځې",
       "status": "حالت",
       "email": "برېښنالیک",
       "phone": "ټیلیفون",
@@ -2520,6 +2522,10 @@
       "addTitle": "قرارداد جوړ کړئ",
       "editTitle": "قرارداد سم کړئ",
       "description": "د پېرودونکي هوکړه، موده، ارزښت او مسئول اداره کړئ.",
+      "moduleDescription": "د قرارداد جزئیات او د کار شرایط د ټاکل شوې برخې له مخې تنظیمېږي.",
+      "generalSection": "د قرارداد معلومات",
+      "termsSection": "شرایط او خواوې",
+      "financialSection": "مالي شرایط",
       "endDateHelp": "له ټاکل شوې مودې څخه په اوتومات ډول محاسبه کېږي.",
       "selectDurationHelp": "لومړی د پیل نېټه او موده وټاکئ."
     },
@@ -2531,6 +2537,13 @@
       "amount": "اندازه",
       "currency": "اسعار",
       "exchangeRate": "د USD/AFN تبادلې نرخ",
+      "staffMember": "کارکوونکی",
+      "contractType": "د قرارداد ډول",
+      "template": "منل شوي شرایط / قالب",
+      "positionTitle": "د دندې عنوان",
+      "baseSalary": "اساسي معاش",
+      "probationDays": "د آزمایښتي مودې ورځې",
+      "noticePeriodDays": "د مخکینۍ خبرتیا ورځې",
       "startDate": "د پیل نېټه",
       "endDate": "د پای نېټه",
       "status": "حالت",
@@ -2542,6 +2555,9 @@
     },
     "placeholders": {
       "client": "پېرودونکی ولټوئ او وټاکئ",
+      "staffMember": "کارکوونکی وټاکئ",
+      "contractType": "د بشري سرچینو قرارداد ډول وټاکئ",
+      "template": "د هوکړې قالب وټاکئ",
       "serviceType": "د خدمت ډول وټاکئ",
       "duration": "موده وټاکئ",
       "status": "حالت وټاکئ",
@@ -3027,8 +3043,8 @@
     "actions": {
       "generate": "د {month} لپاره معاش جوړول",
       "generating": "معاشونه جوړېږي...",
-      "view": "د معاش پاڼه کتل",
-      "edit": "د معاش سمون",
+      "view": "تفصیلات کتل",
+      "edit": "امتیاز زیاتول / معاش سمول",
       "markPaid": "ورکړل شوی نښه کول",
       "delete": "ریکارډ ړنګول",
       "cancel": "لغوه",
@@ -3296,6 +3312,25 @@
       "repaymentBlocked": "دا پور پاتې مبلغ نه لري.",
       "deleteBlocked": "هغه پور چې بېرته ورکړه لري نه شي ړنګېدای.",
       "operationFailed": "د پور کړنه بشپړه نه شوه."
+    }
+  },
+  "shared": {
+    "actions": {
+      "confirm": "تایید",
+      "cancel": "لغوه",
+      "delete": "ړنګول"
+    },
+    "delete": {
+      "title": "د ړنګولو تایید",
+      "description": "ایا ډاډه یاست چې غواړئ دا مورد ړنګ کړئ؟ دا کړنه بېرته نه راګرځي."
+    },
+    "confirmation": {
+      "status": {
+        "title": "د حالت بدلون تایید",
+        "message": "د دې ریکارډ حالت «{status}» ته بدل شي؟",
+        "confirm": "حالت بدلول",
+        "cancel": "لغوه"
+      }
     }
   },
   "systemPages": {

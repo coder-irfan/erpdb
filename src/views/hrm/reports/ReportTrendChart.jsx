@@ -12,6 +12,8 @@ const AppReactApexCharts = dynamic(() => import('@/libs/styles/AppReactApexChart
 
 const ReportTrendChart = ({ title, trend, series, categories, loading, valueFormatter, emptyLabel, className = '' }) => {
   const theme = useTheme()
+  const textSecondary = theme.palette.text.secondary
+  const divider = theme.palette.divider
   const safeCategories = Array.isArray(categories) ? categories : []
 
   const safeSeries = Array.isArray(series)
@@ -24,28 +26,40 @@ const ReportTrendChart = ({ title, trend, series, categories, loading, valueForm
   const hasChartData = safeCategories.length > 0 && safeSeries.some(item => item.data.length > 0)
 
   const options = {
-    chart: { parentHeightOffset: 0, toolbar: { show: false }, animations: { enabled: true } },
+    chart: {
+      parentHeightOffset: 0,
+      foreColor: textSecondary,
+      toolbar: { show: false },
+      animations: { enabled: true }
+    },
     colors: ['var(--mui-palette-primary-main)', 'var(--mui-palette-secondary-main)', 'var(--mui-palette-success-main)'],
     dataLabels: { enabled: false },
     stroke: { curve: 'smooth', width: 3 },
     plotOptions: { bar: { borderRadius: 6, columnWidth: '45%', borderRadiusApplication: 'end' } },
-    grid: { borderColor: 'var(--mui-palette-divider)', strokeDashArray: 5, padding: { left: 4, right: 8 } },
-    legend: { position: 'top', horizontalAlign: theme.direction === 'rtl' ? 'right' : 'left' },
+    grid: { borderColor: divider, strokeDashArray: 5, padding: { left: 4, right: 8 } },
+    legend: {
+      position: 'top',
+      horizontalAlign: theme.direction === 'rtl' ? 'right' : 'left',
+      labels: { colors: textSecondary }
+    },
     xaxis: {
       categories: safeCategories,
       reversed: theme.direction === 'rtl',
-      axisBorder: { color: 'var(--mui-palette-divider)' },
+      axisBorder: { color: divider },
       axisTicks: { show: false },
-      labels: { style: { colors: 'var(--mui-palette-text-secondary)', fontFamily: theme.typography.fontFamily } }
+      labels: { style: { colors: textSecondary, fontFamily: theme.typography.fontFamily } }
     },
     yaxis: {
       opposite: theme.direction === 'rtl',
       labels: {
         formatter: value => (valueFormatter ? valueFormatter(value) : Number(value).toLocaleString()),
-        style: { colors: 'var(--mui-palette-text-secondary)', fontFamily: theme.typography.fontFamily }
+        style: { colors: textSecondary, fontFamily: theme.typography.fontFamily }
       }
     },
-    tooltip: { y: { formatter: value => (valueFormatter ? valueFormatter(value) : Number(value).toLocaleString()) } }
+    tooltip: {
+      theme: theme.palette.mode === 'dark' ? 'dark' : 'light',
+      y: { formatter: value => (valueFormatter ? valueFormatter(value) : Number(value).toLocaleString()) }
+    }
   }
 
   return (

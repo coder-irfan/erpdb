@@ -9,6 +9,7 @@ import Checkbox from '@mui/material/Checkbox'
 import Chip from '@mui/material/Chip'
 import IconButton from '@mui/material/IconButton'
 import LinearProgress from '@mui/material/LinearProgress'
+import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
 import { useDropzone } from 'react-dropzone'
 import { toast } from 'sonner'
@@ -34,7 +35,17 @@ const SubtaskRows = ({ items, parentId = null, disabled, onToggle, onAddChild, d
       <div className='flex items-center gap-2 rounded px-1 py-1 hover:bg-actionHover'>
         <Checkbox size='small' checked={item.is_completed} disabled={disabled} onChange={() => onToggle(item.id)} />
         <Typography variant='body2' className={`grow ${item.is_completed ? 'text-textDisabled line-through' : ''}`}>{item.title}</Typography>
-        {!disabled && <IconButton size='small' title={dictionary.collaboration.addChild} onClick={() => onAddChild(item.id)}><i className='tabler-subtask' /></IconButton>}
+        {!disabled && (
+          <Tooltip title={dictionary.collaboration.addChild}>
+            <IconButton
+              size='small'
+              aria-label={dictionary.collaboration.addChild}
+              onClick={() => onAddChild(item.id)}
+            >
+              <i className='tabler-subtask' />
+            </IconButton>
+          </Tooltip>
+        )}
       </div>
       <SubtaskRows items={items} parentId={item.id} disabled={disabled} onToggle={onToggle} onAddChild={onAddChild} dictionary={dictionary} />
     </div>
@@ -199,7 +210,20 @@ const TaskCollaborationPanels = ({ task, locale, dictionary, canUpdate, onChange
               <CustomTextField fullWidth multiline minRows={2} label={dictionary.collaboration.commentPlaceholder} value={comment} onChange={event => setComment(event.target.value)} />
               {mentionMatch && mentionCandidates.length > 0 && (
                 <div className='absolute bottom-full z-10 mb-1 max-bs-48 w-full overflow-y-auto rounded border border-divider bg-paper p-1 shadow-lg'>
-                  {mentionCandidates.map(staff => <Button key={staff.id} fullWidth className='justify-start' onClick={() => addMention(staff)}>@{staff.full_name}</Button>)}
+                  {mentionCandidates.map(staff => (
+                    <Button
+                      key={staff.id}
+                      fullWidth
+                      className='justify-start'
+                      sx={{
+                        backgroundColor: 'background.paper !important',
+                        '&:hover': { backgroundColor: 'action.selected !important' }
+                      }}
+                      onClick={() => addMention(staff)}
+                    >
+                      @{staff.full_name}
+                    </Button>
+                  ))}
                 </div>
               )}
               <div className='mt-2 flex justify-end'><Button variant='contained' disabled={!comment.trim() || working} onClick={submitComment}>{dictionary.actions.comment}</Button></div>

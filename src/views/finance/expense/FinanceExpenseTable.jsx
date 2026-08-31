@@ -190,18 +190,20 @@ const FinanceExpenseTable = ({
                             </Typography>
                           </Tooltip>
                         ) : (
-                          <Chip
-                            size='small'
-                            variant='tonal'
-                            color='secondary'
-                            label={dictionary.common.generalOverhead}
-                          />
+                          <Typography variant='body2' color='text.secondary'>
+                            {dictionary.common.generalOverhead}
+                          </Typography>
                         )}
                         <div className='mt-1 flex items-center gap-2'>
                           <UserAvatar user={expense.spent_by || { name: dictionary.common.unassigned }} size={28} />
                           <Typography variant='caption' color='text.secondary' className='max-is-[150px] truncate'>
                             {expense.spent_by?.full_name || dictionary.common.unassigned}
                           </Typography>
+                          {expense.spent_by?.position && (
+                            <Typography variant='caption' color='text.secondary' className='max-is-[120px] truncate'>
+                              · {expense.spent_by.position}
+                            </Typography>
+                          )}
                         </div>
                       </div>
                     </td>

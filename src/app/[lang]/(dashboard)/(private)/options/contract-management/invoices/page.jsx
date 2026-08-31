@@ -9,7 +9,6 @@ import ContractOptionsView from '@/views/options/contracts/ContractOptionsView'
 // Keep this server-page configuration local. Importing named values from a client
 // component can be represented as a module reference during server evaluation.
 const INVOICE_OPTION_SECTIONS = [
-  { category: 'INVOICE_STATUS', key: 'invoiceStatuses', icon: 'tabler-receipt' },
   { category: 'PAYMENT_METHOD', key: 'paymentMethods', icon: 'tabler-credit-card' }
 ]
 

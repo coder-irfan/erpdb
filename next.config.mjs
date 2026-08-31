@@ -1,6 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   basePath: process.env.BASEPATH,
+  env: {
+    NEXT_PUBLIC_BASE_PATH: process.env.BASEPATH || ''
+  },
   distDir: process.env.NEXT_DIST_DIR || '.next',
   experimental: {
     serverActions: {

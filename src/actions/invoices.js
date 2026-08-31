@@ -8,6 +8,7 @@ import { Prisma } from '@prisma/client'
 import { safeParse } from 'valibot'
 
 import { i18n } from '@/configs/i18n'
+import { SYSTEM_STATUS_VALUES } from '@/data/systemStatuses'
 import { authorizeAction } from '@/libs/actionAuthorization'
 import { getCompanySetupRecord } from '@/libs/companySetup'
 import { InvoiceSettlementError, settlementTransactionOptions, syncInvoiceSettlement } from '@/libs/invoiceSettlement'
@@ -31,6 +32,7 @@ const DEFAULT_PAGE_SIZE = 10
 const MAX_PAGE_SIZE = 100
 const OUTSTANDING_STATUSES = ['UNPAID', 'PARTIALLY_PAID']
 const SYSTEM_SETTLEMENT_STATUSES = ['PAID', 'PARTIALLY_PAID']
+const INVOICE_STATUS_VALUES = SYSTEM_STATUS_VALUES.INVOICE_STATUS
 const MONEY_TOLERANCE = 0.005
 
 const normalizeLocale = locale => (i18n.locales.includes(locale) ? locale : i18n.defaultLocale)
@@ -202,7 +204,7 @@ const revalidateInvoices = () => {
 
 const getInvoiceStatuses = () =>
   prisma.option.findMany({
-    where: { category: 'INVOICE_STATUS', is_active: true },
+    where: { category: 'INVOICE_STATUS', value: { in: INVOICE_STATUS_VALUES }, is_active: true },
     select: { id: true, label: true, value: true, is_default: true, color_code: true },
     orderBy: [{ sort_order: 'asc' }, { label: 'asc' }]
   })
@@ -228,6 +230,7 @@ const prepareInvoiceData = async (values, translations, currentInvoice = null) =
       where: {
         id: values.status_id,
         category: 'INVOICE_STATUS',
+        value: { in: INVOICE_STATUS_VALUES },
         ...(currentInvoice?.status_id === values.status_id ? {} : { is_active: true })
       },
       select: { id: true, value: true }
@@ -354,7 +357,7 @@ export const getInvoices = async (payload = {}) => {
         }),
         prisma.setup.findUnique({ where: { scope: 'GLOBAL' }, select: { currency_code: true } }),
         prisma.option.findMany({
-          where: { category: 'INVOICE_STATUS', is_active: true },
+          where: { category: 'INVOICE_STATUS', value: { in: INVOICE_STATUS_VALUES }, is_active: true },
           select: { id: true, label: true, value: true, color_code: true },
           orderBy: [{ sort_order: 'asc' }, { label: 'asc' }]
         })
@@ -622,7 +625,12 @@ export const updateInvoiceStatus = async (id, statusId, payload = {}) => {
         }
       }),
       prisma.option.findFirst({
-        where: { id: nextStatusId, category: 'INVOICE_STATUS', is_active: true },
+        where: {
+          id: nextStatusId,
+          category: 'INVOICE_STATUS',
+          value: { in: INVOICE_STATUS_VALUES },
+          is_active: true
+        },
         select: { id: true, value: true }
       })
     ])

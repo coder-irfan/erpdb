@@ -37,6 +37,7 @@ const FinanceSalaryTable = ({
   onPageChange,
   onRowsPerPageChange,
   onView,
+  onPrint,
   onEdit,
   onPay,
   onDelete
@@ -45,11 +46,12 @@ const FinanceSalaryTable = ({
     <EntityActionsMenu
       moreActionsLabel={dictionary.table.actions}
       actions={[
-        { label: dictionary.actions.view, icon: 'tabler-receipt', onClick: () => onView(salary) },
+        { label: dictionary.actions.view, icon: 'tabler-eye', onClick: () => onView(salary) },
+        { label: dictionary.actions.print, icon: 'tabler-printer', onClick: () => onPrint(salary) },
         canExecutePayout &&
           salary.status === 'DRAFT' && {
             label: dictionary.actions.edit,
-            icon: 'tabler-edit',
+            icon: 'tabler-gift',
             onClick: () => onEdit(salary)
           },
         canWrite &&
@@ -198,6 +200,7 @@ const FinanceSalaryTable = ({
                     <td>
                       <div className='min-is-[160px]'>
                         <DualCurrencyAmount amount={salary.earned_salary} currency={salary.currency} exchangeRate={salary.exchange_rate} locale={locale} />
+                        {" "}
                         <Typography variant='caption' color='text.secondary' className='whitespace-nowrap'>
                           {dictionary.common.bonus.replace(
                             '{amount}',

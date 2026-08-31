@@ -9,17 +9,15 @@ import CrmLeadOptionsView from '@/views/options/crm/CrmLeadOptionsView'
 const CrmLeadOptionsPage = async props => {
   const { lang } = await props.params
 
-  const [dictionary, session, statuses, sources] = await Promise.all([
+  const [dictionary, session, sources] = await Promise.all([
     getDictionary(lang),
     getServerSession(authOptions),
-    getOptionsListPaginated({ category: 'LEAD_STATUS', page: 1, limit: 100, locale: lang }),
     getOptionsListPaginated({ category: 'LEAD_SOURCE', page: 1, limit: 100, locale: lang })
   ])
 
   return (
     <CrmLeadOptionsView
       initialData={{
-        LEAD_STATUS: statuses.success ? statuses.data.options : [],
         LEAD_SOURCE: sources.success ? sources.data.options : []
       }}
       canWrite={hasAnyPermission(session, ['options:write', 'crm:write', 'crm_lead:write'])}

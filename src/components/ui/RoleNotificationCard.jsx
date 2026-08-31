@@ -28,6 +28,8 @@ const CATEGORY_ICONS = {
   INVENTORY: 'tabler-package'
 }
 
+const VIEW_MORE = { en: 'View More', fa: 'مشاهده بیشتر', ps: 'نور کتل' }
+
 const TEXT = {
   en: { view: 'View details', dismissAll: 'Dismiss all', more: '{count} more alerts', next: 'Show next', priorities: { CRITICAL: 'Critical', URGENT: 'Urgent', WARNING: 'Warning', INFO: 'Info' } },
   fa: { view: 'مشاهده جزئیات', dismissAll: 'بستن همه', more: '{count} اعلان دیگر', next: 'نمایش بعدی', priorities: { CRITICAL: 'بحرانی', URGENT: 'عاجل', WARNING: 'هشدار', INFO: 'اطلاعات' } },
@@ -77,26 +79,35 @@ export const RoleNotificationCard = ({ notification, locale, onAction, onDismiss
 const RoleNotificationStack = () => {
   const { lang: locale = 'en' } = useParams()
   const router = useRouter()
-  const { notifications, markRead, dismiss, dismissAll } = useNotifications()
-  const [page, setPage] = useState(0)
-  const labels = TEXT[locale] || TEXT.en
+  const { notifications, markRead, dismiss, dismissAll, markAllRead } = useNotifications()
+  const [expanded, setExpanded] = useState(false)
+  const labels = { ...(TEXT[locale] || TEXT.en), next: VIEW_MORE[locale] || VIEW_MORE.en }
 
   const queued = useMemo(
     () => notifications.filter(item => item.unread && ['CRITICAL', 'URGENT', 'WARNING'].includes(item.priority)),
     [notifications]
   )
 
-  const pageCount = Math.max(1, Math.ceil(queued.length / 3))
-  const safePage = Math.min(page, pageCount - 1)
-  const visible = queued.slice(safePage * 3, safePage * 3 + 3)
+  const visible = queued.slice(0, 3)
   const hiddenCount = Math.max(0, queued.length - visible.length)
 
   if (!visible.length) return null
 
   const act = async notification => {
     await markRead(notification.id)
-    router.push(getLocalizedUrl(notification.actionUrl, locale))
+    if (notification.actionUrl) router.push(getLocalizedUrl(notification.actionUrl, locale))
   }
+
+  const viewMore = async () => {
+    await markAllRead()
+    router.push(getLocalizedUrl('/notifications', locale))
+  }
+
+  const stackDepth = [
+    { zIndex: 30, transform: 'translateY(0) scale(1)', opacity: 1 },
+    { zIndex: 20, transform: 'translateY(0.5rem) scale(0.95)', opacity: 0.8 },
+    { zIndex: 10, transform: 'translateY(1rem) scale(0.9)', opacity: 0.6 }
+  ]
 
   return (
     <aside
@@ -104,16 +115,29 @@ const RoleNotificationStack = () => {
       aria-label='Priority notifications'
     >
       <div className='pointer-events-auto flex items-center justify-end gap-2 rounded-xl border border-divider bg-backgroundPaper/95 px-3 py-2 shadow-lg backdrop-blur'>
-        {queued.length > 3 && (
-          <Button size='small' variant='text' onClick={() => setPage(current => (current + 1) % pageCount)}>
+        {queued.length > 0 && (
+          <Button size='small' variant='text' onClick={viewMore}>
             {labels.more.replace('{count}', hiddenCount)} · {labels.next}
           </Button>
         )}
         <Button size='small' color='error' variant='text' onClick={dismissAll}>{labels.dismissAll}</Button>
       </div>
-      {visible.map(notification => (
-        <RoleNotificationCard key={notification.id} notification={notification} locale={locale} onAction={act} onDismiss={dismiss} />
-      ))}
+      <div
+        className='pointer-events-auto relative w-[min(380px,calc(100vw-2rem))]'
+        style={{ height: expanded ? undefined : '232px' }}
+        onMouseEnter={() => setExpanded(true)}
+        onMouseLeave={() => setExpanded(false)}
+      >
+        {visible.map((notification, index) => (
+          <div
+            key={notification.id}
+            className={`transition-[transform,opacity] duration-300 ease-out ${expanded ? 'relative mb-3 last:mb-0' : 'absolute inset-x-0 bottom-0'}`}
+            style={expanded ? { zIndex: 30 - index, opacity: 1, transform: 'translateY(0) scale(1)' } : { ...stackDepth[index], transformOrigin: 'bottom center' }}
+          >
+            <RoleNotificationCard notification={notification} locale={locale} onAction={act} onDismiss={dismiss} />
+          </div>
+        ))}
+      </div>
     </aside>
   )
 }

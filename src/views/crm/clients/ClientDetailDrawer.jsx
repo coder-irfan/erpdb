@@ -9,6 +9,7 @@ import DialogContent from '@mui/material/DialogContent'
 import IconButton from '@mui/material/IconButton'
 import Tab from '@mui/material/Tab'
 import Tabs from '@mui/material/Tabs'
+import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
 import { toast } from 'sonner'
 
@@ -144,12 +145,16 @@ const ClientProfileModal = ({
         <div className='flex gap-1'>
           {client && canWrite && (
             <>
-              <IconButton title={dictionary.actions.activity} onClick={() => onActivity(client)}>
-                <i className='tabler-activity' />
-              </IconButton>
-              <IconButton title={dictionary.actions.edit} onClick={() => onEdit(client)}>
-                <i className='tabler-edit' />
-              </IconButton>
+              <Tooltip title={dictionary.actions.activity}>
+                <IconButton aria-label={dictionary.actions.activity} onClick={() => onActivity(client)}>
+                  <i className='tabler-activity' />
+                </IconButton>
+              </Tooltip>
+              <Tooltip title={dictionary.actions.edit}>
+                <IconButton aria-label={dictionary.actions.edit} onClick={() => onEdit(client)}>
+                  <i className='tabler-edit' />
+                </IconButton>
+              </Tooltip>
             </>
           )}
           <IconButton onClick={closeModal}>

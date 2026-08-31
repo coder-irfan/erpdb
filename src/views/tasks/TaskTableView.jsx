@@ -23,6 +23,7 @@ const TaskTableView = ({
   loading,
   page,
   rowsPerPage,
+  locale = 'en',
   dictionary,
   canManage,
   canUpdate,

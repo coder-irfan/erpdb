@@ -10,6 +10,7 @@ import Dialog from '@mui/material/Dialog'
 import DialogActions from '@mui/material/DialogActions'
 import DialogContent from '@mui/material/DialogContent'
 import DialogTitle from '@mui/material/DialogTitle'
+import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
 import { toast } from 'sonner'
 
@@ -235,9 +236,11 @@ const InventoryCategoriesView = ({ locale, dictionary, canWrite, canDelete }) =>
                     <Typography className='font-medium'>{option.label}</Typography>
                   </td>
                   <td>
-                    <Typography color='text.secondary' className='max-is-[440px] truncate' title={option.description || ''}>
+                    <Tooltip title={option.description || '—'}>
+                    <Typography color='text.secondary' className='max-is-[440px] truncate'>
                       {option.description || '—'}
                     </Typography>
+                    </Tooltip>
                   </td>
                   <td>
                     <Chip

@@ -354,7 +354,13 @@ const FinanceExpenseView = ({ locale, dictionary, canWrite, canDelete, canApprov
         onConfirm={remove}
         onClose={() => setDeleteTarget(null)}
       />
-      <Dialog open={Boolean(transitionTarget)} onClose={transitioning ? undefined : () => setTransitionTarget(null)} fullWidth maxWidth='xs'>
+      <Dialog
+        open={Boolean(transitionTarget)}
+        onClose={transitioning ? undefined : () => setTransitionTarget(null)}
+        fullWidth
+        maxWidth='xs'
+        PaperProps={{ className: 'confirmation-dialog' }}
+      >
         <DialogTitle>{dictionary.workflow[transitionType === 'APPROVE' ? 'approveTitle' : transitionType === 'REJECT' ? 'rejectTitle' : 'payTitle']}</DialogTitle>
         <DialogContent dividers>
           {transitionType === 'REJECT' && (

@@ -9,12 +9,7 @@ import MenuItem from '@mui/material/MenuItem'
 import Tooltip from '@mui/material/Tooltip'
 
 import ConfirmationComponent from '@/components/dialogs/ConfirmationComponent'
-
-const STATUS_COPY = {
-  en: { title: 'Confirm Status Change', message: status => `Change this record's status to “${status}”?`, confirm: 'Change Status', cancel: 'Cancel' },
-  fa: { title: 'تأیید تغییر وضعیت', message: status => `وضعیت این مورد به «${status}» تغییر کند؟`, confirm: 'تغییر وضعیت', cancel: 'لغو' },
-  ps: { title: 'د حالت بدلون تایید', message: status => `د دې ریکارډ حالت «${status}» ته بدل شي؟`, confirm: 'حالت بدلول', cancel: 'لغوه' }
-}
+import { getSharedDictionary } from '@/data/dictionaries/shared'
 
 const EntityActionsMenu = ({
   actions = [],
@@ -26,6 +21,7 @@ const EntityActionsMenu = ({
   changeStatusLabel = 'Change Status',
   moreActionsLabel = 'Actions'
 }) => {
+  const statusConfirmation = getSharedDictionary(locale).confirmation.status
   const menuId = useId()
   const [anchorEl, setAnchorEl] = useState(null)
   const [statusAnchorEl, setStatusAnchorEl] = useState(null)
@@ -131,10 +127,10 @@ const EntityActionsMenu = ({
       </Menu>
       <ConfirmationComponent
         open={Boolean(pendingStatus || pendingAction)}
-        title={(STATUS_COPY[locale] || STATUS_COPY.en).title}
-        message={(STATUS_COPY[locale] || STATUS_COPY.en).message(pendingStatus?.label || pendingAction?.label || '')}
-        confirmText={(STATUS_COPY[locale] || STATUS_COPY.en).confirm}
-        cancelText={(STATUS_COPY[locale] || STATUS_COPY.en).cancel}
+        title={statusConfirmation.title}
+        message={statusConfirmation.message.replace('{status}', pendingStatus?.label || pendingAction?.label || '')}
+        confirmText={statusConfirmation.confirm}
+        cancelText={statusConfirmation.cancel}
         loading={confirming}
         onClose={() => {
           setPendingStatus(null)

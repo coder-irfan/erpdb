@@ -14,6 +14,7 @@ import { toast } from 'sonner'
 
 // Server Action Imports
 import { uploadFileAction } from '@/app/actions/uploadActions'
+import { resolveUploadUrl } from '@/utils/uploadUrl'
 
 const DEFAULT_ACCEPT = {
   'image/avif': ['.avif'],
@@ -80,7 +81,7 @@ const FileUpload = ({
   const [isUploading, setIsUploading] = useState(false)
   const [localPreviewUrl, setLocalPreviewUrl] = useState(null)
   const [localPreviewMimeType, setLocalPreviewMimeType] = useState('')
-  const previewUrl = localPreviewUrl || value
+  const previewUrl = localPreviewUrl || resolveUploadUrl(value)
   const isPdfPreview = localPreviewMimeType === 'application/pdf' || /\.pdf(?:$|[?#])/i.test(previewUrl || '')
 
   useEffect(

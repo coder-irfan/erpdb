@@ -249,7 +249,7 @@ body,
 /* Opt-in responsive copy sizing for longer RTL labels and messages. */
 .locale-fa .rtl-responsive-text,
 .locale-ps .rtl-responsive-text {
-  font-size: clamp(0.875rem, 0.825rem + 0.25vw, 1rem);
+  font-size: clamp(1rem, 0.825rem + 0.25vw, 1.1rem);
   line-height: 1.75;
 }
 

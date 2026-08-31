@@ -617,6 +617,8 @@
       "currency": "Currency",
       "startDate": "Start Date",
       "endDate": "End Date",
+      "probationDays": "Probation Period (Days)",
+      "noticePeriodDays": "Notice Period (Days)",
       "status": "Status",
       "email": "Email",
       "phone": "Phone",
@@ -2525,6 +2527,10 @@
       "addTitle": "Create Contract",
       "editTitle": "Edit Contract",
       "description": "Maintain the client agreement, term, value, and owner.",
+      "moduleDescription": "Contract details and employment terms are tailored to the selected module.",
+      "generalSection": "Contract information",
+      "termsSection": "Terms and parties",
+      "financialSection": "Financial terms",
       "endDateHelp": "Calculated automatically from the selected duration.",
       "selectDurationHelp": "Select a start date and duration first."
     },
@@ -2536,6 +2542,13 @@
       "amount": "Amount",
       "currency": "Currency",
       "exchangeRate": "USD/AFN Exchange Rate",
+      "staffMember": "Staff Member",
+      "contractType": "Contract Type",
+      "template": "Agreed Terms / Template",
+      "positionTitle": "Position Title",
+      "baseSalary": "Base Salary",
+      "probationDays": "Probation Period (Days)",
+      "noticePeriodDays": "Notice Period (Days)",
       "startDate": "Start Date",
       "endDate": "End Date",
       "status": "Status",
@@ -2547,6 +2560,9 @@
     },
     "placeholders": {
       "client": "Search and select a client",
+      "staffMember": "Select staff member",
+      "contractType": "Select HR contract type",
+      "template": "Select agreement template",
       "serviceType": "Select service type",
       "duration": "Select duration",
       "status": "Select status",
@@ -3034,8 +3050,8 @@
     "actions": {
       "generate": "Generate Payroll for {month}",
       "generating": "Generating payroll...",
-      "view": "View Payslip",
-      "edit": "Edit Payroll Adjustments",
+      "view": "View Details",
+      "edit": "Add Bonus / Adjust Payroll",
       "markPaid": "Mark as Paid",
       "delete": "Delete Record",
       "cancel": "Cancel",
@@ -3306,6 +3322,25 @@
       "repaymentBlocked": "This loan has no outstanding balance.",
       "deleteBlocked": "Loans with recorded repayments cannot be deleted.",
       "operationFailed": "The loan operation could not be completed."
+    }
+  },
+  "shared": {
+    "actions": {
+      "confirm": "Confirm",
+      "cancel": "Cancel",
+      "delete": "Delete"
+    },
+    "delete": {
+      "title": "Confirm Deletion",
+      "description": "Are you sure you want to delete this item? This action cannot be undone."
+    },
+    "confirmation": {
+      "status": {
+        "title": "Confirm Status Change",
+        "message": "Change this record's status to “{status}”?",
+        "confirm": "Change Status",
+        "cancel": "Cancel"
+      }
     }
   },
   "systemPages": {

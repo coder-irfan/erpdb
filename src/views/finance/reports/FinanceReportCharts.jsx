@@ -23,6 +23,10 @@ const COLORS = [
 
 const FinanceChartCard = ({ chart, title, dictionary, locale, currency, loading }) => {
   const theme = useTheme()
+  const textPrimary = theme.palette.text.primary
+  const textSecondary = theme.palette.text.secondary
+  const divider = theme.palette.divider
+  const tooltipTheme = theme.palette.mode === 'dark' ? 'dark' : 'light'
   const isDistribution = chart?.type === 'donut'
   const labels = (chart?.labels || []).map(label => dictionary.labels?.[label] || label)
 
@@ -49,21 +53,45 @@ const FinanceChartCard = ({ chart, title, dictionary, locale, currency, loading 
 
   const options = isDistribution
     ? {
-        chart: { parentHeightOffset: 0, toolbar: { show: false }, animations: { enabled: true } },
+        chart: {
+          parentHeightOffset: 0,
+          foreColor: textSecondary,
+          toolbar: { show: false },
+          animations: { enabled: true }
+        },
         labels,
         colors: COLORS,
         stroke: { width: 0 },
-        dataLabels: { enabled: true, formatter: value => `${Math.round(value)}%` },
-        legend: { position: 'bottom', fontFamily: theme.typography.fontFamily },
-        plotOptions: {
-          pie: { donut: { size: '66%', labels: { show: true, total: { show: true, label: dictionary.total } } } }
+        dataLabels: {
+          enabled: true,
+          formatter: value => `${Math.round(value)}%`,
+          style: { colors: [textPrimary], fontFamily: theme.typography.fontFamily }
         },
-        tooltip: { y: { formatter } },
+        legend: {
+          position: 'bottom',
+          fontFamily: theme.typography.fontFamily,
+          labels: { colors: textSecondary }
+        },
+        plotOptions: {
+          pie: {
+            donut: {
+              size: '66%',
+              labels: {
+                show: true,
+                name: { color: textSecondary },
+                value: { color: textPrimary },
+                total: { show: true, label: dictionary.total, color: textSecondary }
+              }
+            }
+          }
+        },
+        tooltip: { theme: tooltipTheme, y: { formatter } },
         responsive: [{ breakpoint: 600, options: { chart: { height: 300 }, legend: { position: 'bottom' } } }]
       }
     : {
         chart: {
           parentHeightOffset: 0,
+          foreColor: textSecondary,
           stacked: Boolean(chart?.stacked),
           toolbar: {
             show: true,
@@ -83,27 +111,31 @@ const FinanceChartCard = ({ chart, title, dictionary, locale, currency, loading 
         dataLabels: { enabled: false },
         stroke: { curve: 'smooth', width: chart?.stacked ? 0 : 3 },
         plotOptions: { bar: { borderRadius: 6, columnWidth: '48%', borderRadiusApplication: 'end' } },
-        grid: { borderColor: 'var(--mui-palette-divider)', strokeDashArray: 5 },
-        legend: { position: 'top', horizontalAlign: theme.direction === 'rtl' ? 'right' : 'left' },
+        grid: { borderColor: divider, strokeDashArray: 5 },
+        legend: {
+          position: 'top',
+          horizontalAlign: theme.direction === 'rtl' ? 'right' : 'left',
+          labels: { colors: textSecondary }
+        },
         xaxis: {
           categories: chart?.categories || [],
           reversed: theme.direction === 'rtl',
-          axisBorder: { color: 'var(--mui-palette-divider)' },
+          axisBorder: { color: divider },
           axisTicks: { show: false },
           labels: {
             trim: true,
             rotate: -35,
-            style: { colors: 'var(--mui-palette-text-secondary)', fontFamily: theme.typography.fontFamily }
+            style: { colors: textSecondary, fontFamily: theme.typography.fontFamily }
           }
         },
         yaxis: {
           opposite: theme.direction === 'rtl',
           labels: {
             formatter,
-            style: { colors: 'var(--mui-palette-text-secondary)', fontFamily: theme.typography.fontFamily }
+            style: { colors: textSecondary, fontFamily: theme.typography.fontFamily }
           }
         },
-        tooltip: { y: { formatter } }
+        tooltip: { theme: tooltipTheme, y: { formatter } }
       }
 
   return (

@@ -3,6 +3,7 @@ import sanitizeHtml from 'sanitize-html'
 import { safeParse } from 'valibot'
 
 import { authorizeAction } from '@/libs/actionAuthorization'
+import { SYSTEM_STATUS_VALUES } from '@/data/systemStatuses'
 import { getCompanySetupRecord } from '@/libs/companySetup'
 import { CRM_DELETE_PERMISSIONS, CRM_WRITE_PERMISSIONS, leadInclude, normalizeLead, parseOptionalDate } from '@/libs/crmLeads'
 import { prisma } from '@/libs/prisma'
@@ -11,6 +12,7 @@ import { SYSTEM_BASE_CURRENCY, convertToBaseCurrency } from '@/utils/formatCurre
 import { getDictionary } from '@/utils/getDictionary'
 
 const localeFrom = value => (['en', 'fa', 'ps'].includes(value) ? value : 'en')
+const LEAD_STATUS_VALUES = SYSTEM_STATUS_VALUES.LEAD_STATUS
 const errorResponse = (error, status, code) => Response.json({ success: false, error, code }, { status })
 const cleanText = value => sanitizeHtml(value || '', { allowedTags: [], allowedAttributes: {} }).trim()
 
@@ -38,7 +40,7 @@ export async function PUT(request, context) {
     const [existing, source, status, assignedStaff, setup] = await Promise.all([
       prisma.crmlead.findUnique({ where: { id }, select: { id: true, currency: true, exchange_rate: true } }),
       prisma.option.findFirst({ where: { id: values.source_id, category: 'LEAD_SOURCE', is_active: true }, select: { id: true } }),
-      prisma.option.findFirst({ where: { id: values.status_id, category: 'LEAD_STATUS', is_active: true }, select: { id: true } }),
+      prisma.option.findFirst({ where: { id: values.status_id, category: 'LEAD_STATUS', value: { in: LEAD_STATUS_VALUES }, is_active: true }, select: { id: true } }),
       values.assigned_to_id ? prisma.hrmstaff.findFirst({ where: { id: values.assigned_to_id, status: 'ACTIVE' }, select: { id: true } }) : null,
       getCompanySetupRecord()
     ])
