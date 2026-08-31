@@ -38,6 +38,7 @@ const StaffPage = async props => {
       baseCurrency={setup.currency_code}
       locale={lang}
       dictionary={dictionary.hrmStaff}
+      contractDictionary={dictionary.hrmContracts}
     />
   )
 }

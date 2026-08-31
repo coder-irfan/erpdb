@@ -79,9 +79,27 @@ const FinanceLoansView = ({ locale, dictionary, canWrite }) => {
     <div className='flex flex-col gap-4'>
       <FinanceLoanStatsCards summary={data.summary} locale={locale} dictionary={dictionary} />
       <Card className='border border-divider/70 shadow-sm'>
-        <Tabs value={loanType} onChange={(_, value) => { setLoanType(value); setPage(0) }} variant='scrollable' className='border-be border-divider px-4'>
-          <Tab value='STAFF' icon={<i className='tabler-users' />} iconPosition='start' label='Staff Loans & Salary Advances' />
-          <Tab value='CORPORATE' icon={<i className='tabler-building-bank' />} iconPosition='start' label='Corporate Debt & Liabilities' />
+        <Tabs
+          value={loanType}
+          onChange={(_, value) => {
+            setLoanType(value)
+            setPage(0)
+          }}
+          variant='scrollable'
+          className='border-be border-divider px-4'
+        >
+          <Tab
+            value='STAFF'
+            icon={<i className='tabler-users' />}
+            iconPosition='start'
+            label='Staff Loans & Salary Advances'
+          />
+          <Tab
+            value='CORPORATE'
+            icon={<i className='tabler-building-bank' />}
+            iconPosition='start'
+            label='Corporate Debt & Liabilities'
+          />
         </Tabs>
         <CardContent className='flex flex-wrap items-center justify-between gap-4'>
           <CustomTextField
@@ -146,7 +164,7 @@ const FinanceLoansView = ({ locale, dictionary, canWrite }) => {
             setPage(0)
           }}
           onView={openDetail}
-          onPrint={loan => window.open(`/${locale}/finance/loans/${loan.id}/print`, '_blank', 'noopener,noreferrer')}
+          onPrint={loan => openDetail(loan, true)}
           onRepay={setRepayTarget}
         />
       </Card>

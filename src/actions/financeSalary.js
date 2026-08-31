@@ -516,7 +516,7 @@ export const generateMonthlyPayroll = async (month, payload = {}) => {
           end_date: { gte: range.start },
           status: { is: { category: 'LEAVE_STATUS', value: 'APPROVED' } }
         },
-        select: { staff_id: true, start_date: true, end_date: true, total_days: true }
+        select: { staff_id: true, start_date: true, end_date: true, total_days: true, duration_type: true }
       }),
       prisma.companyholiday.findMany({
         where: { is_active: true, date: { gte: range.start, lt: range.end } },
@@ -623,7 +623,7 @@ export const generateMonthlyPayroll = async (month, payload = {}) => {
               !presentPayableDates.has(key)
           )
 
-          paidLeaveDays += availableLeaveDates.length
+          paidLeaveDays += leave.duration_type === 'HALF_DAY' ? Math.min(0.5, availableLeaveDates.length) : availableLeaveDates.length
         }
 
         paidLeaveDays = Math.round(paidLeaveDays * 2) / 2

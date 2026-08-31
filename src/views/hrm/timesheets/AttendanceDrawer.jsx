@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 
 import Alert from '@mui/material/Alert'
+import Avatar from '@mui/material/Avatar'
 import Button from '@mui/material/Button'
 import Divider from '@mui/material/Divider'
 import Drawer from '@mui/material/Drawer'
@@ -15,7 +16,7 @@ import { toast } from 'sonner'
 
 import CustomTextField from '@core/components/mui/TextField'
 import LoadingButtonContent from '@/components/LoadingButtonContent'
-import NativeDateTimeInput from '@/components/inputs/NativeDateTimeInput'
+import TimePickerInput from '@/components/inputs/TimePickerInput'
 
 const getEntries = (attendanceStaff, defaultWorkHours) =>
   attendanceStaff.map(staff => ({
@@ -23,12 +24,20 @@ const getEntries = (attendanceStaff, defaultWorkHours) =>
     full_name: staff.full_name,
     position: staff.position,
     locked: Boolean(staff.record?.leave_request_id),
-    status: staff.record?.status || 'PRESENT',
+    status: staff.record?.status || (staff.record?.leave_request_id ? 'LEAVE' : 'PRESENT'),
     check_in_time: staff.record?.check_in_time || defaultWorkHours.start,
     check_out_time: staff.record?.check_out_time || defaultWorkHours.end,
-    notes: staff.record?.notes || '',
-    noteOpen: Boolean(staff.record?.notes)
+    notes: staff.record?.notes || ''
   }))
+
+const getInitials = name =>
+  name
+    ?.split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map(part => part[0])
+    .join('')
+    .toUpperCase() || '?'
 
 const AttendanceDrawerSkeleton = ({ rows = 4 }) => (
   <div aria-busy='true' aria-label='Loading attendance staff'>
@@ -52,15 +61,18 @@ const AttendanceDrawerSkeleton = ({ rows = 4 }) => (
     </div>
     <div className='hidden divide-y divide-divider md:block'>
       {Array.from({ length: rows }).map((_, index) => (
-        <div key={index} className='grid grid-cols-[minmax(140px,1fr)_180px_220px_96px] items-center gap-4 py-4 lg:grid-cols-[minmax(180px,1fr)_210px_270px_120px]'>
+        <div
+          key={index}
+          className='grid grid-cols-[minmax(140px,1fr)_180px_220px_36px] items-center gap-3 py-3 lg:grid-cols-[minmax(180px,1fr)_210px_240px_36px]'
+        >
           <div>
             <Skeleton variant='text' width='65%' height={26} animation='wave' />
             <Skeleton variant='text' width='40%' height={20} animation='wave' />
           </div>
           <Skeleton variant='rounded' height={32} animation='wave' />
-          <div className='grid grid-cols-2 gap-3'>
-            <Skeleton variant='rounded' height={46} animation='wave' />
-            <Skeleton variant='rounded' height={46} animation='wave' />
+          <div className='grid grid-cols-2 gap-2'>
+            <Skeleton variant='rounded' height={40} animation='wave' />
+            <Skeleton variant='rounded' height={40} animation='wave' />
           </div>
           <Skeleton variant='rounded' height={32} animation='wave' />
         </div>
@@ -109,6 +121,15 @@ const AttendanceDrawer = ({
 
   const editableEntries = entries.filter(entry => !entry.locked)
   const controlsDisabled = saving || guard.blocked
+
+  const statusSummary = useMemo(
+    () =>
+      ['PRESENT', 'ABSENT', 'LEAVE'].map(status => ({
+        status,
+        count: entries.filter(entry => entry.status === status).length
+      })),
+    [entries]
+  )
 
   const updateEntry = (staffId, changes) => {
     setEntries(current => current.map(entry => (entry.staff_id === staffId ? { ...entry, ...changes } : entry)))
@@ -180,7 +201,7 @@ const AttendanceDrawer = ({
       anchor='right'
       open={open}
       onClose={saving ? undefined : onClose}
-      PaperProps={{ className: 'is-full sm:is-[840px]' }}
+      PaperProps={{ className: 'is-full sm:is-[min(920px,100vw)] xl:is-[960px]' }}
     >
       <div className='form-surface-header flex items-start justify-between gap-4 border-be border-divider px-4 py-5 sm:px-6'>
         <div>
@@ -212,97 +233,104 @@ const AttendanceDrawer = ({
           </Typography>
         </div>
 
-        <div className='flex flex-1 flex-col gap-3 overflow-y-auto px-4 pb-6 sm:px-6'>
-          {loading ? <AttendanceDrawerSkeleton /> : visibleEntries.map(entry => {
-            const rowDisabled = controlsDisabled || entry.locked
-            const showTimes = entry.status === 'PRESENT'
+        <div className='flex flex-1 flex-col gap-2 overflow-y-auto px-4 pb-4 sm:px-6'>
+          {loading ? (
+            <AttendanceDrawerSkeleton />
+          ) : (
+            visibleEntries.map(entry => {
+              const rowDisabled = controlsDisabled || entry.locked
+              const showTimes = entry.status === 'PRESENT'
 
-            return (
-              <div key={entry.staff_id} className='rounded-lg border border-divider p-4 md:rounded-none md:border-0 md:border-b md:p-0 md:py-4'>
-                <div className='flex flex-col gap-3 md:flex-row md:items-center md:justify-between md:gap-4'>
-                  <div className='min-is-0 md:is-[180px]'>
-                    <Typography className='truncate font-medium'>{entry.full_name}</Typography>
-                    <Typography variant='body2' color='text.secondary' className='truncate'>
-                      {entry.position || '-'}
-                      {entry.locked ? ` · ${dictionary.status.LEAVE}` : ''}
-                    </Typography>
-                  </div>
-                  <ToggleButtonGroup
-                    exclusive
-                    size='small'
-                    value={entry.status}
-                    disabled={rowDisabled}
-                    onChange={(_, status) => changeStatus(entry, status)}
-                    className='flex w-full md:w-auto'
-                  >
-                    <ToggleButton color='success' value='PRESENT' className='flex-1'>
-                      {dictionary.status.PRESENT}
-                    </ToggleButton>
-                    <ToggleButton color='error' value='ABSENT' className='flex-1'>
-                      {dictionary.status.ABSENT}
-                    </ToggleButton>
-                    <ToggleButton color='info' value='LEAVE' className='flex-1'>
-                      {dictionary.status.LEAVE}
-                    </ToggleButton>
-                  </ToggleButtonGroup>
-                  <div className='grid min-is-0 grid-cols-2 gap-2 md:is-[270px] md:gap-3'>
-                    <NativeDateTimeInput
-                      mode='time'
-                      locale={locale}
+              return (
+                <div
+                  key={entry.staff_id}
+                  className='rounded-xl border border-divider bg-backgroundPaper/70 p-4 shadow-sm transition-colors hover:border-primary/30'
+                >
+                  <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
+                    <div className='flex min-is-0 items-center gap-3'>
+                      <Avatar className='is-9 bs-9 bg-primary/10 text-xs font-semibold text-primary'>
+                        {getInitials(entry.full_name)}
+                      </Avatar>
+                      <div className='min-is-0'>
+                        <Typography className='truncate text-lg font-medium text-textPrimary dark:text-gray-200'>
+                          {entry.full_name}
+                        </Typography>
+                        <Typography variant='body2' color='text.secondary' className='truncate'>
+                          {entry.position || '-'}
+                          {entry.locked ? ` · ${dictionary.status.LEAVE}` : ''}
+                        </Typography>
+                      </div>
+                    </div>
+                    <ToggleButtonGroup
+                      exclusive
                       size='small'
-                      label={dictionary.fields.checkIn}
-                      value={showTimes ? entry.check_in_time : ''}
-                      disabled={rowDisabled || !showTimes}
-                      slotProps={{ inputLabel: { shrink: true } }}
-                      onChange={event => updateEntry(entry.staff_id, { check_in_time: event.target.value })}
-                    />
-                    <NativeDateTimeInput
-                      mode='time'
-                      locale={locale}
-                      size='small'
-                      label={dictionary.fields.checkOut}
-                      value={showTimes ? entry.check_out_time : ''}
-                      disabled={rowDisabled || !showTimes}
-                      slotProps={{ inputLabel: { shrink: true } }}
-                      onChange={event => updateEntry(entry.staff_id, { check_out_time: event.target.value })}
-                    />
+                      value={entry.status}
+                      disabled={rowDisabled}
+                      onChange={(_, status) => changeStatus(entry, status)}
+                      className='grid w-full grid-cols-3 rounded-lg border border-divider bg-actionHover p-1 sm:w-auto'
+                    >
+                      <ToggleButton
+                        value='PRESENT'
+                        className='rounded-md! border-0! px-3! py-1.5! text-xs! text-textSecondary! [&.Mui-selected]:bg-backgroundPaper! [&.Mui-selected]:text-primary! [&.Mui-selected]:shadow-sm!'
+                      >
+                        {dictionary.status.PRESENT}
+                      </ToggleButton>
+                      <ToggleButton
+                        value='ABSENT'
+                        className='rounded-md! border-0! px-3! py-1.5! text-xs! text-textSecondary! [&.Mui-selected]:bg-backgroundPaper! [&.Mui-selected]:text-primary! [&.Mui-selected]:shadow-sm!'
+                      >
+                        {dictionary.status.ABSENT}
+                      </ToggleButton>
+                      <ToggleButton
+                        value='LEAVE'
+                        className='rounded-md! border-0! px-3! py-1.5! text-xs! text-textSecondary! [&.Mui-selected]:bg-backgroundPaper! [&.Mui-selected]:text-primary! [&.Mui-selected]:shadow-sm!'
+                      >
+                        {dictionary.status.LEAVE}
+                      </ToggleButton>
+                    </ToggleButtonGroup>
                   </div>
-                </div>
 
-                <div className='mt-3 md:mt-2'>
-                  {entry.noteOpen ? (
-                    <div className='flex items-start gap-2'>
+                  <div className='mt-4 border-bs border-divider pt-4'>
+                    {showTimes ? (
+                      <div className='grid min-is-0 grid-cols-1 gap-3 sm:grid-cols-2'>
+                      <TimePickerInput
+                        locale={locale}
+                        size='small'
+                        label={dictionary.fields.checkIn}
+                        className='[&>div]:h-10'
+                        value={entry.check_in_time}
+                        disabled={rowDisabled}
+                        slotProps={{ inputLabel: { shrink: true } }}
+                        onChange={event => updateEntry(entry.staff_id, { check_in_time: event.target.value })}
+                      />
+                      <TimePickerInput
+                        locale={locale}
+                        size='small'
+                        label={dictionary.fields.checkOut}
+                        className='[&>div]:h-10'
+                        value={entry.check_out_time}
+                        disabled={rowDisabled}
+                        slotProps={{ inputLabel: { shrink: true } }}
+                        onChange={event => updateEntry(entry.staff_id, { check_out_time: event.target.value })}
+                      />
+                      </div>
+                    ) : (
                       <CustomTextField
                         fullWidth
                         size='small'
                         label={dictionary.fields.notes}
+                        placeholder={dictionary.actions.addNote}
                         value={entry.notes}
                         disabled={rowDisabled}
                         onChange={event => updateEntry(entry.staff_id, { notes: event.target.value })}
+                        sx={{ '& .MuiInputBase-root': { minHeight: 40 } }}
                       />
-                      {!entry.notes && !rowDisabled && (
-                        <IconButton size='small' onClick={() => updateEntry(entry.staff_id, { noteOpen: false })}>
-                          <i className='tabler-x' />
-                        </IconButton>
-                      )}
-                    </div>
-                  ) : (
-                    <Button
-                      variant='tonal'
-                      color='secondary'
-                      size='small'
-                      className='w-full md:w-auto'
-                      startIcon={<i className='tabler-note' />}
-                      disabled={rowDisabled}
-                      onClick={() => updateEntry(entry.staff_id, { noteOpen: true })}
-                    >
-                      {dictionary.actions.addNote}
-                    </Button>
-                  )}
+                    )}
+                  </div>
                 </div>
-              </div>
-            )
-          })}
+              )
+            })
+          )}
 
           {!loading && visibleEntries.length === 0 && (
             <div className='flex flex-1 flex-col items-center justify-center gap-2 py-12 text-center'>
@@ -312,12 +340,49 @@ const AttendanceDrawer = ({
           )}
         </div>
 
+        <Popover
+          open={Boolean(noteAnchorEl && activeNoteEntry)}
+          anchorEl={noteAnchorEl}
+          onClose={closeNote}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+          transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+          slotProps={{ paper: { className: 'm-2 w-[min(360px,calc(100vw-32px))] rounded-xl p-4' } }}
+        >
+          {activeNoteEntry && (
+            <CustomTextField
+              autoFocus
+              fullWidth
+              multiline
+              minRows={3}
+              size='small'
+              label={dictionary.fields.notes}
+              value={activeNoteEntry.notes}
+              disabled={controlsDisabled || activeNoteEntry.locked}
+              onChange={event => updateEntry(activeNoteEntry.staff_id, { notes: event.target.value })}
+            />
+          )}
+        </Popover>
+
         <Divider />
-        <div className='form-surface-actions flex flex-wrap items-center justify-between gap-3 p-4 sm:p-6'>
-          <Typography variant='body2' color='text.secondary'>
-            {editableEntries.length} {dictionary.drawer.readyToSave}
-          </Typography>
-          <div className='flex gap-3'>
+        <div className='form-surface-actions sticky bottom-0 flex flex-wrap items-center justify-between gap-3 border-bs border-divider bg-background/95 p-4 backdrop-blur sm:px-6'>
+          <div className='flex flex-wrap items-center gap-x-3 gap-y-1'>
+            {statusSummary.map(({ status, count }) => (
+              <Typography
+                key={status}
+                variant='body2'
+                className={
+                  status === 'PRESENT'
+                    ? 'font-medium text-emerald-600 dark:text-emerald-400'
+                    : status === 'ABSENT'
+                      ? 'font-medium text-rose-600 dark:text-rose-400'
+                      : 'font-medium text-amber-600 dark:text-amber-400'
+                }
+              >
+                {count} {dictionary.status[status]}
+              </Typography>
+            ))}
+          </div>
+          <div className='flex items-center gap-3'>
             <Button variant='tonal' color='secondary' onClick={onClose} disabled={saving}>
               {dictionary.actions.cancel}
             </Button>

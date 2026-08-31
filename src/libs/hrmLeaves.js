@@ -25,6 +25,8 @@ export const leaveSelect = {
   start_date: true,
   end_date: true,
   total_days: true,
+  duration_type: true,
+  half_day_shift: true,
   is_paid: true,
   reason: true,
   created_at: true,
@@ -174,17 +176,34 @@ export const removeLeaveAttendance = async (transaction, leaveId) => {
   return backups.length
 }
 
-export const hasOverlappingLeave = (transaction, { staffId, startDate, endDate, excludeId = null }) =>
-  transaction.hrmstaffleave.findFirst({
+export const hasOverlappingLeave = async (
+  transaction,
+  { staffId, startDate, endDate, durationType = 'FULL_DAY', halfDayShift = null, excludeId = null }
+) => {
+  const overlappingLeaves = await transaction.hrmstaffleave.findMany({
     where: {
       staff_id: staffId,
       ...(excludeId ? { NOT: { id: excludeId } } : {}),
       start_date: { lte: endDate },
       end_date: { gte: startDate },
-      status: { is: { category: 'LEAVE_STATUS', value: { not: 'REJECTED' } } }
+      status: { is: { category: 'LEAVE_STATUS', value: { in: ['PENDING', 'APPROVED'] } } }
     },
-    select: { id: true }
+    select: { id: true, start_date: true, end_date: true, duration_type: true, half_day_shift: true }
   })
+
+  return overlappingLeaves.find(existing => {
+    const isComplementaryHalfDay =
+      durationType === 'HALF_DAY' &&
+      Boolean(halfDayShift) &&
+      existing.duration_type === 'HALF_DAY' &&
+      Boolean(existing.half_day_shift) &&
+      existing.start_date.getTime() === startDate.getTime() &&
+      existing.end_date.getTime() === endDate.getTime() &&
+      existing.half_day_shift !== halfDayShift
+
+    return !isComplementaryHalfDay
+  })
+}
 
 export const getHolidayDateKeys = async (client, startDate, endDate) => {
   const holidays = await client.companyholiday.findMany({
@@ -214,7 +233,14 @@ export const getLeaveBalance = async (client, { staffId, leaveTypeId, year, excl
         end_date: { gte: yearStart },
         status: { is: { category: 'LEAVE_STATUS', value: { in: ['PENDING', 'APPROVED'] } } }
       },
-      select: { start_date: true, end_date: true, status: { select: { value: true } } }
+      select: {
+        start_date: true,
+        end_date: true,
+        total_days: true,
+        duration_type: true,
+        is_paid: true,
+        status: { select: { value: true } }
+      }
     })
   ])
 
@@ -224,9 +250,15 @@ export const getLeaveBalance = async (client, { staffId, leaveTypeId, year, excl
   let pending = 0
 
   for (const leave of leaves) {
+    if (!leave.is_paid) continue
+
     const clippedStart = leave.start_date < yearStart ? yearStart : leave.start_date
     const clippedEnd = leave.end_date > yearEnd ? yearEnd : leave.end_date
-    const days = calculateLeaveWorkingDays(clippedStart, clippedEnd, holidays)
+
+    const days =
+      leave.duration_type === 'HALF_DAY'
+        ? 0.5
+        : calculateLeaveWorkingDays(clippedStart, clippedEnd, holidays)
 
     if (leave.status.value === 'APPROVED') taken += days
     else pending += days
@@ -245,8 +277,10 @@ export const getLeaveBalance = async (client, { staffId, leaveTypeId, year, excl
 
 export const validateLeaveEntitlement = async (
   client,
-  { staffId, leaveTypeId, startDate, endDate, excludeLeaveId = null }
+  { staffId, leaveTypeId, startDate, endDate, excludeLeaveId = null, isPaid = true, durationType = 'FULL_DAY' }
 ) => {
+  if (!isPaid) return { valid: true }
+
   const startYear = startDate.getUTCFullYear()
   const endYear = endDate.getUTCFullYear()
 
@@ -261,7 +295,7 @@ export const validateLeaveEntitlement = async (
     const clippedStart = startDate < yearStart ? yearStart : startDate
     const clippedEnd = endDate > yearEnd ? yearEnd : endDate
     const holidays = await getHolidayDateKeys(client, clippedStart, clippedEnd)
-    const requested = calculateLeaveWorkingDays(clippedStart, clippedEnd, holidays)
+    const requested = durationType === 'HALF_DAY' ? 0.5 : calculateLeaveWorkingDays(clippedStart, clippedEnd, holidays)
 
     if (requested > balance.remaining) return { valid: false, code: 'LEAVE_BALANCE_EXCEEDED', balance, requested, year }
   }

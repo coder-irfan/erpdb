@@ -52,6 +52,8 @@ export async function PATCH(request, routeContext) {
           staffId: existing.staff_id,
           startDate: existing.start_date,
           endDate: existing.end_date,
+          durationType: existing.duration_type,
+          halfDayShift: existing.half_day_shift,
           excludeId: id
         })
 
@@ -67,7 +69,9 @@ export async function PATCH(request, routeContext) {
           leaveTypeId: existing.leave_type_id,
           startDate: existing.start_date,
           endDate: existing.end_date,
-          excludeLeaveId: id
+          excludeLeaveId: id,
+          isPaid: existing.is_paid,
+          durationType: existing.duration_type
         })
 
         if (!entitlement.valid) {

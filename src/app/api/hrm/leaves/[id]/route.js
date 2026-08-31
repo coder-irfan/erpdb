@@ -56,6 +56,8 @@ export async function PUT(request, routeContext) {
     start_date: payload?.start_date,
     end_date: payload?.end_date,
     total_days: payload?.total_days == null ? String(Number(existing.total_days)) : String(payload.total_days),
+    duration_type: payload?.duration_type || existing.duration_type || 'FULL_DAY',
+    half_day_shift: payload?.half_day_shift || existing.half_day_shift || '',
     status_id: payload?.status_id || '',
     is_paid: payload?.is_paid ?? existing.is_paid,
     reason: payload?.reason || ''
@@ -63,15 +65,26 @@ export async function PUT(request, routeContext) {
 
   if (!validation.success) return responseError(validation.issues[0]?.message, 400, 'VALIDATION_ERROR')
 
+  if (validation.output.duration_type === 'HALF_DAY' && !validation.output.half_day_shift) {
+    return responseError('Select Morning or Afternoon for a half-day leave request.', 400, 'HALF_DAY_SHIFT_REQUIRED')
+  }
+
   try {
+    const startDate = parseLeaveDate(validation.output.start_date)
+
+    const endDate =
+      validation.output.duration_type === 'HALF_DAY'
+        ? startDate
+        : parseLeaveDate(validation.output.end_date)
+
     const [staff, leaveType] = await Promise.all([
       prisma.hrmstaff.findFirst({
         where: {
           id: validation.output.staff_id,
           status: 'ACTIVE',
           contracts: activeStaffContractRelation({
-            startDate: parseLeaveDate(validation.output.start_date),
-            endDate: parseLeaveDate(validation.output.end_date)
+            startDate,
+            endDate
           })
         },
         select: { id: true }
@@ -82,18 +95,21 @@ export async function PUT(request, routeContext) {
     if (!staff) return responseError(dictionary.messages.staffNotFound, 404, 'STAFF_NOT_FOUND')
     if (!leaveType && existing.leave_type_id !== validation.output.leave_type_id) return responseError(dictionary.messages.leaveTypeNotFound, 404, 'LEAVE_TYPE_NOT_FOUND')
 
-    const startDate = parseLeaveDate(validation.output.start_date)
-    const endDate = parseLeaveDate(validation.output.end_date)
-    const holidays = await getHolidayDateKeys(prisma, startDate, endDate)
-    const totalDays = calculateLeaveWorkingDays(startDate, endDate, holidays)
+    const isPaid = canManage ? validation.output.is_paid : leaveType?.is_paid_leave ?? existing.is_paid
 
-    if (totalDays < 1) return responseError(dictionary.validation.dateRangeInvalid, 400, 'INVALID_DATE_RANGE')
+    const holidays = await getHolidayDateKeys(prisma, startDate, endDate)
+    const fullDayCount = calculateLeaveWorkingDays(startDate, endDate, holidays)
+    const totalDays = validation.output.duration_type === 'HALF_DAY' && fullDayCount > 0 ? 0.5 : fullDayCount
+
+    if (totalDays < 0.5) return responseError(dictionary.validation.dateRangeInvalid, 400, 'INVALID_DATE_RANGE')
 
     const updated = await prisma.$transaction(async transaction => {
       const overlap = await hasOverlappingLeave(transaction, {
         staffId: validation.output.staff_id,
         startDate,
         endDate,
+        durationType: validation.output.duration_type,
+        halfDayShift: validation.output.half_day_shift,
         excludeId: id
       })
 
@@ -109,7 +125,9 @@ export async function PUT(request, routeContext) {
         leaveTypeId: validation.output.leave_type_id,
         startDate,
         endDate,
-        excludeLeaveId: id
+        excludeLeaveId: id,
+        isPaid,
+        durationType: validation.output.duration_type
       })
 
       if (!entitlement.valid) {
@@ -132,7 +150,10 @@ export async function PUT(request, routeContext) {
           start_date: startDate,
           end_date: endDate,
           total_days: new Prisma.Decimal(totalDays),
-          is_paid: canManage ? validation.output.is_paid : leaveType?.is_paid_leave ?? existing.is_paid,
+          duration_type: validation.output.duration_type,
+          half_day_shift:
+            validation.output.duration_type === 'HALF_DAY' ? validation.output.half_day_shift : null,
+          is_paid: isPaid,
           reason: validation.output.reason || null
         },
         select: leaveSelect

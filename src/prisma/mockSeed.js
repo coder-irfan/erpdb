@@ -347,16 +347,11 @@ const seedStaffAndAttendance = async (transaction, options) => {
       staff_id: staff.id,
       contract_number: `SCNT-${String(index + 1).padStart(3, '0')}`,
       contract_type_id: index === 8 ? internshipType : employmentType,
-      position_title: staff.position,
-      base_salary: decimal(staff.salary),
       start_date: staff.join,
       end_date: index === 7 ? staff.termination : index === 8 ? relativeDate(194) : monthDate(12, 28),
       document_url: `https://example.invalid/mock-contracts/SCNT-${String(index + 1).padStart(3, '0')}.pdf`,
       status_id: index === 7 ? expiredStatus : index === 8 ? pendingStatus : activeStatus,
       content_html: `<p>Mock employment agreement for ${staff.first} ${staff.last}.</p>`,
-      currency: staff.currency,
-      exchange_rate: decimal(USD_AFN_RATE),
-      amount_base: amountInBase(staff.salary, staff.currency)
     }))
   })
 

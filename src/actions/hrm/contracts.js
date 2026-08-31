@@ -18,7 +18,7 @@ import { nextSequentialNumber, withSequentialNumberRetry } from '@/libs/sequenti
 import { getBrandingSettings } from '@/libs/systemSettings'
 import { createStaffContractSchema } from '@/schemas/hrm/contracts'
 import { formatDateRangeDuration, getRemainingDays } from '@/utils/contractDuration'
-import { SYSTEM_BASE_CURRENCY, convertToBaseCurrency } from '@/utils/formatCurrency'
+import { SYSTEM_BASE_CURRENCY } from '@/utils/formatCurrency'
 import { getDictionary } from '@/utils/getDictionary'
 import { toUtcDateOnly, utcDateKey } from '@/utils/utcDate'
 import { replaceContractTemplateTokens } from '@/utils/contractTemplateTokens'
@@ -139,12 +139,7 @@ const compileTemplate = ({ template, staff, values, setup, contractNumber, contr
     base_salary: amount,
     currency: values.currency,
     exchange_rate: new Prisma.Decimal(values.exchange_rate).toFixed(4),
-    amount_base: convertToBaseCurrency(
-      values.base_salary,
-      values.currency,
-      values.exchange_rate,
-      SYSTEM_BASE_CURRENCY
-    ).toFixed(2),
+    amount_base: staff.amount_base.toFixed(2),
     payment_terms: 'Monthly salary',
     start_date: startDate,
     end_date: endDate,
@@ -171,11 +166,6 @@ const contractSelect = {
   contract_type_id: true,
   template_id: true,
   duration_id: true,
-  position_title: true,
-  base_salary: true,
-  currency: true,
-  exchange_rate: true,
-  amount_base: true,
   start_date: true,
   end_date: true,
   document_url: true,
@@ -207,6 +197,7 @@ const contractSelect = {
       salary: true,
       salary_currency: true,
       salary_exchange_rate: true,
+      amount_base: true,
       user: { select: { image: true } }
     }
   },
@@ -226,9 +217,6 @@ const normalizeContract = contract => ({
         : contract.status.value === 'EXPIRED'
           ? 'RENEWAL_REVIEW'
           : 'ACTIVE_EMPLOYEE',
-  base_salary: contract.base_salary.toFixed(2),
-  exchange_rate: contract.exchange_rate.toFixed(4),
-  amount_base: contract.amount_base.toFixed(2),
   start_date: contract.start_date.toISOString(),
   end_date: contract.end_date?.toISOString() ?? null,
   termination_date: contract.termination_date?.toISOString() ?? null,
@@ -236,11 +224,12 @@ const normalizeContract = contract => ({
   duration_label: formatDateRangeDuration(contract.start_date, contract.end_date),
   created_at: contract.created_at.toISOString(),
   updated_at: contract.updated_at.toISOString(),
-  staff: {
+    staff: {
     ...contract.staff,
     full_name: `${contract.staff.first_name} ${contract.staff.last_name}`.trim(),
     salary: contract.staff.salary.toFixed(2),
-    salary_exchange_rate: contract.staff.salary_exchange_rate.toFixed(4)
+      salary_exchange_rate: contract.staff.salary_exchange_rate.toFixed(4),
+      amount_base: contract.staff.amount_base.toFixed(2)
   }
 })
 
@@ -270,9 +259,6 @@ const validateContract = (payload, translations) =>
     staff_id: payload?.staff_id,
     contract_type_id: payload?.contract_type_id,
     template_id: payload?.template_id,
-    base_salary: payload?.base_salary,
-    currency: payload?.currency,
-    exchange_rate: payload?.exchange_rate,
     start_date: payload?.start_date,
     end_date: payload?.end_date || '',
     document_url: payload?.document_url || '',
@@ -306,7 +292,8 @@ const getValidatedRelations = async (values, currentContract = null) => {
         join_date: true,
         salary: true,
         salary_currency: true,
-        salary_exchange_rate: true
+        salary_exchange_rate: true,
+        amount_base: true
       }
     }),
     prisma.option.findFirst({
@@ -405,7 +392,7 @@ const lifecycleData = ({ status, values, previousStatus = null }) => {
   }
 }
 
-const syncStaffAccess = async (transaction, { staffId, status, terminationDate = null, compensation = null }) => {
+const syncStaffAccess = async (transaction, { staffId, status, terminationDate = null }) => {
   if (!['ACTIVE', 'TERMINATED'].includes(status)) return
 
   const staff = await transaction.hrmstaff.update({
@@ -415,14 +402,6 @@ const syncStaffAccess = async (transaction, { staffId, status, terminationDate =
         ? {
             status: 'ACTIVE',
             termination_date: null,
-            ...(compensation
-              ? {
-                  salary: compensation.base_salary,
-                  salary_currency: compensation.currency,
-                  salary_exchange_rate: compensation.exchange_rate,
-                  amount_base: compensation.amount_base
-                }
-              : {})
           }
         : { status: 'TERMINATED', termination_date: terminationDate },
     select: { user_id: true }
@@ -513,7 +492,7 @@ export const getStaffContracts = async (payload = {}) => {
     inThirtyDays.setUTCDate(inThirtyDays.getUTCDate() + 30)
     inThirtyDays.setUTCHours(23, 59, 59, 999)
 
-    const [totalCount, contracts, activeCount, expiringSoonCount, draftCount, totalValue] = await prisma.$transaction([
+    const [totalCount, contracts, activeCount, expiringSoonCount, draftCount, compensation] = await prisma.$transaction([
       prisma.hrmstaffcontract.count({ where }),
       prisma.hrmstaffcontract.findMany({
         where,
@@ -530,7 +509,7 @@ export const getStaffContracts = async (payload = {}) => {
         }
       }),
       prisma.hrmstaffcontract.count({ where: { status: { is: { value: 'DRAFT' } } } }),
-      prisma.hrmstaffcontract.aggregate({ _sum: { amount_base: true } })
+      prisma.hrmstaffcontract.findMany({ select: { staff: { select: { amount_base: true } } } })
     ])
 
     return {
@@ -545,7 +524,9 @@ export const getStaffContracts = async (payload = {}) => {
           expiringSoon: expiringSoonCount,
           draft: draftCount,
           pendingOnboarding: draftCount,
-          totalValue: totalValue._sum.amount_base?.toFixed(2) || '0.00'
+          totalValue: compensation
+            .reduce((total, contract) => total.plus(contract.staff.amount_base), new Prisma.Decimal(0))
+            .toFixed(2)
         }
       }
     }
@@ -705,7 +686,13 @@ export const createStaffContract = async (payload = {}) => {
     if (!relations.status)
       return { success: false, code: 'STATUS_NOT_FOUND', error: context.translations.messages.statusNotFound }
 
-    const values = { ...validation.output, position_title: relations.staff.position }
+    const values = {
+      ...validation.output,
+      position_title: relations.staff.position,
+      base_salary: relations.staff.salary,
+      currency: relations.staff.salary_currency,
+      exchange_rate: relations.staff.salary_exchange_rate
+    }
 
     const effects = lifecycleData({ status: relations.status.value, values })
 
@@ -734,13 +721,6 @@ export const createStaffContract = async (payload = {}) => {
               contract_type_id: values.contract_type_id,
               template_id: values.template_id,
               duration_id: null,
-              position_title: values.position_title,
-              base_salary: new Prisma.Decimal(values.base_salary),
-              currency: values.currency,
-              exchange_rate: new Prisma.Decimal(values.exchange_rate),
-              amount_base: new Prisma.Decimal(
-                convertToBaseCurrency(values.base_salary, values.currency, values.exchange_rate, SYSTEM_BASE_CURRENCY)
-              ),
               start_date: toDate(validation.output.start_date),
               end_date: toDate(validation.output.end_date),
               document_url: nullableText(validation.output.document_url),
@@ -757,7 +737,6 @@ export const createStaffContract = async (payload = {}) => {
             staffId: created.staff_id,
             status: relations.status.value,
             terminationDate: effects.termination_date,
-            compensation: created
           })
 
           await transaction.auditlog.create({
@@ -823,9 +802,7 @@ export const updateStaffContract = async (id, payload = {}) => {
         template_id: true,
         duration_id: true,
         status_id: true,
-        status: { select: { value: true } },
-        currency: true,
-        exchange_rate: true
+        status: { select: { value: true } }
       }
     })
 
@@ -840,7 +817,13 @@ export const updateStaffContract = async (id, payload = {}) => {
     if (!relations.status)
       return { success: false, code: 'STATUS_NOT_FOUND', error: context.translations.messages.statusNotFound }
 
-    const values = { ...validation.output, position_title: relations.staff.position }
+    const values = {
+      ...validation.output,
+      position_title: relations.staff.position,
+      base_salary: relations.staff.salary,
+      currency: relations.staff.salary_currency,
+      exchange_rate: relations.staff.salary_exchange_rate
+    }
 
     const effects = lifecycleData({
       status: relations.status.value,
@@ -866,13 +849,6 @@ export const updateStaffContract = async (id, payload = {}) => {
           contract_type_id: values.contract_type_id,
           template_id: values.template_id,
           duration_id: null,
-          position_title: values.position_title,
-          base_salary: new Prisma.Decimal(values.base_salary),
-          currency: values.currency,
-          exchange_rate: new Prisma.Decimal(values.exchange_rate),
-          amount_base: new Prisma.Decimal(
-            convertToBaseCurrency(values.base_salary, values.currency, values.exchange_rate, SYSTEM_BASE_CURRENCY)
-          ),
           start_date: toDate(validation.output.start_date),
           end_date: toDate(validation.output.end_date),
           document_url: nullableText(validation.output.document_url),
@@ -889,7 +865,6 @@ export const updateStaffContract = async (id, payload = {}) => {
         staffId: updated.staff_id,
         status: relations.status.value,
         terminationDate: effects.termination_date,
-        compensation: updated
       })
 
       await transaction.auditlog.create({
@@ -999,7 +974,6 @@ export const updateStaffContractStatus = async (id, statusId, payload = {}) => {
         staffId: updated.staff_id,
         status: status.value,
         terminationDate: effects.termination_date,
-        compensation: updated
       })
 
       await transaction.auditlog.create({

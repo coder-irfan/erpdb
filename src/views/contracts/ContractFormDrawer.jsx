@@ -25,7 +25,7 @@ import { CONTRACT_TYPE_DOMAINS } from '@/data/contractTypes'
 import { createContractSchema } from '@/schemas/contracts'
 import { createStaffContractSchema } from '@/schemas/hrm/contracts'
 import { toDateInputValue } from '@/utils/contractDuration'
-import { convertToBaseCurrency, formatCurrency } from '@/utils/formatCurrency'
+import { formatCurrency } from '@/utils/formatCurrency'
 
 const getDefaultStatus = statuses =>
   statuses.find(option => option.is_default)?.id ||
@@ -49,8 +49,6 @@ const getEmptyValues = formOptions => ({
   termination_reason: '',
   probation_days: 90,
   notice_period_days: 30,
-  position_title: '',
-  base_salary: '',
   total_amount: '',
   currency: formOptions.baseCurrency || 'AFN',
   exchange_rate: String(formOptions.exchangeRate || '65'),
@@ -110,23 +108,17 @@ const ContractFormDrawer = ({
   const startDate = useWatch({ control, name: 'start_date' })
   const endDate = useWatch({ control, name: 'end_date' })
   const statusId = useWatch({ control, name: 'status_id' })
-  const currency = useWatch({ control, name: 'currency' })
-  const baseSalary = useWatch({ control, name: 'base_salary' })
-  const exchangeRate = useWatch({ control, name: 'exchange_rate' })
+  const staffId = useWatch({ control, name: 'staff_id' })
   const configuredDurations = formOptions.options.CONTRACT_DURATION
   const durations = useMemo(() => configuredDurations || [], [configuredDurations])
 
   const selectedStatus = statusOptions.find(option => option.id === statusId)
 
-  const baseSalaryPreview = useMemo(
+  const selectedStaff = useMemo(
     () =>
-      convertToBaseCurrency(
-        Number(baseSalary) || 0,
-        currency,
-        Number(exchangeRate) || 0,
-        formOptions.baseCurrency || 'AFN'
-      ),
-    [baseSalary, currency, exchangeRate, formOptions.baseCurrency]
+      (formOptions.staff || []).find(person => person.id === staffId) ||
+      (contract?.staff_id === staffId ? contract.staff : null),
+    [contract?.staff, contract?.staff_id, formOptions.staff, staffId]
   )
 
   const typeCategory = CONTRACT_TYPE_DOMAINS[targetCategory] || CONTRACT_TYPE_DOMAINS.CUSTOMER
@@ -162,8 +154,6 @@ const ContractFormDrawer = ({
           template_id:
             contract.template_id ||
             (contract.contract_type?.category === 'CONTRACT_POLICY' ? contract.contract_type_id : ''),
-          position_title: contract.position_title || '',
-          base_salary: String(contract.base_salary || ''),
           total_amount: String(contract.total_amount || ''),
           currency: contract.currency || formOptions.baseCurrency || 'AFN',
           exchange_rate: String(contract.exchange_rate || formOptions.exchangeRate || '65'),
@@ -186,8 +176,6 @@ const ContractFormDrawer = ({
             staff_id: initialValues.staff_id || '',
             contract_type_id: initialValues.contract_type_id || '',
             template_id: initialValues.template_id || '',
-            position_title: initialValues.position_title || '',
-            base_salary: String(initialValues.base_salary || ''),
             currency: initialValues.currency || formOptions.baseCurrency || 'AFN',
             exchange_rate: String(initialValues.exchange_rate || formOptions.exchangeRate || '65'),
             start_date: toDateInputValue(initialValues.start_date || new Date()),
@@ -337,8 +325,26 @@ const ContractFormDrawer = ({
               {selectField(
                 'staff_id',
                 dictionary.fields.staffMember,
-                formOptions.staff.map(person => ({ ...person, label: person.full_name })),
+                (formOptions.staff || []).map(person => ({ ...person, label: person.full_name })),
                 dictionary.placeholders.staffMember
+              )}
+              {selectedStaff && (
+                <div className='grid grid-cols-1 gap-3 rounded border border-primary/20 bg-primaryLighter p-4 sm:grid-cols-2'>
+                  <div>
+                    <Typography variant='caption' color='text.secondary'>
+                      {dictionary.fields.position || dictionary.fields.positionTitle}
+                    </Typography>
+                    <Typography className='font-medium'>{selectedStaff.position || '—'}</Typography>
+                  </div>
+                  <div>
+                    <Typography variant='caption' color='text.secondary'>
+                      {dictionary.fields.baseSalary}
+                    </Typography>
+                    <Typography className='font-medium'>
+                      {formatCurrency(selectedStaff.salary, locale, selectedStaff.salary_currency || formOptions.baseCurrency || 'AFN')}
+                    </Typography>
+                  </div>
+                </div>
               )}
               <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
                 {selectField(
@@ -353,11 +359,6 @@ const ContractFormDrawer = ({
                   formOptions.templates || [],
                   dictionary.placeholders.template
                 )}
-                {field('position_title', dictionary.fields.positionTitle)}
-                {field('base_salary', dictionary.fields.baseSalary, {
-                  type: 'number',
-                  inputProps: { min: 0.01, step: '0.01' }
-                })}
                 {field('start_date', dictionary.fields.startDate, {
                   type: 'date',
                   slotProps: { inputLabel: { shrink: true } }
@@ -537,34 +538,8 @@ const ContractFormDrawer = ({
 
           <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
             {selectField('status_id', dictionary.fields.status, statusOptions, dictionary.placeholders.status)}
-            {targetCategory === 'HRM' && (
-              <Controller
-                name='currency'
-                control={control}
-                render={({ field }) => (
-                  <CustomTextField {...field} select label={dictionary.fields.currency}>
-                    <MenuItem value='AFN'>AFN</MenuItem>
-                    <MenuItem value='USD'>USD</MenuItem>
-                  </CustomTextField>
-                )}
-              />
-            )}
-            {targetCategory === 'HRM' &&
-              currency === 'USD' &&
-              field('exchange_rate', dictionary.fields.exchangeRate, {
-                type: 'number',
-                inputProps: { min: 0.0001, step: '0.0001' }
-              })}
           </div>
 
-          {targetCategory === 'HRM' && currency === 'USD' && (
-            <div className='rounded border border-success/20 bg-successLighter p-3'>
-              <Typography variant='caption'>Base currency preview</Typography>
-              <Typography className='font-semibold'>
-                {formatCurrency(baseSalaryPreview, locale, formOptions.baseCurrency || 'AFN')}
-              </Typography>
-            </div>
-          )}
 
           {selectedStatus?.value === 'TERMINATED' && (
             <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>

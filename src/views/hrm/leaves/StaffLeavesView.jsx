@@ -178,8 +178,12 @@ const StaffLeavesView = ({ locale, dictionary }) => {
 
     return (
       <EntityActionsMenu
-      actions={[
-          { label: dictionary.actions.view || 'View details', icon: 'tabler-eye', onClick: () => setViewingLeave(leave) },
+        actions={[
+          {
+            label: dictionary.actions.view || 'View details',
+            icon: 'tabler-eye',
+            onClick: () => setViewingLeave(leave)
+          },
           data.canManage &&
             isPending && {
               label: dictionary.actions.approve,
@@ -225,14 +229,26 @@ const StaffLeavesView = ({ locale, dictionary }) => {
             onChange={event => setSearchInput(event.target.value)}
             label={dictionary.filters.search}
             placeholder={dictionary.filters.searchPlaceholder}
-            className='is-full sm:is-[320px]'
+            className='is-full sm:is-[380px]'
             slotProps={{ input: { startAdornment: <i className='tabler-search text-textSecondary' /> } }}
           />
           <div className='grid is-full grid-cols-2 gap-2 sm:flex sm:is-auto sm:flex-wrap sm:gap-3 sm:justify-end'>
             <TableFiltersPopover
-              activeCount={Number(Boolean(searchInput.trim())) + Number(Boolean(staffId)) + Number(Boolean(leaveTypeId)) + Number(Boolean(statusId))}
+              activeCount={
+                Number(Boolean(searchInput.trim())) +
+                Number(Boolean(staffId)) +
+                Number(Boolean(leaveTypeId)) +
+                Number(Boolean(statusId))
+              }
               locale={locale}
-              onReset={() => { setSearchInput(''); setSearch(''); setStaffId(''); setLeaveTypeId(''); setStatusId(''); setPage(0) }}
+              onReset={() => {
+                setSearchInput('')
+                setSearch('')
+                setStaffId('')
+                setLeaveTypeId('')
+                setStatusId('')
+                setPage(0)
+              }}
             >
               {data.canManage && (
                 <CustomTextField
@@ -405,9 +421,18 @@ const StaffLeavesView = ({ locale, dictionary }) => {
                   />
                 ) : (
                   data.leaves.map(leave => (
-                    <tr key={leave.id} className='cursor-pointer' onClick={event => {
-                      if (!event.target.closest('button, a, input, select, textarea, [role="button"], [data-row-action]')) setViewingLeave(leave)
-                    }}>
+                    <tr
+                      key={leave.id}
+                      className='cursor-pointer'
+                      onClick={event => {
+                        if (
+                          !event.target.closest(
+                            'button, a, input, select, textarea, [role="button"], [data-row-action]'
+                          )
+                        )
+                          setViewingLeave(leave)
+                      }}
+                    >
                       <td>
                         <div className='flex min-is-[220px] items-center gap-3'>
                           <UserAvatar user={leave.staff} size={40} />
@@ -453,7 +478,10 @@ const StaffLeavesView = ({ locale, dictionary }) => {
                           size='small'
                           variant='tonal'
                           color={STATUS_COLORS[leave.status.value] || 'default'}
-                          label={formatStatusLabel(leave.status.value, dictionary.status[leave.status.value] || leave.status.label)}
+                          label={formatStatusLabel(
+                            leave.status.value,
+                            dictionary.status[leave.status.value] || leave.status.label
+                          )}
                         />
                       </td>
                       <td>{leave.approved_by?.full_name || '—'}</td>

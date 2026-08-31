@@ -44,7 +44,8 @@ const StaffListTable = ({
   canUpdate,
   baseCurrency,
   locale,
-  dictionary
+  dictionary,
+  contractDictionary
 }) => {
   const [staff, setStaff] = useState(initialResult.staff)
   const [stats, setStats] = useState(initialStats)
@@ -225,7 +226,15 @@ const StaffListTable = ({
       }),
       columnHelper.accessor('salary', {
         header: dictionary.table.salary,
-        cell: info => <DualCurrencyAmount amount={info.getValue()} amountBase={info.row.original.amount_base} currency={info.row.original.salary_currency || baseCurrency} exchangeRate={info.row.original.salary_exchange_rate} locale={locale} />
+        cell: info => (
+          <DualCurrencyAmount
+            amount={info.getValue()}
+            amountBase={info.row.original.amount_base}
+            currency={info.row.original.salary_currency || baseCurrency}
+            exchangeRate={info.row.original.salary_exchange_rate}
+            locale={locale}
+          />
+        )
       }),
       columnHelper.accessor('status', {
         header: dictionary.table.status,
@@ -302,7 +311,17 @@ const StaffListTable = ({
               slotProps={{ input: { startAdornment: <i className='tabler-search text-textSecondary' /> } }}
             />
             <div className='grid is-full grid-cols-2 gap-2 sm:flex sm:is-auto sm:flex-wrap sm:gap-3 sm:justify-end'>
-              <TableFiltersPopover activeCount={Number(Boolean(searchInput.trim())) + Number(Boolean(status)) + Number(Boolean(position))} locale={locale} onReset={() => { setSearchInput(''); setSearch(''); setStatus(''); setPosition(''); setPage(0) }}>
+              <TableFiltersPopover
+                activeCount={Number(Boolean(searchInput.trim())) + Number(Boolean(status)) + Number(Boolean(position))}
+                locale={locale}
+                onReset={() => {
+                  setSearchInput('')
+                  setSearch('')
+                  setStatus('')
+                  setPosition('')
+                  setPage(0)
+                }}
+              >
                 <CustomTextField
                   select
                   value={status}
@@ -411,6 +430,7 @@ const StaffListTable = ({
         staffId={detailStaffId}
         locale={locale}
         dictionary={dictionary}
+        contractDictionary={contractDictionary}
         onClose={() => setDetailStaffId(null)}
       />
     </div>

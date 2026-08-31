@@ -1117,7 +1117,7 @@
       "statusNotFound": "Leave statuses are not configured. Run the database seed.",
       "notFound": "The selected leave request could not be found.",
       "invalidRelations": "One or more selected leave values are invalid.",
-      "overlappingLeave": "This staff member already has a pending or approved leave request for part of this date range.",
+      "overlappingLeave": "Employee already has a leave request submitted or approved for these dates.",
       "selfApprovalBlocked": "Managers cannot approve their own leave requests."
     },
     "validation": {

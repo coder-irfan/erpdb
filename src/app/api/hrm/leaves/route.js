@@ -55,6 +55,7 @@ export async function GET(request) {
   const statusId = params.get('status_id') || ''
   const startDate = params.get('start_date') || ''
   const endDate = params.get('end_date') || ''
+  const excludeLeaveId = params.get('exclude_leave_id') || ''
   const todayValue = getKabulToday()
   const todayDate = parseLeaveDate(todayValue)
   const monthStart = parseLeaveDate(`${todayValue.slice(0, 7)}-01`)
@@ -83,6 +84,7 @@ export async function GET(request) {
     ...(staffId && { staff_id: staffId }),
     ...(leaveTypeId && { leave_type_id: leaveTypeId }),
     ...(statusId && { status_id: statusId }),
+    ...(excludeLeaveId && { NOT: { id: excludeLeaveId } }),
     ...(startDate && { end_date: { gte: parseLeaveDate(startDate) } }),
     ...(endDate && { start_date: { lte: parseLeaveDate(endDate) } })
   }
@@ -112,7 +114,7 @@ export async function GET(request) {
         prisma.companyholiday.findMany({ where: { is_active: true }, select: { date: true }, orderBy: { date: 'asc' } }),
         prisma.hrmstaffleave.count({ where: { ...scopeWhere, status: { is: { value: 'PENDING', category: 'LEAVE_STATUS' } } } }),
         prisma.hrmstaffleave.findMany({ where: { ...scopeWhere, status: { is: { value: 'APPROVED', category: 'LEAVE_STATUS' } }, start_date: { lte: todayDate }, end_date: { gte: todayDate } }, distinct: ['staff_id'], select: { staff_id: true } }),
-        prisma.hrmstaffleave.findMany({ where: { ...scopeWhere, status: { is: { value: 'APPROVED', category: 'LEAVE_STATUS' } }, start_date: { lte: monthEnd }, end_date: { gte: monthStart } }, select: { start_date: true, end_date: true, total_days: true } })
+        prisma.hrmstaffleave.findMany({ where: { ...scopeWhere, status: { is: { value: 'APPROVED', category: 'LEAVE_STATUS' } }, start_date: { lte: monthEnd }, end_date: { gte: monthStart } }, select: { start_date: true, end_date: true, total_days: true, duration_type: true } })
       ])
 
     const monthlyDays = approvedMonth.reduce((total, leave) => {
@@ -120,7 +122,7 @@ export async function GET(request) {
       const clippedEnd = leave.end_date > monthEnd ? monthEnd : leave.end_date
       const holidayDates = holidays.map(item => item.date.toISOString().slice(0, 10))
 
-      return total + calculateLeaveWorkingDays(clippedStart, clippedEnd, holidayDates)
+      return total + (leave.duration_type === 'HALF_DAY' ? 0.5 : calculateLeaveWorkingDays(clippedStart, clippedEnd, holidayDates))
     }, 0)
 
     return Response.json({
@@ -167,6 +169,8 @@ export async function POST(request) {
     start_date: payload?.start_date,
     end_date: payload?.end_date,
     total_days: payload?.total_days == null ? '' : String(payload.total_days),
+    duration_type: payload?.duration_type || 'FULL_DAY',
+    half_day_shift: payload?.half_day_shift || '',
     status_id: payload?.status_id || '',
     is_paid: payload?.is_paid ?? true,
     reason: payload?.reason || ''
@@ -174,15 +178,26 @@ export async function POST(request) {
 
   if (!validation.success) return responseError(validation.issues[0]?.message, 400, 'VALIDATION_ERROR')
 
+  if (validation.output.duration_type === 'HALF_DAY' && !validation.output.half_day_shift) {
+    return responseError('Select Morning or Afternoon for a half-day leave request.', 400, 'HALF_DAY_SHIFT_REQUIRED')
+  }
+
   try {
+    const startDate = parseLeaveDate(validation.output.start_date)
+
+    const endDate =
+      validation.output.duration_type === 'HALF_DAY'
+        ? startDate
+        : parseLeaveDate(validation.output.end_date)
+
     const [staff, leaveType, pendingStatus, selectedStatus] = await Promise.all([
       prisma.hrmstaff.findFirst({
         where: {
           id: validation.output.staff_id,
           status: 'ACTIVE',
           contracts: activeStaffContractRelation({
-            startDate: parseLeaveDate(validation.output.start_date),
-            endDate: parseLeaveDate(validation.output.end_date)
+            startDate,
+            endDate
           })
         },
         select: { id: true }
@@ -196,6 +211,7 @@ export async function POST(request) {
 
     const status = selectedStatus || pendingStatus
     const isApproved = status?.value === 'APPROVED'
+    const isPaid = context.canManage ? validation.output.is_paid : leaveType?.is_paid_leave
 
     if (!staff) return responseError(context.dictionary.messages.staffNotFound, 404, 'STAFF_NOT_FOUND')
     if (!leaveType) return responseError(context.dictionary.messages.leaveTypeNotFound, 404, 'LEAVE_TYPE_NOT_FOUND')
@@ -206,18 +222,19 @@ export async function POST(request) {
       return responseError(context.dictionary.messages.selfApprovalBlocked, 403, 'SELF_APPROVAL_BLOCKED')
     }
 
-    const startDate = parseLeaveDate(validation.output.start_date)
-    const endDate = parseLeaveDate(validation.output.end_date)
     const holidayDates = await getHolidayDateKeys(prisma, startDate, endDate)
-    const totalDays = calculateLeaveWorkingDays(startDate, endDate, holidayDates)
+    const fullDayCount = calculateLeaveWorkingDays(startDate, endDate, holidayDates)
+    const totalDays = validation.output.duration_type === 'HALF_DAY' && fullDayCount > 0 ? 0.5 : fullDayCount
 
-    if (totalDays < 1) return responseError(context.dictionary.validation.dateRangeInvalid, 400, 'INVALID_DATE_RANGE')
+    if (totalDays < 0.5) return responseError(context.dictionary.validation.dateRangeInvalid, 400, 'INVALID_DATE_RANGE')
 
     const created = await prisma.$transaction(async transaction => {
       const overlap = await hasOverlappingLeave(transaction, {
         staffId: validation.output.staff_id,
         startDate,
-        endDate
+        endDate,
+        durationType: validation.output.duration_type,
+        halfDayShift: validation.output.half_day_shift
       })
 
       if (overlap) {
@@ -231,7 +248,9 @@ export async function POST(request) {
         staffId: validation.output.staff_id,
         leaveTypeId: validation.output.leave_type_id,
         startDate,
-        endDate
+        endDate,
+        isPaid,
+        durationType: validation.output.duration_type
       })
 
       if (!entitlement.valid) {
@@ -250,7 +269,10 @@ export async function POST(request) {
           start_date: startDate,
           end_date: endDate,
           total_days: new Prisma.Decimal(totalDays),
-          is_paid: context.canManage ? validation.output.is_paid : leaveType.is_paid_leave,
+          duration_type: validation.output.duration_type,
+          half_day_shift:
+            validation.output.duration_type === 'HALF_DAY' ? validation.output.half_day_shift : null,
+          is_paid: isPaid,
           reason: validation.output.reason || null,
           approved_by_id: isApproved ? context.staff?.id || null : null,
           approved_by_user_id: isApproved ? context.authorization.session.user.id : null
@@ -268,7 +290,7 @@ export async function POST(request) {
     return Response.json({ success: true, data: normalizeLeave(created), message: context.dictionary.messages.created }, { status: 201 })
   } catch (error) {
     if (error?.code === 'OVERLAPPING_LEAVE') {
-      return responseError(context.dictionary.messages.overlappingLeave, 409, 'OVERLAPPING_LEAVE')
+      return responseError(context.dictionary.messages.overlappingLeave, 400, 'OVERLAPPING_LEAVE')
     }
 
     if (error?.code === 'LEAVE_BALANCE_EXCEEDED') {

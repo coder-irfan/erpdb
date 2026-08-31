@@ -21,7 +21,8 @@ const formatDate = (value, locale) =>
 const DETAIL_TONES = {
   primary: 'border-primary/20 bg-primaryLighter text-primary',
   warning: 'border-warning/20 bg-secondaryLighter text-warning',
-  info: 'border-info/20 bg-infoLighter text-info'
+  info: 'border-info/20 bg-infoLighter text-info',
+  success: 'border-success/20 bg-successLighter text-success'
 }
 
 const DetailItem = ({ label, value, icon, tone }) => (
@@ -103,23 +104,16 @@ const StaffContractDetailDialog = ({ contract, open, locale, dictionary, onClose
             label={dictionary.fields.baseSalary}
             value={
               <span className='font-bold'>
-                {formatCurrency(contract.base_salary, locale, contract.currency || dictionary.currencyCode || 'AFN')}
+                {formatCurrency(contract.staff.salary, locale, contract.staff.salary_currency || dictionary.currencyCode || 'AFN')}
               </span>
             }
+             tone='success'
             icon='tabler-cash'
           />
           <DetailItem label={dictionary.fields.startDate} value={formatDate(contract.start_date, locale)} />
           <DetailItem label={dictionary.fields.endDate} value={formatDate(contract.end_date, locale)} />
           <DetailItem label={dictionary.fields.duration || 'Duration'} value={contract.duration_label} />
-          <DetailItem label='Exchange Rate' value={contract.currency === 'USD' ? contract.exchange_rate : '1.0000'} />
-          <DetailItem
-            label={dictionary.fields.email}
-            value={<QuickContact email={contract.staff.email}>{contract.staff.email}</QuickContact>}
-          />
-          <DetailItem
-            label={dictionary.fields.phone}
-            value={<QuickContact phone={contract.staff.phone}>{contract.staff.phone}</QuickContact>}
-          />
+          <DetailItem label='Exchange Rate' value={contract.staff.salary_currency === 'USD' ? contract.staff.salary_exchange_rate : '1.0000'} />
         </div>
         <Divider />
         <div>

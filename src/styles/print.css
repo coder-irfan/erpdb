@@ -62,6 +62,10 @@
   margin-top: 0.25rem;
 }
 
+.staff-contract-print-host {
+  display: none;
+}
+
 @media print {
   @page {
     size: A4 portrait;
@@ -81,18 +85,42 @@
     print-color-adjust: exact !important;
   }
 
-  body:has(.enterprise-print-root) * {
+  html:has(.enterprise-print-root),
+  body.is-printing-contract {
+    display: block !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  body:has(.enterprise-print-root) *,
+  body.is-printing-contract * {
     visibility: hidden;
   }
 
   body:has(.enterprise-print-root) .enterprise-print-root,
-  body:has(.enterprise-print-root) .enterprise-print-root * {
+  body:has(.enterprise-print-root) .enterprise-print-root *,
+  body.is-printing-contract .staff-contract-print-host,
+  body.is-printing-contract .staff-contract-print-host * {
     visibility: visible;
   }
 
-  body:has(.enterprise-print-root) .enterprise-print-root {
-    position: absolute !important;
-    inset: 0 !important;
+  body.is-printing-contract .staff-contract-print-host {
+    display: block !important;
+    position: relative !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  body.is-printing-contract > *:not(.staff-contract-print-host) {
+    display: none !important;
+  }
+
+  body.is-printing-contract .staff-contract-print-host .enterprise-print-root {
+    position: static !important;
+    inset: auto !important;
     box-sizing: border-box !important;
     width: 100% !important;
     min-height: 0 !important;

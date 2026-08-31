@@ -2,8 +2,8 @@
 
 import { forwardRef } from 'react'
 
-const inputClassName =
-  'w-full rounded-md border border-input px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-50'
+import DatePickerInput from './DatePickerInput'
+import TimePickerInput from './TimePickerInput'
 
 const pad = value => String(value).padStart(2, '0')
 
@@ -31,7 +31,7 @@ const NativeDateTimeInput = forwardRef(function NativeDateTimeInput(
     type,
     id,
     name,
-    value = '',
+    value,
     onChange,
     onBlur,
     disabled,
@@ -43,7 +43,7 @@ const NativeDateTimeInput = forwardRef(function NativeDateTimeInput(
     size: _size,
     sx: _sx,
     fullWidth: _fullWidth,
-    slotProps: _slotProps,
+    slotProps,
     inputProps,
     ...props
   },
@@ -52,23 +52,46 @@ const NativeDateTimeInput = forwardRef(function NativeDateTimeInput(
   const inputType = type || (mode === 'datetime' ? 'datetime-local' : mode === 'time' ? 'time' : 'date')
   const inputId = id || name
 
+  const sharedProps = {
+    ...props,
+    id: inputId,
+    name,
+    value,
+    label,
+    onChange,
+    onBlur,
+    disabled,
+    required,
+    error,
+    helperText,
+    className,
+    inputProps,
+    slotProps
+  }
+
+  if (inputType === 'time') return <TimePickerInput {...sharedProps} ref={ref} />
+  if (inputType === 'date') return <DatePickerInput {...sharedProps} ref={ref} />
+
   return (
     <label className={`block min-w-0 ${className}`} htmlFor={inputId}>
-      {label && <span className='mb-1 block text-sm font-medium text-foreground'>{label}</span>}
+      {label && <span className='mb-1 block text-xs font-medium text-textSecondary'>{label}</span>}
       <input
         {...props}
+        {...slotProps?.htmlInput}
         {...inputProps}
         ref={ref}
         id={inputId}
         name={name}
         type={inputType}
-        value={normalizeValue(value, inputType)}
+        {...(value !== undefined ? { value: normalizeValue(value, inputType) } : {})}
         onChange={onChange}
         onBlur={onBlur}
         disabled={disabled}
         required={required}
         aria-invalid={error || undefined}
-        className={inputClassName}
+        className={`h-9 w-full rounded-lg border bg-backgroundPaper px-2.5 text-sm font-medium text-textPrimary outline-none transition-all [color-scheme:light] focus:border-primary focus:ring-2 focus:ring-primary/30 disabled:pointer-events-none disabled:bg-backgroundDefault disabled:opacity-30 dark:[color-scheme:dark] ${
+          error ? 'border-error' : 'border-divider'
+        }`}
       />
       {helperText && (
         <span className={`mt-1 block text-xs ${error ? 'text-error' : 'text-textSecondary'}`}>{helperText}</span>

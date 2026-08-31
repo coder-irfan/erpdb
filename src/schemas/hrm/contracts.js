@@ -1,6 +1,7 @@
 import {
   date,
   finite,
+  integer,
   isoDate,
   literal,
   maxLength,
@@ -9,7 +10,6 @@ import {
   number,
   object,
   optional,
-  picklist,
   pipe,
   string,
   transform,
@@ -20,8 +20,7 @@ import {
 const defaultMessages = {
   required: 'This field is required.',
   valueTooLong: 'This value is too long.',
-  salaryInvalid: 'Enter a valid salary.',
-  salaryPositive: 'Salary must be greater than zero.',
+  wholeNumberInvalid: 'Enter a whole number of days.',
   dateInvalid: 'Enter a valid date.'
 }
 
@@ -47,20 +46,21 @@ const optionalDateValue = messages =>
     ''
   )
 
-const salaryValue = messages =>
+const nonNegativeIntegerValue = messages =>
   pipe(
     union([
-      pipe(number(messages.salaryInvalid), finite(messages.salaryInvalid)),
+      pipe(number(messages.wholeNumberInvalid), finite(messages.wholeNumberInvalid)),
       pipe(
-        string(messages.salaryInvalid),
+        string(messages.wholeNumberInvalid),
         trim(),
-        nonEmpty(messages.salaryInvalid),
+        nonEmpty(messages.wholeNumberInvalid),
         transform(value => Number(value)),
-        number(messages.salaryInvalid),
-        finite(messages.salaryInvalid)
+        number(messages.wholeNumberInvalid),
+        finite(messages.wholeNumberInvalid)
       )
     ]),
-    minValue(0.01, messages.salaryPositive)
+    integer(messages.wholeNumberInvalid),
+    minValue(0, messages.wholeNumberInvalid)
   )
 
 export const createStaffContractSchema = customMessages => {
@@ -71,15 +71,12 @@ export const createStaffContractSchema = customMessages => {
     staff_id: requiredText(messages),
     contract_type_id: requiredText(messages),
     template_id: requiredText(messages),
-    base_salary: salaryValue(messages),
-    currency: picklist(['AFN', 'USD'], messages.required),
-    exchange_rate: salaryValue(messages),
     start_date: dateValue(messages),
     end_date: dateValue(messages),
     document_url: optionalText(messages),
     status_id: requiredText(messages),
-    probation_days: optional(salaryValue(messages), 90),
-    notice_period_days: optional(salaryValue(messages), 30),
+    probation_days: optional(nonNegativeIntegerValue(messages), 90),
+    notice_period_days: optional(nonNegativeIntegerValue(messages), 30),
     termination_date: optionalDateValue(messages),
     termination_reason: optionalText(messages)
   })

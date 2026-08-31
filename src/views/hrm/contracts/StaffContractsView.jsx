@@ -30,7 +30,7 @@ import { formatCurrency } from '@/utils/formatCurrency'
 import { formatStatusLabel } from '@/utils/formatStatusLabel'
 
 import StaffContractDetailDialog from './StaffContractDetailDialog'
-import StaffContractPrintPreviewModal from './StaffContractPrintPreviewModal'
+import StaffContractPrintable from './StaffContractPrintable'
 import ContractFormDrawer from '@/views/contracts/ContractFormDrawer'
 import StaffContractStatsCards from './StaffContractStatsCards'
 
@@ -91,6 +91,25 @@ const StaffContractsView = ({
 
     return () => clearTimeout(timeout)
   }, [searchInput])
+
+  useEffect(() => {
+    if (!printingContract) return undefined
+
+    let frame = window.requestAnimationFrame(() => {
+      frame = window.requestAnimationFrame(() => window.print())
+    })
+
+    const clearPrintDocument = () => setPrintingContract(null)
+
+    document.body.classList.add('is-printing-contract')
+    window.addEventListener('afterprint', clearPrintDocument)
+
+    return () => {
+      window.cancelAnimationFrame(frame)
+      document.body.classList.remove('is-printing-contract')
+      window.removeEventListener('afterprint', clearPrintDocument)
+    }
+  }, [printingContract])
 
   const refreshData = useCallback(async () => {
     setLoading(true)
@@ -238,9 +257,17 @@ const StaffContractsView = ({
           />
           <div className='grid is-full grid-cols-2 gap-2 sm:flex sm:is-auto sm:flex-wrap sm:gap-3 sm:justify-end'>
             <TableFiltersPopover
-              activeCount={Number(Boolean(searchInput.trim())) + Number(Boolean(statusId)) + Number(Boolean(contractTypeId))}
+              activeCount={
+                Number(Boolean(searchInput.trim())) + Number(Boolean(statusId)) + Number(Boolean(contractTypeId))
+              }
               locale={locale}
-              onReset={() => { setSearchInput(''); setSearch(''); setStatusId(''); setContractTypeId(''); setPage(0) }}
+              onReset={() => {
+                setSearchInput('')
+                setSearch('')
+                setStatusId('')
+                setContractTypeId('')
+                setPage(0)
+              }}
             >
               <CustomTextField
                 select
@@ -324,7 +351,10 @@ const StaffContractsView = ({
               size='small'
               variant='tonal'
               color={STATUS_COLORS[contract.status.value] || 'default'}
-              label={formatStatusLabel(contract.status.value, dictionary.status[contract.status.value] || contract.status.label)}
+              label={formatStatusLabel(
+                contract.status.value,
+                dictionary.status[contract.status.value] || contract.status.label
+              )}
             />
           )}
           renderMobileActions={renderContractActions}
@@ -334,13 +364,25 @@ const StaffContractsView = ({
             {
               id: 'salary',
               label: dictionary.table.salary,
-              render: contract => <DualCurrencyAmount amount={contract.base_salary} amountBase={contract.amount_base} currency={contract.currency || currencyCode} exchangeRate={contract.exchange_rate} locale={locale} className='font-bold' />
+              render: contract => (
+                <DualCurrencyAmount
+                  amount={contract.staff?.salary}
+                  amountBase={contract.staff?.amount_base}
+                  currency={contract.staff?.salary_currency || currencyCode}
+                  exchangeRate={contract.staff?.salary_exchange_rate}
+                  locale={locale}
+                  className='font-bold'
+                />
+              )
             },
             {
               id: 'period',
               label: dictionary.table.period,
-              render: contract =>
-                <>{formatDate(contract.start_date, locale)} <>&mdash;</> {formatDate(contract.end_date, locale)}</>
+              render: contract => (
+                <>
+                  {formatDate(contract.start_date, locale)} <>&mdash;</> {formatDate(contract.end_date, locale)}
+                </>
+              )
             }
           ]}
           emptyState={{
@@ -402,7 +444,14 @@ const StaffContractsView = ({
                       <td>{contract.staff?.position || '-'}</td>
                       <td>{contract.contract_type.label}</td>
                       <td>
-                        <DualCurrencyAmount amount={contract.base_salary} amountBase={contract.amount_base} currency={contract.currency || currencyCode} exchangeRate={contract.exchange_rate} locale={locale} className='font-bold' />
+                        <DualCurrencyAmount
+                          amount={contract.staff?.salary}
+                          amountBase={contract.staff?.amount_base}
+                          currency={contract.staff?.salary_currency || currencyCode}
+                          exchangeRate={contract.staff?.salary_exchange_rate}
+                          locale={locale}
+                          className='font-bold'
+                        />
                       </td>
                       <td className='whitespace-nowrap'>
                         <Typography variant='body2'>{formatDate(contract.start_date, locale)}</Typography>
@@ -415,7 +464,10 @@ const StaffContractsView = ({
                           size='small'
                           variant='tonal'
                           color={STATUS_COLORS[contract.status.value] || 'default'}
-                          label={formatStatusLabel(contract.status.value, dictionary.status[contract.status.value] || contract.status.label)}
+                          label={formatStatusLabel(
+                            contract.status.value,
+                            dictionary.status[contract.status.value] || contract.status.label
+                          )}
                         />
                       </td>
                       <td className='text-end'>{renderContractActions(contract)}</td>
@@ -458,27 +510,57 @@ const StaffContractsView = ({
         onClose={() => setViewingContract(null)}
         onEdit={openEdit}
       />
-      <StaffContractPrintPreviewModal
+      <StaffContractPrintable
         contract={printingContract}
         setup={formOptions.setup}
         locale={locale}
         dictionary={dictionary}
-        onClose={() => setPrintingContract(null)}
       />
-      <Dialog open={Boolean(terminationTarget)} onClose={busyId ? undefined : () => setTerminationTarget(null)} fullWidth maxWidth='sm'>
+      <Dialog
+        open={Boolean(terminationTarget)}
+        onClose={busyId ? undefined : () => setTerminationTarget(null)}
+        fullWidth
+        maxWidth='sm'
+      >
         <DialogTitle>Terminate staff contract</DialogTitle>
         <DialogContent className='flex flex-col gap-4 pt-2'>
-          <Typography color='text.secondary'>Termination freezes payroll, flags final settlement, archives the staff record, and revokes linked user sessions immediately.</Typography>
-          <NativeDateTimeInput locale={locale} label='Termination Date' value={terminationDate} onChange={event => setTerminationDate(event.target.value)} />
-          <CustomTextField multiline minRows={3} label='Termination Reason' value={terminationReason} onChange={event => setTerminationReason(event.target.value)} />
+          <Typography color='text.secondary'>
+            Termination freezes payroll, flags final settlement, archives the staff record, and revokes linked user
+            sessions immediately.
+          </Typography>
+          <NativeDateTimeInput
+            locale={locale}
+            label='Termination Date'
+            value={terminationDate}
+            onChange={event => setTerminationDate(event.target.value)}
+          />
+          <CustomTextField
+            multiline
+            minRows={3}
+            label='Termination Reason'
+            value={terminationReason}
+            onChange={event => setTerminationReason(event.target.value)}
+          />
         </DialogContent>
         <DialogActions>
-          <Button color='secondary' variant='tonal' onClick={() => setTerminationTarget(null)} disabled={Boolean(busyId)}>Cancel</Button>
+          <Button
+            color='secondary'
+            variant='tonal'
+            onClick={() => setTerminationTarget(null)}
+            disabled={Boolean(busyId)}
+          >
+            Cancel
+          </Button>
           <Button
             color='error'
             variant='contained'
             disabled={!terminationDate || !terminationReason.trim() || Boolean(busyId)}
-            onClick={() => executeStatusChange(terminationTarget.contract, terminationTarget.nextStatusId, { termination_date: terminationDate, termination_reason: terminationReason })}
+            onClick={() =>
+              executeStatusChange(terminationTarget.contract, terminationTarget.nextStatusId, {
+                termination_date: terminationDate,
+                termination_reason: terminationReason
+              })
+            }
           >
             Confirm termination
           </Button>

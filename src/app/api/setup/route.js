@@ -49,7 +49,6 @@ const nullableText = value => value?.trim() || null
 const rebaseStoredAmounts = async (transaction, baseCurrency) => {
   const models = [
     ['hrmstaff', 'salary', 'salary_currency', 'salary_exchange_rate'],
-    ['hrmstaffcontract', 'base_salary', 'currency', 'exchange_rate'],
     ['crmlead', 'estimated_value', 'currency', 'exchange_rate'],
     ['project', 'budget', 'currency', 'exchange_rate'],
     ['contract', 'total_amount', 'currency', 'exchange_rate'],
@@ -81,15 +80,9 @@ const rebaseStoredAmounts = async (transaction, baseCurrency) => {
 }
 
 const refreshCurrentCompensationRates = async (transaction, baseCurrency, exchangeRate) => {
-  const [staff, activeContracts] = await Promise.all([
-    transaction.hrmstaff.findMany({
+  const staff = await transaction.hrmstaff.findMany({
       select: { id: true, salary: true, salary_currency: true }
-    }),
-    transaction.hrmstaffcontract.findMany({
-      where: { status: { is: { value: 'ACTIVE' } } },
-      select: { id: true, base_salary: true, currency: true }
     })
-  ])
 
   for (const member of staff) {
     await transaction.hrmstaff.update({
@@ -103,17 +96,6 @@ const refreshCurrentCompensationRates = async (transaction, baseCurrency, exchan
     })
   }
 
-  for (const contract of activeContracts) {
-    await transaction.hrmstaffcontract.update({
-      where: { id: contract.id },
-      data: {
-        exchange_rate: new Prisma.Decimal(exchangeRate),
-        amount_base: new Prisma.Decimal(
-          convertToBaseCurrency(contract.base_salary, contract.currency, exchangeRate, baseCurrency)
-        )
-      }
-    })
-  }
 }
 
 const normalizeLocalPath = (value, pattern) => {

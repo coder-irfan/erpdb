@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 
 import Button from '@mui/material/Button'
+import Alert from '@mui/material/Alert'
 import Divider from '@mui/material/Divider'
 import Drawer from '@mui/material/Drawer'
 import IconButton from '@mui/material/IconButton'
@@ -24,6 +25,13 @@ import { formatStatusLabel } from '@/utils/formatStatusLabel'
 
 const today = () => getKabulToday()
 
+const toDateValue = value => {
+  if (!value) return ''
+  if (value instanceof Date) return Number.isNaN(value.getTime()) ? '' : value.toISOString().slice(0, 10)
+
+  return String(value).slice(0, 10)
+}
+
 const withCurrentOption = (options, current) => {
   if (!current || options.some(option => option.id === current.id)) return options
 
@@ -33,17 +41,34 @@ const withCurrentOption = (options, current) => {
 const getDefaults = (leave, currentStaffId, statuses = []) => ({
   staff_id: leave?.staff_id || currentStaffId || '',
   leave_type_id: leave?.leave_type_id || '',
-  start_date: leave?.start_date || today(),
-  end_date: leave?.end_date || today(),
+  start_date: toDateValue(leave?.start_date) || today(),
+  end_date: toDateValue(leave?.end_date) || today(),
+  total_days: leave?.total_days == null ? '' : Number(leave.total_days),
+  duration_type: leave?.duration_type || 'FULL_DAY',
+  half_day_shift: leave?.half_day_shift || '',
   reason: leave?.reason || '',
   is_paid: leave?.is_paid ?? true,
   status_id: leave?.status_id || statuses.find(status => status.value === 'PENDING')?.id || ''
 })
 
-const StaffLeaveDrawer = ({ open, leave, options, currentStaffId, canManage, locale, dictionary, onClose, onSaved }) => {
+const StaffLeaveDrawer = ({
+  open,
+  leave,
+  options,
+  currentStaffId,
+  canManage,
+  locale,
+  dictionary,
+  onClose,
+  onSaved
+}) => {
   const [balance, setBalance] = useState(null)
   const staffOptions = useMemo(() => withCurrentOption(options.staff, leave?.staff), [leave?.staff, options.staff])
-  const leaveTypes = useMemo(() => withCurrentOption(options.leaveTypes, leave?.leave_type), [leave?.leave_type, options.leaveTypes])
+
+  const leaveTypes = useMemo(
+    () => withCurrentOption(options.leaveTypes, leave?.leave_type),
+    [leave?.leave_type, options.leaveTypes]
+  )
 
   const {
     control,
@@ -66,7 +91,36 @@ const StaffLeaveDrawer = ({ open, leave, options, currentStaffId, canManage, loc
   const endDate = watch('end_date')
   const staffId = watch('staff_id')
   const leaveTypeId = watch('leave_type_id')
-  const calculatedDays = startDate && endDate ? calculateLeaveWorkingDays(startDate, endDate, options.holidays || []) : 0
+  const isPaid = watch('is_paid')
+  const durationType = watch('duration_type')
+  const isHalfDay = durationType === 'HALF_DAY'
+
+  const calculatedDays = isHalfDay
+    ? calculateLeaveWorkingDays(startDate, startDate, options.holidays || []) > 0
+      ? 0.5
+      : 0
+    : startDate && endDate
+      ? Math.trunc(calculateLeaveWorkingDays(startDate, endDate, options.holidays || []))
+      : 0
+
+  const projectedPending = balance && isPaid ? balance.pending + calculatedDays : balance?.pending
+
+  const projectedRemaining =
+    balance?.allowed == null || !isPaid ? balance?.remaining : balance.allowed - balance.taken - projectedPending
+
+  const hasInsufficientPaidBalance = Boolean(isPaid) && balance?.remaining != null && calculatedDays > balance.remaining
+
+  useEffect(() => {
+    if (isHalfDay && startDate && endDate !== startDate) {
+      setValue('end_date', startDate, { shouldDirty: true, shouldValidate: true })
+    }
+  }, [endDate, isHalfDay, setValue, startDate])
+
+  useEffect(() => {
+    if (!open) return
+
+    setValue('total_days', calculatedDays || '', { shouldDirty: false, shouldValidate: false })
+  }, [calculatedDays, open, setValue])
 
   useEffect(() => {
     if (!open || !staffId || !leaveTypeId || !startDate) {
@@ -91,13 +145,23 @@ const StaffLeaveDrawer = ({ open, leave, options, currentStaffId, canManage, loc
   }, [leave?.id, leaveTypeId, open, staffId, startDate])
 
   const submit = async values => {
-    if (calculatedDays < 1) return
+    if (calculatedDays < 0.5) {
+      toast.error(dictionary.validation.dateRangeInvalid)
+
+      return
+    }
 
     try {
       const response = await fetch(leave ? `/api/hrm/leaves/${leave.id}` : '/api/hrm/leaves', {
         method: leave ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...values, locale })
+        body: JSON.stringify({
+          ...values,
+          start_date: toDateValue(values.start_date),
+          end_date: isHalfDay ? toDateValue(values.start_date) : toDateValue(values.end_date),
+          total_days: Number(calculatedDays),
+          locale
+        })
       })
 
       const result = await response.json()
@@ -116,12 +180,28 @@ const StaffLeaveDrawer = ({ open, leave, options, currentStaffId, canManage, loc
     }
   }
 
+  const submitInvalid = formErrors => {
+    console.error('HRM leave form validation failed:', formErrors)
+
+    const firstError =
+      formErrors.root ||
+      formErrors.total_days ||
+      Object.values(formErrors).find(error => error?.message)
+
+    toast.error(firstError?.message || dictionary.messages.operationFailed)
+  }
+
   const closeDrawer = () => {
     if (!isSubmitting) onClose()
   }
 
   return (
-    <Drawer anchor='right' open={open} onClose={closeDrawer} slotProps={{ paper: { className: 'is-full sm:is-[540px]' } }}>
+    <Drawer
+      anchor='right'
+      open={open}
+      onClose={closeDrawer}
+      slotProps={{ paper: { className: 'is-full sm:is-[540px]' } }}
+    >
       <div className='form-surface-header flex items-start justify-between gap-4 border-be border-divider p-6'>
         <div>
           <Typography variant='h5'>{leave ? dictionary.drawer.editTitle : dictionary.drawer.title}</Typography>
@@ -132,85 +212,245 @@ const StaffLeaveDrawer = ({ open, leave, options, currentStaffId, canManage, loc
         </IconButton>
       </div>
       <Divider />
-      <form className='form-surface-scroll flex flex-1 flex-col gap-5 p-6' onSubmit={handleSubmit(submit)} noValidate>
-        <FormSectionCards labels={[dictionary.tabs?.general || 'Leave request', dictionary.tabs?.approval || 'Balance and approval']}>
-        <Controller
-          name='staff_id'
-          control={control}
-          render={({ field }) => (
-            <CustomTextField {...field} select fullWidth required label={dictionary.fields.staff} value={field.value || ''} disabled={isSubmitting || !canManage} error={Boolean(errors.staff_id)} helperText={errors.staff_id?.message}>
-              <MenuItem value='' disabled>{dictionary.placeholders.selectStaff}</MenuItem>
-              {staffOptions.map(staff => <MenuItem key={staff.id} value={staff.id}>{staff.full_name} <>&mdash;</> {staff.position}</MenuItem>)}
-            </CustomTextField> 
-          )}
-        />
-        <Controller
-          name='leave_type_id'
-          control={control}
-          render={({ field }) => (
-            <CustomTextField {...field} onChange={event => {
-              field.onChange(event)
-              const selected = leaveTypes.find(type => type.id === event.target.value)
-
-              if (selected) setValue('is_paid', selected.is_paid_leave)
-            }} select fullWidth required label={dictionary.fields.leaveType} value={field.value || ''} disabled={isSubmitting} error={Boolean(errors.leave_type_id)} helperText={errors.leave_type_id?.message}>
-              <MenuItem value='' disabled>{dictionary.placeholders.selectLeaveType}</MenuItem>
-              {leaveTypes.map(type => <MenuItem key={type.id} value={type.id}>{type.label}</MenuItem>)}
-            </CustomTextField>
-          )}
-        />
-        <div className='grid grid-cols-1 gap-5 sm:grid-cols-2'>
-          <NativeDateTimeInput fullWidth required locale={locale} label={dictionary.fields.startDate} disabled={isSubmitting} error={Boolean(errors.start_date)} helperText={errors.start_date?.message} {...register('start_date')} />
-          <NativeDateTimeInput fullWidth required locale={locale} label={dictionary.fields.endDate} disabled={isSubmitting} error={Boolean(errors.end_date) || calculatedDays < 1} helperText={errors.end_date?.message || (calculatedDays < 1 ? dictionary.validation.dateRangeInvalid : '')} {...register('end_date')} />
-        </div>
-        <div className='flex items-center justify-between rounded border border-primary/20 bg-primaryLighter p-4'>
-          <Typography color='text.secondary'>Net Working Days (Fridays and public holidays excluded)</Typography>
-          <Typography variant='h5' color={calculatedDays > 0 ? 'primary.main' : 'error.main'}>{Math.max(0, calculatedDays)}</Typography>
-        </div>
-        {balance && (
-          <div className='rounded border border-divider p-4'>
-            <Typography variant='subtitle2'>Leave balance</Typography>
-            <Typography color='text.secondary'>
-              {balance.allowed == null
-                ? 'Yearly allowance is not configured for this leave type.'
-                : `Allowed: ${balance.allowed} / Taken: ${balance.taken} / Pending: ${balance.pending} / Remaining: ${balance.remaining}`}
-            </Typography>
-            {balance.remaining != null && calculatedDays > balance.remaining && (
-              <Typography color='error.main' variant='body2'>Requested days exceed the remaining balance.</Typography>
-            )}
-          </div>
-        )}
-        <Controller
-          name='is_paid'
-          control={control}
-          render={({ field }) => (
-            <FormControlLabel
-              control={<Switch checked={Boolean(field.value)} onChange={event => field.onChange(event.target.checked)} />}
-              label={`Paid Leave: ${field.value ? 'Yes' : 'No'}`}
-              disabled={isSubmitting || !canManage}
-            />
-          )}
-        />
-        {!leave && canManage && (
+      <form
+        className='form-surface-scroll flex flex-1 flex-col gap-5 px-4 pt-5 overflow-x-hidden'
+        onSubmit={handleSubmit(submit, submitInvalid)}
+        noValidate
+      >
+        <FormSectionCards
+          labels={[dictionary.tabs?.general || 'Leave request', dictionary.tabs?.approval || 'Balance and approval']}
+        >
           <Controller
-            name='status_id'
+            name='staff_id'
             control={control}
             render={({ field }) => (
-              <CustomTextField {...field} select fullWidth label={dictionary.fields.initialStatus} value={field.value || ''} disabled={isSubmitting}>
-                <MenuItem value='' disabled>{dictionary.placeholders.selectStatus}</MenuItem>
-                {options.statuses
-                  .filter(status => ['PENDING', 'APPROVED'].includes(status.value))
-                  .map(status => <MenuItem key={status.id} value={status.id}>{formatStatusLabel(status.value, dictionary.status[status.value] || status.label)}</MenuItem>)}
+              <CustomTextField
+                {...field}
+                select
+                fullWidth
+                required
+                label={dictionary.fields.staff}
+                value={field.value || ''}
+                disabled={isSubmitting || !canManage}
+                error={Boolean(errors.staff_id)}
+                helperText={errors.staff_id?.message}
+              >
+                <MenuItem value='' disabled>
+                  {dictionary.placeholders.selectStaff}
+                </MenuItem>
+                {staffOptions.map(staff => (
+                  <MenuItem key={staff.id} value={staff.id}>
+                    {staff.full_name} <>&mdash;</> {staff.position}
+                  </MenuItem>
+                ))}
               </CustomTextField>
             )}
           />
-        )}
-        <CustomTextField fullWidth multiline minRows={4} label={dictionary.fields.reason} placeholder={dictionary.placeholders.reason} disabled={isSubmitting} error={Boolean(errors.reason)} helperText={errors.reason?.message} {...register('reason')} />
+          <Controller
+            name='leave_type_id'
+            control={control}
+            render={({ field }) => (
+              <CustomTextField
+                {...field}
+                onChange={event => {
+                  field.onChange(event)
+                  const selected = leaveTypes.find(type => type.id === event.target.value)
+
+                  if (selected) setValue('is_paid', selected.is_paid_leave)
+                }}
+                select
+                fullWidth
+                required
+                label={dictionary.fields.leaveType}
+                value={field.value || ''}
+                disabled={isSubmitting}
+                error={Boolean(errors.leave_type_id)}
+                helperText={errors.leave_type_id?.message}
+              >
+                <MenuItem value='' disabled>
+                  {dictionary.placeholders.selectLeaveType}
+                </MenuItem>
+                {leaveTypes.map(type => (
+                  <MenuItem key={type.id} value={type.id}>
+                    {type.label}
+                  </MenuItem>
+                ))}
+              </CustomTextField>
+            )}
+          />
+          <Controller
+            name='duration_type'
+            control={control}
+            render={({ field }) => (
+              <CustomTextField
+                {...field}
+                select
+                fullWidth
+                label='Duration Type'
+                value={field.value || 'FULL_DAY'}
+                disabled={isSubmitting}
+                onChange={event => {
+                  field.onChange(event.target.value)
+                  if (event.target.value === 'FULL_DAY') setValue('half_day_shift', '')
+                }}
+              >
+                <MenuItem value='FULL_DAY'>Full Day(s)</MenuItem>
+                <MenuItem value='HALF_DAY'>Half Day</MenuItem>
+              </CustomTextField>
+            )}
+          />
+          <div className='grid grid-cols-1 gap-5 sm:grid-cols-2 items-end'>
+            <NativeDateTimeInput
+              fullWidth
+              required
+              locale={locale}
+              label={dictionary.fields.startDate}
+              disabled={isSubmitting}
+              error={Boolean(errors.start_date)}
+              helperText={errors.start_date?.message}
+              {...register('start_date')}
+            />
+            {!isHalfDay && (
+              <NativeDateTimeInput
+                fullWidth
+                required
+                locale={locale}
+                label={dictionary.fields.endDate}
+                disabled={isSubmitting}
+                error={Boolean(errors.end_date) || calculatedDays < 0.5}
+                helperText={
+                  errors.end_date?.message || (calculatedDays < 0.5 ? dictionary.validation.dateRangeInvalid : '')
+                }
+                {...register('end_date')}
+              />
+            )}
+            {isHalfDay && (
+              <Controller
+                name='half_day_shift'
+                control={control}
+                render={({ field }) => (
+                  <CustomTextField
+                    {...field}
+                    select
+                    fullWidth
+                    required
+                    label='Half-Day Shift'
+                    value={field.value || ''}
+                    disabled={isSubmitting}
+                    error={Boolean(errors.half_day_shift)}
+                    helperText={errors.half_day_shift?.message}
+                  >
+                    <MenuItem value='' disabled>
+                      Select shift
+                    </MenuItem>
+                    <MenuItem value='MORNING'>Morning</MenuItem>
+                    <MenuItem value='AFTERNOON'>Afternoon</MenuItem>
+                  </CustomTextField>
+                )}
+              />
+            )}
+          </div>
+          <div className='flex items-center justify-between rounded border border-primary/20 bg-primaryLighter p-4'>
+            <Typography color='text.secondary'>Net Working Days (Fridays and public holidays excluded)</Typography>
+            <Typography variant='h5' color={calculatedDays > 0 ? 'primary.main' : 'error.main'}>
+              {Math.max(0, calculatedDays)}
+            </Typography>
+          </div>
+          {errors.total_days?.message && (
+            <Typography color='error.main' variant='body2'>
+              {errors.total_days.message}
+            </Typography>
+          )}
+          {balance && (
+            <div className='rounded border border-divider p-4'>
+              <Typography variant='subtitle2'>Leave balance</Typography>
+              <Typography color='text.secondary'>
+                {balance.allowed == null
+                  ? 'Yearly allowance is not configured for this leave type.'
+                  : isPaid
+                    ? `Allowed: ${balance.allowed} / Taken: ${balance.taken} / Pending: ${balance.pending} → ${projectedPending} / Remaining: ${balance.remaining} → ${projectedRemaining} days`
+                    : `Allowed: ${balance.allowed} / Taken: ${balance.taken} / Pending: ${balance.pending} / Remaining: ${balance.remaining}`}
+              </Typography>
+              {!isPaid && (
+                <Typography
+                  className='mt-2 inline-flex rounded bg-warningLighter px-2 py-1'
+                  color='warning.dark'
+                  variant='body2'
+                >
+                  Unpaid Leave (Does not deduct from {balance.allowed ?? 0} annual days)
+                </Typography>
+              )}
+            </div>
+          )}
+          {hasInsufficientPaidBalance && (
+            <Alert severity='warning'>
+              Requested days ({calculatedDays}) exceed available balance ({balance.remaining}).
+            </Alert>
+          )}
+          <Controller
+            name='is_paid'
+            control={control}
+            render={({ field }) => (
+              <FormControlLabel
+                control={
+                  <Switch checked={Boolean(field.value)} onChange={event => field.onChange(event.target.checked)} />
+                }
+                label={`Paid Leave: ${field.value ? 'Yes' : 'No'}`}
+                disabled={isSubmitting || !canManage}
+              />
+            )}
+          />
+          {!leave && canManage && (
+            <Controller
+              name='status_id'
+              control={control}
+              render={({ field }) => (
+                <CustomTextField
+                  {...field}
+                  select
+                  fullWidth
+                  label={dictionary.fields.initialStatus}
+                  value={field.value || ''}
+                  disabled={isSubmitting}
+                >
+                  <MenuItem value='' disabled>
+                    {dictionary.placeholders.selectStatus}
+                  </MenuItem>
+                  {options.statuses
+                    .filter(status => ['PENDING', 'APPROVED'].includes(status.value))
+                    .map(status => (
+                      <MenuItem key={status.id} value={status.id}>
+                        {formatStatusLabel(status.value, dictionary.status[status.value] || status.label)}
+                      </MenuItem>
+                    ))}
+                </CustomTextField>
+              )}
+            />
+          )}
+          <CustomTextField
+            fullWidth
+            multiline
+            minRows={4}
+            label={dictionary.fields.reason}
+            placeholder={dictionary.placeholders.reason}
+            disabled={isSubmitting}
+            error={Boolean(errors.reason)}
+            helperText={errors.reason?.message}
+            {...register('reason')}
+          />
         </FormSectionCards>
-        <div className='form-surface-actions -mx-6 -mb-6 mt-auto flex justify-end gap-3 p-6'>
-          <Button type='button' variant='tonal' color='secondary' onClick={closeDrawer} disabled={isSubmitting}>{dictionary.actions.cancel}</Button>
-          <Button type='submit' variant='contained' disabled={isSubmitting || calculatedDays < 1 || (balance?.remaining != null && calculatedDays > balance.remaining)}>
-            <LoadingButtonContent loading={isSubmitting} loadingLabel={dictionary.actions.saving}>{leave ? dictionary.actions.saveChanges : dictionary.actions.submit}</LoadingButtonContent>
+        <div className='form-surface-actions -mx-6 -mb-6 mt-auto flex justify-end gap-3 p-4'>
+          <Button type='button' variant='tonal' color='secondary' onClick={closeDrawer} disabled={isSubmitting}>
+            {dictionary.actions.cancel}
+          </Button>
+          <Button
+            type='submit'
+            variant='contained'
+            disabled={isSubmitting || calculatedDays < 0.5 || hasInsufficientPaidBalance}
+          >
+            <LoadingButtonContent loading={isSubmitting} loadingLabel={dictionary.actions.saving}>
+              {leave ? dictionary.actions.saveChanges : dictionary.actions.submit}
+            </LoadingButtonContent>
           </Button>
         </div>
       </form>

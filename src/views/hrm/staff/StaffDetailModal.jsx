@@ -2,8 +2,6 @@
 
 import { useEffect, useState } from 'react'
 
-import Link from 'next/link'
-
 import Alert from '@mui/material/Alert'
 import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
@@ -17,8 +15,10 @@ import IconButton from '@mui/material/IconButton'
 import Tab from '@mui/material/Tab'
 import Tabs from '@mui/material/Tabs'
 import Typography from '@mui/material/Typography'
+import { toast } from 'sonner'
 
 import { getStaffById } from '@/actions/hrm/staff'
+import { getStaffContractById } from '@/actions/hrm/contracts'
 import QuickContact from '@/components/common/QuickContact'
 import DualCurrencyAmount from '@/components/currency/DualCurrencyAmount'
 import UserAvatar from '@/components/common/UserAvatar'
@@ -28,6 +28,7 @@ import { formatCurrency } from '@/utils/formatCurrency'
 import { formatStatusLabel } from '@/utils/formatStatusLabel'
 
 import StaffAttendanceHistory from './StaffAttendanceHistory'
+import StaffContractPrintable from '../contracts/StaffContractPrintable'
 
 import tableStyles from '@core/styles/table.module.css'
 
@@ -51,11 +52,13 @@ const DetailItem = ({ label, value }) => (
   </div>
 )
 
-const StaffDetailModal = ({ open, staffId, locale, dictionary, onClose }) => {
+const StaffDetailModal = ({ open, staffId, locale, dictionary, contractDictionary, onClose }) => {
   const [staff, setStaff] = useState(null)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [activeTab, setActiveTab] = useState(0)
+  const [printingContract, setPrintingContract] = useState(null)
+  const [printLoadingId, setPrintLoadingId] = useState(null)
 
   useEffect(() => {
     if (!open || !staffId) return undefined
@@ -89,7 +92,41 @@ const StaffDetailModal = ({ open, staffId, locale, dictionary, onClose }) => {
     }
   }, [dictionary.messages.loadFailed, locale, open, staffId])
 
+  useEffect(() => {
+    if (!printingContract) return undefined
+
+    let frame = window.requestAnimationFrame(() => {
+      frame = window.requestAnimationFrame(() => window.print())
+    })
+
+    const clearPrintDocument = () => setPrintingContract(null)
+
+    document.body.classList.add('is-printing-contract')
+    window.addEventListener('afterprint', clearPrintDocument)
+
+    return () => {
+      window.cancelAnimationFrame(frame)
+      document.body.classList.remove('is-printing-contract')
+      window.removeEventListener('afterprint', clearPrintDocument)
+    }
+  }, [printingContract])
+
   const closeModal = () => onClose()
+
+  const printContract = async contractId => {
+    setPrintLoadingId(contractId)
+
+    try {
+      const result = await getStaffContractById(contractId, { locale })
+
+      if (result.success) setPrintingContract(result.data)
+      else toast.error(result.error || dictionary.messages.loadFailed)
+    } catch {
+      toast.error(dictionary.messages.loadFailed)
+    } finally {
+      setPrintLoadingId(null)
+    }
+  }
 
   return (
     <Dialog open={open} onClose={closeModal} fullWidth maxWidth='md'>
@@ -173,7 +210,15 @@ const StaffDetailModal = ({ open, staffId, locale, dictionary, onClose }) => {
                     <DetailItem label={dictionary.fields.position} value={staff.position} />
                     <DetailItem
                       label={dictionary.fields.salary}
-                      value={<DualCurrencyAmount amount={staff.salary} amountBase={staff.amount_base} currency={staff.salary_currency} exchangeRate={staff.salary_exchange_rate} locale={locale} />}
+                      value={
+                        <DualCurrencyAmount
+                          amount={staff.salary}
+                          amountBase={staff.amount_base}
+                          currency={staff.salary_currency}
+                          exchangeRate={staff.salary_exchange_rate}
+                          locale={locale}
+                        />
+                      }
                     />
                     <DetailItem label={dictionary.fields.joinDate} value={formatDate(staff.join_date, locale)} />
                     <DetailItem label={dictionary.fields.systemUser} value={staff.user?.name || staff.user?.email} />
@@ -209,12 +254,19 @@ const StaffDetailModal = ({ open, staffId, locale, dictionary, onClose }) => {
                 </table>
               </div>
             ) : activeTab === 1 ? (
-              <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+              <div className='flex flex-col gap-4'>
                 {staff.contracts.map(contract => (
-                  <Card key={contract.id} variant='outlined'>
-                    <CardContent className='flex flex-col gap-2'>
+                  <Card key={contract.id} variant='outlined' className='w-full'>
+                    <CardContent className='flex flex-col gap-5 p-4 sm:p-5'>
                       <div className='flex items-start justify-between gap-3'>
-                        <Typography variant='h6'>{contract.contract_number}</Typography>
+                        <div>
+                          <Typography variant='caption' color='text.secondary'>
+                            {dictionary.details.contractId || 'Contract ID'}
+                          </Typography>
+                          <Typography variant='h6' className='mt-1'>
+                            {contract.contract_number}
+                          </Typography>
+                        </div>
                         <Chip
                           size='small'
                           variant='tonal'
@@ -222,27 +274,43 @@ const StaffDetailModal = ({ open, staffId, locale, dictionary, onClose }) => {
                           label={contract.status?.label}
                         />
                       </div>
-                      <Typography>{contract.staff?.position || staff.position}</Typography>
-                      <Typography color='text.secondary'>
-                        {`${formatDate(contract.start_date, locale)} — ${formatDate(contract.end_date, locale)}`}
-                      </Typography>
-                      <Typography className='font-medium'>
-                        <DualCurrencyAmount amount={contract.base_salary} amountBase={contract.amount_base} currency={contract.currency} exchangeRate={contract.exchange_rate} locale={locale} />
-                      </Typography>
-                      <Link
-                        href={`/${locale}/hrm/contracts/${contract.id}/print`}
-                        target='_blank'
-                        rel='noopener noreferrer'
-                      >
+                      <div className='grid grid-cols-1 gap-4 border-y border-divider py-4 sm:grid-cols-2 xl:grid-cols-4'>
+                        <DetailItem
+                          label={dictionary.fields.position}
+                          value={contract.position || staff.position}
+                        />
+                        <DetailItem
+                          label={contractDictionary.fields.startDate}
+                          value={formatDate(contract.start_date, locale)}
+                        />
+                        <DetailItem
+                          label={contractDictionary.fields.endDate}
+                          value={formatDate(contract.end_date, locale)}
+                        />
+                        <DetailItem
+                          label={contractDictionary.fields.baseSalary}
+                          value={
+                            <DualCurrencyAmount
+                              amount={contract.salary}
+                              amountBase={contract.amount_base}
+                              currency={contract.salary_currency}
+                              exchangeRate={contract.salary_exchange_rate}
+                              locale={locale}
+                            />
+                          }
+                        />
+                      </div>
+                      <div className='flex justify-end'>
                         <Button
-                          component='span'
                           variant='tonal'
                           size='small'
                           startIcon={<i className='tabler-printer' />}
+                          disabled={printLoadingId === contract.id}
+                          onClick={() => printContract(contract.id)}
                         >
                           {dictionary.details.printContract}
                         </Button>
-                      </Link>
+                      </div>
                     </CardContent>
                   </Card>
                 ))}
@@ -258,6 +326,12 @@ const StaffDetailModal = ({ open, staffId, locale, dictionary, onClose }) => {
           </div>
         ) : null}
       </DialogContent>
+      <StaffContractPrintable
+        contract={printingContract?.contract}
+        setup={printingContract?.setup}
+        locale={locale}
+        dictionary={contractDictionary}
+      />
     </Dialog>
   )
 }

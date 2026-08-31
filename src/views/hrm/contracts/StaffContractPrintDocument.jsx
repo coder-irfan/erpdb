@@ -25,9 +25,9 @@ const Term = ({ label, value }) => (
 
 const StaffContractPrintDocument = ({ contract, setup, locale, dictionary }) => {
   const print = dictionary.print
-  const currency = contract.currency || 'AFN'
+  const currency = contract.staff.salary_currency || 'AFN'
   const isAfnSalary = currency.toUpperCase() === 'AFN'
-  const salary = formatCurrency(contract.base_salary, locale, currency)
+  const salary = formatCurrency(contract.staff.salary, locale, currency)
 
   return (
     <div className='flex flex-col gap-7 pb-2'>
@@ -73,8 +73,8 @@ const StaffContractPrintDocument = ({ contract, setup, locale, dictionary }) => 
           <Term label={dictionary.fields.currency} value={currency} />
           <Term label={dictionary.fields.duration || 'Duration'} value={contract.duration_label} />
           <Term label={dictionary.fields.baseSalary} value={salary} />
-          <Term label={print.exchangeRate} value={isAfnSalary ? '1.0000' : contract.exchange_rate} />
-          <Term label={print.baseCurrencyValue} value={formatCurrency(contract.amount_base, locale, setup.currency_code || 'AFN')} />
+          <Term label={print.exchangeRate} value={isAfnSalary ? '1.0000' : contract.staff.salary_exchange_rate} />
+          <Term label={print.baseCurrencyValue} value={formatCurrency(contract.staff.amount_base, locale, setup.currency_code || 'AFN')} />
           <Term label={dictionary.fields.startDate} value={formatDate(contract.start_date, locale)} />
           <Term label={dictionary.fields.endDate} value={formatDate(contract.end_date, locale)} />
         </div>

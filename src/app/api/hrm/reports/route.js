@@ -241,6 +241,7 @@ const getLeaveReport = async ({ start, end, staffId }) => {
         id: true,
         staff_id: true,
         total_days: true,
+        duration_type: true,
         start_date: true,
         end_date: true,
         status: { select: { label: true, value: true } },
@@ -304,7 +305,9 @@ const getLeaveReport = async ({ start, end, staffId }) => {
 
     const clippedStart = record.start_date < start ? start : record.start_date
     const clippedEnd = record.end_date > end ? end : record.end_date
-    const recordDays = countAfghanistanWorkingDays(clippedStart, clippedEnd, holidayDates)
+
+    const recordDays =
+      record.duration_type === 'HALF_DAY' ? 0.5 : countAfghanistanWorkingDays(clippedStart, clippedEnd, holidayDates)
 
     if (record.status.value === 'APPROVED') {
       totalApprovedDays += recordDays
@@ -367,16 +370,23 @@ const getContractReport = async ({ start, end, staffId, months }) => {
       template_id: true,
       duration_id: true,
       status_id: true,
-      position_title: true,
-      base_salary: true,
-      currency: true,
-      exchange_rate: true,
-      amount_base: true,
       start_date: true,
       end_date: true,
       probation_days: true,
       notice_period_days: true,
-      staff: { select: { id: true, first_name: true, last_name: true, position: true, status: true } },
+      staff: {
+        select: {
+          id: true,
+          first_name: true,
+          last_name: true,
+          position: true,
+          salary: true,
+          salary_currency: true,
+          salary_exchange_rate: true,
+          amount_base: true,
+          status: true
+        }
+      },
       contract_type: { select: { id: true, label: true, value: true, category: true, is_active: true } },
       template: { select: { id: true, label: true, value: true, description: true, is_active: true } },
       duration: { select: { id: true, label: true, value: true, description: true, is_active: true } },
@@ -429,12 +439,12 @@ const getContractReport = async ({ start, end, staffId, months }) => {
         staff_id: contract.staff.id,
         staff_status: contract.staff.status,
         staff_name: staffName(contract.staff),
-        position: contract.position_title || contract.staff.position,
+        position: contract.staff.position,
         contract_type: contract.contract_type.label,
-        base_salary: contract.base_salary.toFixed(2),
-        currency: contract.currency,
-        exchange_rate: contract.exchange_rate.toFixed(4),
-        amount_base: contract.amount_base.toFixed(2),
+        base_salary: contract.staff.salary.toFixed(2),
+        currency: contract.staff.salary_currency,
+        exchange_rate: contract.staff.salary_exchange_rate.toFixed(4),
+        amount_base: contract.staff.amount_base.toFixed(2),
         contract_type_id: contract.contract_type_id,
         template_id: contract.template_id,
         duration_id: contract.duration_id,
