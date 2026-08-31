@@ -22,7 +22,10 @@ const NativeDateInput = forwardRef(function NativeDateInput(
       ref={ref}
       type='date'
       value={toDateValue(selected)}
-      onChange={event => onChange?.(event.target.value ? new Date(`${event.target.value}T00:00:00`) : null)}
+      onChange={event => {
+        if (!event?.target) return
+        onChange?.(event.target.value ? new Date(`${event.target.value}T00:00:00`) : null)
+      }}
     />
   )
 })

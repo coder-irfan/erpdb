@@ -45,7 +45,7 @@ const toValueTime = (time, period) => {
 }
 
 const maskTime = value => {
-  const cleaned = value.replace(/[^\d:]/g, '')
+  const cleaned = String(value || '').replace(/[^\d:]/g, '')
 
   if (cleaned.includes(':')) {
     const [hours = '', minutes = ''] = cleaned.split(':')
@@ -101,6 +101,8 @@ const TimePickerInput = forwardRef(function TimePickerInput(
   }
 
   const updateDisplayTime = event => {
+    if (!event?.target) return
+
     const nextDisplay = maskTime(event.target.value)
 
     setDisplayTime(nextDisplay)
@@ -131,7 +133,7 @@ const TimePickerInput = forwardRef(function TimePickerInput(
       setPeriod(current.period)
     }
 
-    onBlur?.(event)
+    if (event) onBlur?.(event)
   }
 
   const togglePeriod = () => {
@@ -212,6 +214,8 @@ const TimePickerInput = forwardRef(function TimePickerInput(
           disabled={disabled}
           step={nativeProps.step || 60}
           onChange={event => {
+            if (!event?.target) return
+
             const next = toDisplayTime(event.target.value)
 
             setDisplayTime(next.time)

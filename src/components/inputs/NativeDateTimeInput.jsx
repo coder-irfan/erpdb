@@ -85,7 +85,10 @@ const NativeDateTimeInput = forwardRef(function NativeDateTimeInput(
         name={name}
         type={inputType}
         {...(value !== undefined ? { value: normalizeValue(value, inputType) } : {})}
-        onChange={onChange}
+        onChange={event => {
+          if (!event) return
+          onChange?.(event)
+        }}
         onBlur={onBlur}
         disabled={disabled}
         required={required}

@@ -24,7 +24,7 @@ const Layout = async props => {
   const { children } = props
 
   // Type guard to ensure lang is a valid Locale
-  const lang = i18n.locales.includes(params.lang) ? params.lang : i18n.defaultLocale
+  const lang = i18n.locales.includes(params?.lang) ? params.lang : i18n.defaultLocale
 
   // Vars
   const direction = i18n.langDirection[lang]

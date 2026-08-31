@@ -1263,9 +1263,9 @@
   "crmVisitors": {
     "summary": {
       "totalToday": "Visitors Today",
-      "activeGuests": "Active Guests in Building",
+      "activeGuests": "Active Guests",
       "completedToday": "Completed Visits Today",
-      "convertedCount": "Visitor-Lead Conversions"
+      "convertedCount": "Visitor to Lead"
     },
     "filters": {
       "search": "Search",

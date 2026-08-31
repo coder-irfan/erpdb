@@ -182,7 +182,7 @@ const ProfileView = ({ initialProfile, dictionary, uploadTranslations, locale })
     toast.success(result.message)
 
     if (result.data.locale !== locale) {
-      const pathSegments = pathname.split('/')
+      const pathSegments = String(pathname || '/').split('/')
 
       pathSegments[1] = result.data.locale
       router.push(pathSegments.join('/'))

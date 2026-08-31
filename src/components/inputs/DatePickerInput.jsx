@@ -76,9 +76,12 @@ const DatePickerInput = forwardRef(function DatePickerInput(
           required={required}
           aria-invalid={error || undefined}
           aria-describedby={helperText ? `${inputId}-helper` : undefined}
-          onChange={onChange}
+          onChange={event => {
+            if (!event) return
+            onChange?.(event)
+          }}
           onBlur={onBlur}
-          onClick={e => e.target.showPicker?.()}
+          onClick={event => event?.target?.showPicker?.()}
           className='h-full w-full bg-transparent px-3 text-sm font-medium text-textPrimary outline-none cursor-pointer [color-scheme:dark]'
         />
       </div>

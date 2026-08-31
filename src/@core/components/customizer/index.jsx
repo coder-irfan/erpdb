@@ -43,12 +43,15 @@ import { useSettings } from '@core/hooks/useSettings'
 import styles from './styles.module.css'
 
 const getLocalePath = (pathName, locale) => {
-  if (!pathName) return '/'
-  const segments = pathName.split('/')
+  const segments = String(pathName || '/').split('/').filter(Boolean)
 
-  segments[1] = locale
+  if (!locale) return `/${segments.join('/')}`
 
-  return segments.join('/')
+  if (segments.length === 0) return `/${locale}`
+
+  segments[0] = locale
+
+  return `/${segments.join('/')}`
 }
 
 const DebouncedColorPicker = props => {

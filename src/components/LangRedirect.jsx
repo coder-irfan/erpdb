@@ -8,7 +8,7 @@ import { i18n } from '@configs/i18n'
 
 const LangRedirect = () => {
   const pathname = usePathname()
-  const redirectUrl = `/${i18n.defaultLocale}${pathname}`
+  const redirectUrl = `/${i18n.defaultLocale}${pathname || '/'}`
 
   redirect(redirectUrl)
 }

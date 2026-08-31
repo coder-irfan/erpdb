@@ -8,7 +8,19 @@ const nextConfig = {
   experimental: {
     serverActions: {
       bodySizeLimit: '5mb'
-    }
+    },
+    optimizePackageImports: [
+      '@mui/material',
+      '@mui/icons-material',
+      '@mui/lab',
+      'lucide-react',
+      '@iconify/react',
+      'apexcharts',
+      'recharts',
+      'date-fns',
+      '@fullcalendar/react',
+      '@tiptap/react'
+    ]
   },
   redirects: async () => {
     return [
