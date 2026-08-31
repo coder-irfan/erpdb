@@ -17,6 +17,7 @@ import CustomTextField from '@core/components/mui/TextField'
 import { updateFinanceSalary } from '@/actions/financeSalary'
 import LoadingButtonContent from '@/components/LoadingButtonContent'
 import FormSectionCards from '@/components/forms/FormSectionCards'
+import { parseSalaryTimesheetSummary } from '@/libs/salaryTimesheetSummary'
 import { financeSalaryAdjustmentSchema } from '@/schemas/financeSalary'
 import { convertToBaseCurrency, formatCurrency, toFiniteNumber } from '@/utils/formatCurrency'
 
@@ -25,7 +26,6 @@ const valuesFor = salary => ({
   off_days: String(salary?.off_days ?? 0),
   bonus_amount: String(salary?.bonus_amount ?? 0),
   loan_deduction: String(salary?.loan_deduction ?? 0),
-  timesheet_summary: salary?.timesheet_summary || '',
   currency: salary?.currency || 'AFN',
   exchange_rate: String(salary?.exchange_rate || '65')
 })
@@ -40,6 +40,7 @@ const FinanceSalaryAdjustmentDrawer = ({ open, salary, baseCurrency, locale, dic
     resolver: valibotResolver(financeSalaryAdjustmentSchema(dictionary.validation)),
     defaultValues: valuesFor(salary)
   })
+
   const workedDays = useWatch({ control, name: 'worked_days' })
   const bonus = useWatch({ control, name: 'bonus_amount' })
   const deduction = useWatch({ control, name: 'loan_deduction' })
@@ -59,6 +60,8 @@ const FinanceSalaryAdjustmentDrawer = ({ open, salary, baseCurrency, locale, dic
 
     return { dailyRate, earned, payable, base: convertToBaseCurrency(payable, currency, rate, baseCurrency) }
   }, [baseCurrency, bonus, currency, deduction, rate, salary, workedDays])
+
+  const timesheetSummary = useMemo(() => parseSalaryTimesheetSummary(salary?.timesheet_summary, salary), [salary])
 
   const submit = async values => {
     const result = await updateFinanceSalary(salary.id, { ...values, locale })
@@ -145,7 +148,41 @@ const FinanceSalaryAdjustmentDrawer = ({ open, salary, baseCurrency, locale, dic
               inputProps: { min: 0.0001, step: '0.0001' }
             })}
           </div>
-          {field('timesheet_summary', dictionary.fields.notes, { multiline: true, minRows: 3 })}
+          <Card variant='outlined' className='border border-divider bg-backgroundDefault/40'>
+            <CardContent>
+              <Typography variant='h6' className='mb-4'>
+                Timesheet Summary
+              </Typography>
+              <div className='grid grid-cols-2 gap-3 sm:grid-cols-4'>
+                <div className='rounded-lg bg-actionHover p-3'>
+                  <Typography variant='caption' color='text.secondary'>
+                    Working Days
+                  </Typography>
+                  <Typography className='mt-1 font-semibold'>{timesheetSummary.workingDays ?? '---'} Days</Typography>
+                </div>
+                <div className='rounded-lg bg-actionHover p-3'>
+                  <Typography variant='caption' color='text.secondary'>
+                    Payable Days
+                  </Typography>
+                  <Typography className='mt-1 font-semibold'>{timesheetSummary.payableDays ?? '---'} Days</Typography>
+                </div>
+                <div className='rounded-lg bg-actionHover p-3'>
+                  <Typography variant='caption' color='text.secondary'>
+                    Absent / Leave
+                  </Typography>
+                  <Typography className='mt-1 font-semibold'>
+                    {timesheetSummary.absentDays ?? '---'} Absent · {timesheetSummary.paidLeaveDays ?? 0} Paid Leave
+                  </Typography>
+                </div>
+                <div className='rounded-lg bg-actionHover p-3'>
+                  <Typography variant='caption' color='text.secondary'>
+                    Logged Hours
+                  </Typography>
+                  <Typography className='mt-1 font-semibold'>{timesheetSummary.loggedHours ?? '---'} hrs</Typography>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
           <Card variant='outlined'>
             <CardContent>
               <Typography variant='h6' className='mb-4'>

@@ -17,14 +17,15 @@ import { toast } from 'sonner'
 import CustomTextField from '@core/components/mui/TextField'
 import LoadingButtonContent from '@/components/LoadingButtonContent'
 import TimePickerInput from '@/components/inputs/TimePickerInput'
+import { EMPTY_TABLE_CELL } from '@/libs/tableCell'
 
 const getEntries = (attendanceStaff, defaultWorkHours) =>
   attendanceStaff.map(staff => ({
     staff_id: staff.id,
     full_name: staff.full_name,
     position: staff.position,
-    locked: Boolean(staff.record?.leave_request_id),
-    status: staff.record?.status || (staff.record?.leave_request_id ? 'LEAVE' : 'PRESENT'),
+    locked: Boolean(staff.record?.leave_request_id || staff.record?.leave_id),
+    status: staff.record?.status || (staff.record?.leave_request_id || staff.record?.leave_id ? 'LEAVE' : 'PRESENT'),
     check_in_time: staff.record?.check_in_time || defaultWorkHours.start,
     check_out_time: staff.record?.check_out_time || defaultWorkHours.end,
     notes: staff.record?.notes || ''
@@ -40,44 +41,25 @@ const getInitials = name =>
     .toUpperCase() || '?'
 
 const AttendanceDrawerSkeleton = ({ rows = 4 }) => (
-  <div aria-busy='true' aria-label='Loading attendance staff'>
-    <div className='space-y-3 md:hidden'>
-      {Array.from({ length: rows }).map((_, index) => (
-        <div key={index} className='overflow-hidden rounded-lg border border-divider p-4'>
-          <Skeleton variant='text' width='55%' height={28} animation='wave' />
-          <Skeleton variant='text' width='35%' height={20} animation='wave' />
-          <div className='mt-3 grid grid-cols-3 gap-2'>
-            <Skeleton variant='rounded' height={32} animation='wave' />
-            <Skeleton variant='rounded' height={32} animation='wave' />
-            <Skeleton variant='rounded' height={32} animation='wave' />
+  <div className='space-y-3' aria-busy='true' aria-label='Loading attendance staff'>
+    {Array.from({ length: rows }).map((_, index) => (
+      <div key={index} className='rounded-xl border border-divider bg-backgroundPaper/70 p-4'>
+        <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
+          <div className='flex items-center gap-3'>
+            <Skeleton variant='circular' width={36} height={36} animation='wave' />
+            <div>
+              <Skeleton variant='text' width={150} height={24} animation='wave' />
+              <Skeleton variant='text' width={100} height={18} animation='wave' />
+            </div>
           </div>
-          <div className='mt-3 grid grid-cols-2 gap-2'>
-            <Skeleton variant='rounded' height={54} animation='wave' />
-            <Skeleton variant='rounded' height={54} animation='wave' />
-          </div>
-          <Skeleton variant='rounded' height={40} animation='wave' className='mt-3' />
+          <Skeleton variant='rounded' width={210} height={34} animation='wave' />
         </div>
-      ))}
-    </div>
-    <div className='hidden divide-y divide-divider md:block'>
-      {Array.from({ length: rows }).map((_, index) => (
-        <div
-          key={index}
-          className='grid grid-cols-[minmax(140px,1fr)_180px_220px_36px] items-center gap-3 py-3 lg:grid-cols-[minmax(180px,1fr)_210px_240px_36px]'
-        >
-          <div>
-            <Skeleton variant='text' width='65%' height={26} animation='wave' />
-            <Skeleton variant='text' width='40%' height={20} animation='wave' />
-          </div>
-          <Skeleton variant='rounded' height={32} animation='wave' />
-          <div className='grid grid-cols-2 gap-2'>
-            <Skeleton variant='rounded' height={40} animation='wave' />
-            <Skeleton variant='rounded' height={40} animation='wave' />
-          </div>
-          <Skeleton variant='rounded' height={32} animation='wave' />
+        <div className='mt-4 grid grid-cols-1 gap-3 border-bs border-divider pt-4 sm:grid-cols-2'>
+          <Skeleton variant='rounded' height={40} animation='wave' />
+          <Skeleton variant='rounded' height={40} animation='wave' />
         </div>
-      ))}
-    </div>
+      </div>
+    ))}
   </div>
 )
 
@@ -201,7 +183,7 @@ const AttendanceDrawer = ({
       anchor='right'
       open={open}
       onClose={saving ? undefined : onClose}
-      PaperProps={{ className: 'is-full sm:is-[min(920px,100vw)] xl:is-[960px]' }}
+      PaperProps={{ className: 'is-full sm:is-[min(920px,100vw)] xl:is-[750px]' }}
     >
       <div className='form-surface-header flex items-start justify-between gap-4 border-be border-divider px-4 py-5 sm:px-6'>
         <div>
@@ -217,23 +199,23 @@ const AttendanceDrawer = ({
       <Divider />
 
       <div className='flex flex-1 flex-col overflow-hidden'>
-        <div className='space-y-4 px-4 py-5 sm:px-6'>
-          {blockedMessage && <Alert severity='warning'>{blockedMessage}</Alert>}
-          <CustomTextField
-            fullWidth
-            size='small'
-            label={dictionary.filters.search}
-            placeholder={dictionary.filters.searchPlaceholder}
-            value={search}
-            onChange={event => setSearch(event.target.value)}
-            slotProps={{ input: { startAdornment: <i className='tabler-search me-2 text-textSecondary' /> } }}
-          />
-          <Typography variant='body2' color='text.secondary'>
-            {visibleEntries.length} {dictionary.fields.staff}
-          </Typography>
-        </div>
+        <div className='flex flex-1 flex-col gap-6 overflow-y-auto px-4 pb-4 sm:px-6'>
+          <div className='space-y-4 pt-5 sm:px-0'>
+            {blockedMessage && <Alert severity='warning'>{blockedMessage}</Alert>}
+            <CustomTextField
+              fullWidth
+              size='small'
+              label={dictionary.filters.search}
+              placeholder={dictionary.filters.searchPlaceholder}
+              value={search}
+              onChange={event => setSearch(event.target.value)}
+              slotProps={{ input: { startAdornment: <i className='tabler-search me-2 text-textSecondary' /> } }}
+            />
+            <Typography variant='body2' color='text.secondary'>
+              {visibleEntries.length} {dictionary.fields.staff}
+            </Typography>
+          </div>
 
-        <div className='flex flex-1 flex-col gap-2 overflow-y-auto px-4 pb-4 sm:px-6'>
           {loading ? (
             <AttendanceDrawerSkeleton />
           ) : (
@@ -244,11 +226,15 @@ const AttendanceDrawer = ({
               return (
                 <div
                   key={entry.staff_id}
-                  className='rounded-xl border border-divider bg-backgroundPaper/70 p-4 shadow-sm transition-colors hover:border-primary/30'
+                  className='rounded-xl border border-divider bg-backgroundDefault p-4 shadow-xs'
                 >
                   <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
                     <div className='flex min-is-0 items-center gap-3'>
-                      <Avatar className='is-9 bs-9 bg-primary/10 text-xs font-semibold text-primary'>
+                      <Avatar
+                        className={`is-9 bs-9 text-xs font-semibold ${
+                          entry.locked ? 'bg-info/15 text-info' : 'bg-primary/20 text-primary'
+                        }`}
+                      >
                         {getInitials(entry.full_name)}
                       </Avatar>
                       <div className='min-is-0'>
@@ -256,7 +242,7 @@ const AttendanceDrawer = ({
                           {entry.full_name}
                         </Typography>
                         <Typography variant='body2' color='text.secondary' className='truncate'>
-                          {entry.position || '-'}
+                          {entry.position || EMPTY_TABLE_CELL}
                           {entry.locked ? ` · ${dictionary.status.LEAVE}` : ''}
                         </Typography>
                       </div>
@@ -267,23 +253,23 @@ const AttendanceDrawer = ({
                       value={entry.status}
                       disabled={rowDisabled}
                       onChange={(_, status) => changeStatus(entry, status)}
-                      className='grid w-full grid-cols-3 rounded-lg border border-divider bg-actionHover p-1 sm:w-auto'
+                      className='grid w-full grid-cols-3 gap-1 rounded-lg border border-divider bg-actionHover p-1 sm:w-auto'
                     >
                       <ToggleButton
                         value='PRESENT'
-                        className='rounded-md! border-0! px-3! py-1.5! text-xs! text-textSecondary! [&.Mui-selected]:bg-backgroundPaper! [&.Mui-selected]:text-primary! [&.Mui-selected]:shadow-sm!'
+                        className='rounded-md! border-0! px-3! py-1.5! text-xs! text-textSecondary! [&.Mui-selected]:bg-success/10! [&.Mui-selected]:text-success!'
                       >
                         {dictionary.status.PRESENT}
                       </ToggleButton>
                       <ToggleButton
                         value='ABSENT'
-                        className='rounded-md! border-0! px-3! py-1.5! text-xs! text-textSecondary! [&.Mui-selected]:bg-backgroundPaper! [&.Mui-selected]:text-primary! [&.Mui-selected]:shadow-sm!'
+                        className='rounded-md! border-0! px-3! py-1.5! text-xs! text-textSecondary! [&.Mui-selected]:bg-error/10! [&.Mui-selected]:text-error!'
                       >
                         {dictionary.status.ABSENT}
                       </ToggleButton>
                       <ToggleButton
                         value='LEAVE'
-                        className='rounded-md! border-0! px-3! py-1.5! text-xs! text-textSecondary! [&.Mui-selected]:bg-backgroundPaper! [&.Mui-selected]:text-primary! [&.Mui-selected]:shadow-sm!'
+                        className='rounded-md! border-0! px-3! py-1.5! text-xs! text-textSecondary! [&.Mui-selected]:bg-info/10! [&.Mui-selected]:text-info! [&.Mui-selected]:shadow-sm!'
                       >
                         {dictionary.status.LEAVE}
                       </ToggleButton>
@@ -292,27 +278,27 @@ const AttendanceDrawer = ({
 
                   <div className='mt-4 border-bs border-divider pt-4'>
                     {showTimes ? (
-                      <div className='grid min-is-0 grid-cols-1 gap-3 sm:grid-cols-2'>
-                      <TimePickerInput
-                        locale={locale}
-                        size='small'
-                        label={dictionary.fields.checkIn}
-                        className='[&>div]:h-10'
-                        value={entry.check_in_time}
-                        disabled={rowDisabled}
-                        slotProps={{ inputLabel: { shrink: true } }}
-                        onChange={event => updateEntry(entry.staff_id, { check_in_time: event.target.value })}
-                      />
-                      <TimePickerInput
-                        locale={locale}
-                        size='small'
-                        label={dictionary.fields.checkOut}
-                        className='[&>div]:h-10'
-                        value={entry.check_out_time}
-                        disabled={rowDisabled}
-                        slotProps={{ inputLabel: { shrink: true } }}
-                        onChange={event => updateEntry(entry.staff_id, { check_out_time: event.target.value })}
-                      />
+                      <div className='grid min-is-0 grid-cols-2 gap-3 sm:grid-cols-2'>
+                        <TimePickerInput
+                          locale={locale}
+                          size='small'
+                          label={dictionary.fields.checkIn}
+                          className='[&>div]:h-10'
+                          value={entry.check_in_time}
+                          disabled={rowDisabled}
+                          slotProps={{ inputLabel: { shrink: true } }}
+                          onChange={event => updateEntry(entry.staff_id, { check_in_time: event.target.value })}
+                        />
+                        <TimePickerInput
+                          locale={locale}
+                          size='small'
+                          label={dictionary.fields.checkOut}
+                          className='[&>div]:h-10'
+                          value={entry.check_out_time}
+                          disabled={rowDisabled}
+                          slotProps={{ inputLabel: { shrink: true } }}
+                          onChange={event => updateEntry(entry.staff_id, { check_out_time: event.target.value })}
+                        />
                       </div>
                     ) : (
                       <CustomTextField
@@ -339,29 +325,6 @@ const AttendanceDrawer = ({
             </div>
           )}
         </div>
-
-        <Popover
-          open={Boolean(noteAnchorEl && activeNoteEntry)}
-          anchorEl={noteAnchorEl}
-          onClose={closeNote}
-          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-          transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-          slotProps={{ paper: { className: 'm-2 w-[min(360px,calc(100vw-32px))] rounded-xl p-4' } }}
-        >
-          {activeNoteEntry && (
-            <CustomTextField
-              autoFocus
-              fullWidth
-              multiline
-              minRows={3}
-              size='small'
-              label={dictionary.fields.notes}
-              value={activeNoteEntry.notes}
-              disabled={controlsDisabled || activeNoteEntry.locked}
-              onChange={event => updateEntry(activeNoteEntry.staff_id, { notes: event.target.value })}
-            />
-          )}
-        </Popover>
 
         <Divider />
         <div className='form-surface-actions sticky bottom-0 flex flex-wrap items-center justify-between gap-3 border-bs border-divider bg-background/95 p-4 backdrop-blur sm:px-6'>

@@ -25,6 +25,7 @@ import NativeDateTimeInput from '@/components/inputs/NativeDateTimeInput'
 import TableSkeletonRows from '@/components/table/TableSkeletonRows'
 import ResponsiveDataTable from '@/components/tables/ResponsiveDataTable'
 import { formatStatusLabel } from '@/utils/formatStatusLabel'
+import { EMPTY_TABLE_CELL, formatTableCellValue } from '@/libs/tableCell'
 
 import AttendanceDrawer from './AttendanceDrawer'
 import AttendanceStatsCards from './AttendanceStatsCards'
@@ -45,6 +46,7 @@ const EMPTY_DATA = {
 }
 
 const STATUS_COLORS = { PRESENT: 'success', ABSENT: 'error', LEAVE: 'info' }
+const getStatusBadgeColor = status => (status === 'LEAVE_PAID' ? 'primary' : 'secondary')
 const localeMap = { en: 'en-US', fa: 'fa-AF', ps: 'ps-AF' }
 
 const shiftDate = (date, offset) => {
@@ -62,7 +64,16 @@ const formatDate = (value, locale) =>
 
 const escapeCsv = value => `"${String(value ?? '').replaceAll('"', '""')}"`
 
-const TimesheetsView = ({ initialDate, canWrite, canDelete, canOverridePayrollLock, defaultWorkHours, printSetup, locale, dictionary }) => {
+const TimesheetsView = ({
+  initialDate,
+  canWrite,
+  canDelete,
+  canOverridePayrollLock,
+  defaultWorkHours,
+  printSetup,
+  locale,
+  dictionary
+}) => {
   const [selectedDate, setSelectedDate] = useState(initialDate)
   const [data, setData] = useState(EMPTY_DATA)
   const [loading, setLoading] = useState(true)
@@ -144,9 +155,7 @@ const TimesheetsView = ({ initialDate, canWrite, canDelete, canOverridePayrollLo
     setDrawerOpen(true)
   }
 
-  const payrollOverrideActive = Boolean(
-    canOverridePayrollLock && data.guard?.payrollLocked && payrollOverrideEnabled
-  )
+  const payrollOverrideActive = Boolean(canOverridePayrollLock && data.guard?.payrollLocked && payrollOverrideEnabled)
 
   const effectiveGuard = {
     ...data.guard,
@@ -293,9 +302,18 @@ const TimesheetsView = ({ initialDate, canWrite, canDelete, canOverridePayrollLo
           />
           <div className='grid is-full grid-cols-2 gap-2 sm:flex sm:is-auto sm:flex-wrap sm:justify-end'>
             <TableFiltersPopover
-              activeCount={Number(Boolean(searchInput.trim())) + Number(Boolean(statusFilter)) + Number(selectedDate !== initialDate)}
+              activeCount={
+                Number(Boolean(searchInput.trim())) +
+                Number(Boolean(statusFilter)) +
+                Number(selectedDate !== initialDate)
+              }
               locale={locale}
-              onReset={() => { setSearchInput(''); setSearch(''); setStatusFilter(''); changeDate(initialDate) }}
+              onReset={() => {
+                setSearchInput('')
+                setSearch('')
+                setStatusFilter('')
+                changeDate(initialDate)
+              }}
             >
               <div className='flex items-end gap-2'>
                 <Tooltip title={dictionary.date.previous}>
@@ -390,8 +408,10 @@ const TimesheetsView = ({ initialDate, canWrite, canDelete, canOverridePayrollLo
             }
           >
             {payrollOverrideActive
-              ? dictionary.messages.payrollOverrideActive || 'Administrative override is active for this payroll period.'
-              : dictionary.messages.payrollLockedAdmin || 'Payroll for this month has been finalized. Unlock attendance only for an authorized correction.'}
+              ? dictionary.messages.payrollOverrideActive ||
+                'Administrative override is active for this payroll period.'
+              : dictionary.messages.payrollLockedAdmin ||
+                'Payroll for this month has been finalized. Unlock attendance only for an authorized correction.'}
           </Alert>
         )}
         <ResponsiveDataTable
@@ -417,28 +437,39 @@ const TimesheetsView = ({ initialDate, canWrite, canDelete, canOverridePayrollLo
             <Chip
               size='small'
               variant='tonal'
-              color={STATUS_COLORS[record.status]}
+              color={getStatusBadgeColor(record.status)}
               label={formatStatusLabel(record.status, dictionary.status[record.status])}
             />
           )}
           renderMobileActions={renderRecordActions}
           mobileMetadata={[
             { id: 'position', label: dictionary.fields.position, render: record => record.staff.position },
-            { id: 'check-in', label: dictionary.fields.checkIn, render: record => record.check_in_time || '-' },
-            { id: 'check-out', label: dictionary.fields.checkOut, render: record => record.check_out_time || '-' },
+            {
+              id: 'check-in',
+              label: dictionary.fields.checkIn,
+              render: record => formatTableCellValue(record.check_in_time)
+            },
+            {
+              id: 'check-out',
+              label: dictionary.fields.checkOut,
+              render: record => formatTableCellValue(record.check_out_time)
+            },
             {
               id: 'hours',
               label: dictionary.fields.hours,
               render: record =>
-                record.hours_worked ? `${Number(record.hours_worked).toFixed(2)} ${dictionary.hoursShort}` : '-'
+                record.hours_worked
+                  ? `${Number(record.hours_worked).toFixed(2)} ${dictionary.hoursShort}`
+                  : EMPTY_TABLE_CELL
             },
-            { id: 'notes', label: dictionary.fields.notes, render: record => record.notes || '-' }
+            { id: 'notes', label: dictionary.fields.notes, render: record => formatTableCellValue(record.notes) }
           ]}
           emptyState={{
             icon: 'tabler-calendar-time',
             title: dictionary.table.emptyTitle,
             description: dictionary.table.emptyDescription,
-            actionLabel: canWrite && !attendanceBlocked && data.attendanceStaff.length > 0 ? dictionary.actions.mark : undefined,
+            actionLabel:
+              canWrite && !attendanceBlocked && data.attendanceStaff.length > 0 ? dictionary.actions.mark : undefined,
             onAction: canWrite && !attendanceBlocked && data.attendanceStaff.length > 0 ? openCreate : undefined
           }}
           onRowClick={record => setViewingRecord(record)}
@@ -466,8 +497,14 @@ const TimesheetsView = ({ initialDate, canWrite, canDelete, canOverridePayrollLo
                     icon='tabler-calendar-time'
                     title={dictionary.table.emptyTitle}
                     description={dictionary.table.emptyDescription}
-                    actionLabel={canWrite && !attendanceBlocked && data.attendanceStaff.length > 0 ? dictionary.actions.mark : undefined}
-                    onAction={canWrite && !attendanceBlocked && data.attendanceStaff.length > 0 ? openCreate : undefined}
+                    actionLabel={
+                      canWrite && !attendanceBlocked && data.attendanceStaff.length > 0
+                        ? dictionary.actions.mark
+                        : undefined
+                    }
+                    onAction={
+                      canWrite && !attendanceBlocked && data.attendanceStaff.length > 0 ? openCreate : undefined
+                    }
                   />
                 ) : (
                   data.records.map(record => (
@@ -503,16 +540,16 @@ const TimesheetsView = ({ initialDate, canWrite, canDelete, canOverridePayrollLo
                         <Chip
                           size='small'
                           variant='tonal'
-                          color={STATUS_COLORS[record.status]}
+                          color={getStatusBadgeColor(record.status)}
                           label={formatStatusLabel(record.status, dictionary.status[record.status])}
                         />
                       </td>
-                      <td>{record.check_in_time || '-'}</td>
-                      <td>{record.check_out_time || '-'}</td>
+                      <td>{formatTableCellValue(record.check_in_time)}</td>
+                      <td>{formatTableCellValue(record.check_out_time)}</td>
                       <td>
                         {record.hours_worked
                           ? `${Number(record.hours_worked).toFixed(2)} ${dictionary.hoursShort}`
-                          : '-' }
+                          : EMPTY_TABLE_CELL}
                       </td>
                       <td>
                         {record.notes ? (
@@ -522,7 +559,7 @@ const TimesheetsView = ({ initialDate, canWrite, canDelete, canOverridePayrollLo
                             </Typography>
                           </Tooltip>
                         ) : (
-                          '-'
+                          EMPTY_TABLE_CELL
                         )}
                       </td>
                       <td className='no-print text-end'>{renderRecordActions(record)}</td>

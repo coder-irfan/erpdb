@@ -2,15 +2,11 @@
 
 import { useCallback, useEffect, useState } from 'react'
 
-import Alert from '@mui/material/Alert'
-import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import Dialog from '@mui/material/Dialog'
-import DialogActions from '@mui/material/DialogActions'
 import DialogContent from '@mui/material/DialogContent'
-import DialogTitle from '@mui/material/DialogTitle'
 import MenuItem from '@mui/material/MenuItem'
 import Typography from '@mui/material/Typography'
 import { toast } from 'sonner'
@@ -45,6 +41,7 @@ const MONTH_PATTERN = /^\d{4}-(0[1-9]|1[0-2])$/
 const EMPTY_DATA = {
   salaries: [],
   totalCount: 0,
+  hasGeneratedPayroll: false,
   baseCurrency: 'AFN',
   summary: { total: 0, paid: 0, pending: 0, loanDeductions: 0 },
   payoutContext: {
@@ -121,6 +118,9 @@ const FinanceSalaryView = ({ locale, dictionary, canWrite, canDelete, canExecute
     if (result.success) {
       toast.success(result.message)
       await refresh()
+    } else if (result.code === 'PAYROLL_ALREADY_GENERATED') {
+      toast.warning(result.error || dictionary.messages.payrollAlreadyGenerated)
+      await refresh()
     } else toast.error(result.error || dictionary.messages.operationFailed)
     setGenerating(false)
   }
@@ -131,8 +131,7 @@ const FinanceSalaryView = ({ locale, dictionary, canWrite, canDelete, canExecute
 
     const result = await markSalaryPaid(payTarget.id, {
       locale,
-      confirmEarlyExecution:
-        data.payoutContext.isEarlyExecution && payTarget.timesheet_month === month
+      confirmEarlyExecution: data.payoutContext.isEarlyExecution && payTarget.timesheet_month === month
     })
 
     if (result.success) {
@@ -167,12 +166,14 @@ const FinanceSalaryView = ({ locale, dictionary, canWrite, canDelete, canExecute
   }
 
   const isEarlyPayment = Boolean(
-    payTarget &&
-      data.payoutContext.isEarlyExecution &&
-      payTarget.timesheet_month === month
+    payTarget && data.payoutContext.isEarlyExecution && payTarget.timesheet_month === month
   )
 
+  const payrollGenerated = data.hasGeneratedPayroll
+
   const localeTag = locale === 'fa' ? 'fa-AF' : locale === 'ps' ? 'ps-AF' : 'en-US'
+  const payDescriptionParts = dictionary.pay.description.split('{name}')
+  const hasPayNameToken = payDescriptionParts.length > 1
 
   const payrollMonthLabel = payTarget
     ? new Intl.DateTimeFormat(localeTag, { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(
@@ -218,7 +219,10 @@ const FinanceSalaryView = ({ locale, dictionary, canWrite, canDelete, canExecute
             />
           </div>
           <div className='grid is-full grid-cols-2 gap-2 sm:flex sm:is-auto sm:flex-wrap sm:gap-3 sm:justify-end'>
-            <TableFiltersPopover activeCount={Number(Boolean(searchInput.trim())) + Number(Boolean(status))} locale={locale}>
+            <TableFiltersPopover
+              activeCount={Number(Boolean(searchInput.trim())) + Number(Boolean(status))}
+              locale={locale}
+            >
               <CustomTextField
                 select
                 label={dictionary.filters.status}
@@ -250,13 +254,16 @@ const FinanceSalaryView = ({ locale, dictionary, canWrite, canDelete, canExecute
             </TableFiltersPopover>
             {canWrite && (
               <Button
-                variant='contained'
-                startIcon={<i className='tabler-calendar-dollar' />}
-                disabled={generating || !month}
+                variant={payrollGenerated ? 'tonal' : 'contained'}
+                color={payrollGenerated ? 'success' : 'primary'}
+                startIcon={<i className={payrollGenerated ? 'tabler-circle-check' : 'tabler-calendar-dollar'} />}
+                disabled={generating || !month || payrollGenerated}
                 onClick={generate}
               >
                 <LoadingButtonContent loading={generating} loadingLabel={dictionary.actions.generating}>
-                  {dictionary.actions.generate.replace('{month}', month)}
+                  {payrollGenerated
+                    ? dictionary.actions.payrollGenerated
+                    : dictionary.actions.generate.replace('{month}', month)}
                 </LoadingButtonContent>
               </Button>
             )}
@@ -316,62 +323,79 @@ const FinanceSalaryView = ({ locale, dictionary, canWrite, canDelete, canExecute
         onClose={busyId ? undefined : () => setPayTarget(null)}
         fullWidth
         maxWidth={isEarlyPayment ? 'sm' : 'xs'}
+        aria-labelledby='confirm-salary-payment-title'
         PaperProps={{ className: 'confirmation-dialog' }}
       >
-        <DialogTitle>{isEarlyPayment ? dictionary.pay.earlyTitle : dictionary.pay.title}</DialogTitle>
-        <DialogContent dividers>
-          {isEarlyPayment ? (
-            <div className='flex flex-col gap-4'>
-              <Alert severity='warning' variant='filled'>
-                {dictionary.pay.earlyDescription
-                  .replace('{month}', payrollMonthLabel)
-                  .replace('{date}', currentDateLabel)}
-              </Alert>
-              <Box className='rounded-lg border border-warning/40 bg-warningLight p-4'>
-                <div className='grid gap-3 sm:grid-cols-3'>
-                  <div>
-                    <Typography variant='caption' color='text.secondary'>
-                      {dictionary.pay.netPayout}
-                    </Typography>
-                    <Typography className='font-semibold'>
-                      {payTarget ? formatCurrency(payTarget.payable_amount, locale, payTarget.currency) : ''}
-                    </Typography>
-                  </div>
-                  <div>
-                    <Typography variant='caption' color='text.secondary'>
-                      {dictionary.pay.targetLedger}
-                    </Typography>
-                    <Typography className='font-semibold'>
-                      {data.payoutContext.targetLedgerAccount === 'Payroll Expenses'
-                        ? dictionary.pay.payrollExpensesLedger
-                        : data.payoutContext.targetLedgerAccount}
-                    </Typography>
-                  </div>
-                  <div>
-                    <Typography variant='caption' color='text.secondary'>
-                      {dictionary.pay.workingDaysToDate}
-                    </Typography>
-                    <Typography className='font-semibold'>{data.payoutContext.workingDaysToDate}</Typography>
-                  </div>
-                </div>
-              </Box>
+        <DialogContent className='flex flex-col items-center px-5 pb-6 pt-7 text-center sm:px-8 sm:pb-8'>
+          <div className='mb-4 flex size-14 items-center justify-center rounded-full bg-successLighter text-success'>
+            <i className='tabler-circle-check text-3xl' />
+          </div>
+          <Typography id='confirm-salary-payment-title' variant='h5' className='font-semibold'>
+            {isEarlyPayment ? dictionary.pay.earlyTitle : dictionary.pay.title}
+          </Typography>
+          <Typography color='text.secondary' className='mt-2 max-is-[420px] leading-relaxed'>
+            {isEarlyPayment ? (
+              dictionary.pay.earlyDescription.replace('{month}', payrollMonthLabel).replace('{date}', currentDateLabel)
+            ) : (
+              <>
+                {payDescriptionParts[0]}
+                {hasPayNameToken && (
+                  <Typography component='span' className='font-semibold' color='text.primary'>
+                    {payTarget?.staff?.full_name}
+                  </Typography>
+                )}
+                {payDescriptionParts.slice(1).join('{name}')}
+              </>
+            )}
+          </Typography>
+          {payTarget && !isEarlyPayment && !hasPayNameToken && (
+            <div className='mt-4 w-full rounded border border-success/20 bg-successLighter px-4 py-3'>
+              <Typography className='break-words font-semibold' color='text.primary'>
+                {payTarget.staff?.full_name}
+              </Typography>
             </div>
-          ) : (
-            <Typography color='text.secondary'>
-              {dictionary.pay.description.replace('{name}', payTarget?.staff?.full_name || '')}
-            </Typography>
           )}
+          {isEarlyPayment && (
+            <div className='mt-4 w-full rounded border border-warning/30 bg-warningLight p-4 text-start'>
+              <div className='grid gap-3 sm:grid-cols-3'>
+                <div>
+                  <Typography variant='caption' color='text.secondary'>
+                    {dictionary.pay.netPayout}
+                  </Typography>
+                  <Typography className='font-semibold'>
+                    {payTarget ? formatCurrency(payTarget.payable_amount, locale, payTarget.currency) : ''}
+                  </Typography>
+                </div>
+                <div>
+                  <Typography variant='caption' color='text.secondary'>
+                    {dictionary.pay.targetLedger}
+                  </Typography>
+                  <Typography className='font-semibold'>
+                    {data.payoutContext.targetLedgerAccount === 'Payroll Expenses'
+                      ? dictionary.pay.payrollExpensesLedger
+                      : data.payoutContext.targetLedgerAccount}
+                  </Typography>
+                </div>
+                <div>
+                  <Typography variant='caption' color='text.secondary'>
+                    {dictionary.pay.workingDaysToDate}
+                  </Typography>
+                  <Typography className='font-semibold'>{data.payoutContext.workingDaysToDate}</Typography>
+                </div>
+              </div>
+            </div>
+          )}
+          <div className='mt-6 grid w-full grid-cols-2 gap-3'>
+            <Button variant='tonal' color='secondary' disabled={Boolean(busyId)} onClick={() => setPayTarget(null)}>
+              {dictionary.actions.cancel}
+            </Button>
+            <Button variant='contained' color='success' disabled={Boolean(busyId)} onClick={pay} autoFocus>
+              <LoadingButtonContent loading={Boolean(busyId)} loadingLabel={dictionary.actions.saving}>
+                {isEarlyPayment ? dictionary.pay.confirmEarly : dictionary.pay.confirm}
+              </LoadingButtonContent>
+            </Button>
+          </div>
         </DialogContent>
-        <DialogActions className='gap-2 p-5'>
-          <Button variant='tonal' color='secondary' disabled={Boolean(busyId)} onClick={() => setPayTarget(null)}>
-            {dictionary.actions.cancel}
-          </Button>
-          <Button variant='contained' color='success' disabled={Boolean(busyId)} onClick={pay}>
-            <LoadingButtonContent loading={Boolean(busyId)} loadingLabel={dictionary.actions.saving}>
-              {isEarlyPayment ? dictionary.pay.confirmEarly : dictionary.pay.confirm}
-            </LoadingButtonContent>
-          </Button>
-        </DialogActions>
       </Dialog>
       <ConfirmDeleteModal
         open={Boolean(deleteTarget)}

@@ -14,7 +14,7 @@ export const financeSalaryAdjustmentSchema = messages =>
     off_days: pipe(string(messages.daysInvalid), trim(), regex(NUMBER_PATTERN, messages.daysInvalid)),
     bonus_amount: pipe(string(messages.numberInvalid), trim(), regex(NUMBER_PATTERN, messages.numberInvalid)),
     loan_deduction: pipe(string(messages.numberInvalid), trim(), regex(NUMBER_PATTERN, messages.numberInvalid)),
-    timesheet_summary: optional(pipe(string(), trim(), maxLength(5000, messages.notesTooLong)), ''),
+    timesheet_summary: optional(pipe(string(), trim(), maxLength(5000, messages.notesTooLong))),
     currency: picklist(['AFN', 'USD'], messages.currencyInvalid),
     exchange_rate: pipe(string(messages.rateInvalid), trim(), nonEmpty(messages.rateInvalid), regex(NUMBER_PATTERN, messages.rateInvalid))
   })

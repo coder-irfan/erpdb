@@ -28,6 +28,7 @@ import TableSkeletonRows from '@/components/table/TableSkeletonRows'
 import ResponsiveDataTable from '@/components/tables/ResponsiveDataTable'
 import { formatCurrency } from '@/utils/formatCurrency'
 import { formatStatusLabel } from '@/utils/formatStatusLabel'
+import { EMPTY_TABLE_CELL, formatTableCellValue } from '@/libs/tableCell'
 
 import StaffContractDetailDialog from './StaffContractDetailDialog'
 import StaffContractPrintable from './StaffContractPrintable'
@@ -46,7 +47,9 @@ const STATUS_COLORS = {
 }
 
 const formatDate = (value, locale) =>
-  value ? new Intl.DateTimeFormat(localeMap[locale] || 'en-US', { dateStyle: 'medium' }).format(new Date(value)) : '-'
+  value
+    ? new Intl.DateTimeFormat(localeMap[locale] || 'en-US', { dateStyle: 'medium' }).format(new Date(value))
+    : EMPTY_TABLE_CELL
 
 const StaffContractsView = ({
   initialResult,
@@ -359,7 +362,11 @@ const StaffContractsView = ({
           )}
           renderMobileActions={renderContractActions}
           mobileMetadata={[
-            { id: 'position', label: dictionary.table.position, render: contract => contract.staff?.position || '-' },
+            {
+              id: 'position',
+              label: dictionary.table.position,
+              render: contract => formatTableCellValue(contract.staff?.position)
+            },
             { id: 'type', label: dictionary.table.contractType, render: contract => contract.contract_type.label },
             {
               id: 'salary',
@@ -441,7 +448,7 @@ const StaffContractsView = ({
                           </QuickContact>
                         </Typography>
                       </td>
-                      <td>{contract.staff?.position || '-'}</td>
+                      <td>{formatTableCellValue(contract.staff?.position)}</td>
                       <td>{contract.contract_type.label}</td>
                       <td>
                         <DualCurrencyAmount

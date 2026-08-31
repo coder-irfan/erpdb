@@ -56,7 +56,6 @@ const NativeDateTimeInput = forwardRef(function NativeDateTimeInput(
     ...props,
     id: inputId,
     name,
-    value,
     label,
     onChange,
     onBlur,
@@ -68,6 +67,8 @@ const NativeDateTimeInput = forwardRef(function NativeDateTimeInput(
     inputProps,
     slotProps
   }
+
+  if (value !== undefined) sharedProps.value = normalizeValue(value, inputType)
 
   if (inputType === 'time') return <TimePickerInput {...sharedProps} ref={ref} />
   if (inputType === 'date') return <DatePickerInput {...sharedProps} ref={ref} />

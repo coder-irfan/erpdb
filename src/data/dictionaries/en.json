@@ -3050,6 +3050,7 @@
     "actions": {
       "generate": "Generate Payroll for {month}",
       "generating": "Generating payroll...",
+      "payrollGenerated": "Payroll Generated",
       "view": "View Details",
       "edit": "Add Bonus / Adjust Payroll",
       "markPaid": "Mark as Paid",
@@ -3187,6 +3188,7 @@
       "detailLoadFailed": "Payslip details could not be loaded.",
       "notFound": "Payroll record was not found.",
       "duplicate": "Payroll already exists for this staff member and month.",
+      "payrollAlreadyGenerated": "Payroll for this period has already been generated.",
       "noEligibleStaff": "No active staff members are available for payroll generation.",
       "generated": "{created} payroll records generated; {skipped} existing records skipped.",
       "updated": "Payroll adjustments saved successfully.",

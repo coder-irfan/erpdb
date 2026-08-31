@@ -218,7 +218,7 @@ const adjustmentPayload = payload => ({
   off_days: String(payload?.off_days ?? ''),
   bonus_amount: String(payload?.bonus_amount ?? '0'),
   loan_deduction: String(payload?.loan_deduction ?? '0'),
-  timesheet_summary: payload?.timesheet_summary ?? '',
+  timesheet_summary: payload?.timesheet_summary,
   currency: payload?.currency ?? 'AFN',
   exchange_rate: String(payload?.exchange_rate ?? '65')
 })
@@ -281,7 +281,7 @@ const getPreparedAdjustment = async (salary, values, translations) => {
       exchange_rate: new Prisma.Decimal(exchangeRate),
       amount_base: new Prisma.Decimal(calculation.amountBase),
       currency: values.currency,
-      timesheet_summary: values.timesheet_summary || null,
+      timesheet_summary: values.timesheet_summary === undefined ? salary.timesheet_summary : values.timesheet_summary || null,
       loan_status: loanDeduction > 0 ? 'PENDING' : 'NOT_APPLICABLE'
     }
   }
@@ -365,6 +365,7 @@ export const getFinanceSalaries = async (payload = {}) => {
       data: {
         salaries: salaries.map(normalizeSalary),
         totalCount,
+        hasGeneratedPayroll: summaryRows.length > 0,
         page,
         baseCurrency: SYSTEM_BASE_CURRENCY,
         summary,
@@ -525,6 +526,13 @@ export const generateMonthlyPayroll = async (month, payload = {}) => {
       getCompanySetupRecord()
     ])
 
+    if (existing.length > 0)
+      return {
+        success: false,
+        code: 'PAYROLL_ALREADY_GENERATED',
+        error: context.translations.messages.payrollAlreadyGenerated
+      }
+
     if (staffMembers.length === 0)
       return { success: false, code: 'NO_ELIGIBLE_STAFF', error: context.translations.messages.noEligibleStaff }
 
@@ -635,6 +643,7 @@ export const generateMonthlyPayroll = async (month, payload = {}) => {
 
         const absentDays = Math.max(0, eligibleWorkingDates.length - payableDays)
         const maximumGross = (salaryAmount / workingDates.length) * payableDays
+        const unpaidLeaveDeduction = 0
 
         const scheduledLoanDeduction = (loansByStaff.get(staff.id) || []).reduce((total, loan) => {
           const loanAmount = Math.min(toFiniteNumber(loan.monthly_deduction), toFiniteNumber(loan.remaining_balance))
@@ -665,7 +674,13 @@ export const generateMonthlyPayroll = async (month, payload = {}) => {
           baseCurrency: SYSTEM_BASE_CURRENCY
         })
 
-        const notes = `Payable calendar: ${workingDates.length} non-Friday days; Employee eligible for ${eligibleWorkingDates.length}; ${payableDays} payable (${recordedPresentDates.size} present records, ${paidHolidayDates.size} public holidays, ${paidLeaveDays} approved paid leave days), ${absentDays} absent; ${staffAttendance.hours.toFixed(2)} hours logged.`
+        const timesheetSummary = JSON.stringify({
+          workingDays: workingDates.length,
+          payableDays,
+          absentDays,
+          paidLeaveDays,
+          loggedHours: Number(staffAttendance.hours.toFixed(2))
+        })
 
         await transaction.financesalary.create({
           data: {
@@ -686,7 +701,7 @@ export const generateMonthlyPayroll = async (month, payload = {}) => {
             amount_base: new Prisma.Decimal(calculation.amountBase),
             currency,
             status: 'DRAFT',
-            timesheet_summary: notes
+            timesheet_summary: timesheetSummary
           }
         })
         count += 1
@@ -826,7 +841,15 @@ export const updateFinanceSalary = async (id, payload = {}) => {
   try {
     const current = await prisma.financesalary.findUnique({
       where: { id: normalizeId(id) },
-      select: { id: true, status: true, total_month_days: true, base_salary: true, currency: true, exchange_rate: true }
+      select: {
+        id: true,
+        status: true,
+        total_month_days: true,
+        base_salary: true,
+        currency: true,
+        exchange_rate: true,
+        timesheet_summary: true
+      }
     })
 
     if (!current) return { success: false, code: 'NOT_FOUND', error: context.translations.messages.notFound }

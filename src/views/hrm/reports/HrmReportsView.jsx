@@ -27,6 +27,7 @@ import NativeDateTimeInput from '@/components/inputs/NativeDateTimeInput'
 import ResponsiveDataTable from '@/components/tables/ResponsiveDataTable'
 import { formatCurrency, toFiniteNumber } from '@/utils/formatCurrency'
 import { formatStatusLabel } from '@/utils/formatStatusLabel'
+import { EMPTY_TABLE_CELL } from '@/libs/tableCell'
 import ContractFormDrawer from '@/views/contracts/ContractFormDrawer'
 
 import ReportStatsCards from '@/components/reports/ReportStatsCards'
@@ -105,7 +106,7 @@ const HrmReportsView = ({
             dateStyle: 'medium',
             timeZone: 'UTC'
           }).format(new Date(value))
-        : '-',
+        : EMPTY_TABLE_CELL,
     [locale]
   )
 
@@ -128,10 +129,7 @@ const HrmReportsView = ({
     [locale]
   )
 
-  const currency = useCallback(
-    value => formatCurrency(toFiniteNumber(value), locale, REPORT_BASE_CURRENCY),
-    [locale]
-  )
+  const currency = useCallback(value => formatCurrency(toFiniteNumber(value), locale, REPORT_BASE_CURRENCY), [locale])
 
   const loadReport = useCallback(async () => {
     if (!startDate || !endDate || startDate > endDate) {
@@ -273,7 +271,7 @@ const HrmReportsView = ({
       contract_type_id: row.contract_type_id,
       template_id: row.template_id,
       contract_duration: row.duration_id,
-        start_date: toInputDate(nextStart),
+      start_date: toInputDate(nextStart),
       end_date: '',
       status_id: '',
       probation_days: row.probation_days,
@@ -547,7 +545,13 @@ const HrmReportsView = ({
     return (
       <div className='flex flex-wrap justify-end gap-1' data-row-action>
         {canManageContracts && (
-          <Button size='small' variant='tonal' disabled={renewalLoading} startIcon={<i className='tabler-refresh' />} onClick={() => openRenewal(row)}>
+          <Button
+            size='small'
+            variant='tonal'
+            disabled={renewalLoading}
+            startIcon={<i className='tabler-refresh' />}
+            onClick={() => openRenewal(row)}
+          >
             {dictionary.actions.renewContract}
           </Button>
         )}
@@ -683,7 +687,9 @@ const HrmReportsView = ({
           id: 'breakdown',
           label: dictionary.table.leaveBreakdown,
           render: row =>
-            row.leave_types.length ? row.leave_types.map(item => `${item.name}: ${item.days}`).join(', ') : '-'
+            row.leave_types.length
+              ? row.leave_types.map(item => `${item.name}: ${item.days}`).join(', ')
+              : EMPTY_TABLE_CELL
         },
         { id: 'allowance', label: dictionary.table.allowance, render: row => row.allowance_days },
         { id: 'remaining', label: dictionary.table.remaining, render: row => row.remaining_days },
@@ -738,12 +744,8 @@ const HrmReportsView = ({
                   <td>{formatMonth(row.period)}</td>
                   <td className='text-end'>{payrollAmount(row, 'base_salary', 'original_base_salary')}</td>
                   <td className='text-end'>{payrollAmount(row, 'allowances', 'original_allowances')}</td>
-                  <td className='text-end text-warning'>
-                    {payrollAmount(row, 'deductions', 'original_deductions')}
-                  </td>
-                  <td className='text-end text-success'>
-                    {payrollAmount(row, 'net_payout', 'original_net_payout')}
-                  </td>
+                  <td className='text-end text-warning'>{payrollAmount(row, 'deductions', 'original_deductions')}</td>
+                  <td className='text-end text-success'>{payrollAmount(row, 'net_payout', 'original_net_payout')}</td>
                   <td>
                     <Chip
                       size='small'
@@ -842,7 +844,7 @@ const HrmReportsView = ({
                         ? row.leave_types.map(item => (
                             <Chip key={item.name} size='small' variant='tonal' label={`${item.name}: ${item.days}`} />
                           ))
-                        : '-'}
+                        : EMPTY_TABLE_CELL}
                     </div>
                   </td>
                   <td className='text-end'>
@@ -903,7 +905,13 @@ const HrmReportsView = ({
                   <Chip
                     size='small'
                     variant='tonal'
-                    color={row.renewal_status === 'EXPIRED' ? 'error' : row.renewal_status === 'DUE_SOON' ? 'warning' : 'info'}
+                    color={
+                      row.renewal_status === 'EXPIRED'
+                        ? 'error'
+                        : row.renewal_status === 'DUE_SOON'
+                          ? 'warning'
+                          : 'info'
+                    }
                     label={expirationLabel(row)}
                   />
                 </td>
@@ -911,7 +919,13 @@ const HrmReportsView = ({
                   <Chip
                     size='small'
                     variant='tonal'
-                    color={row.renewal_status === 'EXPIRED' ? 'error' : row.renewal_status === 'DUE_SOON' ? 'warning' : 'info'}
+                    color={
+                      row.renewal_status === 'EXPIRED'
+                        ? 'error'
+                        : row.renewal_status === 'DUE_SOON'
+                          ? 'warning'
+                          : 'info'
+                    }
                     label={formatStatusLabel(row.renewal_status, dictionary.status[row.renewal_status])}
                   />
                 </td>
@@ -938,7 +952,9 @@ const HrmReportsView = ({
           />
           <div className='grid is-full grid-cols-2 gap-2 sm:flex sm:is-auto sm:flex-wrap sm:justify-end'>
             <TableFiltersPopover
-              activeCount={Number(Boolean(searchInput.trim())) + Number(Boolean(staffId)) + Number(datePreset !== 'this_month')}
+              activeCount={
+                Number(Boolean(searchInput.trim())) + Number(Boolean(staffId)) + Number(datePreset !== 'this_month')
+              }
               locale={locale}
               onReset={() => {
                 const range = getPresetRange('this_month')

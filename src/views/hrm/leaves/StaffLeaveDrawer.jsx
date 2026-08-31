@@ -299,17 +299,19 @@ const StaffLeaveDrawer = ({
               </CustomTextField>
             )}
           />
-          <div className='grid grid-cols-1 gap-5 sm:grid-cols-2 items-end'>
-            <NativeDateTimeInput
-              fullWidth
-              required
-              locale={locale}
-              label={dictionary.fields.startDate}
-              disabled={isSubmitting}
-              error={Boolean(errors.start_date)}
-              helperText={errors.start_date?.message}
-              {...register('start_date')}
-            />
+          <div className='grid grid-cols-1 items-end gap-5 sm:grid-cols-2'>
+            <div className='self-end'>
+              <NativeDateTimeInput
+                fullWidth
+                required
+                locale={locale}
+                label={dictionary.fields.startDate}
+                disabled={isSubmitting}
+                error={Boolean(errors.start_date)}
+                helperText={errors.start_date?.message}
+                {...register('start_date')}
+              />
+            </div>
             {!isHalfDay && (
               <NativeDateTimeInput
                 fullWidth

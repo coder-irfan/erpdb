@@ -7,11 +7,11 @@ import Popover from '@mui/material/Popover'
 
 const FILTER_LABELS = {
   en: 'Filters',
-  fa: 'فیلترها',
+  fa: 'فلترها',
   ps: 'فلټرونه'
 }
 
-const RESET_LABELS = { en: 'Clear Filters', fa: 'پاک‌کردن فیلترها', ps: 'فلټرونه پاک کړئ' }
+const RESET_LABELS = { en: 'Clear Filters', fa: 'پاک‌کردن فلترها', ps: 'فلټرونه پاک کړئ' }
 
 const TableFiltersPopover = ({ activeCount = 0, children, locale = 'en', onReset }) => {
   const [anchorElement, setAnchorElement] = useState(null)
