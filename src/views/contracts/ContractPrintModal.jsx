@@ -45,9 +45,7 @@ const ContractPrintModal = ({ open, contractId, setup, locale, dictionary, other
     }
   }, [contractId, dictionary.messages.loadFailed, locale, open])
 
-  const duration = contract
-    ? formatContractDuration(contract.duration_option, contract.contract_duration) || '—'
-    : '—'
+  const duration = contract ? formatContractDuration(contract.duration_option, contract.contract_duration) || '—' : '—'
 
   const document = contract && (
     <PrintLayout
@@ -74,18 +72,39 @@ const ContractPrintModal = ({ open, contractId, setup, locale, dictionary, other
             <h2 className='enterprise-section-title'>Agreement Metadata</h2>
             <div className='grid grid-cols-2 gap-4'>
               <div className='rounded border border-gray-200 bg-gray-50/50 p-3 text-xs'>
-                <p><strong>{dictionary.fields.startDate}:</strong> {toDateInputValue(contract.start_date)}</p>
-                <p><strong>{dictionary.fields.endDate}:</strong> {toDateInputValue(contract.end_date)}</p>
-                <p><strong>{dictionary.fields.amount}:</strong> {formatCurrency(contract.total_amount, locale, contract.currency)}</p>
+                <p>
+                  <strong>{dictionary.fields.startDate}:</strong> {toDateInputValue(contract.start_date)}
+                </p>
+                <p>
+                  <strong>{dictionary.fields.endDate}:</strong> {toDateInputValue(contract.end_date)}
+                </p>
+                <p>
+                  <strong>{dictionary.fields.amount}:</strong>{' '}
+                  {formatCurrency(contract.total_amount, locale, contract.currency)}
+                </p>
               </div>
               <div className='rounded border border-gray-200 bg-gray-50/50 p-3 text-xs'>
-                <p><strong>{dictionary.fields.serviceType}:</strong> {contract.contract_type?.label || '—'}</p>
-                <p><strong>Renewal Status:</strong> {contract.renewal_status || '—'}</p>
-                <p><strong>Third-Party Company / Vendor:</strong> {contract.vendor?.company_name || '—'}</p>
-                <p><strong>Vendor Representative:</strong> {contract.vendor?.contact_name || '—'}</p>
-                <p><strong>Vendor Email:</strong> {contract.vendor?.email || '—'}</p>
-                <p><strong>Internal Owner:</strong> {contract.account_manager?.full_name || '—'}</p>
-                <p><strong>{dictionary.fields.country}:</strong> {contract.country?.label || '—'}</p>
+                <p>
+                  <strong>{dictionary.fields.serviceType}:</strong> {contract.contract_type?.label || '—'}
+                </p>
+                <p>
+                  <strong>Renewal Status:</strong> {contract.renewal_status || '—'}
+                </p>
+                <p>
+                  <strong>Third-Party Company / Vendor:</strong> {contract.vendor?.company_name || '—'}
+                </p>
+                <p>
+                  <strong>Vendor Representative:</strong> {contract.vendor?.contact_name || '—'}
+                </p>
+                <p>
+                  <strong>Vendor Email:</strong> {contract.vendor?.email || '—'}
+                </p>
+                <p>
+                  <strong>Internal Owner:</strong> {contract.account_manager?.full_name || '—'}
+                </p>
+                <p>
+                  <strong>{dictionary.fields.country}:</strong> {contract.country?.label || '—'}
+                </p>
               </div>
             </div>
           </section>
@@ -95,12 +114,16 @@ const ContractPrintModal = ({ open, contractId, setup, locale, dictionary, other
               <h2 className='enterprise-section-title'>Parties to the Agreement</h2>
               <div className='grid grid-cols-2 gap-4'>
                 <div className='rounded border border-gray-200 bg-gray-50/50 p-3 text-xs'>
-                  <p><strong>Party A — Service Provider</strong></p>
+                  <p>
+                    <strong>Party A — Service Provider</strong>
+                  </p>
                   <p>{setup.company_name}</p>
                   <p>{contract.account_manager?.full_name || setup.signatory_name}</p>
                 </div>
                 <div className='rounded border border-gray-200 bg-gray-50/50 p-3 text-xs'>
-                  <p><strong>Party B — Client</strong></p>
+                  <p>
+                    <strong>Party B — Client</strong>
+                  </p>
                   <p>{contract.client?.company_name || '—'}</p>
                   <p>{contract.client?.primary_contact_name || '—'}</p>
                   <p>{contract.client?.address || '—'}</p>
@@ -116,7 +139,9 @@ const ContractPrintModal = ({ open, contractId, setup, locale, dictionary, other
                     <SummaryCell label={dictionary.fields.level}>{contract.level?.label}</SummaryCell>
                   </tr>
                   <tr>
-                    <SummaryCell label={dictionary.fields.startDate}>{toDateInputValue(contract.start_date)}</SummaryCell>
+                    <SummaryCell label={dictionary.fields.startDate}>
+                      {toDateInputValue(contract.start_date)}
+                    </SummaryCell>
                     <SummaryCell label={dictionary.fields.endDate}>{toDateInputValue(contract.end_date)}</SummaryCell>
                   </tr>
                   <tr>
@@ -164,14 +189,20 @@ const ContractPrintModal = ({ open, contractId, setup, locale, dictionary, other
           >
             Print Document
           </Button>
-          <Button variant='tonal' onClick={onClose}>{dictionary.actions.cancel}</Button>
+          <Button variant='tonal' onClick={onClose}>
+            {dictionary.actions.cancel}
+          </Button>
         </div>
       </DialogTitle>
       <DialogContent dividers className='bg-gray-50 p-2 sm:p-6'>
         {error ? (
           <Alert severity='error'>{error}</Alert>
         ) : (
-          document || <div className='flex min-h-80 items-center justify-center'><CircularProgress /></div>
+          document || (
+            <div className='flex min-h-80 items-center justify-center'>
+              <CircularProgress />
+            </div>
+          )
         )}
       </DialogContent>
     </Dialog>

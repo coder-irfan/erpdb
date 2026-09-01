@@ -13,6 +13,7 @@ import { authorizeAction } from '@/libs/actionAuthorization'
 import { getCompanySetupRecord } from '@/libs/companySetup'
 import { InvoiceSettlementError, settlementTransactionOptions, syncInvoiceSettlement } from '@/libs/invoiceSettlement'
 import { prisma } from '@/libs/prisma'
+import { serializeData } from '@/libs/serialize'
 import { nextSequentialNumber, withSequentialNumberRetry } from '@/libs/sequentialNumbers'
 import { createInvoiceSchema, recordInvoicePaymentSchema } from '@/schemas/invoices'
 import { toUtcDateOnly } from '@/utils/contractDuration'
@@ -144,7 +145,7 @@ const normalizeInvoice = invoice => {
   const today = toUtcDateOnly(new Date())
   const isOverdue = invoice.due_date < today && !['PAID', 'CANCELLED'].includes(invoice.status.value)
 
-  return {
+  return serializeData({
     ...invoice,
     amount: invoice.amount.toFixed(2),
     exchange_rate: invoice.exchange_rate.toFixed(4),
@@ -191,7 +192,7 @@ const normalizeInvoice = invoice => {
           created_at: invoice.payment_incomes[0].created_at.toISOString()
         }
       : null
-  }
+  })
 }
 
 const revalidateInvoices = () => {

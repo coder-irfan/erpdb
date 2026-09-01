@@ -29,8 +29,8 @@ import { EMPTY_TABLE_CELL, formatTableCellValue } from '@/libs/tableCell'
 
 import AttendanceDrawer from './AttendanceDrawer'
 import AttendanceStatsCards from './AttendanceStatsCards'
-import TimesheetPrintDocument from './TimesheetPrintDocument'
 import TimesheetDetailDialog from './TimesheetDetailDialog'
+import TimesheetPrintModal from './TimesheetPrintModal'
 
 import tableStyles from '@core/styles/table.module.css'
 
@@ -89,6 +89,7 @@ const TimesheetsView = ({
   const [deleteLoading, setDeleteLoading] = useState(false)
   const [printData, setPrintData] = useState(null)
   const [printLoadingId, setPrintLoadingId] = useState(null)
+  const [printSummaryLoading, setPrintSummaryLoading] = useState(false)
   const [payrollOverrideEnabled, setPayrollOverrideEnabled] = useState(false)
 
   const changeDate = nextDate => {
@@ -142,14 +143,6 @@ const TimesheetsView = ({
 
     return () => clearTimeout(timeout)
   }, [searchInput])
-
-  useEffect(() => {
-    if (!printData) return undefined
-
-    const timeout = window.setTimeout(() => window.print(), 50)
-
-    return () => window.clearTimeout(timeout)
-  }, [printData])
 
   const openCreate = () => {
     setDrawerOpen(true)
@@ -251,6 +244,60 @@ const TimesheetsView = ({
       toast.error(dictionary.messages.loadFailed)
     } finally {
       setPrintLoadingId(null)
+    }
+  }
+
+  const printSelectedDateSummary = async () => {
+    setPrintSummaryLoading(true)
+
+    try {
+      const createParams = pageNumber => {
+        const params = new URLSearchParams({
+          date: selectedDate,
+          locale,
+          page: String(pageNumber),
+          limit: '100'
+        })
+
+        if (search) params.set('search', search)
+        if (statusFilter) params.set('status', statusFilter)
+
+        return params
+      }
+
+      const response = await fetch(`/api/hrm/timesheets?${createParams(1).toString()}`, { cache: 'no-store' })
+      const result = await response.json()
+
+      if (!response.ok || !result.success) {
+        toast.error(result.error || dictionary.messages.loadFailed)
+
+        return
+      }
+
+      const remainingPages = Array.from(
+        { length: Math.max(0, Number(result.data.totalPages || 1) - 1) },
+        (_, index) => index + 2
+      )
+
+      const remainingResults = await Promise.all(
+        remainingPages.map(async pageNumber => {
+          const pageResponse = await fetch(`/api/hrm/timesheets?${createParams(pageNumber).toString()}`, {
+            cache: 'no-store'
+          })
+
+          const pageResult = await pageResponse.json()
+
+          if (!pageResponse.ok || !pageResult.success) throw new Error('TIMESHEET_PAGE_LOAD_FAILED')
+
+          return pageResult.data.records
+        })
+      )
+
+      setPrintData({ records: [result.data.records, ...remainingResults].flat(), reportDate: selectedDate })
+    } catch {
+      toast.error(dictionary.messages.loadFailed)
+    } finally {
+      setPrintSummaryLoading(false)
     }
   }
 
@@ -372,6 +419,16 @@ const TimesheetsView = ({
             <Tooltip title={dictionary.actions.export} arrow>
               <Button variant='tonal' startIcon={<i className='tabler-file-download' />} onClick={exportCsv}>
                 <span>{dictionary.actions.export}</span>
+              </Button>
+            </Tooltip>
+            <Tooltip title={dictionary.actions.print} arrow>
+              <Button
+                variant='tonal'
+                startIcon={<i className='tabler-printer' />}
+                disabled={printSummaryLoading}
+                onClick={printSelectedDateSummary}
+              >
+                <span>{dictionary.actions.print}</span>
               </Button>
             </Tooltip>
             {canWrite && (
@@ -616,9 +673,14 @@ const TimesheetsView = ({
         onConfirm={confirmDelete}
         onClose={() => setDeleteTarget(null)}
       />
-      {printData && (
-        <TimesheetPrintDocument {...printData} locale={locale} dictionary={dictionary} setup={printSetup} />
-      )}
+      <TimesheetPrintModal
+        open={Boolean(printData)}
+        {...printData}
+        locale={locale}
+        dictionary={dictionary}
+        setup={printSetup}
+        onClose={() => setPrintData(null)}
+      />
     </div>
   )
 }

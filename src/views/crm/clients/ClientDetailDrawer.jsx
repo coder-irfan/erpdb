@@ -73,7 +73,11 @@ const ClientProfileModal = ({
     setLoading(true)
 
     try {
-      const response = await fetch(`/api/crm/clients/${clientId}?locale=${locale}`, { cache: 'no-store', signal: controller.signal })
+      const response = await fetch(`/api/crm/clients/${clientId}?locale=${locale}`, {
+        cache: 'no-store',
+        signal: controller.signal
+      })
+
       const result = await response.json()
 
       if (!response.ok || !result.success) return toast.error(result.error || dictionary.messages.loadFailed)
@@ -164,7 +168,9 @@ const ClientProfileModal = ({
       </div>
       <DialogContent dividers className='flex min-bs-0 flex-1 flex-col p-0'>
         {loading || !client ? (
-          <div className='p-5'><DetailSkeleton rows={6} /></div>
+          <div className='p-5'>
+            <DetailSkeleton rows={6} />
+          </div>
         ) : (
           <>
             <Tabs value={tab} onChange={(_, value) => setTab(value)} variant='scrollable' className='px-3'>

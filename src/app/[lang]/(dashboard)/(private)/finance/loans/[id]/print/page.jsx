@@ -4,6 +4,7 @@ import { authorizeAction } from '@/libs/actionAuthorization'
 import { getCompanySetupRecord } from '@/libs/companySetup'
 import { LOAN_READ_PERMISSIONS, loanSelect, normalizeLoan } from '@/libs/financeLoans'
 import { prisma } from '@/libs/prisma'
+import { serializeData } from '@/libs/serialize'
 import FinanceLoanPrint from '@/views/finance/loans/FinanceLoanPrint'
 
 const FinanceLoanPrintPage = async props => {
@@ -19,7 +20,7 @@ const FinanceLoanPrintPage = async props => {
 
   if (!loan) notFound()
 
-  return <FinanceLoanPrint loan={normalizeLoan(loan)} setup={setup} locale={lang} />
+  return <FinanceLoanPrint loan={normalizeLoan(loan)} setup={serializeData(setup)} locale={lang} />
 }
 
 export default FinanceLoanPrintPage

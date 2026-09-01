@@ -10,7 +10,6 @@ import Chip from '@mui/material/Chip'
 import Dialog from '@mui/material/Dialog'
 import DialogContent from '@mui/material/DialogContent'
 import DialogTitle from '@mui/material/DialogTitle'
-import Divider from '@mui/material/Divider'
 import IconButton from '@mui/material/IconButton'
 import Tab from '@mui/material/Tab'
 import Tabs from '@mui/material/Tabs'
@@ -267,33 +266,31 @@ const ContractDetailModal = ({
                 <Typography color='text.secondary'>{dictionary.detail.noNotificationsDescription}</Typography>
               </div>
             ) : (
-              <div className='flex flex-col'>
-                {contract.notifications.map((notification, index) => (
-                  <div key={notification.id} className='flex gap-4'>
-                    <div className='flex flex-col items-center'>
-                      <span className='flex size-10 items-center justify-center rounded-full bg-successLighter text-success'>
+              <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+                {contract.notifications.map(notification => (
+                  <div
+                    key={notification.id}
+                    className='flex min-w-0 flex-col gap-3 rounded-xl border border-divider/80 bg-backgroundPaper/60 p-4 transition-colors hover:border-primary/50'
+                  >
+                    <div className='flex items-start justify-between gap-3'>
+                      <span className='flex size-10 shrink-0 items-center justify-center rounded-full bg-successLighter text-success'>
                         <i className='tabler-mail-check' />
                       </span>
-                      {index < contract.notifications.length - 1 && (
-                        <Divider orientation='vertical' flexItem className='my-2' />
-                      )}
+                      <Chip
+                        size='small'
+                        variant='tonal'
+                        color={notification.status === 'SENT' ? 'success' : 'error'}
+                        label={notification.status}
+                      />
                     </div>
-                    <div className='pb-6'>
-                      <div className='flex flex-wrap items-center gap-2'>
-                        <Typography className='font-semibold'>
-                          {dictionary.reminders[notification.reminder_type] || notification.reminder_type}
-                        </Typography>
-                        <Chip
-                          size='small'
-                          variant='tonal'
-                          color={notification.status === 'SENT' ? 'success' : 'error'}
-                          label={notification.status}
-                        />
-                      </div>
-                      <Typography variant='body2' color='text.secondary'>
+                    <div className='min-w-0'>
+                      <Typography className='break-words font-semibold'>
+                        {dictionary.reminders[notification.reminder_type] || notification.reminder_type}
+                      </Typography>
+                      <Typography variant='body2' color='text.secondary' className='mt-1 break-words'>
                         {notification.recipient_email}
                       </Typography>
-                      <Typography variant='caption' color='text.secondary'>
+                      <Typography variant='caption' color='text.secondary' className='mt-2 block'>
                         {formatAfghanDateTime(notification.sent_at, locale, { dateStyle: 'medium' })}
                       </Typography>
                     </div>

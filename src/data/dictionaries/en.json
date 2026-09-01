@@ -1263,7 +1263,7 @@
   "crmVisitors": {
     "summary": {
       "totalToday": "Visitors Today",
-      "activeGuests": "Active Guests",
+      "activeGuests": "Active Guests (Office)",
       "completedToday": "Completed Visits Today",
       "convertedCount": "Visitor to Lead"
     },

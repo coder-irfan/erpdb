@@ -12,6 +12,7 @@ import { getFinanceExpenseDictionary } from '@/data/dictionaries/financeExpense'
 import { authorizeAction } from '@/libs/actionAuthorization'
 import { getCompanySetupRecord } from '@/libs/companySetup'
 import { prisma } from '@/libs/prisma'
+import { serializeData } from '@/libs/serialize'
 import { createFinanceExpenseSchema } from '@/schemas/financeExpense'
 import { toUtcDateOnly } from '@/utils/contractDuration'
 import { SYSTEM_BASE_CURRENCY, convertToBaseCurrency, effectiveAfnExchangeRate, normalizeToAfn, toFiniteNumber } from '@/utils/formatCurrency'
@@ -90,7 +91,7 @@ const iso = value => value?.toISOString() || null
 const numberString = (value, scale = 2) => (value == null ? null : toFiniteNumber(value).toFixed(scale))
 const withFullName = staff => staff ? { ...staff, full_name: `${staff.first_name} ${staff.last_name}`.trim() } : null
 
-const normalizeExpense = expense => ({
+const normalizeExpense = expense => serializeData({
   ...expense,
   unit_price: numberString(expense.unit_price),
   sub_total: numberString(expense.sub_total),

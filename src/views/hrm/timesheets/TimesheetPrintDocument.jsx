@@ -10,6 +10,12 @@ const formatPeriod = (value, locale) =>
     timeZone: 'UTC'
   }).format(new Date(`${value}-01T00:00:00.000Z`))
 
+const formatReportDate = (value, locale) =>
+  new Intl.DateTimeFormat(DATE_LOCALES[locale] || DATE_LOCALES.en, {
+    dateStyle: 'long',
+    timeZone: 'UTC'
+  }).format(new Date(`${value}T00:00:00.000Z`))
+
 const formatDay = (value, locale) =>
   new Intl.DateTimeFormat(DATE_LOCALES[locale] || DATE_LOCALES.en, {
     weekday: 'short',
@@ -21,20 +27,35 @@ const formatTimeRange = record =>
     ? `${record.check_in_time || '—'} / ${record.check_out_time || '—'}`
     : '—'
 
-const IndividualTimesheetPrintDocument = ({ staff, records, period, locale, dictionary, setup }) => {
+const TimesheetPrintDocument = ({ staff, records, period, reportDate, locale, dictionary, setup }) => {
   const print = dictionary.print
+  const isIndividual = Boolean(staff)
+  const reference = period ? formatPeriod(period, locale) : formatReportDate(reportDate, locale)
   const totalHours = records.reduce((total, record) => total + Number(record.hours_worked || 0), 0)
   const presentDays = records.filter(record => record.status === 'PRESENT').length
   const offLeaveDays = records.filter(record => record.status === 'ABSENT' || record.status?.startsWith('LEAVE')).length
   const orderedRecords = [...records].sort((left, right) => left.date.localeCompare(right.date))
 
+  const summary = isIndividual
+    ? [
+        [print.totalLoggedHours, `${totalHours.toFixed(2)} ${dictionary.hoursShort}`],
+        [print.presentDays, presentDays],
+        [print.offLeaveDays, offLeaveDays]
+      ]
+    : [
+        [print.totalRecords, records.length],
+        [print.totalLoggedHours, `${totalHours.toFixed(2)} ${dictionary.hoursShort}`],
+        [print.presentDays, presentDays],
+        [print.offLeaveDays, offLeaveDays]
+      ]
+
   const labels = {
     reference: print.period,
     issuedDate: print.generatedOn,
     signatures: print.approvals,
-    recipientSignature: print.employeeSignature,
+    recipientSignature: isIndividual ? print.employeeSignature : print.preparedBy,
     authorizedRepresentative: print.supervisorApproval,
-    employeeSignatureLine: print.employeeSignature,
+    employeeSignatureLine: isIndividual ? print.employeeSignature : print.signature,
     employerSignatureLine: print.supervisorApproval,
     date: print.date,
     officialSeal: print.officialSeal,
@@ -45,7 +66,7 @@ const IndividualTimesheetPrintDocument = ({ staff, records, period, locale, dict
   }
 
   return (
-    <div className='timesheet-print-root hidden print:block'>
+    <div className='timesheet-print-root'>
       <style jsx global>{`
         @media print {
           @page {
@@ -80,29 +101,32 @@ const IndividualTimesheetPrintDocument = ({ staff, records, period, locale, dict
         }
       `}</style>
       <PrintLayout
-        title={print.individualTitle}
-        documentNumber={formatPeriod(period, locale)}
-        date={formatPeriod(period, locale)}
+        title={isIndividual ? print.individualTitle : print.title}
+        documentNumber={reference}
+        date={reference}
         setup={setup}
         landscape
         labels={labels}
         metadata={[
-          { label: print.employee, value: staff.full_name },
-          { label: dictionary.fields.position, value: staff.position },
-          { label: print.period, value: formatPeriod(period, locale) }
+          { label: print.employee, value: staff?.full_name },
+          { label: dictionary.fields.position, value: staff?.position },
+          { label: period ? print.period : print.reportReference, value: reference }
         ]}
-        recipientLabel={print.employeeSignature}
-        recipientName={staff.full_name}
+        recipientLabel={isIndividual ? print.employeeSignature : print.preparedBy}
+        recipientName={staff?.full_name}
         authorizedName={setup?.signatory_name || undefined}
-        authorizedTitle={print.supervisorApproval}
+        authorizedTitle={isIndividual ? print.supervisorApproval : print.approvedBy}
       >
-        <section className='mb-3 grid grid-cols-3 overflow-hidden rounded border border-gray-300 bg-white'>
-          {[
-            [print.totalLoggedHours, `${totalHours.toFixed(2)} ${dictionary.hoursShort}`],
-            [print.presentDays, presentDays],
-            [print.offLeaveDays, offLeaveDays]
-          ].map(([label, value], index) => (
-            <div key={label} className={`px-2 py-1.5 text-center ${index < 2 ? 'border-e border-gray-300' : ''}`}>
+        <section
+          className={`mb-3 grid overflow-hidden rounded border border-gray-300 bg-white ${
+            isIndividual ? 'grid-cols-3' : 'grid-cols-4'
+          }`}
+        >
+          {summary.map(([label, value], index) => (
+            <div
+              key={label}
+              className={`px-2 py-1.5 text-center ${index < summary.length - 1 ? 'border-e border-gray-300' : ''}`}
+            >
               <div className='text-[10px] font-semibold uppercase tracking-wide text-gray-600'>{label}</div>
               <div className='text-sm font-bold text-gray-900'>{value}</div>
             </div>
@@ -114,17 +138,23 @@ const IndividualTimesheetPrintDocument = ({ staff, records, period, locale, dict
           <table className='w-full border-collapse border border-gray-300 text-xs text-gray-800'>
             <thead className='bg-gray-100 text-[10px] font-semibold uppercase tracking-wide text-gray-700'>
               <tr>
-                <th className='w-[18%] border border-gray-300 px-2 py-1 text-start'>{dictionary.fields.date}</th>
-                <th className='w-[17%] border border-gray-300 px-2 py-1 text-start'>{print.day}</th>
-                <th className='w-[26%] border border-gray-300 px-2 py-1 text-start'>{print.timeInOut}</th>
-                <th className='w-[20%] border border-gray-300 px-2 py-1 text-start'>{dictionary.fields.status}</th>
-                <th className='w-[19%] border border-gray-300 px-2 py-1 text-end'>{dictionary.fields.hours}</th>
+                {!isIndividual && (
+                  <th className='w-[24%] border border-gray-300 px-2 py-1 text-start'>{dictionary.fields.staff}</th>
+                )}
+                <th className='border border-gray-300 px-2 py-1 text-start'>{dictionary.fields.date}</th>
+                <th className='border border-gray-300 px-2 py-1 text-start'>{print.day}</th>
+                <th className='border border-gray-300 px-2 py-1 text-start'>{print.timeInOut}</th>
+                <th className='border border-gray-300 px-2 py-1 text-start'>{dictionary.fields.status}</th>
+                <th className='border border-gray-300 px-2 py-1 text-end'>{dictionary.fields.hours}</th>
               </tr>
             </thead>
             <tbody>
               {orderedRecords.length ? (
                 orderedRecords.map((record, index) => (
                   <tr key={record.id} className={index % 2 ? 'bg-gray-50' : ''}>
+                    {!isIndividual && (
+                      <td className='border border-gray-300 px-2 py-1'>{record.staff?.full_name || 'â€”'}</td>
+                    )}
                     <td className='border border-gray-300 px-2 py-1'>{record.date}</td>
                     <td className='border border-gray-300 px-2 py-1'>{formatDay(record.date, locale)}</td>
                     <td className='border border-gray-300 px-2 py-1'>{formatTimeRange(record)}</td>
@@ -138,7 +168,7 @@ const IndividualTimesheetPrintDocument = ({ staff, records, period, locale, dict
                 ))
               ) : (
                 <tr>
-                  <td colSpan={5} className='border border-gray-300 px-2 py-4 text-center text-gray-500'>
+                  <td colSpan={isIndividual ? 5 : 6} className='border border-gray-300 px-2 py-4 text-center text-gray-500'>
                     {print.noRecords}
                   </td>
                 </tr>
@@ -147,7 +177,7 @@ const IndividualTimesheetPrintDocument = ({ staff, records, period, locale, dict
             <tfoot className='bg-gray-50 font-bold'>
               <tr>
                 <td
-                  colSpan={4}
+                  colSpan={isIndividual ? 4 : 5}
                   className='border border-gray-300 px-2 py-1 text-end uppercase tracking-wide text-gray-600'
                 >
                   {print.totalLoggedHours}
@@ -164,4 +194,4 @@ const IndividualTimesheetPrintDocument = ({ staff, records, period, locale, dict
   )
 }
 
-export default IndividualTimesheetPrintDocument
+export default TimesheetPrintDocument

@@ -6,6 +6,7 @@ import { Prisma } from '@prisma/client'
 
 import { getCompanySetupRecord } from '@/libs/companySetup'
 import { prisma } from '@/libs/prisma'
+import { serializeData } from '@/libs/serialize'
 import { nextSequentialNumber } from '@/libs/sequentialNumbers'
 import { SYSTEM_BASE_CURRENCY, convertAfnToUsd, convertToBaseCurrency, toFiniteNumber } from '@/utils/formatCurrency'
 import { formatLedgerText } from '@/utils/ledgerDisplay'
@@ -87,7 +88,7 @@ export const getStockState = item => {
   return 'IN_STOCK'
 }
 
-export const normalizeInventoryItem = item => ({
+export const normalizeInventoryItem = item => serializeData({
   ...item,
   unit_price: numberString(item.unit_price),
   amount_base: numberString(item.amount_base),
@@ -103,7 +104,7 @@ export const normalizeInventoryItem = item => ({
   updated_at: iso(item.updated_at)
 })
 
-export const normalizeInventoryMovement = movement => ({
+export const normalizeInventoryMovement = movement => serializeData({
   ...movement,
   source_vendor: formatLedgerText(movement.source_vendor),
   reason: formatLedgerText(movement.reason),

@@ -60,7 +60,6 @@ const VisitorDetailDialog = ({ visitor, open, locale, dictionary, purposeLabel, 
           <Item label='Email' value={<QuickContact email={visitor.email}>{visitor.email}</QuickContact>} />
           <Item label='Purpose' value={purposeLabel(visitor)} />
           <Item label='Host' value={visitor.host_staff?.full_name} />
-          <Item label='Host position' value={visitor.host_staff?.position} />
           <Item label='Checked in' value={dateTime(visitor.visited_at, locale)} />
           <Item label='Checked out' value={dateTime(visitor.check_out_time, locale)} />
         </div>

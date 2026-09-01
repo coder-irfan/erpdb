@@ -31,7 +31,7 @@ import { formatStatusLabel } from '@/utils/formatStatusLabel'
 import { EMPTY_TABLE_CELL, formatTableCellValue } from '@/libs/tableCell'
 
 import StaffContractDetailDialog from './StaffContractDetailDialog'
-import StaffContractPrintable from './StaffContractPrintable'
+import ContractPrintModal from './ContractPrintModal'
 import ContractFormDrawer from '@/views/contracts/ContractFormDrawer'
 import StaffContractStatsCards from './StaffContractStatsCards'
 
@@ -94,25 +94,6 @@ const StaffContractsView = ({
 
     return () => clearTimeout(timeout)
   }, [searchInput])
-
-  useEffect(() => {
-    if (!printingContract) return undefined
-
-    let frame = window.requestAnimationFrame(() => {
-      frame = window.requestAnimationFrame(() => window.print())
-    })
-
-    const clearPrintDocument = () => setPrintingContract(null)
-
-    document.body.classList.add('is-printing-contract')
-    window.addEventListener('afterprint', clearPrintDocument)
-
-    return () => {
-      window.cancelAnimationFrame(frame)
-      document.body.classList.remove('is-printing-contract')
-      window.removeEventListener('afterprint', clearPrintDocument)
-    }
-  }, [printingContract])
 
   const refreshData = useCallback(async () => {
     setLoading(true)
@@ -517,11 +498,13 @@ const StaffContractsView = ({
         onClose={() => setViewingContract(null)}
         onEdit={openEdit}
       />
-      <StaffContractPrintable
+      <ContractPrintModal
+        open={Boolean(printingContract)}
         contract={printingContract}
         setup={formOptions.setup}
         locale={locale}
         dictionary={dictionary}
+        onClose={() => setPrintingContract(null)}
       />
       <Dialog
         open={Boolean(terminationTarget)}

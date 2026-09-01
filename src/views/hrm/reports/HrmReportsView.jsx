@@ -223,6 +223,12 @@ const HrmReportsView = ({
   const selectedStaff = staffOptions.find(staff => staff.id === staffId)
   const activeReport = dictionary.tabs[reportType]
 
+  const handlePrint = event => {
+    if (!event || typeof window === 'undefined' || typeof window.print !== 'function') return
+
+    window.print()
+  }
+
   useEffect(() => {
     if (page > 0 && page * rowsPerPage >= rows.length) setPage(0)
   }, [page, rows.length, rowsPerPage])
@@ -1040,7 +1046,7 @@ const HrmReportsView = ({
               variant='contained'
               startIcon={<i className='tabler-printer' />}
               disabled={loading}
-              onClick={() => window.print()}
+              onClick={handlePrint}
             >
               {dictionary.actions.print}
             </Button>

@@ -62,10 +62,6 @@
   margin-top: 0.25rem;
 }
 
-.staff-contract-print-host {
-  display: none;
-}
-
 @media print {
   @page {
     size: A4 portrait;
@@ -85,50 +81,57 @@
     print-color-adjust: exact !important;
   }
 
-  html:has(.enterprise-print-root),
-  body.is-printing-contract {
+  html:has(.enterprise-print-root) {
     display: block !important;
     height: auto !important;
     overflow: visible !important;
   }
 
-  body:has(.enterprise-print-root) *,
-  body.is-printing-contract * {
+  body:has(.enterprise-print-root) * {
     visibility: hidden;
   }
 
   body:has(.enterprise-print-root) .enterprise-print-root,
-  body:has(.enterprise-print-root) .enterprise-print-root *,
-  body.is-printing-contract .staff-contract-print-host,
-  body.is-printing-contract .staff-contract-print-host * {
+  body:has(.enterprise-print-root) .enterprise-print-root * {
     visibility: visible;
   }
 
-  body.is-printing-contract .staff-contract-print-host {
-    display: block !important;
-    position: relative !important;
-    width: 100% !important;
-    height: auto !important;
-    min-height: 0 !important;
-    margin: 0 !important;
-    padding: 0 !important;
-  }
-
-  body.is-printing-contract > *:not(.staff-contract-print-host) {
+  body:has(.standard-print-preview) > *:not(.MuiDialog-root),
+  body:has(.standard-print-preview) .MuiBackdrop-root,
+  body:has(.standard-print-preview) .no-print {
     display: none !important;
   }
 
-  body.is-printing-contract .staff-contract-print-host .enterprise-print-root {
+  body:has(.standard-print-preview) .MuiDialog-root,
+  body:has(.standard-print-preview) .MuiDialog-container,
+  body:has(.standard-print-preview) .MuiDialog-paper,
+  body:has(.standard-print-preview) .MuiDialogContent-root,
+  body:has(.standard-print-preview) .standard-print-preview,
+  body:has(.standard-print-preview) .standard-print-preview > div {
     position: static !important;
-    inset: auto !important;
-    box-sizing: border-box !important;
-    width: 100% !important;
-    min-height: 0 !important;
-    margin: 0 !important;
-    padding: 0 !important;
+    display: block !important;
+    inline-size: 100% !important;
+    max-inline-size: none !important;
+    block-size: auto !important;
+    max-block-size: none !important;
+    min-block-size: 0 !important;
+    margin-block: 0 !important;
+    margin-inline: 0 !important;
+    padding-block: 0 !important;
+    padding-inline: 0 !important;
     overflow: visible !important;
-    color: #000 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
     background: #fff !important;
+    box-shadow: none !important;
+  }
+
+  body:has(.standard-print-preview) .standard-print-preview .enterprise-print-root {
+    inline-size: 100% !important;
+    max-inline-size: none !important;
+    min-block-size: 0 !important;
+    margin-block: 0 !important;
+    margin-inline: 0 !important;
     box-shadow: none !important;
   }
 

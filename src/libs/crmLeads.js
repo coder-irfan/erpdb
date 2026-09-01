@@ -1,6 +1,7 @@
 import 'server-only'
 
 import { prisma } from '@/libs/prisma'
+import { serializeData } from '@/libs/serialize'
 
 export const CRM_READ_PERMISSIONS = ['crm:read', 'crm_lead:read']
 export const CRM_WRITE_PERMISSIONS = ['crm:write', 'crm_lead:write']
@@ -50,7 +51,7 @@ export const leadInclude = {
 const normalizeStaff = staff =>
   staff ? { ...staff, full_name: `${staff.first_name} ${staff.last_name}`.trim() } : null
 
-export const normalizeLead = lead => ({
+export const normalizeLead = lead => serializeData({
   ...lead,
   estimated_value: lead.estimated_value?.toFixed(2) || '0.00',
   exchange_rate: lead.exchange_rate.toFixed(4),

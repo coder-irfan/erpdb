@@ -28,7 +28,7 @@ import { formatCurrency } from '@/utils/formatCurrency'
 import { formatStatusLabel } from '@/utils/formatStatusLabel'
 
 import StaffAttendanceHistory from './StaffAttendanceHistory'
-import StaffContractPrintable from '../contracts/StaffContractPrintable'
+import StaffContractPrintModal from '../contracts/StaffContractPrintModal'
 
 import tableStyles from '@core/styles/table.module.css'
 
@@ -91,25 +91,6 @@ const StaffDetailModal = ({ open, staffId, locale, dictionary, contractDictionar
       active = false
     }
   }, [dictionary.messages.loadFailed, locale, open, staffId])
-
-  useEffect(() => {
-    if (!printingContract) return undefined
-
-    let frame = window.requestAnimationFrame(() => {
-      frame = window.requestAnimationFrame(() => window.print())
-    })
-
-    const clearPrintDocument = () => setPrintingContract(null)
-
-    document.body.classList.add('is-printing-contract')
-    window.addEventListener('afterprint', clearPrintDocument)
-
-    return () => {
-      window.cancelAnimationFrame(frame)
-      document.body.classList.remove('is-printing-contract')
-      window.removeEventListener('afterprint', clearPrintDocument)
-    }
-  }, [printingContract])
 
   const closeModal = () => onClose()
 
@@ -326,11 +307,13 @@ const StaffDetailModal = ({ open, staffId, locale, dictionary, contractDictionar
           </div>
         ) : null}
       </DialogContent>
-      <StaffContractPrintable
+      <StaffContractPrintModal
+        open={Boolean(printingContract)}
         contract={printingContract?.contract}
         setup={printingContract?.setup}
         locale={locale}
         dictionary={contractDictionary}
+        onClose={() => setPrintingContract(null)}
       />
     </Dialog>
   )

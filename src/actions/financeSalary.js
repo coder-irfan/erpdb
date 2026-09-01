@@ -12,6 +12,7 @@ import { getCompanySetupRecord } from '@/libs/companySetup'
 import { ACTIVE_LOAN_STATUSES } from '@/libs/financialStatuses'
 import { applyLoanRepayment } from '@/libs/financeLoans'
 import { prisma } from '@/libs/prisma'
+import { serializeData } from '@/libs/serialize'
 import { getBrandingSettings } from '@/libs/systemSettings'
 import {
   createFinanceSalarySchema,
@@ -93,7 +94,7 @@ const withStaffName = staff =>
       }
     : null
 
-const normalizeSalary = salary => ({
+const normalizeSalary = salary => serializeData({
   ...salary,
   worked_days: moneyString(salary.worked_days, 1),
   off_days: moneyString(salary.off_days, 1),

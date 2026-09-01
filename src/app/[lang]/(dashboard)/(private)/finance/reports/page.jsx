@@ -1,4 +1,5 @@
 import { getCompanySetupRecord } from '@/libs/companySetup'
+import { serializeData } from '@/libs/serialize'
 import { getDictionary } from '@/utils/getDictionary'
 import FinanceReportsView from '@/views/finance/reports/FinanceReportsView'
 
@@ -10,7 +11,7 @@ const FinanceReportsPage = async props => {
     <FinanceReportsView
       locale={lang}
       dictionary={dictionary.financeReports}
-      setup={setup}
+      setup={serializeData(setup)}
       generatedAt={new Date().toISOString()}
     />
   )

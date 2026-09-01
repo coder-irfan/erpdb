@@ -1,6 +1,7 @@
 import 'server-only'
 
 import { toFiniteNumber } from '@/utils/formatCurrency'
+import { serializeData } from '@/libs/serialize'
 
 export const CRM_CLIENT_READ_PERMISSIONS = ['crm:read', 'crm_client:read']
 export const CRM_CLIENT_WRITE_PERMISSIONS = ['crm:write', 'crm_client:write']
@@ -17,7 +18,7 @@ const normalizeActivity = activity => ({
   staff: normalizeStaff(activity.staff)
 })
 
-export const normalizeClientListItem = client => ({
+export const normalizeClientListItem = client => serializeData({
   ...client,
   created_at: client.created_at.toISOString(),
   updated_at: client.updated_at.toISOString(),
@@ -37,7 +38,7 @@ export const normalizeClientDetail = client => {
     .sort((left, right) => right.activity_date.getTime() - left.activity_date.getTime())
     .map(normalizeActivity)
 
-  return {
+  return serializeData({
     ...client,
     created_at: client.created_at.toISOString(),
     updated_at: client.updated_at.toISOString(),
@@ -68,5 +69,5 @@ export const normalizeClientDetail = client => {
     })),
     activities,
     lead: client.lead ? { ...client.lead, activities: undefined } : null
-  }
+  })
 }

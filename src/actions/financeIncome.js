@@ -18,6 +18,7 @@ import {
   syncInvoiceSettlement
 } from '@/libs/invoiceSettlement'
 import { prisma } from '@/libs/prisma'
+import { serializeData } from '@/libs/serialize'
 import { createFinanceIncomeSchema } from '@/schemas/financeIncome'
 import { toUtcDateOnly } from '@/utils/contractDuration'
 import { SYSTEM_BASE_CURRENCY, convertToBaseCurrency, effectiveAfnExchangeRate, normalizeToAfn, toFiniteNumber } from '@/utils/formatCurrency'
@@ -137,7 +138,7 @@ const missingIncomeType = incomeTypeId => ({
   requires_invoice: false
 })
 
-const normalizeIncome = (income, incomeTypesById = new Map()) => ({
+const normalizeIncome = (income, incomeTypesById = new Map()) => serializeData({
   ...income,
   income_type: incomeTypesById.get(income.income_type_id) || missingIncomeType(income.income_type_id),
   total_amount: numberString(income.total_amount),

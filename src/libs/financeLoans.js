@@ -7,6 +7,7 @@ import { Prisma } from '@prisma/client'
 import { getCompanySetupRecord } from '@/libs/companySetup'
 import { ACTIVE_LOAN_STATUSES } from '@/libs/financialStatuses'
 import { prisma } from '@/libs/prisma'
+import { serializeData } from '@/libs/serialize'
 import { nextSequentialNumber } from '@/libs/sequentialNumbers'
 import { toUtcDateOnly } from '@/utils/contractDuration'
 import { SYSTEM_BASE_CURRENCY, convertAfnToUsd, convertToBaseCurrency, normalizeToAfn, toFiniteNumber } from '@/utils/formatCurrency'
@@ -103,7 +104,7 @@ const numberString = (value, scale = 2) => value == null ? null : toFiniteNumber
 const fullName = staff => `${staff?.first_name || ''} ${staff?.last_name || ''}`.trim()
 const normalizeStaff = staff => staff ? { ...staff, full_name: fullName(staff) } : null
 
-export const normalizeLoan = loan => ({
+export const normalizeLoan = loan => serializeData({
   ...loan,
   total_amount: numberString(loan.total_amount),
   monthly_deduction: numberString(loan.monthly_deduction),
