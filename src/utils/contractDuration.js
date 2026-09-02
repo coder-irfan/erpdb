@@ -19,7 +19,12 @@ const durationSources = option => {
 
 export const parseDurationOption = option => {
   const match = durationSources(option)
-    .map(source => String(source).trim().replaceAll('_', ' ').replace(/(?<=\d)-(?=[a-z])/gi, ' '))
+    .map(source =>
+      String(source)
+        .trim()
+        .replaceAll('_', ' ')
+        .replace(/(?<=\d)-(?=[a-z])/gi, ' ')
+    )
     .map(source => source.match(DURATION_PATTERN))
     .find(Boolean)
 

@@ -204,6 +204,7 @@ export const getProjects = async (payload = {}) => {
   if (!context.authorized) return { success: false, code: context.code, error: context.error }
   const page = Math.max(1, Number.parseInt(payload.page, 10) || 1)
   const limit = Math.min(MAX_PAGE_SIZE, Math.max(1, Number.parseInt(payload.limit, 10) || DEFAULT_PAGE_SIZE))
+  const isKanban = payload.view === 'KANBAN'
   const search = typeof payload.search === 'string' ? payload.search.trim() : ''
   const clientId = normalizeId(payload.clientId)
   const managerId = normalizeId(payload.managerId)
@@ -224,7 +225,7 @@ export const getProjects = async (payload = {}) => {
   try {
     const [totalCount, projects, active, totals, approvedHours, activeApprovedHours, estimatedHours, overdueCount, setup, statuses, priorities] = await prisma.$transaction([
       prisma.project.count({ where }),
-      prisma.project.findMany({ where, select: projectSelect, orderBy: { created_at: 'desc' }, skip: (page - 1) * limit, take: limit }),
+      prisma.project.findMany({ where, select: projectSelect, orderBy: { created_at: 'desc' }, ...(isKanban ? { take: 500 } : { skip: (page - 1) * limit, take: limit }) }),
       prisma.project.count({ where: activeWhere }),
       prisma.project.aggregate({ _sum: { budget: true, amount_base: true } }),
       prisma.hrmstafftimesheet.groupBy({ by: ['project_id'], where: { project_id: { not: null }, status: APPROVED_TIMESHEET_STATUS }, _sum: { hours_worked: true } }),

@@ -53,25 +53,25 @@ const TaskKanbanView = ({
   }
 
   return (
-    <div className='no-scrollbar flex items-start gap-4 overflow-x-auto py-3'>
+    <div className='no-scrollbar flex h-[calc(100vh-220px)] min-h-[420px] items-stretch gap-4 overflow-x-auto py-3'>
       {data.statuses.map(status => {
         const tasks = data.tasks.filter(task => task.status_id === status.id)
 
         return (
           <div
             key={status.id}
-            className={`min-w-[290px] max-w-[320px] flex-1 rounded p-3 transition-colors ${dropStatusId === status.id ? 'bg-primaryLighter ring-2 ring-primary' : 'bg-actionHover'}`}
+            className={`flex h-full min-w-[290px] max-w-[320px] flex-1 flex-col overflow-hidden rounded p-3 transition-colors ${dropStatusId === status.id ? 'bg-primaryLighter ring-2 ring-primary' : 'bg-actionHover'}`}
             onDragOver={event => { if (canUpdate) { event.preventDefault(); setDropStatusId(status.id) } }}
             onDragLeave={() => setDropStatusId(current => current === status.id ? null : current)}
             onDrop={event => dropTask(event, status)}
           >
-            <div className='mb-3 flex items-center justify-between gap-3'>
+            <div className='sticky top-0 z-10 mb-3 flex shrink-0 items-center justify-between gap-3 bg-inherit'>
               <Chip size='small' variant='tonal' label={status.label} {...optionChipProps(status)} />
               <Typography variant='caption' color='text.secondary'>
                 {tasks.length}
               </Typography>
             </div>
-            <div className='flex flex-col gap-3'>
+            <div className='custom-scrollbar flex flex-1 flex-col space-y-3 overflow-y-auto pe-1'>
               {tasks.length === 0 ? (
                 <div className='rounded border border-dashed border-divider bg-paper p-5 text-center'>
                   <Typography variant='body2' color='text.secondary'>

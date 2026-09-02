@@ -46,26 +46,44 @@ const LeadKanbanBoard = ({
 }) => {
   const now = new Date()
   const [pendingChange, setPendingChange] = useState(null)
+  const [draggingId, setDraggingId] = useState(null)
+  const [dropStatusId, setDropStatusId] = useState(null)
 
   if (loading) return <KanbanCardSkeleton minWidth={300} />
 
+  const dropLead = (event, status) => {
+    event.preventDefault()
+    const lead = leads.find(item => item.id === draggingId)
+
+    setDraggingId(null)
+    setDropStatusId(null)
+    if (!lead || lead.status_id === status.id) return
+    setPendingChange({ lead, status })
+  }
+
   return (
-    <div className='no-scrollbar overflow-x-auto scroll-smooth pb-3'>
-      <div className='grid min-is-[1200px] grid-flow-col auto-cols-[300px] gap-4'>
+    <div className='no-scrollbar h-[calc(100vh-220px)] min-h-[420px] overflow-x-auto scroll-smooth py-3'>
+      <div className='grid h-full min-is-[1200px] grid-flow-col auto-cols-[300px] items-stretch gap-4'>
         {statuses.map(status => {
           const columnLeads = leads.filter(lead => lead.status_id === status.id)
           const color = COLOR_MAP[status.color_code] || 'primary'
 
           return (
-            <section key={status.id} className='flex min-bs-[320px] flex-col rounded-xl bg-actionHover p-3 mt-3'>
-              <div className='mb-3 flex items-center justify-between'>
+            <section
+              key={status.id}
+              className={`flex h-full min-bs-0 flex-col overflow-hidden rounded-xl p-3 transition-colors ${dropStatusId === status.id ? 'bg-primaryLighter ring-2 ring-primary' : 'bg-actionHover'}`}
+              onDragOver={event => { if (canWrite) { event.preventDefault(); setDropStatusId(status.id) } }}
+              onDragLeave={() => setDropStatusId(current => current === status.id ? null : current)}
+              onDrop={event => dropLead(event, status)}
+            >
+              <div className='sticky top-0 z-10 mb-3 flex shrink-0 items-center justify-between bg-inherit'>
                 <div className='flex items-center gap-2'>
                   <span className={`size-2.5 rounded-full ${DOT_CLASSES[color]}`} />
                   <Typography className='font-semibold'>{status.label}</Typography>
                 </div>
                 <Chip size='small' variant='tonal' color={color} label={columnLeads.length} />
               </div>
-              <div className='flex flex-1 flex-col gap-3 pt-2'>
+              <div className='custom-scrollbar flex flex-1 flex-col space-y-3 overflow-y-auto pe-1 pt-2'>
                 {columnLeads.length === 0 ? (
                   <div className='flex min-bs-[300px] flex-1 flex-col items-center justify-center rounded-lg border border-dashed border-divider p-7 text-center text-textSecondary'>
                     <i className='tabler-layout-kanban text-3xl' />
@@ -82,7 +100,10 @@ const LeadKanbanBoard = ({
                       <Card
                         key={lead.id}
                         variant='outlined'
-                        className='cursor-pointer transition-shadow duration-200 hover:shadow-md'
+                        draggable={canWrite}
+                        className={`cursor-pointer transition-all duration-200 hover:shadow-md ${draggingId === lead.id ? 'opacity-40' : ''}`}
+                        onDragStart={event => { event.dataTransfer.effectAllowed = 'move'; setDraggingId(lead.id) }}
+                        onDragEnd={() => { setDraggingId(null); setDropStatusId(null) }}
                         onClick={() => onActivity(lead)}
                       >
                         <CardContent className='flex flex-col gap-3'>

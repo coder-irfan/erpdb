@@ -6,6 +6,8 @@ import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import MenuItem from '@mui/material/MenuItem'
+import ToggleButton from '@mui/material/ToggleButton'
+import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
 import { toast } from 'sonner'
 
 import CustomTextField from '@core/components/mui/TextField'
@@ -15,6 +17,7 @@ import TableFiltersPopover from '@/components/table/TableFiltersPopover'
 
 import ProjectDetailModal from './ProjectDetailModal'
 import ProjectFormDrawer from './ProjectFormDrawer'
+import ProjectKanbanView from './ProjectKanbanView'
 import ProjectStatsCards from './ProjectStatsCards'
 import ProjectTableView from './ProjectTableView'
 
@@ -22,6 +25,7 @@ const EMPTY_DATA = { projects: [], totalCount: 0, baseCurrency: 'AFN', statuses:
 const EMPTY_OPTIONS = { clients: [], staff: [], contracts: [], statuses: [], priorities: [], baseCurrency: 'AFN', exchangeRate: '65.0000' }
 
 const ProjectsView = ({ locale, dictionary, taskDictionary, canWrite, canDelete, canTaskManage, canTaskUpdate, canTaskDelete }) => {
+  const [view, setView] = useState('KANBAN')
   const [searchInput, setSearchInput] = useState('')
   const [search, setSearch] = useState('')
   const [clientId, setClientId] = useState('')
@@ -50,12 +54,12 @@ const ProjectsView = ({ locale, dictionary, taskDictionary, canWrite, canDelete,
 
   const loadData = useCallback(async (showLoading = true) => {
     if (showLoading) setLoading(true)
-    const result = await getProjects({ page: page + 1, limit: rowsPerPage, search, clientId, managerId, statusId, priorityId, locale })
+    const result = await getProjects({ view, page: page + 1, limit: rowsPerPage, search, clientId, managerId, statusId, priorityId, locale })
 
     if (result.success) setData(result.data)
     else toast.error(result.error || dictionary.messages.loadFailed)
     if (showLoading) setLoading(false)
-  }, [clientId, dictionary.messages.loadFailed, locale, managerId, page, priorityId, rowsPerPage, search, statusId])
+  }, [clientId, dictionary.messages.loadFailed, locale, managerId, page, priorityId, rowsPerPage, search, statusId, view])
 
   const loadOptions = useCallback(async () => {
     const result = await getProjectFormOptions({ locale })
@@ -140,6 +144,20 @@ const ProjectsView = ({ locale, dictionary, taskDictionary, canWrite, canDelete,
         <CardContent className='flex flex-wrap items-center justify-between gap-4'>
           <CustomTextField label={dictionary.filters.search} placeholder={dictionary.filters.searchPlaceholder} value={searchInput} onChange={event => setSearchInput(event.target.value)} className='is-full sm:is-[360px]' slotProps={{ input: { startAdornment: <i className='tabler-search' /> } }} />
           <div className='grid is-full grid-cols-2 gap-2 sm:flex sm:is-auto sm:flex-wrap sm:gap-3 sm:justify-end'>
+            <ToggleButtonGroup
+              exclusive
+              size='small'
+              value={view}
+              onChange={(_, value) => {
+                if (value) {
+                  setView(value)
+                  setPage(0)
+                }
+              }}
+            >
+              <ToggleButton value='TABLE'><i className='tabler-table mie-2' />{taskDictionary.views.table}</ToggleButton>
+              <ToggleButton value='KANBAN'><i className='tabler-layout-kanban mie-2' />{taskDictionary.views.kanban}</ToggleButton>
+            </ToggleButtonGroup>
             <TableFiltersPopover activeCount={activeFilters} locale={locale}>
               {selectFilter(dictionary.filters.client, clientId, setClientId, options.clients, dictionary.filters.allClients)}
               {selectFilter(dictionary.filters.manager, managerId, setManagerId, options.staff, dictionary.filters.allManagers)}
@@ -150,7 +168,13 @@ const ProjectsView = ({ locale, dictionary, taskDictionary, canWrite, canDelete,
             {canWrite && <Button variant='contained' startIcon={<i className='tabler-plus' />} onClick={openCreate}>{dictionary.actions.add}</Button>}
           </div>
         </CardContent>
-        <ProjectTableView data={data} loading={loading} statusUpdating={statusUpdating} page={page} rowsPerPage={rowsPerPage} locale={locale} dictionary={dictionary} canWrite={canWrite} canDelete={canDelete} statusOptions={options.statuses} onPageChange={(_, value) => setPage(value)} onRowsPerPageChange={event => { setRowsPerPage(Number(event.target.value)); setPage(0) }} onView={project => openDetail(project, 0)} onEdit={openEdit} onMembers={project => openDetail(project, 1)} onDelete={setDeleteTarget} onStatusChange={changeStatus} onAdd={openCreate} />
+        {view === 'KANBAN' ? (
+          <CardContent>
+            <ProjectKanbanView data={data} loading={loading} statusUpdating={statusUpdating} locale={locale} dictionary={dictionary} canWrite={canWrite} canDelete={canDelete} onView={project => openDetail(project, 0)} onEdit={openEdit} onMembers={project => openDetail(project, 1)} onDelete={setDeleteTarget} onStatusChange={changeStatus} />
+          </CardContent>
+        ) : (
+          <ProjectTableView data={data} loading={loading} statusUpdating={statusUpdating} page={page} rowsPerPage={rowsPerPage} locale={locale} dictionary={dictionary} canWrite={canWrite} canDelete={canDelete} statusOptions={options.statuses} onPageChange={(_, value) => setPage(value)} onRowsPerPageChange={event => { setRowsPerPage(Number(event.target.value)); setPage(0) }} onView={project => openDetail(project, 0)} onEdit={openEdit} onMembers={project => openDetail(project, 1)} onDelete={setDeleteTarget} onStatusChange={changeStatus} onAdd={openCreate} />
+        )}
       </Card>
       <ProjectFormDrawer open={formOpen} project={editing} options={options} locale={locale} dictionary={dictionary} onClose={() => setFormOpen(false)} onSaved={refresh} />
       <ProjectDetailModal open={Boolean(detailId)} projectId={detailId} initialTab={detailTab} locale={locale} baseCurrency={data.baseCurrency} dictionary={dictionary} taskDictionary={taskDictionary} options={options} canWrite={canWrite} canTaskManage={canTaskManage} canTaskUpdate={canTaskUpdate} canTaskDelete={canTaskDelete} refreshKey={refreshKey} onClose={() => setDetailId(null)} onEdit={project => { setDetailId(null); openEdit(project) }} onChanged={refresh} />

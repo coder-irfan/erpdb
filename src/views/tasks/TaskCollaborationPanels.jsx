@@ -126,8 +126,8 @@ const CommentRow = ({ entry, locale, dictionary, disabled, onEdit, onDelete }) =
           <div className='flex items-center gap-1'>
             <Typography variant='caption' color='text.secondary'>{relativeTime(entry.created_at, locale)}</Typography>
             {!disabled && !editing && (
-              <div className='flex opacity-100 sm:opacity-0 sm:transition-opacity sm:group-hover:opacity-100'>
-                <Tooltip title={editLabel}><IconButton size='small' aria-label={editLabel} onClick={() => setEditing(true)}><i className='tabler-edit' /></IconButton></Tooltip>
+              <div className='flex'>
+                <Tooltip title={editLabel}><IconButton size='small' className='text-textSecondary hover:text-textPrimary' aria-label={editLabel} onClick={() => setEditing(true)}><i className='tabler-edit' /></IconButton></Tooltip>
                 <Tooltip title={deleteLabel}><IconButton size='small' color='error' aria-label={deleteLabel} onClick={() => onDelete(entry)}><i className='tabler-trash' /></IconButton></Tooltip>
               </div>
             )}
@@ -248,7 +248,7 @@ const TaskCollaborationPanels = ({ task, locale, dictionary, canUpdate, onChange
     accept: { 'image/*': ['.png', '.jpg', '.jpeg', '.gif', '.webp'], 'application/pdf': ['.pdf'] },
     disabled: working || !canUpdate,
     maxSize: 4 * 1024 * 1024,
-    onDropAccepted: uploadFiles,
+    onDropAccepted: files => uploadFiles(files),
     onDropRejected: () => toast.error(dictionary.collaboration.uploadInvalid),
     noClick: true
   })

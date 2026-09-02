@@ -8,11 +8,13 @@ export const AFGHAN_SOLAR_MONTHS = {
 
 const WEEKDAYS = {
   fa: ['یکشنبه', 'دوشنبه', 'سه‌شنبه', 'چهارشنبه', 'پنجشنبه', 'جمعه', 'شنبه'],
-  ps: ['یکشنبه', 'دوشنبه', 'درې‌شنبه', 'څلورشنبه', 'پنجشنبه', 'جمعه', 'شنبه']
+  ps: ['یکشنبه', 'دوشنبه', 'سه‌شنبه', 'چهارشنبه', 'پنجشنبه', 'جمعه', 'شنبه']
 }
 
 export const normalizeAppLocale = locale => {
-  const language = String(locale || 'en').toLowerCase().split(/[-_]/)[0]
+  const language = String(locale || 'en')
+    .toLowerCase()
+    .split(/[-_]/)[0]
 
   return language === 'fa' || language === 'ps' ? language : 'en'
 }
@@ -56,7 +58,10 @@ export const formatAfghanMonth = (value, locale = 'en', options = {}) => {
     const date = dateFrom(value)
 
     return date
-      ? new Intl.DateTimeFormat('en-US', { month: options.short ? 'short' : 'long', timeZone: options.timeZone || 'UTC' }).format(date)
+      ? new Intl.DateTimeFormat('en-US', {
+          month: options.short ? 'short' : 'long',
+          timeZone: options.timeZone || 'UTC'
+        }).format(date)
       : '—'
   }
 
@@ -117,7 +122,11 @@ export const formatAfghanMonthYear = (value, locale = 'en', options = {}) => {
   if (!parts) return '—'
 
   if (language === 'en' && !options.solar) {
-    return new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric', timeZone: options.timeZone || 'UTC' }).format(parts.date)
+    return new Intl.DateTimeFormat('en-US', {
+      month: 'long',
+      year: 'numeric',
+      timeZone: options.timeZone || 'UTC'
+    }).format(parts.date)
   }
 
   return `${AFGHAN_SOLAR_MONTHS[language][parts.month - 1]} ${localizeNumber(parts.year, language)}`
