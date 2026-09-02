@@ -67,7 +67,7 @@ const getPayrollReport = async ({ start, end, staffId, months }) => {
         staff: { select: { id: true, first_name: true, last_name: true, position: true } },
         status: true
       },
-      orderBy: [{ timesheet_month: 'desc' }, { staff: { first_name: 'asc' } }]
+      orderBy: { created_at: 'desc' }
     })
 
   const trendMap = new Map(
@@ -149,7 +149,7 @@ const getAttendanceReport = async ({ start, end, staffId, months }) => {
         hours_worked: true,
         staff: { select: { id: true, first_name: true, last_name: true, position: true } }
       },
-      orderBy: [{ date: 'desc' }, { staff: { first_name: 'asc' } }]
+      orderBy: { created_at: 'desc' }
     }),
     prisma.companyholiday.findMany({
       where: { is_active: true, date: { gte: start, lte: end } },
@@ -247,7 +247,7 @@ const getLeaveReport = async ({ start, end, staffId }) => {
         status: { select: { label: true, value: true } },
         leave_type: { select: { id: true, label: true, value: true } }
       },
-      orderBy: { start_date: 'desc' }
+      orderBy: { created_at: 'desc' }
     }),
     prisma.companyholiday.findMany({
       where: { is_active: true, date: { gte: start, lte: end } },
@@ -392,7 +392,7 @@ const getContractReport = async ({ start, end, staffId, months }) => {
       duration: { select: { id: true, label: true, value: true, description: true, is_active: true } },
       status: { select: { id: true, label: true, value: true, color_code: true, is_active: true } }
     },
-    orderBy: [{ end_date: 'asc' }, { staff: { first_name: 'asc' } }]
+    orderBy: { created_at: 'desc' }
   })
 
   const trendMap = new Map(months.map(period => [period, { period, expirations: 0, starts: 0 }]))

@@ -434,7 +434,7 @@ export const getFinanceIncomes = async (payload = {}) => {
       prisma.financeincome.findMany({
         where,
         select: incomeSelect,
-        orderBy: [{ remind_date: 'asc' }, { created_at: 'desc' }],
+        orderBy: { created_at: 'desc' },
         skip: (page - 1) * limit,
         take: limit
       }),

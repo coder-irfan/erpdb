@@ -134,6 +134,7 @@ const FinanceExpenseView = ({ locale, dictionary, canWrite, canDelete, canApprov
   }
 
   const openCreate = () => {
+    setPage(0)
     setEditing(null)
     setFormOpen(true)
   }

@@ -209,6 +209,7 @@ const ContractDetailModal = ({
                       {isOther && <DetailItem label='Vendor Contact Phone' value={<QuickContact phone={contract.vendor?.phone}>{contract.vendor?.phone}</QuickContact>} />}
                       {isOther && <DetailItem label='Vendor Address' value={contract.vendor?.address} />}
                       <DetailItem label={dictionary.fields.serviceType} value={contract.contract_type.label} />
+                      <DetailItem label={dictionary.fields.template || 'Contract Template'} value={contract.template?.label} />
                       <DetailItem label={dictionary.fields.country} value={contract.country?.label} />
                       {!isOther && <DetailItem label={dictionary.fields.level} value={contract.level?.label} />}
                       <DetailItem

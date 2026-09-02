@@ -15,6 +15,7 @@ import { InvoiceSettlementError, settlementTransactionOptions, syncInvoiceSettle
 import { prisma } from '@/libs/prisma'
 import { serializeData } from '@/libs/serialize'
 import { nextSequentialNumber, withSequentialNumberRetry } from '@/libs/sequentialNumbers'
+import { ensureInvoicePaymentSystemOptions, resolveInvoicePaymentSystemOptions } from '@/libs/systemOptions'
 import { createInvoiceSchema, recordInvoicePaymentSchema } from '@/schemas/invoices'
 import { toUtcDateOnly } from '@/utils/contractDuration'
 import {
@@ -115,7 +116,7 @@ const invoiceSelect = {
       fx_snapshot_at: true,
       payment_method: { select: { id: true, label: true, value: true } }
     },
-    orderBy: [{ payment_date: 'desc' }, { created_at: 'desc' }]
+    orderBy: { created_at: 'desc' }
   }
 }
 
@@ -332,7 +333,7 @@ export const getInvoices = async (payload = {}) => {
         prisma.contractinvoice.findMany({
           where,
           select: invoiceSelect,
-          orderBy: [{ due_date: 'asc' }, { issued_date: 'desc' }],
+          orderBy: { created_at: 'desc' },
           skip: (page - 1) * limit,
           take: limit
         }),
@@ -401,6 +402,8 @@ export const getInvoiceFormOptions = async (payload = {}) => {
   if (!context.authorized) return { success: false, code: context.code, error: context.error }
 
   try {
+    await ensureInvoicePaymentSystemOptions(prisma)
+
     const [contracts, statuses, paymentMethods, durationOptions, setup] = await Promise.all([
       prisma.contract.findMany({
         where: {
@@ -490,6 +493,28 @@ export const createInvoice = async (payload = {}) => {
     const invoice = await withSequentialNumberRetry(() =>
       prisma.$transaction(
         async transaction => {
+          const periodStart = new Date(
+            Date.UTC(prepared.data.issued_date.getUTCFullYear(), prepared.data.issued_date.getUTCMonth(), 1)
+          )
+
+          const periodEnd = new Date(Date.UTC(periodStart.getUTCFullYear(), periodStart.getUTCMonth() + 1, 1))
+
+          const existingInvoice = await transaction.contractinvoice.findFirst({
+            where: {
+              contract_id: prepared.data.contract_id,
+              issued_date: { gte: periodStart, lt: periodEnd },
+              status: { is: { value: { not: 'CANCELLED' } } }
+            },
+            select: { id: true }
+          })
+
+          if (existingInvoice) {
+            const duplicateError = new Error('ACTIVE_CONTRACT_INVOICE_EXISTS')
+
+            duplicateError.code = 'ACTIVE_CONTRACT_INVOICE_EXISTS'
+            throw duplicateError
+          }
+
           const invoiceNumber = await nextSequentialNumber(transaction, 'invoice', {
             prefix: `INV-${new Date().getUTCFullYear()}-`,
             digits: 4
@@ -523,6 +548,14 @@ export const createInvoice = async (payload = {}) => {
 
     return { success: true, data: { id: invoice.id }, message: context.translations.messages.created }
   } catch (error) {
+    if (error?.code === 'ACTIVE_CONTRACT_INVOICE_EXISTS') {
+      return {
+        success: false,
+        code: error.code,
+        error: context.translations.messages.activeContractInvoiceExists
+      }
+    }
+
     if (error?.code === 'P2002')
       return { success: false, code: 'DUPLICATE', error: context.translations.messages.duplicate }
 
@@ -750,16 +783,8 @@ export const recordInvoicePayment = async (id, payload = {}) => {
     }
 
   try {
-    const [invoice, paymentMethod, incomeType, receiver] = await Promise.all([
+    const [invoice, receiver] = await Promise.all([
       prisma.contractinvoice.findUnique({ where: { id: invoiceId }, select: invoiceSelect }),
-      prisma.option.findFirst({
-        where: { id: validation.output.payment_method_id, category: 'PAYMENT_METHOD', is_active: true },
-        select: { id: true, label: true, value: true }
-      }),
-      prisma.option.findFirst({
-        where: { category: 'INCOME_TYPE', requires_invoice: true, is_active: true },
-        select: { id: true }
-      }),
       prisma.hrmstaff.findFirst({
         where: { user_id: context.session.user.id, status: { not: 'TERMINATED' } },
         select: { id: true }
@@ -769,12 +794,6 @@ export const recordInvoicePayment = async (id, payload = {}) => {
     if (!invoice) return { success: false, code: 'NOT_FOUND', error: context.translations.messages.notFound }
     if (invoice.status.value === 'PAID' || toFiniteNumber(invoice.remaining_balance) <= 0.005)
       return { success: false, code: 'ALREADY_PAID', error: context.translations.messages.alreadyPaid }
-    if (!paymentMethod || !incomeType || !receiver)
-      return {
-        success: false,
-        code: 'PAYMENT_OPTIONS_MISSING',
-        error: context.translations.messages.paymentOptionsMissing
-      }
 
     const paymentAmount = toFiniteNumber(validation.output.amount)
 
@@ -794,6 +813,11 @@ export const recordInvoicePayment = async (id, payload = {}) => {
     })
 
     const income = await prisma.$transaction(async transaction => {
+      const { paymentMethod, incomeType } = await resolveInvoicePaymentSystemOptions(
+        transaction,
+        validation.output.payment_method_id
+      )
+
       const createdIncome = await transaction.financeincome.create({
         data: {
           receipt_voucher_number: `RCT-${executionTimestamp.getUTCFullYear()}-${randomUUID().replaceAll('-', '').slice(-8).toUpperCase()}`,
@@ -801,7 +825,7 @@ export const recordInvoicePayment = async (id, payload = {}) => {
           client_id: invoice.client_id,
           contract_id: invoice.contract_id,
           project_id: project?.id || null,
-          received_by_id: receiver.id,
+          received_by_id: receiver?.id || null,
           status: 'PAID',
           name: `${invoice.invoice_number} - ${invoice.contract.title}`,
           pay_details: JSON.stringify({

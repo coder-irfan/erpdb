@@ -72,7 +72,7 @@ const ProjectsView = ({ locale, dictionary, taskDictionary, canWrite, canDelete,
     setRefreshKey(value => value + 1)
   }
 
-  const openCreate = () => { setEditing(null); setFormOpen(true) }
+  const openCreate = () => { setPage(0); setEditing(null); setFormOpen(true) }
   const openEdit = project => { setEditing(project); setFormOpen(true) }
   const openDetail = (project, tab = 0) => { setDetailTab(tab); setDetailId(project.id) }
 

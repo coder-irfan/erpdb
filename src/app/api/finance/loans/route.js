@@ -56,7 +56,7 @@ export async function GET(request) {
     const monthEnd = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1))
 
     const [loans, totalCount, summaryRows, debtSchedule, statuses, staff, setup] = await Promise.all([
-      prisma.financeloan.findMany({ where, select: loanSelect, orderBy: [{ issue_date: 'desc' }, { created_at: 'desc' }], skip: (page - 1) * limit, take: limit }),
+      prisma.financeloan.findMany({ where, select: loanSelect, orderBy: { created_at: 'desc' }, skip: (page - 1) * limit, take: limit }),
       prisma.financeloan.count({ where }),
       prisma.financeloan.findMany({ select: { loan_type: true, auto_deduct: true, repayment_start_date: true, total_amount: true, monthly_deduction: true, repaid_amount: true, remaining_balance: true, amount_base: true, currency: true, exchange_rate: true, status: { select: { value: true } } } }),
       prisma.loanrepaymentschedule.findMany({

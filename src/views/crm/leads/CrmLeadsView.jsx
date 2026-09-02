@@ -235,6 +235,7 @@ const CrmLeadsView = ({ locale, dictionary, currencyCode, canWrite, canDelete })
                 aria-label={dictionary.actions.newLead}
                 title={dictionary.actions.newLead}
                 onClick={() => {
+                  setPage(0)
                   setEditingLead(null)
                   setDrawerOpen(true)
                 }}
@@ -269,6 +270,7 @@ const CrmLeadsView = ({ locale, dictionary, currencyCode, canWrite, canDelete })
             onDelete={setDeleteTarget}
             onView={setViewingLead}
             onAdd={() => {
+              setPage(0)
               setEditingLead(null)
               setDrawerOpen(true)
             }}

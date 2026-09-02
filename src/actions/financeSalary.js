@@ -330,7 +330,7 @@ export const getFinanceSalaries = async (payload = {}) => {
       prisma.financesalary.findMany({
         where,
         select: salarySelect,
-        orderBy: [{ status: 'asc' }, { staff: { first_name: 'asc' } }],
+        orderBy: { created_at: 'desc' },
         skip: (page - 1) * limit,
         take: limit
       }),

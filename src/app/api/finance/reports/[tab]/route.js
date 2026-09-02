@@ -161,7 +161,7 @@ const getExpenseReport = async ({ start, end, displayCurrency, reportRate }) => 
           }
         }
     },
-    orderBy: { expense_date: 'desc' }
+    orderBy: { created_at: 'desc' }
   })
 
   let totalUsd = 0
@@ -244,7 +244,7 @@ const getSalaryReport = async ({ start, end, displayCurrency, reportRate }) => {
         }
       }
     },
-    orderBy: [{ timesheet_month: 'desc' }, { staff: { first_name: 'asc' } }]
+    orderBy: { created_at: 'desc' }
   })
 
   let paidUsd = 0
@@ -330,7 +330,7 @@ const getInventoryReport = async ({ end, displayCurrency, reportRate }) => {
       category: { select: { label: true, value: true } },
       status: { select: { label: true, value: true } }
     },
-    orderBy: { name: 'asc' }
+    orderBy: { created_at: 'desc' }
   })
 
   const balances = await getInventoryBalances(prisma, records.map(record => record.id), end)
@@ -415,7 +415,7 @@ const getLoansReport = async ({ start, end, displayCurrency, reportRate }) => {
       },
       status: { select: { label: true, value: true } }
     },
-    orderBy: { issue_date: 'desc' }
+    orderBy: { created_at: 'desc' }
   })
 
   let activeUsd = 0

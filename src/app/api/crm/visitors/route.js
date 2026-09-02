@@ -63,7 +63,7 @@ export async function GET(request) {
 
   try {
     const [visitors, totalCount, totalToday, activeGuests, completedToday, convertedCount, staff, purposes] = await Promise.all([
-      prisma.crmvisitor.findMany({ where, include: visitorInclude, orderBy: { visited_at: 'desc' }, skip: (page - 1) * limit, take: limit }),
+      prisma.crmvisitor.findMany({ where, include: visitorInclude, orderBy: { created_at: 'desc' }, skip: (page - 1) * limit, take: limit }),
       prisma.crmvisitor.count({ where }),
       prisma.crmvisitor.count({ where: todayWhere }),
       prisma.crmvisitor.count({ where: { ...sharedWhere, status: 'CHECKED_IN', check_out_time: null } }),

@@ -117,7 +117,9 @@ const FinanceSalaryView = ({ locale, dictionary, canWrite, canDelete, canExecute
 
     if (result.success) {
       toast.success(result.message)
-      await refresh()
+
+      if (page === 0) await refresh()
+      else setPage(0)
     } else if (result.code === 'PAYROLL_ALREADY_GENERATED') {
       toast.warning(result.error || dictionary.messages.payrollAlreadyGenerated)
       await refresh()

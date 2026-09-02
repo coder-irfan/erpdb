@@ -116,6 +116,7 @@ const TasksView = ({ locale, dictionary, canManage, canUpdate, canDelete, fixedP
   }
 
   const openCreate = () => {
+    setPage(0)
     setEditing(null)
     setFormOpen(true)
   }

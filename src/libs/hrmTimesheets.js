@@ -195,7 +195,7 @@ export const getAttendanceDashboard = async ({
     prisma.hrmstafftimesheet.findMany({
       where: recordWhere,
       select: attendanceSelect,
-      orderBy: [{ date: 'desc' }, { created_at: 'desc' }],
+      orderBy: { created_at: 'desc' },
       skip: (page - 1) * limit,
       take: limit
     }),

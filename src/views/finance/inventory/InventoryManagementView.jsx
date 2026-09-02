@@ -97,6 +97,7 @@ const InventoryManagementView = ({ locale, dictionary, canWrite, canDelete }) =>
   const activeFilters = [searchInput.trim(), categoryId, statusId, stockState].filter(Boolean).length
 
   const openCreate = () => {
+    setPage(0)
     setEditingItem(null)
     setFormOpen(true)
   }

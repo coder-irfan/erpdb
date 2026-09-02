@@ -2836,6 +2836,7 @@
       "paymentRequired": "د بل د ورکړل شوي کولو او FinanceIncome سند جوړولو لپاره ورکړه ثبت کړئ.",
       "notFound": "بل ونه موندل شو.",
       "duplicate": "په دې شمېره بل شته.",
+      "activeContractInvoiceExists": "د دې قرارداد لپاره یو فعال بل له مخکې شته.",
       "paidLocked": "ورکړل شوی بل د مالي همغږۍ له امله تړلی دی.",
       "paidDeleteBlocked": "ورکړل شوی بل نه ړنګېږي.",
       "alreadyPaid": "دا بل مخکې ورکړل شوی.",

@@ -144,7 +144,7 @@ const FinanceLoansView = ({ locale, dictionary, canWrite }) => {
               )}
             </TableFiltersPopover>
             {canWrite && (
-              <Button variant='contained' startIcon={<i className='tabler-plus' />} onClick={() => setFormOpen(true)}>
+              <Button variant='contained' startIcon={<i className='tabler-plus' />} onClick={() => { setPage(0); setFormOpen(true) }}>
                 {loanType === 'STAFF' ? 'Create Staff Loan' : 'Create Corporate Debt'}
               </Button>
             )}

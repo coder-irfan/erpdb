@@ -1,4 +1,4 @@
-import { maxLength, nonEmpty, object, pipe, regex, string, trim } from 'valibot'
+import { maxLength, nonEmpty, object, optional, pipe, regex, string, trim } from 'valibot'
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/
 const POSITIVE_NUMBER_PATTERN = /^(?:0|[1-9]\d*)(?:\.\d+)?$/
@@ -31,7 +31,7 @@ export const recordInvoicePaymentSchema = customMessages => {
   return object({
     payment_date: pipe(string(messages.dateInvalid), trim(), regex(DATE_PATTERN, messages.dateInvalid)),
     amount: pipe(string(messages.amountInvalid), trim(), regex(POSITIVE_NUMBER_PATTERN, messages.amountInvalid)),
-    payment_method_id: pipe(string(messages.required), trim(), nonEmpty(messages.required)),
+    payment_method_id: optional(pipe(string(), trim()), ''),
     notes: pipe(string(), trim(), maxLength(1000, messages.notesTooLong))
   })
 }

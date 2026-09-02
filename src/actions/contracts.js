@@ -7,7 +7,7 @@ import { safeParse } from 'valibot'
 
 import { i18n } from '@/configs/i18n'
 import { CONTRACT_STATUS_VALUES } from '@/data/contracts'
-import { CONTRACT_TYPE_CATEGORIES, CONTRACT_TYPE_DOMAINS } from '@/data/contractTypes'
+import { CONTRACT_TYPE_DOMAINS } from '@/data/contractTypes'
 import { authorizeAction } from '@/libs/actionAuthorization'
 import { runContractExpirationAuditCore } from '@/libs/contractExpirationAudit'
 import { getContractStatusOptions } from '@/libs/contractStatuses'
@@ -36,12 +36,20 @@ const normalizeContractContext = value => (CONTRACT_CONTEXTS.includes(value) ? v
 
 const getContextTypeCategories = contractContext => [
   CONTRACT_TYPE_DOMAINS[contractContext],
-  ...(contractContext === 'CUSTOMER' ? ['CONTRACT_TYPE'] : [])
+  ...(['CUSTOMER', 'OTHERS'].includes(contractContext) ? ['CONTRACT_TYPE'] : [])
 ]
 
-const getContractScopeWhere = contractContext => ({
-  contract_type: { is: { category: { in: getContextTypeCategories(contractContext) } } }
-})
+const getContractScopeWhere = contractContext =>
+  contractContext === 'OTHERS'
+    ? {
+        contract_type: { is: { category: { in: getContextTypeCategories(contractContext) } } },
+        client_id: null,
+        vendor_id: { not: null }
+      }
+    : {
+        contract_type: { is: { category: { in: getContextTypeCategories(contractContext) } } },
+        client_id: { not: null }
+      }
 
 const getContext = async (payload, permissions) => {
   const locale = normalizeLocale(payload?.locale)
@@ -306,7 +314,7 @@ const prepareContractData = async (values, translations, currentContract = null)
   if (
     (!isOther && !relations.client) ||
     !relations.contractType ||
-    (isCustomer && !relations.template) ||
+    ((isCustomer || isOther) && !relations.template) ||
     !relations.status
   ) {
     return { success: false, error: translations.validation.invalidOption }
@@ -361,7 +369,7 @@ const prepareContractData = async (values, translations, currentContract = null)
       total_amount: new Prisma.Decimal(amount),
       contract_duration: null,
       contract_type_id: values.contract_type_id,
-      template_id: isCustomer ? values.template_id : null,
+      template_id: values.template_id,
       country_id: values.country_id || null,
       level_id: values.level_id || null,
       currency: values.currency,
@@ -397,6 +405,33 @@ const compileCustomerContent = (prepared, contractNumber) => {
     template: prepared.relations.template.description,
     contract: prepared.data,
     client: prepared.relations.client,
+    accountManager: manager,
+    setup: prepared.relations.setup,
+    contractNumber,
+    contractType: prepared.relations.contractType,
+    durationLabel: formatDateRangeDuration(prepared.data.start_date, prepared.data.end_date)
+  })
+}
+
+const compileOtherContent = (prepared, contractNumber, values) => {
+  const manager = prepared.relations.manager
+    ? {
+        ...prepared.relations.manager,
+        full_name: `${prepared.relations.manager.first_name} ${prepared.relations.manager.last_name}`.trim()
+      }
+    : null
+
+  return compileCustomerContractTemplate({
+    template: prepared.relations.template.description,
+    contract: prepared.data,
+    client: {
+      company_name: values.vendor_name,
+      primary_contact_name: values.vendor_contact_name,
+      email: values.vendor_contact_email,
+      phone: values.vendor_phone || null,
+      address: values.vendor_address || null,
+      tax_id: null
+    },
     accountManager: manager,
     setup: prepared.relations.setup,
     contractNumber,
@@ -500,7 +535,7 @@ export const getContracts = async (payload = {}) => {
         prisma.contract.findMany({
           where,
           select: contractSelect,
-          orderBy: [{ end_date: 'asc' }, { created_at: 'desc' }],
+          orderBy: { created_at: 'desc' },
           skip: (page - 1) * limit,
           take: limit
         }),
@@ -720,9 +755,10 @@ export const createContract = async (payload = {}, moduleContext = 'CUSTOMER') =
           const contractData = {
             ...prepared.data,
             vendor_id: vendor?.id || null,
-            ...(validation.output.target_category === 'CUSTOMER'
-              ? { content_html: compileCustomerContent(prepared, contractNumber) }
-              : {})
+            content_html:
+              validation.output.target_category === 'OTHERS'
+                ? compileOtherContent(prepared, contractNumber, validation.output)
+                : compileCustomerContent(prepared, contractNumber)
           }
 
           const created = await transaction.contract.create({
@@ -823,9 +859,10 @@ export const updateContract = async (id, payload = {}, moduleContext = 'CUSTOMER
             : prepared.statusValue === 'ACTIVE'
               ? 'ACTIVE'
               : 'NOT_APPLICABLE',
-      ...(validation.output.target_category === 'CUSTOMER'
-        ? { content_html: compileCustomerContent(prepared, current.contract_number) }
-        : {})
+      content_html:
+        validation.output.target_category === 'OTHERS'
+          ? compileOtherContent(prepared, current.contract_number, validation.output)
+          : compileCustomerContent(prepared, current.contract_number)
     }
 
     await prisma.$transaction(async transaction => {

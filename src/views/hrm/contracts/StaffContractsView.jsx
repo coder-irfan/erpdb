@@ -129,6 +129,7 @@ const StaffContractsView = ({
   }, [refreshData])
 
   const openCreate = () => {
+    setPage(0)
     setEditingContract(null)
     setDrawerOpen(true)
   }

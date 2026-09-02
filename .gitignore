@@ -42,3 +42,4 @@ src/assets/iconify-icons/generated-icons.css
 
 # Codex & temporary build artifacts
 .prisma-tmp
+.next-validation

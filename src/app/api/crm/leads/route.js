@@ -73,7 +73,7 @@ export async function GET(request) {
       prisma.crmlead.findMany({
         where,
         include: leadInclude,
-        orderBy: [{ next_follow_up_date: 'asc' }, { created_at: 'desc' }],
+        orderBy: { created_at: 'desc' },
         skip: view === 'kanban' ? 0 : (page - 1) * limit,
         take: limit
       }),

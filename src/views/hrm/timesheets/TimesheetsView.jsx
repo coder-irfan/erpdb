@@ -145,6 +145,7 @@ const TimesheetsView = ({
   }, [searchInput])
 
   const openCreate = () => {
+    setPage(0)
     setDrawerOpen(true)
   }
 

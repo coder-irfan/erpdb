@@ -248,6 +248,7 @@ const CrmVisitorsView = ({ locale, dictionary, canWrite, canDelete }) => {
                 aria-label={dictionary.actions.add}
                 title={dictionary.actions.add}
                 onClick={() => {
+                  setPage(0)
                   setEditingVisitor(null)
                   setFormOpen(true)
                 }}
@@ -281,6 +282,7 @@ const CrmVisitorsView = ({ locale, dictionary, canWrite, canDelete }) => {
           onDelete={setDeleteTarget}
           onView={setViewingVisitor}
           onAdd={() => {
+            setPage(0)
             setEditingVisitor(null)
             setFormOpen(true)
           }}

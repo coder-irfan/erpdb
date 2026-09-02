@@ -91,7 +91,7 @@ export const loanSelect = {
       created_at: true,
       payment_method: { select: optionSelect }
     },
-    orderBy: [{ repayment_date: 'desc' }, { created_at: 'desc' }],
+    orderBy: { created_at: 'desc' },
     take: 100
   },
   repayment_schedule: {

@@ -51,7 +51,7 @@ export async function GET(request) {
     const options = await getInventoryOptions()
 
     const [filteredRows, allRows] = await Promise.all([
-      prisma.inventory.findMany({ where, select: inventorySelect, orderBy: [{ updated_at: 'desc' }, { name: 'asc' }] }),
+      prisma.inventory.findMany({ where, select: inventorySelect, orderBy: { created_at: 'desc' } }),
       prisma.inventory.findMany({ select: { id: true, quantity_in_stock: true, reorder_level: true, amount_base: true } })
     ])
 

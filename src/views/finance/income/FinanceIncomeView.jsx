@@ -111,6 +111,7 @@ const FinanceIncomeView = ({ locale, dictionary, canWrite, canDelete, setup }) =
   }
 
   const openCreate = () => {
+    setPage(0)
     setEditing(null)
     setFormOpen(true)
   }

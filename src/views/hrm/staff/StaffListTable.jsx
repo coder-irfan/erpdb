@@ -153,6 +153,7 @@ const StaffListTable = ({
   ])
 
   const openCreateDrawer = () => {
+    setPage(0)
     setEditingStaff(null)
     setDrawerOpen(true)
   }

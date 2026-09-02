@@ -27,6 +27,7 @@ const InvoiceTableView = ({ data, loading, statusUpdating, page, rowsPerPage, lo
         canWrite && Number(invoice.remaining_balance) > 0.005 && !['PAID', 'CANCELLED'].includes(invoice.status.value) && {
           label: dictionary.actions.recordPayment,
           icon: 'tabler-cash',
+          skipConfirmation: true,
           onClick: () => onPay(invoice)
         },
         canWrite && {

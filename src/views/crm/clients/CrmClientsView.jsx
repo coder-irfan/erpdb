@@ -199,6 +199,7 @@ const CrmClientsView = ({ locale, dictionary, currencyCode, canWrite, canDelete 
                 variant='contained'
                 startIcon={<i className='tabler-plus' />}
                 onClick={() => {
+                  setPage(0)
                   setEditingClient(null)
                   setFormOpen(true)
                 }}
@@ -230,6 +231,7 @@ const CrmClientsView = ({ locale, dictionary, currencyCode, canWrite, canDelete 
           onDelete={setDeleteTarget}
           onStatusChange={changeStatus}
           onAdd={() => {
+            setPage(0)
             setEditingClient(null)
             setFormOpen(true)
           }}

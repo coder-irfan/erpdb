@@ -123,6 +123,7 @@ const InvoicesView = ({ locale, dictionary, setup, canWrite, canDelete }) => {
   }
 
   const openCreate = () => {
+    setPage(0)
     setEditingInvoice(null)
     setFormOpen(true)
   }

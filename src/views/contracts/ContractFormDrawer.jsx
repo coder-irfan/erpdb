@@ -33,6 +33,8 @@ const getDefaultStatus = statuses =>
   statuses[0]?.id ||
   ''
 
+const SectionTitle = ({ children }) => children
+
 const getEmptyValues = formOptions => ({
   client_id: '',
   vendor_id: '',
@@ -124,7 +126,9 @@ const ContractFormDrawer = ({
   const typeCategory = CONTRACT_TYPE_DOMAINS[targetCategory] || CONTRACT_TYPE_DOMAINS.CUSTOMER
 
   const configuredTypeOptions = (formOptions.options.CONTRACT_TYPES || []).filter(
-    option => option.category === typeCategory
+    option =>
+      option.category === typeCategory ||
+      (['CUSTOMER', 'OTHERS'].includes(targetCategory) && option.category === 'CONTRACT_TYPE')
   )
 
   const typeOptions =
@@ -320,6 +324,8 @@ const ContractFormDrawer = ({
             dictionary.form.financialSection
           ]}
         >
+          {targetCategory === 'OTHERS' && <SectionTitle>Third-Party Details</SectionTitle>}
+
           {targetCategory === 'HRM' && (
             <>
               {selectField(
@@ -456,8 +462,22 @@ const ContractFormDrawer = ({
                 {field('vendor_phone', 'Vendor Contact Phone')}
               </div>
               {field('vendor_address', 'Vendor Address', { multiline: true, minRows: 2 })}
+            </>
+          )}
+
+          {targetCategory === 'OTHERS' && <SectionTitle>Contract Details</SectionTitle>}
+
+          {targetCategory === 'OTHERS' && (
+            <>
               {field('title', 'Agreement Title / Subject')}
               <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
+                {selectField('contract_type_id', 'Contract Type', typeOptions, 'Select contract type')}
+                {selectField(
+                  'template_id',
+                  'Contract Template',
+                  formOptions.templates || [],
+                  'Select contract template'
+                )}
                 {selectField(
                   'account_manager_id',
                   'Internal Owner / Responsible Lead',
@@ -469,15 +489,33 @@ const ContractFormDrawer = ({
                 )}
                 {selectField('country_id', 'Country', formOptions.options.COUNTRY || [], 'Select country')}
               </div>
+              <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
+                {field('start_date', dictionary.fields.startDate, {
+                  type: 'date',
+                  slotProps: { inputLabel: { shrink: true } }
+                })}
+                <div className='flex flex-col gap-2'>
+                  {field('end_date', dictionary.fields.endDate, {
+                    type: 'date',
+                    slotProps: { inputLabel: { shrink: true } }
+                  })}
+                  <DateDurationHelper
+                    startDate={startDate}
+                    endDate={endDate}
+                    durationOptions={durations}
+                    onEndDateChange={value => setValue('end_date', value, { shouldDirty: true, shouldValidate: true })}
+                  />
+                </div>
+              </div>
             </>
           )}
 
-          {targetCategory !== 'HRM' && (
+          {targetCategory === 'CUSTOMER' && (
             <>
               <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
                 {selectField(
                   'contract_type_id',
-                  targetCategory === 'OTHERS' ? 'Contract Purpose' : 'Contract Type',
+                  'Contract Type',
                   typeOptions,
                   'Select contract type'
                 )}
@@ -497,7 +535,7 @@ const ContractFormDrawer = ({
                     onEndDateChange={value => setValue('end_date', value, { shouldDirty: true, shouldValidate: true })}
                   />
                 </div>
-                {field('total_amount', targetCategory === 'OTHERS' ? 'Contract Amount' : dictionary.fields.amount, {
+                {field('total_amount', dictionary.fields.amount, {
                   type: 'number',
                   inputProps: { min: 0, step: '0.01' }
                 })}
@@ -516,23 +554,63 @@ const ContractFormDrawer = ({
                   inputProps: { min: 0, step: '0.0001' }
                 })}
               </div>
-              {['CUSTOMER', 'OTHERS'].includes(targetCategory) && (
+              <Controller
+                name='auto_renew'
+                control={control}
+                render={({ field }) => (
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={Boolean(field.value)}
+                        onChange={event => field.onChange(event.target.checked)}
+                      />
+                    }
+                    label={dictionary.fields.autoRenew}
+                  />
+                )}
+              />
+            </>
+          )}
+
+          {targetCategory === 'OTHERS' && <SectionTitle>Financial &amp; Status</SectionTitle>}
+
+          {targetCategory === 'OTHERS' && (
+            <>
+              <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
+                {field('total_amount', 'Contract Amount', {
+                  type: 'number',
+                  inputProps: { min: 0, step: '0.01' }
+                })}
                 <Controller
-                  name='auto_renew'
+                  name='currency'
                   control={control}
                   render={({ field }) => (
-                    <FormControlLabel
-                      control={
-                        <Switch
-                          checked={Boolean(field.value)}
-                          onChange={event => field.onChange(event.target.checked)}
-                        />
-                      }
-                      label={dictionary.fields.autoRenew}
-                    />
+                    <CustomTextField {...field} select label={dictionary.fields.currency}>
+                      <MenuItem value='AFN'>AFN</MenuItem>
+                      <MenuItem value='USD'>USD</MenuItem>
+                    </CustomTextField>
                   )}
                 />
-              )}
+                {field('exchange_rate', dictionary.fields.exchangeRate, {
+                  type: 'number',
+                  inputProps: { min: 0, step: '0.0001' }
+                })}
+              </div>
+              <Controller
+                name='auto_renew'
+                control={control}
+                render={({ field }) => (
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={Boolean(field.value)}
+                        onChange={event => field.onChange(event.target.checked)}
+                      />
+                    }
+                    label={dictionary.fields.autoRenew}
+                  />
+                )}
+              />
             </>
           )}
 

@@ -108,6 +108,7 @@ const StaffLeavesView = ({ locale, dictionary }) => {
   }, [searchInput])
 
   const openCreate = () => {
+    setPage(0)
     setEditingLeave(null)
     setDrawerOpen(true)
   }

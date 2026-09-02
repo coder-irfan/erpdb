@@ -90,7 +90,7 @@ const ContractsView = ({ locale, dictionary, setup, canWrite, canDelete, canRunA
     setDetailRefresh(value => value + 1)
   }
 
-  const openCreate = () => { setEditingContract(null); setFormOpen(true) }
+  const openCreate = () => { setPage(0); setEditingContract(null); setFormOpen(true) }
   const edit = contract => { setEditingContract(contract); setFormOpen(true) }
 
   const performStatusChange = async (contract, statusId, reason = '') => {
@@ -149,7 +149,10 @@ const ContractsView = ({ locale, dictionary, setup, canWrite, canDelete, canRunA
   const filterTypeOptions = (formOptions.options.CONTRACT_TYPES || []).filter(option => {
     const expectedCategory = CONTRACT_TYPE_DOMAINS[contractContext]
 
-    return option.category === expectedCategory || (contractContext === 'CUSTOMER' && option.category === 'CONTRACT_TYPE')
+    return (
+      option.category === expectedCategory ||
+      (['CUSTOMER', 'OTHERS'].includes(contractContext) && option.category === 'CONTRACT_TYPE')
+    )
   })
 
   const activeFilterCount = Number(Boolean(searchInput.trim())) + Number(statusFilter !== 'ALL') + Number(Boolean(serviceTypeId)) + Number(Boolean(clientId)) + Number(Boolean(fromDate || toDate))

@@ -38,7 +38,7 @@ export async function GET(request, routeContext) {
     prisma.inventorymovement.findMany({
       where: { inventory_id: id },
       select: inventoryMovementSelect,
-      orderBy: [{ occurred_at: 'desc' }, { created_at: 'desc' }],
+      orderBy: { created_at: 'desc' },
       skip: (page - 1) * limit,
       take: limit
     }),

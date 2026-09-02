@@ -3,6 +3,7 @@ import 'server-only'
 import { Prisma } from '@prisma/client'
 
 import { CENT_TOLERANCE, deriveSettlementStatus } from '@/libs/financialStatuses'
+import { ensureSystemOption } from '@/libs/systemOptions'
 import { toFiniteNumber } from '@/utils/formatCurrency'
 
 export class InvoiceSettlementError extends Error {
@@ -60,14 +61,7 @@ export const syncInvoiceSettlement = async (transaction, invoiceId) => {
     })
   }
 
-  const status = await transaction.option.findUnique({
-    where: { category_value: { category: 'INVOICE_STATUS', value: statusValue } },
-    select: { id: true }
-  })
-
-  if (!status) {
-    throw new InvoiceSettlementError('INVOICE_STATUS_NOT_CONFIGURED', `Invoice status ${statusValue} is not configured.`)
-  }
+  const status = await ensureSystemOption(transaction, 'INVOICE_STATUS', statusValue)
 
   return transaction.contractinvoice.update({
     where: { id: invoiceId },

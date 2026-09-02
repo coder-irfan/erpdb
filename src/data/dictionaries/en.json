@@ -2841,6 +2841,7 @@
       "paymentRequired": "Use Record Payment to mark an invoice as paid and create its FinanceIncome entry.",
       "notFound": "Invoice not found.",
       "duplicate": "An invoice with this number already exists.",
+      "activeContractInvoiceExists": "An active invoice already exists for this contract.",
       "paidLocked": "Paid invoices are locked because they are synchronized with FinanceIncome.",
       "paidDeleteBlocked": "Paid invoices cannot be deleted because their ledger entry must be preserved.",
       "alreadyPaid": "This invoice has already been paid.",

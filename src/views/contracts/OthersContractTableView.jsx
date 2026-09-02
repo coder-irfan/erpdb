@@ -123,6 +123,7 @@ const OthersContractTableView = ({
             )
           },
           { id: 'type', label: 'Contract Purpose', render: contract => contract.contract_type.label },
+          { id: 'template', label: 'Contract Template', render: contract => contract.template?.label || '—' },
           { id: 'owner', label: 'Internal Owner', render: contract => contract.account_manager?.full_name || '—' },
           {
             id: 'duration',
@@ -158,6 +159,7 @@ const OthersContractTableView = ({
                 <th>Contract</th>
                 <th>Vendor</th>
                 <th>Contract Purpose</th>
+                <th>Contract Template</th>
                 <th>Duration</th>
                 <th>Internal Owner</th>
                 <th className='text-end'>Amount</th>
@@ -167,10 +169,10 @@ const OthersContractTableView = ({
             </thead>
             <tbody>
               {loading ? (
-                <TableSkeletonRows columns={8} />
+                <TableSkeletonRows columns={9} />
               ) : data.contracts.length === 0 ? (
                 <TableEmptyStateRow
-                  colSpan={8}
+                  colSpan={9}
                   icon='tabler-building-store'
                   title='No other contracts found'
                   description='Create a vendor, lease, or miscellaneous contract or adjust the filters.'
@@ -221,6 +223,11 @@ const OthersContractTableView = ({
                       <td>
                         <Typography variant='body2' className='min-is-[150px] font-medium'>
                           {contract.contract_type.label}
+                        </Typography>
+                      </td>
+                      <td>
+                        <Typography variant='body2' className='min-is-[150px] font-medium'>
+                          {contract.template?.label || '—'}
                         </Typography>
                       </td>
                       <td>

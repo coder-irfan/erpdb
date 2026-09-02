@@ -220,7 +220,7 @@ export const getTasks = async (payload = {}) => {
   try {
     const [totalCount, tasks, inProgress, overdue, hours, statuses, priorities] = await prisma.$transaction([
       prisma.task.count({ where: filters }),
-      prisma.task.findMany({ where: filters, select: taskSelect, orderBy: [{ due_date: 'asc' }, { created_at: 'desc' }], ...(isKanban ? { take: 500 } : { skip: (page - 1) * limit, take: limit }) }),
+      prisma.task.findMany({ where: filters, select: taskSelect, orderBy: { created_at: 'desc' }, ...(isKanban ? { take: 500 } : { skip: (page - 1) * limit, take: limit }) }),
       prisma.task.count({ where: { AND: [visibility, { status: { is: { value: { in: ACTIVE_VALUES } } } }] } }),
       prisma.task.count({ where: { AND: [visibility, { due_date: { lt: today } }, { status: { is: { value: { notIn: COMPLETED_VALUES } } } }] } }),
       prisma.task.aggregate({ where: visibility, _sum: { actual_hours: true, estimated_hours: true } }),
@@ -619,6 +619,50 @@ export const toggleTaskSubtask = async (taskId, subtaskId, payload = {}) => {
   }
 }
 
+export const updateTaskSubtask = async (taskId, subtaskId, payload = {}) => {
+  const context = await getContext(payload, SELF_UPDATE_PERMISSIONS)
+
+  if (!context.authorized) return { success: false, code: context.code, error: context.error }
+  const title = typeof payload.title === 'string' ? payload.title.trim() : ''
+
+  if (!title || title.length > 191) return { success: false, code: 'VALIDATION_ERROR', error: context.translations.validation.subtaskInvalid }
+
+  try {
+    const task = await getCollaborativeTask(context, taskId)
+    const subtask = task ? await prisma.tasksubtask.findFirst({ where: { id: normalizeId(subtaskId), task_id: task.id }, select: { id: true } }) : null
+
+    if (!subtask) return { success: false, code: 'NOT_FOUND', error: context.translations.messages.notFound }
+
+    await prisma.tasksubtask.update({ where: { id: subtask.id }, data: { title } })
+    revalidateTasks()
+
+    return { success: true, message: context.translations.messages.subtaskUpdated }
+  } catch {
+    return { success: false, code: 'SUBTASK_UPDATE_FAILED', error: context.translations.messages.operationFailed }
+  }
+}
+
+export const deleteTaskSubtask = async (taskId, subtaskId, payload = {}) => {
+  const context = await getContext(payload, SELF_UPDATE_PERMISSIONS)
+
+  if (!context.authorized) return { success: false, code: context.code, error: context.error }
+
+  try {
+    const task = await getCollaborativeTask(context, taskId)
+    const subtask = task ? await prisma.tasksubtask.findFirst({ where: { id: normalizeId(subtaskId), task_id: task.id }, select: { id: true } }) : null
+
+    if (!subtask) return { success: false, code: 'NOT_FOUND', error: context.translations.messages.notFound }
+
+    // Children are removed by the self-relation's cascading delete rule.
+    await prisma.tasksubtask.delete({ where: { id: subtask.id } })
+    revalidateTasks()
+
+    return { success: true, message: context.translations.messages.subtaskDeleted || context.translations.messages.subtaskUpdated }
+  } catch {
+    return { success: false, code: 'SUBTASK_DELETE_FAILED', error: context.translations.messages.operationFailed }
+  }
+}
+
 export const addTaskAttachment = async (taskId, payload = {}) => {
   const context = await getContext(payload, SELF_UPDATE_PERMISSIONS)
 
@@ -653,6 +697,110 @@ export const addTaskAttachment = async (taskId, payload = {}) => {
     return { success: true, data: created, message: context.translations.messages.attachmentAdded }
   } catch {
     return { success: false, code: 'ATTACHMENT_CREATE_FAILED', error: context.translations.messages.operationFailed }
+  }
+}
+
+export const updateTaskAttachment = async (taskId, attachmentId, payload = {}) => {
+  const context = await getContext(payload, SELF_UPDATE_PERMISSIONS)
+
+  if (!context.authorized) return { success: false, code: context.code, error: context.error }
+  const type = payload.attachment_type === 'LINK' ? 'LINK' : 'FILE'
+  const name = typeof payload.name === 'string' ? payload.name.trim().slice(0, 191) : ''
+  const url = typeof payload.url === 'string' ? payload.url.trim() : ''
+  const validUrl = type === 'LINK' ? /^https?:\/\//i.test(url) : /^\/uploads\/task-attachments\/[a-zA-Z0-9._-]+$/.test(url)
+
+  if (!name || !validUrl) return { success: false, code: 'VALIDATION_ERROR', error: context.translations.validation.attachmentInvalid }
+
+  try {
+    const task = await getCollaborativeTask(context, taskId)
+    const attachment = task ? await prisma.taskattachment.findFirst({ where: { id: normalizeId(attachmentId), task_id: task.id }, select: { id: true } }) : null
+
+    if (!attachment) return { success: false, code: 'NOT_FOUND', error: context.translations.messages.notFound }
+
+    await prisma.taskattachment.update({
+      where: { id: attachment.id },
+      data: {
+        attachment_type: type,
+        name,
+        url,
+        mime_type: type === 'FILE' && typeof payload.mime_type === 'string' ? payload.mime_type.slice(0, 191) : null,
+        file_size: type === 'FILE' && Number.isInteger(payload.file_size) ? payload.file_size : null
+      }
+    })
+    revalidateTasks()
+
+    return { success: true, message: context.translations.messages.attachmentUpdated || context.translations.messages.attachmentAdded }
+  } catch {
+    return { success: false, code: 'ATTACHMENT_UPDATE_FAILED', error: context.translations.messages.operationFailed }
+  }
+}
+
+export const deleteTaskAttachment = async (taskId, attachmentId, payload = {}) => {
+  const context = await getContext(payload, SELF_UPDATE_PERMISSIONS)
+
+  if (!context.authorized) return { success: false, code: context.code, error: context.error }
+
+  try {
+    const task = await getCollaborativeTask(context, taskId)
+    const attachment = task ? await prisma.taskattachment.findFirst({ where: { id: normalizeId(attachmentId), task_id: task.id }, select: { id: true } }) : null
+
+    if (!attachment) return { success: false, code: 'NOT_FOUND', error: context.translations.messages.notFound }
+
+    await prisma.taskattachment.delete({ where: { id: attachment.id } })
+    revalidateTasks()
+
+    return { success: true, message: context.translations.messages.attachmentDeleted || context.translations.messages.attachmentAdded }
+  } catch {
+    return { success: false, code: 'ATTACHMENT_DELETE_FAILED', error: context.translations.messages.operationFailed }
+  }
+}
+
+export const updateTaskComment = async (taskId, commentId, payload = {}) => {
+  const context = await getContext(payload, SELF_UPDATE_PERMISSIONS)
+
+  if (!context.authorized) return { success: false, code: context.code, error: context.error }
+  const body = typeof payload.body === 'string' ? payload.body.trim() : ''
+
+  if (!body || body.length > 5000) return { success: false, code: 'VALIDATION_ERROR', error: context.translations.validation.commentInvalid }
+
+  try {
+    const task = await getCollaborativeTask(context, taskId)
+    const comment = task ? await prisma.taskcomment.findFirst({ where: { id: normalizeId(commentId), task_id: task.id }, select: { id: true } }) : null
+
+    if (!comment) return { success: false, code: 'NOT_FOUND', error: context.translations.messages.notFound }
+
+    await prisma.$transaction([
+      prisma.taskcomment.update({ where: { id: comment.id }, data: { body } }),
+      prisma.auditlog.create({ data: { user_id: context.session.user.id, action: 'TASK_COMMENT_UPDATED', module: 'TASKS', details: { taskId: task.id, commentId: comment.id } } })
+    ])
+    revalidateTasks()
+
+    return { success: true, message: context.translations.messages.commentUpdated || context.translations.messages.commentAdded }
+  } catch {
+    return { success: false, code: 'COMMENT_UPDATE_FAILED', error: context.translations.messages.operationFailed }
+  }
+}
+
+export const deleteTaskComment = async (taskId, commentId, payload = {}) => {
+  const context = await getContext(payload, SELF_UPDATE_PERMISSIONS)
+
+  if (!context.authorized) return { success: false, code: context.code, error: context.error }
+
+  try {
+    const task = await getCollaborativeTask(context, taskId)
+    const comment = task ? await prisma.taskcomment.findFirst({ where: { id: normalizeId(commentId), task_id: task.id }, select: { id: true } }) : null
+
+    if (!comment) return { success: false, code: 'NOT_FOUND', error: context.translations.messages.notFound }
+
+    await prisma.$transaction([
+      prisma.taskcomment.delete({ where: { id: comment.id } }),
+      prisma.auditlog.create({ data: { user_id: context.session.user.id, action: 'TASK_COMMENT_DELETED', module: 'TASKS', details: { taskId: task.id, commentId: comment.id } } })
+    ])
+    revalidateTasks()
+
+    return { success: true, message: context.translations.messages.commentDeleted || context.translations.messages.commentAdded }
+  } catch {
+    return { success: false, code: 'COMMENT_DELETE_FAILED', error: context.translations.messages.operationFailed }
   }
 }
 

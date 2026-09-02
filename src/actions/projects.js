@@ -224,7 +224,7 @@ export const getProjects = async (payload = {}) => {
   try {
     const [totalCount, projects, active, totals, approvedHours, activeApprovedHours, estimatedHours, overdueCount, setup, statuses, priorities] = await prisma.$transaction([
       prisma.project.count({ where }),
-      prisma.project.findMany({ where, select: projectSelect, orderBy: [{ end_date: 'asc' }, { created_at: 'desc' }], skip: (page - 1) * limit, take: limit }),
+      prisma.project.findMany({ where, select: projectSelect, orderBy: { created_at: 'desc' }, skip: (page - 1) * limit, take: limit }),
       prisma.project.count({ where: activeWhere }),
       prisma.project.aggregate({ _sum: { budget: true, amount_base: true } }),
       prisma.hrmstafftimesheet.groupBy({ by: ['project_id'], where: { project_id: { not: null }, status: APPROVED_TIMESHEET_STATUS }, _sum: { hours_worked: true } }),
@@ -277,7 +277,7 @@ export const getProjectDetail = async (id, payload = {}) => {
         ...projectSelect,
         timesheets: { where: { status: APPROVED_TIMESHEET_STATUS }, select: { id: true, task_id: true, date: true, status: true, hours_worked: true, notes: true, check_in_time: true, check_out_time: true, staff: { select: staffSelect }, task: { select: { id: true, title: true } } }, orderBy: { date: 'desc' } },
         tasks: { select: { id: true, title: true }, orderBy: { created_at: 'desc' } },
-        expenses: { where: { approval_status: 'PAID' }, select: { id: true, vendor_payee: true, approval_status: true, expense_date: true, details: true, sub_total: true, currency: true, amount_base: true, expense_type: { select: optionSelect }, spent_by: { select: staffSelect } }, orderBy: { expense_date: 'desc' } },
+        expenses: { where: { approval_status: 'PAID' }, select: { id: true, vendor_payee: true, approval_status: true, expense_date: true, details: true, sub_total: true, currency: true, amount_base: true, expense_type: { select: optionSelect }, spent_by: { select: staffSelect } }, orderBy: { created_at: 'desc' } },
         incomes: { select: { id: true, name: true, status: true, total_amount: true, paid_amount: true, currency: true, amount_base: true, created_at: true, income_type: { select: optionSelect }, received_by: { select: staffSelect } }, orderBy: { created_at: 'desc' } }
       }
     })
