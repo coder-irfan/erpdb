@@ -49,7 +49,7 @@ const tablePagination = {
       }),
       select: {
         '& ~ i, & ~ svg': {
-          right: '2px !important'
+          insetInlineEnd: '2px !important'
         }
       }
     }

@@ -140,13 +140,13 @@
     "setupSettings": "سیسټم او امستنې",
     "companySetup": "د شرکت امستنې",
     "systemAuditLogs": "د سیسټم د تفتیش ثبتونه",
-    "invoiceOptions": "Invoice Options",
-    "otherContracts": "Others",
-    "contractTypes": "Contract Types",
-    "contractTemplates": "Contract Templates",
-    "incomeCategories": "Income Categories",
-    "expenseCategories": "Expense Categories",
-    "crmVisitorOptions": "Visitor Purposes"
+    "invoiceOptions": "د بل اختیارونه",
+    "otherContracts": "نور قراردادونه",
+    "contractTypes": "د قرارداد ډولونه",
+    "contractTemplates": "د قرارداد کينډۍ",
+    "incomeCategories": "د عاید کټګورۍ",
+    "expenseCategories": "د لګښت کټګورۍ",
+    "crmVisitorOptions": "د لیدونکو موخې"
   },
   "notifications": {
     "title": "خبرتیاوې",
@@ -514,7 +514,9 @@
       "editTitle": "حاضري سمول",
       "description": "ټول فعال کارکوونکي په یوه لید کې وڅېړئ او تازه یې کړئ.",
       "noStaffFound": "سمون لرونکی کارکوونکی ونه موندل شو",
-      "readyToSave": "د حاضرۍ ریکارډونه خوندي کېدو ته چمتو دي"
+      "readyToSave": "د حاضرۍ ریکارډونه خوندي کېدو ته چمتو دي",
+      "completeTitle": "د دې نېټې حاضري بشپړه ده",
+      "completeDescription": "ټول فعال کارکوونکي مخکې ثبت شوي دي."
     },
     "placeholders": {
       "selectStaff": "پاتې کارکوونکی وټاکئ",
@@ -571,6 +573,7 @@
       "updated": "حاضري په بریالیتوب تازه شوه.",
       "deleted": "د حاضرۍ ریکارډ ړنګ شو.",
       "bulkAbsent": "{count} پاتې کارکوونکي غیر حاضر ثبت شول.",
+      "bulkSaved": "{count} د حاضرۍ ریکارډونه خوندي شول.",
       "noRemainingStaff": "د ټولو فعالو کارکوونکو حاضري ثبت شوې.",
       "duplicate": "د دې کارکوونکي حاضري په دې نېټه مخکې ثبت شوې.",
       "staffNotFound": "ټاکل شوی فعال کارکوونکی ونه موندل شو.",
@@ -1882,19 +1885,19 @@
   },
   "optionsManagement": {
     "visitorPurposes": {
-      "title": "Visitor Purposes",
-      "description": "Maintain the approved purposes available when logging CRM visitors.",
-      "add": "Add Visitor Purpose",
-      "addTitle": "Create Visitor Purpose",
-      "editTitle": "Edit Visitor Purpose",
-      "searchPlaceholder": "Search visitor purposes or descriptions",
-      "emptyTitle": "No Visitor Purposes Found",
-      "emptyDescription": "Add the first approved purpose for visitor check-ins.",
-      "deleteTitle": "Delete Visitor Purpose",
-      "deleteDescription": "Delete this visitor purpose? Existing visitor records keep their saved purpose.",
+      "title": "د لیدونکو موخې",
+      "description": "د CRM لیدونکو د ثبت لپاره تایید شوې موخې اداره کړئ.",
+      "add": "د لیدنې موخه زیاتول",
+      "addTitle": "د لیدنې موخه جوړول",
+      "editTitle": "د لیدنې موخه سمول",
+      "searchPlaceholder": "د لیدنې موخې یا تشریحات ولټوئ",
+      "emptyTitle": "د لیدنې موخه ونه موندل شوه",
+      "emptyDescription": "د لیدونکو د ننوتلو لپاره لومړۍ تایید شوې موخه زیاته کړئ.",
+      "deleteTitle": "د لیدنې موخه ړنګول",
+      "deleteDescription": "دا د لیدنې موخه ړنګه شي؟ د لیدونکو اوسني ریکارډونه خپله خوندي شوې موخه ساتي.",
       "fields": {
-        "name": "Title / Name",
-        "description": "Description"
+        "name": "سرلیک / نوم",
+        "description": "تشریح"
       }
     },
     "contractCountries": {
@@ -1914,35 +1917,35 @@
       }
     },
     "incomeCategories": {
-      "title": "Income Categories",
-      "description": "Maintain the active categories available for finance income records.",
-      "add": "Add Income Category",
-      "addTitle": "Create Income Category",
-      "editTitle": "Edit Income Category",
-      "searchPlaceholder": "Search income categories or descriptions",
-      "emptyTitle": "No Income Categories Found",
-      "emptyDescription": "Add the first category used to classify income records.",
-      "deleteTitle": "Delete Income Category",
-      "deleteDescription": "Delete this income category? Categories linked to income records cannot be deleted.",
+      "title": "د عاید کټګورۍ",
+      "description": "د مالي عاید ریکارډونو لپاره فعالې کټګورۍ اداره کړئ.",
+      "add": "د عاید کټګوري زیاتول",
+      "addTitle": "د عاید کټګوري جوړول",
+      "editTitle": "د عاید کټګوري سمول",
+      "searchPlaceholder": "د عاید کټګورۍ یا تشریحات ولټوئ",
+      "emptyTitle": "د عاید کټګوري ونه موندل شوه",
+      "emptyDescription": "د عاید ریکارډونو د ډلبندۍ لپاره لومړۍ کټګوري زیاته کړئ.",
+      "deleteTitle": "د عاید کټګوري ړنګول",
+      "deleteDescription": "دا د عاید کټګوري ړنګه شي؟ له عاید ریکارډونو سره تړلې کټګورۍ نه شي ړنګېدای.",
       "fields": {
-        "name": "Title / Name",
-        "description": "Description"
+        "name": "سرلیک / نوم",
+        "description": "تشریح"
       }
     },
     "expenseCategories": {
-      "title": "Expense Categories",
-      "description": "Maintain the active categories available for corporate expense records.",
-      "add": "Add Expense Category",
-      "addTitle": "Create Expense Category",
-      "editTitle": "Edit Expense Category",
-      "searchPlaceholder": "Search expense categories or descriptions",
-      "emptyTitle": "No Expense Categories Found",
-      "emptyDescription": "Add the first category used to classify expense records.",
-      "deleteTitle": "Delete Expense Category",
-      "deleteDescription": "Delete this expense category? Categories linked to expense records cannot be deleted.",
+      "title": "د لګښت کټګورۍ",
+      "description": "د شرکت د لګښت ریکارډونو لپاره فعالې کټګورۍ اداره کړئ.",
+      "add": "د لګښت کټګوري زیاتول",
+      "addTitle": "د لګښت کټګوري جوړول",
+      "editTitle": "د لګښت کټګوري سمول",
+      "searchPlaceholder": "د لګښت کټګورۍ یا تشریحات ولټوئ",
+      "emptyTitle": "د لګښت کټګوري ونه موندل شوه",
+      "emptyDescription": "د لګښت ریکارډونو د ډلبندۍ لپاره لومړۍ کټګوري زیاته کړئ.",
+      "deleteTitle": "د لګښت کټګوري ړنګول",
+      "deleteDescription": "دا د لګښت کټګوري ړنګه شي؟ له لګښت ریکارډونو سره تړلې کټګورۍ نه شي ړنګېدای.",
       "fields": {
-        "name": "Title / Name",
-        "description": "Description"
+        "name": "سرلیک / نوم",
+        "description": "تشریح"
       }
     },
     "common": {
@@ -2378,6 +2381,8 @@
       "title": "د رول او امنیت لنډیز",
       "assignedRoles": "ټاکل شوي رولونه",
       "lastLogin": "وروستی ننوتل",
+      "activeNow": "اوس فعال (اوسنۍ ناسته)",
+      "lastPreviousLogin": "وروستی مخکینی ننوتل",
       "createdBy": "جوړونکی",
       "recentActivity": "وروستي فعالیتونه",
       "noActivity": "هیڅ وروستی فعالیت نشته.",
@@ -2636,20 +2641,20 @@
   },
   "contractOptions": {
     "hrmTypes": {
-      "title": "HRM / Staff Types",
-      "description": "Employment contract types used for staff agreements."
+      "title": "بشري سرچینې / د کارکوونکو ډولونه",
+      "description": "د کارکوونکو د هوکړو لپاره د استخدام قرارداد ډولونه."
     },
     "customerTypes": {
-      "title": "Customers / Clients",
-      "description": "Contract types used for customer and client agreements."
+      "title": "پېرودونکي",
+      "description": "د پېرودونکو د هوکړو لپاره د قرارداد ډولونه."
     },
     "financeTypes": {
-      "title": "Invoices / Finance",
-      "description": "Agreement types used for payment and settlement arrangements."
+      "title": "بلونه / مالي چارې",
+      "description": "د ورکړې او تصفیې لپاره د هوکړې ډولونه."
     },
     "otherTypes": {
-      "title": "Others",
-      "description": "Vendor, lease, and miscellaneous third-party contract types."
+      "title": "نور",
+      "description": "د پلورونکي، اجارې او نورو درېیمو خواوو د قرارداد ډولونه."
     },
     "types": {
       "title": "د قرارداد ډولونه",
@@ -2993,6 +2998,7 @@
       "duplicateSku": "په دې SKU کوډ توکی مخکې شته.",
       "notFound": "د زېرمې توکی ونه موندل شو.",
       "insufficientStock": "د وتلو شمېر له شته زېرمې ډېر دی.",
+      "deleteBlocked": "د زېرمې هغه توکي چې د خوځښت سابقه لري نه شي ړنګېدای.",
       "invalidOptionType": "غوښتل شوی د انتخاب ډول نه ملاتړ کېږي.",
       "unauthenticated": "ننوتل اړین دي.",
       "forbidden": "تاسو د دې کړنې اجازه نه لرئ."
@@ -3002,6 +3008,7 @@
       "nameTooLong": "د توکي نوم باید له ۱۵۰ تورو زیات نه وي.",
       "skuInvalid": "د SKU لپاره ۲-۵۰ انګلیسي توري، شمېرې، کرښه یا لاندې کرښه وکاروئ.",
       "quantityInvalid": "سمه نامنفي بشپړه شمېره ولیکئ.",
+      "stockLocked": "د زېرمې شمېر مستقیماً نه شي سمېدای. پر ځای یې د زېرمې خوځښت ثبت کړئ.",
       "priceInvalid": "له صفر لوړه د واحد بیه ولیکئ.",
       "currencyInvalid": "AFN یا USD وټاکئ.",
       "rateInvalid": "له صفر لوړ د تبادلې نرخ ولیکئ.",
@@ -3220,7 +3227,8 @@
     "types": {
       "STAFF": "د کارکوونکي پور",
       "EXTERNAL": "بهرنۍ اداره",
-      "BANK": "بانک / شرکت"
+      "BANK": "بانک / شرکت",
+      "CORPORATE": "شرکتي پور"
     },
     "table": {
       "loan": "پور",
@@ -3312,6 +3320,8 @@
       "repaid": "د پور بېرته ورکړه ثبت شوه.",
       "notFound": "پور ونه موندل شو.",
       "invalidRelation": "ټاکل شوی کارکوونکی یا حالت سم نه دی.",
+      "repaymentLocked": "د پور شرایط او اسعار له تایید یا بېرته ورکړې وروسته نه شي بدلېدای.",
+      "statusInvalid": "د پور د حالت سم بدلون وټاکئ.",
       "repaymentBlocked": "دا پور پاتې مبلغ نه لري.",
       "deleteBlocked": "هغه پور چې بېرته ورکړه لري نه شي ړنګېدای.",
       "operationFailed": "د پور کړنه بشپړه نه شوه."

@@ -102,6 +102,7 @@ const SubMenu = (props, ref) => {
   const [active, setActive] = useState(false)
 
   // Refs
+  const direction = useRef('ltr')
   const contentRef = useRef(null)
 
   // Hooks
@@ -140,11 +141,15 @@ const SubMenu = (props, ref) => {
       ? popoutMenuOffset.alignmentAxis({ level })
       : popoutMenuOffset.alignmentAxis)
 
+  useEffect(() => {
+    direction.current = window.getComputedStyle(document.documentElement).getPropertyValue('direction')
+  }, [])
+
   const { refs, floatingStyles, context } = useFloating({
     strategy: 'fixed',
     open: openWhenCollapsed,
     onOpenChange: setOpenWhenCollapsed,
-    placement: 'right-start',
+    placement: direction.current === 'rtl' ? 'left-start' : 'right-start',
     middleware: [
       offset({
         mainAxis: mainAxisOffset,

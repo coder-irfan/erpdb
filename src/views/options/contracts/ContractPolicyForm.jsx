@@ -53,7 +53,7 @@ const Indent = Extension.create({
 
               if (Number.isFinite(dataIndent) && dataIndent > 0) return dataIndent
 
-              const margin = Number.parseFloat(element.style.marginLeft)
+              const margin = Number.parseFloat(element.style.marginInlineStart || element.style.marginLeft)
 
               return Number.isFinite(margin) ? Math.round(margin / 1.5) : 0
             },
@@ -61,7 +61,7 @@ const Indent = Extension.create({
               attributes.indent
                 ? {
                     'data-indent': attributes.indent,
-                    style: `margin-left: ${attributes.indent * 1.5}rem`
+                    style: `margin-inline-start: ${attributes.indent * 1.5}rem`
                   }
                 : {}
           }
@@ -317,7 +317,7 @@ const ContractPolicyForm = ({ open, option, locale, dictionary, onClose, onSaved
                   <ListSubheader key={`${group.id}-heading`}>{group.label}</ListSubheader>,
                   ...group.tokens.map(token => (
                     <MenuItem key={token.key} value={token.key}>
-                      <Tooltip title={token.description} placement='right' arrow>
+                      <Tooltip title={token.description} placement={locale === 'en' ? 'right' : 'left'} arrow>
                         <span className='flex is-full items-center justify-between gap-4'>
                           <span>{token.label}</span>
                           <span className='font-mono text-xs text-textSecondary'>{contractTemplateToken(token.key)}</span>

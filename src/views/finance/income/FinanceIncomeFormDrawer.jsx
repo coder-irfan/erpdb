@@ -53,7 +53,7 @@ const FinanceIncomeFormDrawer = ({ open, income, options, locale, dictionary, on
     control,
     handleSubmit,
     reset,
-    setError,
+    clearErrors,
     setValue,
     formState: { errors, isSubmitting }
   } = useForm({
@@ -65,7 +65,6 @@ const FinanceIncomeFormDrawer = ({ open, income, options, locale, dictionary, on
   const projectId = useWatch({ control, name: 'project_id' })
   const contractId = useWatch({ control, name: 'contract_id' })
   const invoiceId = useWatch({ control, name: 'invoice_id' })
-  const incomeTypeId = useWatch({ control, name: 'income_type_id' })
   const totalAmount = useWatch({ control, name: 'total_amount' })
   const paidAmount = useWatch({ control, name: 'paid_amount' })
   const currency = useWatch({ control, name: 'currency' })
@@ -74,8 +73,9 @@ const FinanceIncomeFormDrawer = ({ open, income, options, locale, dictionary, on
   const paid = toFiniteNumber(paidAmount)
   const remaining = Math.max(0, total - paid)
   const derivedStatus = total > 0 && paid >= total ? 'PAID' : paid > 0 ? 'PARTIAL' : 'PENDING'
-  const selectedIncomeType = options.incomeTypes.find(option => option.id === incomeTypeId)
-  const isClientIncome = Boolean(selectedIncomeType?.requires_invoice || invoiceId)
+  // Client, contract, and project are optional allocation fields for direct
+  // income too. Selecting an invoice fills and locks them to that invoice.
+  const isClientIncome = true
 
   const baseAmount = useMemo(
     () => convertToBaseCurrency(total, currency, exchangeRate, options.baseCurrency),
@@ -116,14 +116,6 @@ const FinanceIncomeFormDrawer = ({ open, income, options, locale, dictionary, on
   }, [income, open, options, reset])
 
   const submit = async values => {
-    const type = options.incomeTypes.find(option => option.id === values.income_type_id)
-
-    if (type?.requires_invoice && !values.invoice_id) {
-      setError('invoice_id', { type: 'manual', message: dictionary.validation.invoiceRequired })
-
-      return
-    }
-
     const result = income
       ? await updateFinanceIncome(income.id, { ...values, locale })
       : await createFinanceIncome({ ...values, locale })
@@ -242,11 +234,7 @@ const FinanceIncomeFormDrawer = ({ open, income, options, locale, dictionary, on
                   select
                   onChange={event => {
                     controllerField.onChange(event)
-                    const nextType = options.incomeTypes.find(item => item.id === event.target.value)
-
-                    if (nextType?.requires_invoice) {
-                      setError('invoice_id', { type: 'manual', message: dictionary.validation.invoiceRequired })
-                    }
+                    clearErrors('invoice_id')
                   }}
                   value={controllerField.value || ''}
                   label={dictionary.fields.incomeType}
@@ -302,9 +290,7 @@ const FinanceIncomeFormDrawer = ({ open, income, options, locale, dictionary, on
               item => item.invoice_number,
               value => {
                 if (!value) {
-                  setValue('client_id', '')
-                  setValue('contract_id', '')
-                  setValue('project_id', '')
+                  clearErrors(['client_id', 'contract_id', 'project_id', 'invoice_id'])
 
                   return
                 }
@@ -312,6 +298,7 @@ const FinanceIncomeFormDrawer = ({ open, income, options, locale, dictionary, on
                 setValue('client_id', value.client_id)
                 setValue('contract_id', value.contract_id)
                 setValue('project_id', value.project_id || '')
+                clearErrors(['client_id', 'contract_id', 'project_id', 'invoice_id'])
                 const outstanding = Number(value.remaining_balance) > 0 ? value.remaining_balance : value.amount
 
                 setValue('total_amount', String(outstanding || ''))

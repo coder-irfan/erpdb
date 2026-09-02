@@ -111,7 +111,7 @@ const RoleNotificationStack = () => {
 
   return (
     <aside
-      className={`pointer-events-none fixed bottom-6 z-[1300] flex max-h-[calc(100vh-3rem)] flex-col gap-5 overflow-y-auto ${locale === 'fa' || locale === 'ps' ? 'left-4 sm:left-6' : 'right-4 sm:right-6'}`}
+      className='pointer-events-none fixed bottom-6 end-4 z-[1300] flex max-h-[calc(100vh-3rem)] flex-col gap-5 overflow-y-auto sm:end-6'
       aria-label='Priority notifications'
     >
       <div className='pointer-events-auto flex items-center justify-end gap-2 rounded-xl border border-divider bg-backgroundPaper/95 px-3 py-2 shadow-lg backdrop-blur'>

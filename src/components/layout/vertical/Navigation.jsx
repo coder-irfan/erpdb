@@ -28,14 +28,14 @@ import { getLocalizedUrl } from '@/utils/i18n'
 import navigationCustomStyles from '@core/styles/vertical/navigationCustomStyles'
 
 const StyledBoxForShadow = styled('div')(({ theme }) => ({
-  top: 60,
-  left: -8,
+  insetBlockStart: 60,
+  insetInlineStart: -8,
   zIndex: 2,
   opacity: 0,
   position: 'absolute',
   pointerEvents: 'none',
-  width: 'calc(100% + 15px)',
-  height: theme.mixins.toolbar.minHeight,
+  inlineSize: 'calc(100% + 15px)',
+  blockSize: theme.mixins.toolbar.minHeight,
   transition: 'opacity .15s ease-in-out',
   background: `linear-gradient(var(--mui-palette-background-paper) ${theme.direction === 'rtl' ? '95%' : '5%'}, rgb(var(--mui-palette-background-paperChannel) / 0.85) 30%, rgb(var(--mui-palette-background-paperChannel) / 0.5) 65%, rgb(var(--mui-palette-background-paperChannel) / 0.3) 75%, transparent)`,
   '&.scrolled': {

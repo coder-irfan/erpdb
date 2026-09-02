@@ -140,13 +140,13 @@
     "setupSettings": "تنظیمات سیستم",
     "companySetup": "تنظیمات شرکت",
     "systemAuditLogs": "ثبت‌های تفتیش سیستم",
-    "invoiceOptions": "Invoice Options",
-    "otherContracts": "Others",
-    "contractTypes": "Contract Types",
-    "contractTemplates": "Contract Templates",
-    "incomeCategories": "Income Categories",
-    "expenseCategories": "Expense Categories",
-    "crmVisitorOptions": "Visitor Purposes"
+    "invoiceOptions": "گزینه‌های صورتحساب",
+    "otherContracts": "سایر قراردادها",
+    "contractTypes": "انواع قرارداد",
+    "contractTemplates": "قالب‌های قرارداد",
+    "incomeCategories": "دسته‌بندی‌های درآمد",
+    "expenseCategories": "دسته‌بندی‌های هزینه",
+    "crmVisitorOptions": "اهداف بازدیدکنندگان"
   },
   "notifications": {
     "title": "اعلان‌ها",
@@ -514,7 +514,9 @@
       "editTitle": "ویرایش حاضری",
       "description": "همه کارمندان فعال را در یک نما بررسی و به‌روزرسانی کنید.",
       "noStaffFound": "کارمند مطابق یافت نشد",
-      "readyToSave": "رکورد حاضری آماده ذخیره"
+      "readyToSave": "رکورد حاضری آماده ذخیره",
+      "completeTitle": "حاضری برای این تاریخ تکمیل است",
+      "completeDescription": "حاضری همه کارمندان فعال قبلاً ثبت شده است."
     },
     "placeholders": {
       "selectStaff": "کارمند باقی‌مانده را انتخاب کنید",
@@ -571,6 +573,7 @@
       "updated": "حاضری با موفقیت به‌روزرسانی شد.",
       "deleted": "سابقه حاضری حذف شد.",
       "bulkAbsent": "{count} کارمند باقی‌مانده غایب ثبت شد.",
+      "bulkSaved": "{count} رکورد حاضری ذخیره شد.",
       "noRemainingStaff": "حاضری همه کارمندان فعال ثبت شده است.",
       "duplicate": "حاضری این کارمند برای این تاریخ قبلاً ثبت شده است.",
       "staffNotFound": "کارمند فعال انتخاب‌شده یافت نشد.",
@@ -1882,19 +1885,19 @@
   },
   "optionsManagement": {
     "visitorPurposes": {
-      "title": "Visitor Purposes",
-      "description": "Maintain the approved purposes available when logging CRM visitors.",
-      "add": "Add Visitor Purpose",
-      "addTitle": "Create Visitor Purpose",
-      "editTitle": "Edit Visitor Purpose",
-      "searchPlaceholder": "Search visitor purposes or descriptions",
-      "emptyTitle": "No Visitor Purposes Found",
-      "emptyDescription": "Add the first approved purpose for visitor check-ins.",
-      "deleteTitle": "Delete Visitor Purpose",
-      "deleteDescription": "Delete this visitor purpose? Existing visitor records keep their saved purpose.",
+      "title": "اهداف بازدیدکنندگان",
+      "description": "اهداف تأییدشده برای ثبت بازدیدکنندگان CRM را مدیریت کنید.",
+      "add": "افزودن هدف بازدید",
+      "addTitle": "ایجاد هدف بازدید",
+      "editTitle": "ویرایش هدف بازدید",
+      "searchPlaceholder": "جستجوی اهداف بازدید یا توضیحات",
+      "emptyTitle": "هدف بازدیدی یافت نشد",
+      "emptyDescription": "نخستین هدف تأییدشده برای ثبت ورود بازدیدکنندگان را اضافه کنید.",
+      "deleteTitle": "حذف هدف بازدید",
+      "deleteDescription": "این هدف بازدید حذف شود؟ سوابق موجود بازدیدکنندگان هدف ذخیره‌شده خود را حفظ می‌کنند.",
       "fields": {
-        "name": "Title / Name",
-        "description": "Description"
+        "name": "عنوان / نام",
+        "description": "توضیحات"
       }
     },
     "contractCountries": {
@@ -1914,35 +1917,35 @@
       }
     },
     "incomeCategories": {
-      "title": "Income Categories",
-      "description": "Maintain the active categories available for finance income records.",
-      "add": "Add Income Category",
-      "addTitle": "Create Income Category",
-      "editTitle": "Edit Income Category",
-      "searchPlaceholder": "Search income categories or descriptions",
-      "emptyTitle": "No Income Categories Found",
-      "emptyDescription": "Add the first category used to classify income records.",
-      "deleteTitle": "Delete Income Category",
-      "deleteDescription": "Delete this income category? Categories linked to income records cannot be deleted.",
+      "title": "دسته‌بندی‌های درآمد",
+      "description": "دسته‌بندی‌های فعال قابل استفاده برای سوابق درآمد مالی را مدیریت کنید.",
+      "add": "افزودن دسته‌بندی درآمد",
+      "addTitle": "ایجاد دسته‌بندی درآمد",
+      "editTitle": "ویرایش دسته‌بندی درآمد",
+      "searchPlaceholder": "جستجوی دسته‌بندی درآمد یا توضیحات",
+      "emptyTitle": "دسته‌بندی درآمدی یافت نشد",
+      "emptyDescription": "نخستین دسته‌بندی برای طبقه‌بندی سوابق درآمد را اضافه کنید.",
+      "deleteTitle": "حذف دسته‌بندی درآمد",
+      "deleteDescription": "این دسته‌بندی درآمد حذف شود؟ دسته‌بندی‌های مرتبط با سوابق درآمد قابل حذف نیستند.",
       "fields": {
-        "name": "Title / Name",
-        "description": "Description"
+        "name": "عنوان / نام",
+        "description": "توضیحات"
       }
     },
     "expenseCategories": {
-      "title": "Expense Categories",
-      "description": "Maintain the active categories available for corporate expense records.",
-      "add": "Add Expense Category",
-      "addTitle": "Create Expense Category",
-      "editTitle": "Edit Expense Category",
-      "searchPlaceholder": "Search expense categories or descriptions",
-      "emptyTitle": "No Expense Categories Found",
-      "emptyDescription": "Add the first category used to classify expense records.",
-      "deleteTitle": "Delete Expense Category",
-      "deleteDescription": "Delete this expense category? Categories linked to expense records cannot be deleted.",
+      "title": "دسته‌بندی‌های هزینه",
+      "description": "دسته‌بندی‌های فعال قابل استفاده برای سوابق هزینه شرکت را مدیریت کنید.",
+      "add": "افزودن دسته‌بندی هزینه",
+      "addTitle": "ایجاد دسته‌بندی هزینه",
+      "editTitle": "ویرایش دسته‌بندی هزینه",
+      "searchPlaceholder": "جستجوی دسته‌بندی هزینه یا توضیحات",
+      "emptyTitle": "دسته‌بندی هزینه‌ای یافت نشد",
+      "emptyDescription": "نخستین دسته‌بندی برای طبقه‌بندی سوابق هزینه را اضافه کنید.",
+      "deleteTitle": "حذف دسته‌بندی هزینه",
+      "deleteDescription": "این دسته‌بندی هزینه حذف شود؟ دسته‌بندی‌های مرتبط با سوابق هزینه قابل حذف نیستند.",
       "fields": {
-        "name": "Title / Name",
-        "description": "Description"
+        "name": "عنوان / نام",
+        "description": "توضیحات"
       }
     },
     "common": {
@@ -2378,6 +2381,8 @@
       "title": "خلاصه نقش و امنیت",
       "assignedRoles": "نقش‌های اختصاص‌یافته",
       "lastLogin": "آخرین ورود",
+      "activeNow": "اکنون فعال (جلسه فعلی)",
+      "lastPreviousLogin": "آخرین ورود قبلی",
       "createdBy": "ایجادشده توسط",
       "recentActivity": "فعالیت‌های اخیر",
       "noActivity": "هیچ فعالیت اخیری موجود نیست.",
@@ -2636,20 +2641,20 @@
   },
   "contractOptions": {
     "hrmTypes": {
-      "title": "HRM / Staff Types",
-      "description": "Employment contract types used for staff agreements."
+      "title": "منابع بشری / انواع کارمندان",
+      "description": "انواع قرارداد استخدامی مورد استفاده برای توافق‌نامه‌های کارمندان."
     },
     "customerTypes": {
-      "title": "Customers / Clients",
-      "description": "Contract types used for customer and client agreements."
+      "title": "مشتریان",
+      "description": "انواع قرارداد مورد استفاده برای توافق‌نامه‌های مشتریان."
     },
     "financeTypes": {
-      "title": "Invoices / Finance",
-      "description": "Agreement types used for payment and settlement arrangements."
+      "title": "صورتحساب‌ها / مالی",
+      "description": "انواع توافق‌نامه مورد استفاده برای پرداخت و تسویه حساب."
     },
     "otherTypes": {
-      "title": "Others",
-      "description": "Vendor, lease, and miscellaneous third-party contract types."
+      "title": "سایر موارد",
+      "description": "انواع قرارداد فروشنده، اجاره و سایر اشخاص ثالث."
     },
     "types": {
       "title": "انواع قرارداد",
@@ -2993,6 +2998,7 @@
       "duplicateSku": "قلمی با این کود SKU موجود است.",
       "notFound": "قلم موجودی یافت نشد.",
       "insufficientStock": "مقدار خروج بیشتر از موجودی فعلی است.",
+      "deleteBlocked": "اقلام موجودی دارای سابقه گردش قابل حذف نیستند.",
       "invalidOptionType": "نوع گزینه درخواست‌شده پشتیبانی نمی‌شود.",
       "unauthenticated": "ورود به سیستم الزامی است.",
       "forbidden": "اجازه این عملیات را ندارید."
@@ -3002,6 +3008,7 @@
       "nameTooLong": "نام قلم نباید بیشتر از ۱۵۰ نویسه باشد.",
       "skuInvalid": "برای SKU از ۲ تا ۵۰ حرف انگلیسی، عدد، خط تیره یا زیرخط استفاده کنید.",
       "quantityInvalid": "یک عدد صحیح نامنفی وارد کنید.",
+      "stockLocked": "مقدار موجودی را نمی‌توان مستقیماً ویرایش کرد. به‌جای آن یک گردش موجودی ثبت کنید.",
       "priceInvalid": "قیمت واحد بزرگ‌تر از صفر وارد کنید.",
       "currencyInvalid": "AFN یا USD را انتخاب کنید.",
       "rateInvalid": "نرخ تبادله بزرگ‌تر از صفر وارد کنید.",
@@ -3220,7 +3227,8 @@
     "types": {
       "STAFF": "قرضه کارمند",
       "EXTERNAL": "نهاد بیرونی",
-      "BANK": "بانک / شرکت"
+      "BANK": "بانک / شرکت",
+      "CORPORATE": "بدهی شرکتی"
     },
     "table": {
       "loan": "قرضه",
@@ -3312,6 +3320,8 @@
       "repaid": "بازپرداخت قرضه ثبت شد.",
       "notFound": "قرضه یافت نشد.",
       "invalidRelation": "کارمند یا وضعیت انتخاب‌شده معتبر نیست.",
+      "repaymentLocked": "شرایط و ارز قرضه پس از تأیید یا ثبت بازپرداخت قابل تغییر نیست.",
+      "statusInvalid": "یک تغییر وضعیت معتبر برای قرضه انتخاب کنید.",
       "repaymentBlocked": "این قرضه مانده ندارد.",
       "deleteBlocked": "قرضه دارای بازپرداخت قابل حذف نیست.",
       "operationFailed": "عملیات قرضه تکمیل نشد."

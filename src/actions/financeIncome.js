@@ -12,16 +12,18 @@ import { getFinanceIncomeDictionary } from '@/data/dictionaries/financeIncome'
 import { authorizeAction } from '@/libs/actionAuthorization'
 import { getCompanySetupRecord } from '@/libs/companySetup'
 import { deriveReceivableStatus, isOverdue } from '@/libs/financialStatuses'
-import {
-  InvoiceSettlementError,
-  settlementTransactionOptions,
-  syncInvoiceSettlement
-} from '@/libs/invoiceSettlement'
+import { InvoiceSettlementError, settlementTransactionOptions, syncInvoiceSettlement } from '@/libs/invoiceSettlement'
 import { prisma } from '@/libs/prisma'
 import { serializeData } from '@/libs/serialize'
 import { createFinanceIncomeSchema } from '@/schemas/financeIncome'
 import { toUtcDateOnly } from '@/utils/contractDuration'
-import { SYSTEM_BASE_CURRENCY, convertToBaseCurrency, effectiveAfnExchangeRate, normalizeToAfn, toFiniteNumber } from '@/utils/formatCurrency'
+import {
+  SYSTEM_BASE_CURRENCY,
+  convertToBaseCurrency,
+  effectiveAfnExchangeRate,
+  normalizeToAfn,
+  toFiniteNumber
+} from '@/utils/formatCurrency'
 
 const READ_PERMISSIONS = ['finance:read', 'finance_income:read']
 const WRITE_PERMISSIONS = ['finance:write', 'finance_income:write']
@@ -86,7 +88,6 @@ const invoiceSelect = {
   remaining_balance: true,
   currency: true,
   exchange_rate: true,
-  fx_snapshot_at: true,
   issued_date: true,
   due_date: true
 }
@@ -138,41 +139,42 @@ const missingIncomeType = incomeTypeId => ({
   requires_invoice: false
 })
 
-const normalizeIncome = (income, incomeTypesById = new Map()) => serializeData({
-  ...income,
-  income_type: incomeTypesById.get(income.income_type_id) || missingIncomeType(income.income_type_id),
-  total_amount: numberString(income.total_amount),
-  paid_amount: numberString(income.paid_amount),
-  remind_amount: numberString(income.remind_amount),
-  exchange_rate: numberString(income.exchange_rate, 4),
-  fx_snapshot_at: iso(income.fx_snapshot_at),
-  total_usd: numberString(convertToBaseCurrency(income.total_amount, income.currency, income.exchange_rate, 'USD')),
-  amount_base: numberString(income.amount_base),
-  remind_date: iso(income.remind_date),
-  payment_date: iso(income.payment_date),
-  created_at: iso(income.created_at),
-  updated_at: iso(income.updated_at),
-  contract: income.contract
-    ? {
-        ...income.contract,
-        total_amount: numberString(income.contract.total_amount),
-        start_date: iso(income.contract.start_date),
-        end_date: iso(income.contract.end_date)
-      }
-    : null,
-  invoice: income.invoice
-    ? {
-        ...income.invoice,
-        amount: numberString(income.invoice.amount),
-        paid_amount: numberString(income.invoice.paid_amount),
-        remaining_balance: numberString(income.invoice.remaining_balance),
-        exchange_rate: numberString(income.invoice.exchange_rate, 4),
-        issued_date: iso(income.invoice.issued_date),
-        due_date: iso(income.invoice.due_date)
-      }
-    : null,
-  received_by: withFullName(income.received_by)
-})
+const normalizeIncome = (income, incomeTypesById = new Map()) =>
+  serializeData({
+    ...income,
+    income_type: incomeTypesById.get(income.income_type_id) || missingIncomeType(income.income_type_id),
+    total_amount: numberString(income.total_amount),
+    paid_amount: numberString(income.paid_amount),
+    remind_amount: numberString(income.remind_amount),
+    exchange_rate: numberString(income.exchange_rate, 4),
+    fx_snapshot_at: iso(income.fx_snapshot_at),
+    total_usd: numberString(convertToBaseCurrency(income.total_amount, income.currency, income.exchange_rate, 'USD')),
+    amount_base: numberString(income.amount_base),
+    remind_date: iso(income.remind_date),
+    payment_date: iso(income.payment_date),
+    created_at: iso(income.created_at),
+    updated_at: iso(income.updated_at),
+    contract: income.contract
+      ? {
+          ...income.contract,
+          total_amount: numberString(income.contract.total_amount),
+          start_date: iso(income.contract.start_date),
+          end_date: iso(income.contract.end_date)
+        }
+      : null,
+    invoice: income.invoice
+      ? {
+          ...income.invoice,
+          amount: numberString(income.invoice.amount),
+          paid_amount: numberString(income.invoice.paid_amount),
+          remaining_balance: numberString(income.invoice.remaining_balance),
+          exchange_rate: numberString(income.invoice.exchange_rate, 4),
+          issued_date: iso(income.invoice.issued_date),
+          due_date: iso(income.invoice.due_date)
+        }
+      : null,
+    received_by: withFullName(income.received_by)
+  })
 
 const getContext = async (payload, permissions) => {
   const locale = normalizeLocale(payload?.locale)
@@ -299,14 +301,17 @@ const prepareIncomeData = async (values, translations, actorUserId, currentIncom
   }
 
   const project = invoice
-    ? selectedProject || await prisma.project.findFirst({
+    ? selectedProject ||
+      (await prisma.project.findFirst({
         where: { contract_id: invoice.contract_id, client_id: invoice.client_id },
         select: { id: true, client_id: true, contract_id: true },
         orderBy: { created_at: 'desc' }
-      })
+      }))
     : selectedProject
 
-  if ((incomeType.requires_invoice || invoice) && (!invoice || !project)) {
+  // Incomes may be recorded directly without an invoice.  When an invoice is
+  // selected, keep its project relationship intact so settlement remains safe.
+  if (invoice && !project) {
     return { success: false, error: translations.validation.invoiceRelationsRequired }
   }
 
@@ -338,10 +343,7 @@ const prepareIncomeData = async (values, translations, actorUserId, currentIncom
     return { success: false, error: translations.validation.positiveInvalid }
   }
 
-  if (
-    invoice &&
-    (paidAmount <= 0 || (invoice.status.value === 'PAID' && currentIncome?.invoice_id !== invoice.id))
-  ) {
+  if (invoice && (paidAmount <= 0 || (invoice.status.value === 'PAID' && currentIncome?.invoice_id !== invoice.id))) {
     return { success: false, error: translations.validation.positiveInvalid }
   }
 
@@ -488,7 +490,11 @@ export const getFinanceIncomes = async (payload = {}) => {
         summary
       }
     }
-  } catch {
+  } catch (error) {
+    if (process.env.NODE_ENV === 'development') {
+      console.error('[financeIncome] Failed to load income records:', error)
+    }
+
     return { success: false, code: 'INCOME_LOAD_FAILED', error: context.translations.messages.loadFailed }
   }
 }
@@ -499,37 +505,38 @@ export const getFinanceIncomeFormOptions = async (payload = {}) => {
   if (!context.authorized) return { success: false, code: context.code, error: context.error }
 
   try {
-    const [clients, projects, contracts, invoices, staff, incomeTypes, paymentMethods, setup, currentStaff] = await Promise.all([
-      prisma.crmclient.findMany({ select: clientSelect, orderBy: { company_name: 'asc' }, take: 500 }),
-      prisma.project.findMany({ select: projectSelect, orderBy: { created_at: 'desc' }, take: 500 }),
-      prisma.contract.findMany({ select: contractSelect, orderBy: { created_at: 'desc' }, take: 500 }),
-      prisma.contractinvoice.findMany({
-        select: { ...invoiceSelect, payment_incomes: { select: { id: true }, orderBy: { created_at: 'desc' } } },
-        orderBy: { created_at: 'desc' },
-        take: 500
-      }),
-      prisma.hrmstaff.findMany({
-        where: { status: { not: 'TERMINATED' } },
-        select: staffSelect,
-        orderBy: [{ first_name: 'asc' }, { last_name: 'asc' }],
-        take: 500
-      }),
-      prisma.option.findMany({
-        where: { category: 'INCOME_TYPE', is_active: true },
-        select: optionSelect,
-        orderBy: [{ sort_order: 'asc' }, { label: 'asc' }]
-      }),
-      prisma.option.findMany({
-        where: { category: 'PAYMENT_METHOD', is_active: true },
-        select: optionSelect,
-        orderBy: [{ sort_order: 'asc' }, { label: 'asc' }]
-      }),
-      getCompanySetupRecord(),
-      prisma.hrmstaff.findFirst({
-        where: { user_id: context.session.user.id, status: { not: 'TERMINATED' } },
-        select: { id: true }
-      })
-    ])
+    const [clients, projects, contracts, invoices, staff, incomeTypes, paymentMethods, setup, currentStaff] =
+      await Promise.all([
+        prisma.crmclient.findMany({ select: clientSelect, orderBy: { company_name: 'asc' }, take: 500 }),
+        prisma.project.findMany({ select: projectSelect, orderBy: { created_at: 'desc' }, take: 500 }),
+        prisma.contract.findMany({ select: contractSelect, orderBy: { created_at: 'desc' }, take: 500 }),
+        prisma.contractinvoice.findMany({
+          select: { ...invoiceSelect, payment_incomes: { select: { id: true }, orderBy: { created_at: 'desc' } } },
+          orderBy: { created_at: 'desc' },
+          take: 500
+        }),
+        prisma.hrmstaff.findMany({
+          where: { status: { not: 'TERMINATED' } },
+          select: staffSelect,
+          orderBy: [{ first_name: 'asc' }, { last_name: 'asc' }],
+          take: 500
+        }),
+        prisma.option.findMany({
+          where: { category: 'INCOME_TYPE', is_active: true },
+          select: optionSelect,
+          orderBy: [{ sort_order: 'asc' }, { label: 'asc' }]
+        }),
+        prisma.option.findMany({
+          where: { category: 'PAYMENT_METHOD', is_active: true },
+          select: optionSelect,
+          orderBy: [{ sort_order: 'asc' }, { label: 'asc' }]
+        }),
+        getCompanySetupRecord(),
+        prisma.hrmstaff.findFirst({
+          where: { user_id: context.session.user.id, status: { not: 'TERMINATED' } },
+          select: { id: true }
+        })
+      ])
 
     return {
       success: true,
@@ -561,7 +568,11 @@ export const getFinanceIncomeFormOptions = async (payload = {}) => {
         exchangeRate: setup.usd_afn_exchange_rate || '65.0000'
       }
     }
-  } catch {
+  } catch (error) {
+    if (process.env.NODE_ENV === 'development') {
+      console.error('[financeIncome] Failed to load income form options:', error)
+    }
+
     return {
       success: false,
       code: 'INCOME_OPTIONS_LOAD_FAILED',
@@ -669,7 +680,15 @@ export const updateFinanceIncome = async (id, payload = {}) => {
   try {
     const current = await prisma.financeincome.findUnique({
       where: { id: incomeId },
-      select: { id: true, status: true, invoice_id: true, total_amount: true, currency: true, exchange_rate: true, fx_snapshot_at: true }
+      select: {
+        id: true,
+        status: true,
+        invoice_id: true,
+        total_amount: true,
+        currency: true,
+        exchange_rate: true,
+        fx_snapshot_at: true
+      }
     })
 
     if (!current) return { success: false, code: 'NOT_FOUND', error: context.translations.messages.notFound }
@@ -720,7 +739,16 @@ export const markFinanceIncomePaid = async (id, payload = {}) => {
     const [income, setup] = await Promise.all([
       prisma.financeincome.findUnique({
         where: { id: incomeId },
-        select: { id: true, invoice_id: true, total_amount: true, paid_amount: true, status: true, currency: true, exchange_rate: true, fx_snapshot_at: true }
+        select: {
+          id: true,
+          invoice_id: true,
+          total_amount: true,
+          paid_amount: true,
+          status: true,
+          currency: true,
+          exchange_rate: true,
+          fx_snapshot_at: true
+        }
       }),
       getCompanySetupRecord()
     ])

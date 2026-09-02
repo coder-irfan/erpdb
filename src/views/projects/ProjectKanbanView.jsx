@@ -47,25 +47,26 @@ const ProjectKanbanView = ({ data, locale, dictionary, canWrite, canDelete, load
 
   return (
     <>
-      <div className='no-scrollbar flex h-[calc(100vh-220px)] min-h-[420px] items-stretch gap-4 overflow-x-auto py-3'>
+      <div className='h-[calc(100vh-225px)] min-h-[455px] overflow-hidden'>
+        <div className='no-scrollbar flex h-full items-stretch gap-4 overflow-x-auto overflow-y-hidden py-3'>
         {data.statuses.map(status => {
           const projects = data.projects.filter(project => project.status_id === status.id)
 
           return (
             <section
               key={status.id}
-              className={`flex h-full min-w-[300px] max-w-[330px] flex-1 flex-col overflow-hidden rounded-xl p-3 transition-colors ${dropStatusId === status.id ? 'bg-primaryLighter ring-2 ring-primary' : 'bg-actionHover'}`}
+              className={`flex h-full min-h-0 min-w-[300px] max-w-[330px] flex-1 flex-col overflow-hidden rounded-xl p-3 transition-colors ${dropStatusId === status.id ? 'bg-primaryLighter ring-2 ring-primary' : 'bg-actionHover'}`}
               onDragOver={event => { if (canWrite) { event.preventDefault(); setDropStatusId(status.id) } }}
               onDragLeave={() => setDropStatusId(current => current === status.id ? null : current)}
               onDrop={event => dropProject(event, status)}
             >
-              <div className='sticky top-0 z-10 mb-3 flex shrink-0 items-center justify-between gap-3 bg-inherit'>
+              <div className='sticky top-0 z-10 mb-3 flex shrink-0 items-center justify-between gap-3 bg-transparent'>
                 <Chip size='small' variant='tonal' label={status.label} {...optionChipProps(status)} />
                 <Typography variant='caption' color='text.secondary'>{projects.length}</Typography>
               </div>
-              <div className='custom-scrollbar flex flex-1 flex-col space-y-3 overflow-y-auto pe-1'>
+              <div className='custom-scrollbar flex min-h-0 flex-1 flex-col space-y-3 overflow-y-auto p-2 pe-1'>
                 {projects.length === 0 ? (
-                  <div className='flex min-bs-36 items-center justify-center rounded border border-dashed border-divider bg-paper p-5 text-center'>
+                  <div className='flex min-h-0 flex-1 items-center justify-center rounded border border-dashed border-divider bg-paper p-5 text-center'>
                     <Typography variant='body2' color='text.secondary'>{dictionary.empty.title}</Typography>
                   </div>
                 ) : projects.map(project => (
@@ -73,7 +74,7 @@ const ProjectKanbanView = ({ data, locale, dictionary, canWrite, canDelete, load
                     key={project.id}
                     variant='outlined'
                     draggable={canWrite && statusUpdating !== project.id}
-                    className={`cursor-pointer transition-opacity ${draggingId === project.id ? 'opacity-40' : ''}`}
+                    className={`h-auto shrink-0 cursor-pointer transition-opacity ${draggingId === project.id ? 'opacity-40' : ''}`}
                     onDragStart={event => { event.dataTransfer.effectAllowed = 'move'; setDraggingId(project.id) }}
                     onDragEnd={() => { setDraggingId(null); setDropStatusId(null) }}
                     onClick={() => onView(project)}
@@ -132,6 +133,7 @@ const ProjectKanbanView = ({ data, locale, dictionary, canWrite, canDelete, load
             </section>
           )
         })}
+        </div>
       </div>
       <ConfirmationComponent
         open={Boolean(pendingMove)}

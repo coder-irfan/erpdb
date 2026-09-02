@@ -150,7 +150,7 @@ const CrmLeadsView = ({ locale, dictionary, currencyCode, canWrite, canDelete })
               slotProps={{ input: { startAdornment: <i className='tabler-search' /> } }}
             />
           </div>
-          <div className='grid is-full grid-cols-2 gap-2 sm:flex sm:is-auto sm:flex-wrap sm:gap-3 sm:justify-end'>
+          <div className='grid is-full grid-cols-1 gap-2 sm:flex sm:is-auto sm:flex-wrap sm:gap-3 sm:justify-end'>
             <ToggleButtonGroup
               exclusive
               size='small'

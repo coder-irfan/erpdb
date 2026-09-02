@@ -156,7 +156,7 @@ const TextFieldStyled = styled(TextField)(({ theme }) => ({
   },
   '& .Mui-focused .MuiSelect-select': {
     '& ~ i, & ~ svg': {
-      right: '0.9375rem'
+      insetInlineEnd: '0.9375rem'
     }
   },
   '& .MuiSelect-select:focus, & .MuiNativeSelect-select:focus': {
@@ -189,7 +189,7 @@ const TextFieldStyled = styled(TextField)(({ theme }) => ({
     }
   },
   '& .MuiAutocomplete-inputRoot.Mui-focused .MuiAutocomplete-endAdornment': {
-    right: '.9375rem'
+    insetInlineEnd: '.9375rem'
   },
 
   // For Textarea

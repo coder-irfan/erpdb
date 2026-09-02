@@ -27,7 +27,7 @@ const autocomplete = skin => ({
       },
       input: {
         '& + .MuiAutocomplete-endAdornment': {
-          right: '1rem',
+          insetInlineEnd: '1rem',
           '& i, & svg': {
             fontSize: '1.25rem',
             color: 'var(--mui-palette-text-primary)'
