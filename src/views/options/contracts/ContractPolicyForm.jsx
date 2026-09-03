@@ -287,7 +287,6 @@ const ContractPolicyForm = ({ open, option, locale, dictionary, onClose, onSaved
           <CustomTextField
             fullWidth
             label={dictionary.contractPolicies.fields.name}
-            placeholder={dictionary.contractPolicies.fields.namePlaceholder}
             error={Boolean(errors.name)}
             helperText={errors.name?.message}
             disabled={isSubmitting}

@@ -24,7 +24,7 @@ const Details = ({ activeStep, isLastStep, handleNext, handlePrev }) => {
 
   return (
     <div className='flex flex-col md:gap-4 gap-2'>
-      <CustomTextField fullWidth label='Application Name' placeholder={`${themeConfig.templateName}`} />
+      <CustomTextField fullWidth label='Application Name' />
       <div className='flex flex-col md:gap-4 gap-2'>
         <Typography variant='h5'>Category</Typography>
         <div onClick={() => setValue('crm')} className='flex items-center justify-between cursor-pointer gap-4'>

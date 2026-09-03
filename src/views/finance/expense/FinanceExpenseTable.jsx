@@ -17,7 +17,14 @@ import { formatCurrency } from '@/utils/formatCurrency'
 import tableStyles from '@core/styles/table.module.css'
 
 const PALETTE_COLORS = new Set(['primary', 'secondary', 'success', 'error', 'info', 'warning'])
-const STATUS_COLORS = { DRAFT: 'secondary', PENDING_APPROVAL: 'warning', APPROVED: 'info', PAID: 'success', REJECTED: 'error' }
+
+const STATUS_COLORS = {
+  DRAFT: 'secondary',
+  PENDING_APPROVAL: 'warning',
+  APPROVED: 'info',
+  PAID: 'success',
+  REJECTED: 'error'
+}
 
 const typeChipProps = option => {
   const configuredColor = option?.color_code?.toLowerCase()
@@ -61,16 +68,43 @@ const FinanceExpenseTable = ({
       actions={[
         { label: dictionary.actions.view, icon: 'tabler-eye', onClick: () => onView(expense) },
         { label: dictionary.actions.printVoucher, icon: 'tabler-printer', onClick: () => onPrint(expense) },
-        canWrite && !['APPROVED', 'PAID'].includes(expense.approval_status) && { label: dictionary.actions.edit, icon: 'tabler-edit', onClick: () => onEdit(expense) },
-        canApprove && expense.approval_status === 'PENDING_APPROVAL' && { label: dictionary.actions.approve, icon: 'tabler-check', color: 'success', skipConfirmation: true, onClick: () => onApprove(expense) },
-        canApprove && expense.approval_status === 'PENDING_APPROVAL' && { label: dictionary.actions.reject, icon: 'tabler-x', color: 'error', skipConfirmation: true, onClick: () => onReject(expense) },
-        canPay && expense.approval_status === 'APPROVED' && { label: dictionary.actions.markPaid, icon: 'tabler-cash', color: 'success', skipConfirmation: true, onClick: () => onPay(expense) },
-        canDelete && !['APPROVED', 'PAID'].includes(expense.approval_status) && {
-          label: dictionary.actions.delete,
-          icon: 'tabler-trash',
-          color: 'error',
-          onClick: () => onDelete(expense)
-        }
+        canWrite &&
+          !['APPROVED', 'PAID'].includes(expense.approval_status) && {
+            label: dictionary.actions.edit,
+            icon: 'tabler-edit',
+            onClick: () => onEdit(expense)
+          },
+        canApprove &&
+          expense.approval_status === 'PENDING_APPROVAL' && {
+            label: dictionary.actions.approve,
+            icon: 'tabler-check',
+            color: 'success',
+            skipConfirmation: true,
+            onClick: () => onApprove(expense)
+          },
+        canApprove &&
+          expense.approval_status === 'PENDING_APPROVAL' && {
+            label: dictionary.actions.reject,
+            icon: 'tabler-x',
+            color: 'error',
+            skipConfirmation: true,
+            onClick: () => onReject(expense)
+          },
+        canPay &&
+          expense.approval_status === 'APPROVED' && {
+            label: dictionary.actions.markPaid,
+            icon: 'tabler-cash',
+            color: 'success',
+            skipConfirmation: true,
+            onClick: () => onPay(expense)
+          },
+        canDelete &&
+          !['APPROVED', 'PAID'].includes(expense.approval_status) && {
+            label: dictionary.actions.delete,
+            icon: 'tabler-trash',
+            color: 'error',
+            onClick: () => onDelete(expense)
+          }
       ]}
     />
   )
@@ -91,7 +125,12 @@ const FinanceExpenseTable = ({
           </div>
         )}
         renderMobileStatus={expense => (
-          <Chip size='small' variant='tonal' color={STATUS_COLORS[expense.approval_status] || 'secondary'} label={dictionary.status[expense.approval_status]} />
+          <Chip
+            size='small'
+            variant='tonal'
+            color={STATUS_COLORS[expense.approval_status] || 'secondary'}
+            label={dictionary.status[expense.approval_status]}
+          />
         )}
         renderMobileActions={renderActions}
         mobileMetadata={[
@@ -114,7 +153,15 @@ const FinanceExpenseTable = ({
           {
             id: 'subtotal',
             label: dictionary.table.subtotal,
-            render: expense => <DualCurrencyAmount amount={expense.sub_total} amountBase={expense.amount_base} currency={expense.currency} exchangeRate={expense.exchange_rate} locale={locale} />
+            render: expense => (
+              <DualCurrencyAmount
+                amount={expense.sub_total}
+                amountBase={expense.amount_base}
+                currency={expense.currency}
+                exchangeRate={expense.exchange_rate}
+                locale={locale}
+              />
+            )
           }
         ]}
         emptyState={{
@@ -160,9 +207,17 @@ const FinanceExpenseTable = ({
                           <i className='tabler-receipt-tax' />
                         </span>
                         <div className='min-is-0'>
-                          <Typography className='max-is-[240px] truncate font-medium'>{expense.vendor_payee}</Typography>
+                          <Typography className='max-is-[240px] truncate font-medium'>
+                            {expense.vendor_payee}
+                          </Typography>
                           <Tooltip title={expense.details}>
-                            <Typography variant='caption' color='text.secondary' className='block max-is-[240px] truncate'>{expense.details}</Typography>
+                            <Typography
+                              variant='caption'
+                              color='text.secondary'
+                              className='block max-is-[240px] truncate'
+                            >
+                              {expense.details}
+                            </Typography>
                           </Tooltip>
                         </div>
                         {expense.receipt_url && (
@@ -180,7 +235,14 @@ const FinanceExpenseTable = ({
                         {...typeChipProps(expense.expense_type)}
                       />
                     </td>
-                    <td><Chip size='small' variant='tonal' color={STATUS_COLORS[expense.approval_status] || 'secondary'} label={dictionary.status[expense.approval_status]} /></td>
+                    <td>
+                      <Chip
+                        size='small'
+                        variant='tonal'
+                        color={STATUS_COLORS[expense.approval_status] || 'secondary'}
+                        label={dictionary.status[expense.approval_status]}
+                      />
+                    </td>
                     <td>
                       <div className='min-is-[200px]'>
                         {expense.project ? (
@@ -218,7 +280,14 @@ const FinanceExpenseTable = ({
                       </Typography>
                     </td>
                     <td className='text-end'>
-                      <DualCurrencyAmount amount={expense.sub_total} amountBase={expense.amount_base} currency={expense.currency} exchangeRate={expense.exchange_rate} locale={locale} className='min-is-[150px] items-end' />
+                      <DualCurrencyAmount
+                        amount={expense.sub_total}
+                        amountBase={expense.amount_base}
+                        currency={expense.currency}
+                        exchangeRate={expense.exchange_rate}
+                        locale={locale}
+                        className='min-is-[150px] items-end'
+                      />
                     </td>
                     <td className='text-end' onClick={event => event.stopPropagation()}>
                       {renderActions(expense)}

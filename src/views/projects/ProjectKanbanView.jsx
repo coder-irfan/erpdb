@@ -13,7 +13,7 @@ import Typography from '@mui/material/Typography'
 import KanbanCardSkeleton from '@/components/common/KanbanCardSkeleton'
 import UserAvatar from '@/components/common/UserAvatar'
 import DualCurrencyAmount from '@/components/currency/DualCurrencyAmount'
-import ConfirmationComponent from '@/components/dialogs/ConfirmationComponent'
+import ConfirmationDeleteModal from '@/components/dialogs/ConfirmationDeleteModal'
 import EntityActionsMenu from '@/components/table/EntityActionsMenu'
 import { toDateInputValue } from '@/utils/contractDuration'
 
@@ -135,7 +135,7 @@ const ProjectKanbanView = ({ data, locale, dictionary, canWrite, canDelete, load
         })}
         </div>
       </div>
-      <ConfirmationComponent
+      <ConfirmationDeleteModal
         open={Boolean(pendingMove)}
         title={dictionary.actions.changeStatus}
         message={`${dictionary.actions.changeStatus}: ${pendingMove?.destination?.label || ''}?`}

@@ -5,6 +5,8 @@ import { forwardRef } from 'react'
 
 // MUI Imports
 import { styled } from '@mui/material/styles'
+import IconButton from '@mui/material/IconButton'
+import InputAdornment from '@mui/material/InputAdornment'
 import TextField from '@mui/material/TextField'
 
 const TextFieldStyled = styled(TextField)(({ theme }) => ({
@@ -154,6 +156,23 @@ const TextFieldStyled = styled(TextField)(({ theme }) => ({
       color: 'rgb(var(--mui-palette-text-primaryChannel) / 0.78)'
     }
   },
+  '& .MuiInputBase-root.MuiSelect-root-with-clear .MuiSelect-select.MuiInputBase-input': {
+    paddingInlineEnd: '64px !important'
+  },
+  '& .MuiSelect-clearButton': {
+    position: 'absolute',
+    insetInlineEnd: '34px',
+    zIndex: 1,
+    padding: '3px',
+    color: 'var(--mui-palette-text-secondary)',
+    '&:hover': {
+      color: 'var(--mui-palette-text-primary)',
+      backgroundColor: 'var(--mui-palette-action-hover)'
+    },
+    '& i': {
+      fontSize: '1rem'
+    }
+  },
   '& .Mui-focused .MuiSelect-select': {
     '& ~ i, & ~ svg': {
       insetInlineEnd: '0.9375rem'
@@ -204,7 +223,46 @@ const TextFieldStyled = styled(TextField)(({ theme }) => ({
 }))
 
 const CustomTextField = forwardRef((props, ref) => {
-  const { size = 'small', slotProps, ...rest } = props
+  const { size = 'small', slotProps, clearable = true, onClear, ...rest } = props
+
+  const hasSelectValue =
+    rest.select && clearable && rest.value !== undefined && rest.value !== null && rest.value !== ''
+
+  const clearSelect = event => {
+    event.preventDefault()
+    event.stopPropagation()
+
+    if (onClear) {
+      onClear(event)
+
+      return
+    }
+
+    rest.onChange?.({
+      target: { name: rest.name, value: '' },
+      currentTarget: { name: rest.name, value: '' }
+    })
+  }
+
+  const selectClearAdornment = hasSelectValue ? (
+    <InputAdornment position='end'>
+      {slotProps?.input?.endAdornment}
+      <IconButton
+        className='MuiSelect-clearButton'
+        size='small'
+        aria-label='Clear selection'
+        onMouseDown={event => {
+          event.preventDefault()
+          event.stopPropagation()
+        }}
+        onClick={clearSelect}
+      >
+        <i className='tabler-x' aria-hidden='true' />
+      </IconButton>
+    </InputAdornment>
+  ) : (
+    slotProps?.input?.endAdornment
+  )
 
   return (
     <TextFieldStyled
@@ -214,6 +272,17 @@ const CustomTextField = forwardRef((props, ref) => {
       variant='filled'
       slotProps={{
         ...slotProps,
+        ...((slotProps?.input || hasSelectValue) && {
+          input: {
+            ...slotProps?.input,
+            ...(hasSelectValue
+              ? {
+                  className: [slotProps?.input?.className, 'MuiSelect-root-with-clear'].filter(Boolean).join(' '),
+                  endAdornment: selectClearAdornment
+                }
+              : {})
+          }
+        }),
         inputLabel: { ...slotProps?.inputLabel, shrink: true }
       }}
     />

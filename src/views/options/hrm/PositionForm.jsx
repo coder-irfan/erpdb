@@ -79,7 +79,6 @@ const PositionForm = ({ open, option, locale, dictionary, onClose, onSaved }) =>
           <CustomTextField
             fullWidth
             label={dictionary.positions.fields.name}
-            placeholder={dictionary.positions.fields.namePlaceholder}
             error={Boolean(errors.name)}
             helperText={errors.name?.message}
             disabled={isSubmitting}
@@ -90,7 +89,6 @@ const PositionForm = ({ open, option, locale, dictionary, onClose, onSaved }) =>
             multiline
             minRows={4}
             label={dictionary.positions.fields.description}
-            placeholder={dictionary.positions.fields.descriptionPlaceholder}
             error={Boolean(errors.description)}
             helperText={errors.description?.message}
             disabled={isSubmitting}

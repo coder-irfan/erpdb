@@ -218,15 +218,10 @@ const VisitorFormDrawer = ({ open, visitor, staff, locale, dictionary, onClose, 
                     select: {
                       displayEmpty: true,
                       renderValue: selected =>
-                        selected
-                          ? purposeOptions.find(option => option.value === selected)?.label || selected
-                          : dictionary.placeholders.purpose
+                        selected ? purposeOptions.find(option => option.value === selected)?.label || selected : ''
                     }
                   }}
                 >
-                  <MenuItem value='' disabled>
-                    {dictionary.placeholders.purpose}
-                  </MenuItem>
                   {purposeOptions.map(option => (
                     <MenuItem key={option.id} value={option.value}>
                       {option.label}
@@ -250,14 +245,10 @@ const VisitorFormDrawer = ({ open, visitor, staff, locale, dictionary, onClose, 
                   slotProps={{
                     select: {
                       displayEmpty: true,
-                      renderValue: selected =>
-                        staff.find(item => item.id === selected)?.full_name || dictionary.placeholders.host
+                      renderValue: selected => staff.find(item => item.id === selected)?.full_name || ''
                     }
                   }}
                 >
-                  <MenuItem value='' disabled>
-                    {dictionary.placeholders.host}
-                  </MenuItem>
                   {staff.map(item => (
                     <MenuItem key={item.id} value={item.id}>
                       {item.full_name} — {item.position}

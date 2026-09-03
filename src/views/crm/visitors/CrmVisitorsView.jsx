@@ -10,7 +10,7 @@ import Typography from '@mui/material/Typography'
 import { toast } from 'sonner'
 
 import CustomTextField from '@core/components/mui/TextField'
-import ConfirmDeleteModal from '@/components/dialogs/ConfirmDeleteModal'
+import ConfirmationDeleteModal from '@/components/dialogs/ConfirmationDeleteModal'
 import TableFiltersPopover from '@/components/table/TableFiltersPopover'
 
 import VisitorConvertDialog from './VisitorConvertDialog'
@@ -324,7 +324,7 @@ const CrmVisitorsView = ({ locale, dictionary, canWrite, canDelete }) => {
         onClose={() => setEmailTarget(null)}
         onConfirm={continueWithEmail}
       />
-      <ConfirmDeleteModal
+      <ConfirmationDeleteModal
         open={Boolean(deleteTarget)}
         title={dictionary.delete.title}
         description={dictionary.delete.description}

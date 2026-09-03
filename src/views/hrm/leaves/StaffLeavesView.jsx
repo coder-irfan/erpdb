@@ -13,7 +13,7 @@ import { toast } from 'sonner'
 
 import CustomTextField from '@core/components/mui/TextField'
 import UserAvatar from '@/components/common/UserAvatar'
-import ConfirmDeleteModal from '@/components/dialogs/ConfirmDeleteModal'
+import ConfirmationDeleteModal from '@/components/dialogs/ConfirmationDeleteModal'
 import DashboardTablePagination from '@/components/table/DashboardTablePagination'
 import EntityActionsMenu from '@/components/table/EntityActionsMenu'
 import TableEmptyStateRow from '@/components/table/TableEmptyStateRow'
@@ -372,18 +372,18 @@ const StaffLeavesView = ({ locale, dictionary }) => {
             {
               id: 'duration',
               label: dictionary.table.duration,
-              render: leave => `${formatDate(leave.start_date, locale)} — ${formatDate(leave.end_date, locale)}`
+              render: leave => `${formatDate(leave.start_date, locale)} â€” ${formatDate(leave.end_date, locale)}`
             },
             {
               id: 'days',
               label: dictionary.table.duration,
               render: leave => dictionary.table.days.replace('{count}', leave.total_days)
             },
-            { id: 'reason', label: dictionary.table.reason, render: leave => leave.reason || '—' },
+            { id: 'reason', label: dictionary.table.reason, render: leave => leave.reason || 'â€”' },
             {
               id: 'approved-by',
               label: dictionary.table.approvedBy,
-              render: leave => leave.approved_by?.full_name || '—'
+              render: leave => leave.approved_by?.full_name || 'â€”'
             }
           ]}
           emptyState={{
@@ -453,7 +453,7 @@ const StaffLeavesView = ({ locale, dictionary }) => {
                       <td>
                         <div className='min-is-[190px]'>
                           <Typography color='text.primary'>
-                            {formatDate(leave.start_date, locale)} → {formatDate(leave.end_date, locale)}
+                            {formatDate(leave.start_date, locale)} â†’ {formatDate(leave.end_date, locale)}
                           </Typography>
                           <Chip
                             size='small'
@@ -471,7 +471,7 @@ const StaffLeavesView = ({ locale, dictionary }) => {
                             </Typography>
                           </Tooltip>
                         ) : (
-                          <Typography color='text.secondary'>—</Typography>
+                          <Typography color='text.secondary'>â€”</Typography>
                         )}
                       </td>
                       <td>
@@ -485,7 +485,7 @@ const StaffLeavesView = ({ locale, dictionary }) => {
                           )}
                         />
                       </td>
-                      <td>{leave.approved_by?.full_name || '—'}</td>
+                      <td>{leave.approved_by?.full_name || 'â€”'}</td>
                       <td className='text-end'>{renderLeaveActions(leave)}</td>
                     </tr>
                   ))
@@ -528,7 +528,7 @@ const StaffLeavesView = ({ locale, dictionary }) => {
         onClose={() => setViewingLeave(null)}
       />
 
-      <ConfirmDeleteModal
+      <ConfirmationDeleteModal
         open={Boolean(deleteTarget)}
         title={dictionary.delete.title}
         description={dictionary.delete.description}

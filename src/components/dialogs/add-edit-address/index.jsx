@@ -124,7 +124,6 @@ const AddEditAddress = ({ open, setOpen, data }) => {
                 label='First Name'
                 name='firstName'
                 variant='outlined'
-                placeholder='John'
                 value={addressData?.firstName}
                 onChange={e => setAddressData({ ...addressData, firstName: e.target.value })}
               />
@@ -135,7 +134,6 @@ const AddEditAddress = ({ open, setOpen, data }) => {
                 label='Last Name'
                 name='lastName'
                 variant='outlined'
-                placeholder='Doe'
                 value={addressData?.lastName}
                 onChange={e => setAddressData({ ...addressData, lastName: e.target.value })}
               />
@@ -163,7 +161,6 @@ const AddEditAddress = ({ open, setOpen, data }) => {
                 label='Address Line 1'
                 name='address1'
                 variant='outlined'
-                placeholder='12, Business Park'
                 value={addressData?.address1}
                 onChange={e => setAddressData({ ...addressData, address1: e.target.value })}
               />
@@ -174,7 +171,6 @@ const AddEditAddress = ({ open, setOpen, data }) => {
                 label='Address Line 2'
                 name='address1'
                 variant='outlined'
-                placeholder='Mall Road'
                 value={addressData?.address2}
                 onChange={e => setAddressData({ ...addressData, address2: e.target.value })}
               />
@@ -185,7 +181,6 @@ const AddEditAddress = ({ open, setOpen, data }) => {
                 label='Landmark'
                 name='landmark'
                 variant='outlined'
-                placeholder='Nr. Hard Rock Cafe'
                 value={addressData?.landmark}
                 onChange={e => setAddressData({ ...addressData, landmark: e.target.value })}
               />
@@ -196,7 +191,6 @@ const AddEditAddress = ({ open, setOpen, data }) => {
                 label='City'
                 name='city'
                 variant='outlined'
-                placeholder='Los Angeles'
                 value={addressData?.city}
                 onChange={e => setAddressData({ ...addressData, city: e.target.value })}
               />
@@ -207,7 +201,6 @@ const AddEditAddress = ({ open, setOpen, data }) => {
                 label='State'
                 name='state'
                 variant='outlined'
-                placeholder='California'
                 value={addressData?.state}
                 onChange={e => setAddressData({ ...addressData, state: e.target.value })}
               />
@@ -219,7 +212,6 @@ const AddEditAddress = ({ open, setOpen, data }) => {
                 type='number'
                 name='zipCode'
                 variant='outlined'
-                placeholder='99950'
                 value={addressData?.zipCode}
                 onChange={e => setAddressData({ ...addressData, zipCode: e.target.value })}
               />

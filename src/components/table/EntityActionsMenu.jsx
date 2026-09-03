@@ -8,7 +8,7 @@ import Menu from '@mui/material/Menu'
 import MenuItem from '@mui/material/MenuItem'
 import Tooltip from '@mui/material/Tooltip'
 
-import ConfirmationComponent from '@/components/dialogs/ConfirmationComponent'
+import ConfirmationDeleteModal from '@/components/dialogs/ConfirmationDeleteModal'
 import { getSharedDictionary } from '@/data/dictionaries/shared'
 
 const EntityActionsMenu = ({
@@ -125,7 +125,7 @@ const EntityActionsMenu = ({
           </MenuItem>
         ))}
       </Menu>
-      <ConfirmationComponent
+      <ConfirmationDeleteModal
         open={Boolean(pendingStatus || pendingAction)}
         title={statusConfirmation.title}
         message={statusConfirmation.message.replace('{status}', pendingStatus?.label || pendingAction?.label || '')}

@@ -139,12 +139,10 @@ const ClientFormDrawer = ({ open, client, staff, locale, dictionary, onClose, on
                   slotProps={{
                     select: {
                       displayEmpty: true,
-                      renderValue: selected =>
-                        staff.find(item => item.id === selected)?.full_name || dictionary.placeholders.manager
+                      renderValue: selected => staff.find(item => item.id === selected)?.full_name || ''
                     }
                   }}
                 >
-                  <MenuItem value=''>{dictionary.placeholders.manager}</MenuItem>
                   {staff.map(item => (
                     <MenuItem key={item.id} value={item.id}>
                       {item.full_name} — {item.position}

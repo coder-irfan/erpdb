@@ -235,9 +235,6 @@ const StaffLeaveDrawer = ({
                 error={Boolean(errors.staff_id)}
                 helperText={errors.staff_id?.message}
               >
-                <MenuItem value='' disabled>
-                  {dictionary.placeholders.selectStaff}
-                </MenuItem>
                 {staffOptions.map(staff => (
                   <MenuItem key={staff.id} value={staff.id}>
                     {staff.full_name} <>&mdash;</> {staff.position}
@@ -256,7 +253,7 @@ const StaffLeaveDrawer = ({
                   field.onChange(event)
                   const selected = leaveTypes.find(type => type.id === event.target.value)
 
-                  if (selected) setValue('is_paid', selected.is_paid_leave)
+                  setValue('is_paid', selected?.is_paid_leave ?? false, { shouldDirty: true, shouldValidate: true })
                 }}
                 select
                 fullWidth
@@ -267,9 +264,6 @@ const StaffLeaveDrawer = ({
                 error={Boolean(errors.leave_type_id)}
                 helperText={errors.leave_type_id?.message}
               >
-                <MenuItem value='' disabled>
-                  {dictionary.placeholders.selectLeaveType}
-                </MenuItem>
                 {leaveTypes.map(type => (
                   <MenuItem key={type.id} value={type.id}>
                     {type.label}
@@ -342,9 +336,6 @@ const StaffLeaveDrawer = ({
                     error={Boolean(errors.half_day_shift)}
                     helperText={errors.half_day_shift?.message}
                   >
-                    <MenuItem value='' disabled>
-                      Select shift
-                    </MenuItem>
                     <MenuItem value='MORNING'>Morning</MenuItem>
                     <MenuItem value='AFTERNOON'>Afternoon</MenuItem>
                   </CustomTextField>
@@ -415,9 +406,6 @@ const StaffLeaveDrawer = ({
                   value={field.value || ''}
                   disabled={isSubmitting}
                 >
-                  <MenuItem value='' disabled>
-                    {dictionary.placeholders.selectStatus}
-                  </MenuItem>
                   {options.statuses
                     .filter(status => ['PENDING', 'APPROVED'].includes(status.value))
                     .map(status => (
@@ -434,7 +422,6 @@ const StaffLeaveDrawer = ({
             multiline
             minRows={4}
             label={dictionary.fields.reason}
-            placeholder={dictionary.placeholders.reason}
             disabled={isSubmitting}
             error={Boolean(errors.reason)}
             helperText={errors.reason?.message}

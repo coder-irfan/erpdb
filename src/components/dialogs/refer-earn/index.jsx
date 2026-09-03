@@ -97,7 +97,6 @@ const ReferEarn = ({ open, setOpen }) => {
               fullWidth
               size='small'
               id='refer-email'
-              placeholder='johnDoe@email.com'
               label=' Enter your friend&#39;s email address and invite them to join Vuexy 😍'
             />
             <Button variant='contained' className='max-sm:is-full'>
@@ -112,7 +111,6 @@ const ReferEarn = ({ open, setOpen }) => {
               fullWidth
               size='small'
               id='refer-social'
-              placeholder='http://pixinvent.link'
               label='You can also copy and send it or share it on your social media. 🚀'
               slotProps={{
                 input: {

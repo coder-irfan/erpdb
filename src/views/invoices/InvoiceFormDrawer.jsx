@@ -121,11 +121,17 @@ const InvoiceFormDrawer = ({ open, invoice, options, locale, dictionary, onClose
     setValue('contract_id', contract?.id || '', { shouldValidate: true })
     setValue('client_id', contract?.client_id || '', { shouldValidate: true })
 
-    if (contract) {
-      setValue('amount', String(contract.total_amount), { shouldValidate: true })
-      setValue('currency', contract.currency || options.baseCurrency, { shouldValidate: true })
-      setValue('exchange_rate', String(contract.exchange_rate || options.exchangeRate), { shouldValidate: true })
+    if (!contract) {
+      setValue('amount', '', { shouldValidate: true })
+      setValue('currency', options.baseCurrency || 'AFN', { shouldValidate: true })
+      setValue('exchange_rate', String(options.exchangeRate || '65'), { shouldValidate: true })
+
+      return
     }
+
+    setValue('amount', String(contract.total_amount), { shouldValidate: true })
+    setValue('currency', contract.currency || options.baseCurrency, { shouldValidate: true })
+    setValue('exchange_rate', String(contract.exchange_rate || options.exchangeRate), { shouldValidate: true })
   }
 
   const submit = async values => {
@@ -215,7 +221,6 @@ const InvoiceFormDrawer = ({ open, invoice, options, locale, dictionary, onClose
                   <CustomTextField
                     {...params}
                     label={dictionary.fields.contract}
-                    placeholder={dictionary.placeholders.contract}
                     error={Boolean(errors.contract_id)}
                     helperText={errors.contract_id?.message}
                   />

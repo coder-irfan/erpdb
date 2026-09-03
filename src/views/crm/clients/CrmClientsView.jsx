@@ -10,7 +10,7 @@ import Typography from '@mui/material/Typography'
 import { toast } from 'sonner'
 
 import CustomTextField from '@core/components/mui/TextField'
-import ConfirmDeleteModal from '@/components/dialogs/ConfirmDeleteModal'
+import ConfirmationDeleteModal from '@/components/dialogs/ConfirmationDeleteModal'
 import TableFiltersPopover from '@/components/table/TableFiltersPopover'
 
 import ClientActivityDialog from './ClientActivityDialog'
@@ -266,7 +266,7 @@ const CrmClientsView = ({ locale, dictionary, currencyCode, canWrite, canDelete 
         onClose={() => setActivityClient(null)}
         onSaved={refresh}
       />
-      <ConfirmDeleteModal
+      <ConfirmationDeleteModal
         open={Boolean(deleteTarget)}
         title={dictionary.delete.title}
         description={dictionary.delete.description}

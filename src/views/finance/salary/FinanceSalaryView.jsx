@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from 'react'
 import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
+import Chip from '@mui/material/Chip'
 import Dialog from '@mui/material/Dialog'
 import DialogContent from '@mui/material/DialogContent'
 import MenuItem from '@mui/material/MenuItem'
@@ -14,12 +15,13 @@ import { toast } from 'sonner'
 import CustomTextField from '@core/components/mui/TextField'
 import {
   deleteFinanceSalary,
+  finalizeMonthlyPayroll,
   generateMonthlyPayroll,
   getFinanceSalaries,
   getFinanceSalaryOptions,
   markSalaryPaid
 } from '@/actions/financeSalary'
-import ConfirmDeleteModal from '@/components/dialogs/ConfirmDeleteModal'
+import ConfirmationDeleteModal from '@/components/dialogs/ConfirmationDeleteModal'
 import LoadingButtonContent from '@/components/LoadingButtonContent'
 import TableFiltersPopover from '@/components/table/TableFiltersPopover'
 import { formatCurrency } from '@/utils/formatCurrency'
@@ -31,9 +33,23 @@ import FinanceSalaryStatsCards from './FinanceSalaryStatsCards'
 import FinanceSalaryTable from './FinanceSalaryTable'
 
 const currentMonth = () => {
-  const date = new Date()
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Kabul',
+    year: 'numeric',
+    month: '2-digit'
+  }).formatToParts(new Date())
 
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
+  const year = parts.find(part => part.type === 'year')?.value
+  const month = parts.find(part => part.type === 'month')?.value
+
+  return `${year}-${month}`
+}
+
+const previousCompletedMonth = () => {
+  const [year, month] = currentMonth().split('-').map(Number)
+  const date = new Date(Date.UTC(year, month - 2, 1))
+
+  return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}`
 }
 
 const MONTH_PATTERN = /^\d{4}-(0[1-9]|1[0-2])$/
@@ -42,6 +58,8 @@ const EMPTY_DATA = {
   salaries: [],
   totalCount: 0,
   hasGeneratedPayroll: false,
+  hasDraftPayroll: false,
+  isPayrollFinalized: false,
   baseCurrency: 'AFN',
   summary: { total: 0, paid: 0, pending: 0, loanDeductions: 0 },
   payoutContext: {
@@ -55,8 +73,8 @@ const EMPTY_DATA = {
 const EMPTY_OPTIONS = { staff: [], baseCurrency: 'AFN', exchangeRate: '65.0000', company: null }
 
 const FinanceSalaryView = ({ locale, dictionary, canWrite, canDelete, canExecutePayout }) => {
-  const [month, setMonth] = useState(currentMonth)
-  const [monthInput, setMonthInput] = useState(currentMonth)
+  const [month, setMonth] = useState(previousCompletedMonth)
+  const [monthInput, setMonthInput] = useState(previousCompletedMonth)
   const [searchInput, setSearchInput] = useState('')
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState('')
@@ -127,14 +145,22 @@ const FinanceSalaryView = ({ locale, dictionary, canWrite, canDelete, canExecute
     setGenerating(false)
   }
 
+  const finalize = async () => {
+    setGenerating(true)
+    const result = await finalizeMonthlyPayroll(month, { locale })
+
+    if (result.success) {
+      toast.success(result.message)
+      await refresh()
+    } else toast.error(result.error || dictionary.messages.operationFailed)
+    setGenerating(false)
+  }
+
   const pay = async () => {
     if (!payTarget) return
     setBusyId(payTarget.id)
 
-    const result = await markSalaryPaid(payTarget.id, {
-      locale,
-      confirmEarlyExecution: data.payoutContext.isEarlyExecution && payTarget.timesheet_month === month
-    })
+    const result = await markSalaryPaid(payTarget.id, { locale })
 
     if (result.success) {
       toast.success(result.message)
@@ -172,8 +198,18 @@ const FinanceSalaryView = ({ locale, dictionary, canWrite, canDelete, canExecute
   )
 
   const payrollGenerated = data.hasGeneratedPayroll
+  const ongoingMonth = data.payoutContext.currentDate?.slice(0, 7) || currentMonth()
+  const activeOrFuturePeriod = month >= ongoingMonth
 
   const localeTag = locale === 'fa' ? 'fa-AF' : locale === 'ps' ? 'ps-AF' : 'en-US'
+
+  const formatMonth = value =>
+    new Intl.DateTimeFormat(localeTag, { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(
+      new Date(`${value}-01T00:00:00.000Z`)
+    )
+
+  const selectedMonthLabel = formatMonth(month)
+  const ongoingMonthLabel = formatMonth(ongoingMonth)
   const payDescriptionParts = dictionary.pay.description.split('{name}')
   const hasPayNameToken = payDescriptionParts.length > 1
 
@@ -213,11 +249,25 @@ const FinanceSalaryView = ({ locale, dictionary, canWrite, canDelete, canExecute
               label={dictionary.filters.month}
               value={monthInput}
               onChange={event => selectMonth(event.target.value)}
+              helperText={
+                month === ongoingMonth
+                  ? dictionary.filters.currentPeriod
+                  : month > ongoingMonth
+                    ? dictionary.filters.futurePeriod
+                    : undefined
+              }
               onBlur={() => {
                 if (!MONTH_PATTERN.test(monthInput)) setMonthInput(month)
               }}
               slotProps={{ inputLabel: { shrink: true }, htmlInput: { pattern: '\\d{4}-(0[1-9]|1[0-2])' } }}
               className='is-full sm:is-[180px]'
+            />
+            <Chip
+              size='small'
+              variant='tonal'
+              color='warning'
+              icon={<i className='tabler-progress-clock' />}
+              label={`${ongoingMonthLabel} · ${dictionary.filters.currentPeriod}`}
             />
           </div>
           <div className='grid is-full grid-cols-2 gap-2 sm:flex sm:is-auto sm:flex-wrap sm:gap-3 sm:justify-end'>
@@ -237,6 +287,7 @@ const FinanceSalaryView = ({ locale, dictionary, canWrite, canDelete, canExecute
               >
                 <MenuItem value=''>{dictionary.filters.allStatuses}</MenuItem>
                 <MenuItem value='DRAFT'>{dictionary.status.DRAFT}</MenuItem>
+                <MenuItem value='FINALIZED'>{dictionary.status.FINALIZED}</MenuItem>
                 <MenuItem value='PAID'>{dictionary.status.PAID}</MenuItem>
               </CustomTextField>
               {status && (
@@ -256,16 +307,30 @@ const FinanceSalaryView = ({ locale, dictionary, canWrite, canDelete, canExecute
             </TableFiltersPopover>
             {canWrite && (
               <Button
-                variant={payrollGenerated ? 'tonal' : 'contained'}
-                color={payrollGenerated ? 'success' : 'primary'}
-                startIcon={<i className={payrollGenerated ? 'tabler-circle-check' : 'tabler-calendar-dollar'} />}
-                disabled={generating || !month || payrollGenerated}
-                onClick={generate}
+                variant={data.isPayrollFinalized ? 'tonal' : 'contained'}
+                color={data.isPayrollFinalized ? 'success' : payrollGenerated ? 'warning' : 'primary'}
+                startIcon={
+                  <i
+                    className={
+                      data.isPayrollFinalized
+                        ? 'tabler-lock-check'
+                        : payrollGenerated
+                          ? 'tabler-lock'
+                          : 'tabler-calendar-dollar'
+                    }
+                  />
+                }
+                disabled={generating || !month || activeOrFuturePeriod || data.isPayrollFinalized}
+                onClick={payrollGenerated ? finalize : generate}
               >
                 <LoadingButtonContent loading={generating} loadingLabel={dictionary.actions.generating}>
-                  {payrollGenerated
-                    ? dictionary.actions.payrollGenerated
-                    : dictionary.actions.generate.replace('{month}', month)}
+                  {activeOrFuturePeriod
+                    ? dictionary.actions.currentPeriod
+                    : data.isPayrollFinalized
+                      ? dictionary.actions.payrollFinalized
+                      : payrollGenerated
+                        ? dictionary.actions.finalize.replace('{month}', selectedMonthLabel)
+                        : dictionary.actions.generate.replace('{month}', selectedMonthLabel)}
                 </LoadingButtonContent>
               </Button>
             )}
@@ -282,6 +347,7 @@ const FinanceSalaryView = ({ locale, dictionary, canWrite, canDelete, canExecute
           canWrite={canWrite}
           canDelete={canDelete}
           canExecutePayout={canExecutePayout}
+          activeMonth={ongoingMonth}
           onPageChange={(_, value) => setPage(value)}
           onRowsPerPageChange={event => {
             setRowsPerPage(Number(event.target.value))
@@ -399,7 +465,7 @@ const FinanceSalaryView = ({ locale, dictionary, canWrite, canDelete, canExecute
           </div>
         </DialogContent>
       </Dialog>
-      <ConfirmDeleteModal
+      <ConfirmationDeleteModal
         open={Boolean(deleteTarget)}
         title={dictionary.delete.title}
         description={dictionary.delete.description}

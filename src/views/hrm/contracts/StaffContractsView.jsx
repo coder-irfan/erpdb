@@ -236,8 +236,8 @@ const StaffContractsView = ({
             className='is-full sm:max-is-[320px]'
             value={searchInput}
             onChange={event => setSearchInput(event.target.value)}
-            placeholder={dictionary.filters.searchPlaceholder}
             label={dictionary.filters.search}
+            placeholder={dictionary.filters.searchPlaceholder}
             slotProps={{ input: { startAdornment: <i className='tabler-search text-textSecondary' /> } }}
           />
           <div className='grid is-full grid-cols-2 gap-2 sm:flex sm:is-auto sm:flex-wrap sm:gap-3 sm:justify-end'>

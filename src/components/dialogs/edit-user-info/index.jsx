@@ -72,7 +72,6 @@ const EditUserInfo = ({ open, setOpen, data }) => {
               <CustomTextField
                 fullWidth
                 label='First Name'
-                placeholder='John'
                 value={userData?.firstName}
                 onChange={e => setUserData({ ...userData, firstName: e.target.value })}
               />
@@ -81,7 +80,6 @@ const EditUserInfo = ({ open, setOpen, data }) => {
               <CustomTextField
                 fullWidth
                 label='Last Name'
-                placeholder='Doe'
                 value={userData?.lastName}
                 onChange={e => setUserData({ ...userData, lastName: e.target.value })}
               />
@@ -90,7 +88,6 @@ const EditUserInfo = ({ open, setOpen, data }) => {
               <CustomTextField
                 fullWidth
                 label='User Name'
-                placeholder='JohnDoe'
                 value={userData?.userName}
                 onChange={e => setUserData({ ...userData, userName: e.target.value })}
               />
@@ -99,7 +96,6 @@ const EditUserInfo = ({ open, setOpen, data }) => {
               <CustomTextField
                 fullWidth
                 label='Billing Email'
-                placeholder='johnDoe@email.com'
                 value={userData?.billingEmail}
                 onChange={e => setUserData({ ...userData, billingEmail: e.target.value })}
               />
@@ -123,7 +119,6 @@ const EditUserInfo = ({ open, setOpen, data }) => {
               <CustomTextField
                 fullWidth
                 label='Tax ID'
-                placeholder='Tax-7490'
                 value={userData?.taxId}
                 onChange={e => setUserData({ ...userData, taxId: e.target.value })}
               />
@@ -132,7 +127,6 @@ const EditUserInfo = ({ open, setOpen, data }) => {
               <CustomTextField
                 fullWidth
                 label='Contact'
-                placeholder='+ 123 456 7890'
                 value={userData?.contact}
                 onChange={e => setUserData({ ...userData, contact: e.target.value })}
               />

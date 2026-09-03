@@ -13,7 +13,7 @@ import { toast } from 'sonner'
 
 import CustomTextField from '@core/components/mui/TextField'
 import { deleteOption, getOptionsListPaginated, toggleOptionStatus } from '@/actions/options'
-import ConfirmDeleteModal from '@/components/dialogs/ConfirmDeleteModal'
+import ConfirmationDeleteModal from '@/components/dialogs/ConfirmationDeleteModal'
 import DashboardTablePagination from '@/components/table/DashboardTablePagination'
 import EntityActionsMenu from '@/components/table/EntityActionsMenu'
 import TableEmptyStateRow from '@/components/table/TableEmptyStateRow'
@@ -314,7 +314,7 @@ const LeaveTypeTable = ({ initialResult, initialError, canCreate, canUpdate, can
         onClose={() => setFormOpen(false)}
         onSaved={refreshData}
       />
-      <ConfirmDeleteModal
+      <ConfirmationDeleteModal
         open={Boolean(deleteTarget)}
         title={dictionary.leaveTypes.deleteTitle}
         description={dictionary.leaveTypes.deleteDescription}

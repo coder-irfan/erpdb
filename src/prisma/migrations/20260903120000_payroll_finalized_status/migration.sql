@@ -1,0 +1,2 @@
+ALTER TABLE `financesalary`
+    MODIFY `status` ENUM('DRAFT', 'FINALIZED', 'PAID') NOT NULL DEFAULT 'DRAFT';

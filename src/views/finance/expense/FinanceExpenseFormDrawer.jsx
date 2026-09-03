@@ -47,6 +47,7 @@ const FinanceExpenseFormDrawer = ({ open, expense, options, locale, dictionary, 
     control,
     handleSubmit,
     reset,
+    setValue,
     formState: { errors, isSubmitting }
   } = useForm({
     resolver: valibotResolver(createFinanceExpenseSchema(dictionary.validation)),
@@ -55,8 +56,10 @@ const FinanceExpenseFormDrawer = ({ open, expense, options, locale, dictionary, 
 
   const quantity = useWatch({ control, name: 'quantity' })
   const unitPrice = useWatch({ control, name: 'unit_price' })
+  const projectId = useWatch({ control, name: 'project_id' })
   const currency = useWatch({ control, name: 'currency' })
   const exchangeRate = useWatch({ control, name: 'exchange_rate' })
+  const selectedProject = options.projects.find(project => project.id === projectId)
   const subTotal = Math.max(0, Number.parseInt(quantity, 10) || 0) * Math.max(0, toFiniteNumber(unitPrice))
 
   const amountBase = useMemo(
@@ -66,6 +69,24 @@ const FinanceExpenseFormDrawer = ({ open, expense, options, locale, dictionary, 
 
   const totalUsd =
     currency === 'USD' ? subTotal : toFiniteNumber(exchangeRate) > 0 ? subTotal / toFiniteNumber(exchangeRate) : 0
+
+  useEffect(() => {
+    if (!open) return
+
+    if (projectId) {
+      if (!selectedProject) return
+
+      setValue('currency', selectedProject.currency || options.baseCurrency || 'AFN', { shouldValidate: true })
+      setValue('exchange_rate', String(selectedProject.exchange_rate || options.exchangeRate || '65'), {
+        shouldValidate: true
+      })
+
+      return
+    }
+
+    setValue('currency', options.baseCurrency || 'AFN', { shouldValidate: true })
+    setValue('exchange_rate', String(options.exchangeRate || '65'), { shouldValidate: true })
+  }, [open, options.baseCurrency, options.exchangeRate, projectId, selectedProject, setValue])
 
   useEffect(() => {
     if (!open) return
@@ -119,7 +140,7 @@ const FinanceExpenseFormDrawer = ({ open, expense, options, locale, dictionary, 
     />
   )
 
-  const relationField = (name, label, items, placeholder, getLabel) => (
+  const relationField = (name, label, items, getLabel) => (
     <Controller
       name={name}
       control={control}
@@ -134,7 +155,6 @@ const FinanceExpenseFormDrawer = ({ open, expense, options, locale, dictionary, 
             <CustomTextField
               {...params}
               label={label}
-              placeholder={placeholder}
               error={Boolean(errors[name])}
               helperText={errors[name]?.message}
             />
@@ -186,13 +206,10 @@ const FinanceExpenseFormDrawer = ({ open, expense, options, locale, dictionary, 
             />
           </div>
 
-          {field('vendor_payee', dictionary.fields.vendorPayee, {
-            placeholder: dictionary.placeholders.vendorPayee
-          })}
+          {field('vendor_payee', dictionary.fields.vendorPayee)}
           {field('details', dictionary.fields.details, {
             multiline: true,
-            minRows: 3,
-            placeholder: dictionary.placeholders.details
+            minRows: 3
           })}
 
           <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
@@ -210,15 +227,10 @@ const FinanceExpenseFormDrawer = ({ open, expense, options, locale, dictionary, 
                   slotProps={{
                     select: {
                       displayEmpty: true,
-                      renderValue: selected =>
-                        options.expenseTypes.find(item => item.id === selected)?.label ||
-                        dictionary.placeholders.expenseType
+                      renderValue: selected => options.expenseTypes.find(item => item.id === selected)?.label || ''
                     }
                   }}
                 >
-                  <MenuItem value='' disabled>
-                    {dictionary.placeholders.expenseType}
-                  </MenuItem>
                   {options.expenseTypes.map(item => (
                     <MenuItem key={item.id} value={item.id}>
                       {item.label}
@@ -235,14 +247,12 @@ const FinanceExpenseFormDrawer = ({ open, expense, options, locale, dictionary, 
               'project_id',
               dictionary.fields.project,
               options.projects,
-              dictionary.placeholders.project,
               item => `${item.project_code} · ${item.title}`
             )}
             {relationField(
               'spent_by_id',
               dictionary.fields.spentBy,
               options.staff,
-              dictionary.placeholders.spentBy,
               item => `${item.full_name} · ${item.position}`
             )}
             {field('quantity', dictionary.fields.quantity, { type: 'number', inputProps: { min: 1, step: 1 } })}
@@ -254,6 +264,7 @@ const FinanceExpenseFormDrawer = ({ open, expense, options, locale, dictionary, 
                 <CustomTextField
                   {...controllerField}
                   select
+                  disabled={Boolean(selectedProject)}
                   value={controllerField.value || options.baseCurrency || 'AFN'}
                   label={dictionary.fields.currency}
                   error={Boolean(errors.currency)}
@@ -266,7 +277,7 @@ const FinanceExpenseFormDrawer = ({ open, expense, options, locale, dictionary, 
             />
             {field('exchange_rate', dictionary.fields.exchangeRate, {
               type: 'number',
-              inputProps: { min: 0, step: '0.0001', readOnly: true }
+              inputProps: { min: 0, step: '0.0001', readOnly: Boolean(selectedProject) }
             })}
           </div>
 

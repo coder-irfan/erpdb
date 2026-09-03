@@ -15,7 +15,7 @@ import { toast } from 'sonner'
 
 import CustomTextField from '@core/components/mui/TextField'
 import { deleteAuditLogs, getAuditLogsPage } from '@/actions/notifications'
-import ConfirmDeleteModal from '@/components/dialogs/ConfirmDeleteModal'
+import ConfirmationDeleteModal from '@/components/dialogs/ConfirmationDeleteModal'
 import DashboardTablePagination from '@/components/table/DashboardTablePagination'
 import TableEmptyStateRow from '@/components/table/TableEmptyStateRow'
 import TableSkeletonRows from '@/components/table/TableSkeletonRows'
@@ -261,7 +261,7 @@ const AuditLogsView = ({ initialResult, initialError, locale, dictionary }) => {
           }}
         />
       </Card>
-      <ConfirmDeleteModal
+      <ConfirmationDeleteModal
         open={Boolean(deleteTarget)}
         title={dictionary.deleteTitle}
         description={dictionary.deleteDescription}

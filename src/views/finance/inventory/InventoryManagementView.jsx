@@ -9,7 +9,7 @@ import MenuItem from '@mui/material/MenuItem'
 import { toast } from 'sonner'
 
 import CustomTextField from '@core/components/mui/TextField'
-import ConfirmDeleteModal from '@/components/dialogs/ConfirmDeleteModal'
+import ConfirmationDeleteModal from '@/components/dialogs/ConfirmationDeleteModal'
 import TableFiltersPopover from '@/components/table/TableFiltersPopover'
 
 import InventoryAdjustmentDialog from './InventoryAdjustmentDialog'
@@ -246,7 +246,7 @@ const InventoryManagementView = ({ locale, dictionary, canWrite, canDelete }) =>
         onClose={() => setAdjustTarget(null)}
         onSaved={loadData}
       />
-      <ConfirmDeleteModal
+      <ConfirmationDeleteModal
         open={Boolean(deleteTarget)}
         title={dictionary.delete.title}
         description={dictionary.delete.description}

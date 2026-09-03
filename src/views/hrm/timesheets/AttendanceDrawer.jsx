@@ -305,7 +305,6 @@ const AttendanceDrawer = ({
                         fullWidth
                         size='small'
                         label={dictionary.fields.notes}
-                        placeholder={dictionary.actions.addNote}
                         value={entry.notes}
                         disabled={rowDisabled}
                         onChange={event => updateEntry(entry.staff_id, { notes: event.target.value })}

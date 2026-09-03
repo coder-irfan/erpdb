@@ -28,8 +28,8 @@ const translations = {
       date: 'Expense Date',
       quantity: 'Qty & Unit Price',
       subtotal: 'Subtotal & Currency',
-      actions: 'Actions'
-      ,status: 'Approval Status'
+      actions: 'Actions',
+      status: 'Approval Status'
     },
     actions: {
       add: 'Log Expense',
@@ -42,10 +42,10 @@ const translations = {
       save: 'Save Changes',
       saving: 'Saving...',
       close: 'Close',
-      download: 'Download Receipt'
-      ,approve: 'Approve Expense'
-      ,reject: 'Reject'
-      ,markPaid: 'Mark as Paid'
+      download: 'Download Receipt',
+      approve: 'Approve Expense',
+      reject: 'Reject',
+      markPaid: 'Mark as Paid'
     },
     form: {
       addTitle: 'Log Expense',
@@ -54,8 +54,8 @@ const translations = {
       calculation: 'Live Calculation',
       subtotalPreview: 'Transaction subtotal',
       basePreview: 'Base amount ({currency})',
-      usdPreview: 'USD equivalent'
-      ,statusManagedHint: 'New and revised expenses enter Pending Approval.'
+      usdPreview: 'USD equivalent',
+      statusManagedHint: 'New and revised expenses enter Pending Approval.'
     },
     fields: {
       details: 'Expense Details',
@@ -71,25 +71,27 @@ const translations = {
       exchangeRate: 'USD / AFN Exchange Rate',
       baseAmount: 'Base Amount',
       totalUsd: 'USD Equivalent',
-      receipt: 'Receipt Attachment'
-      ,vendorPayee: 'Vendor / Payee'
-      ,approvalStatus: 'Approval Status'
-      ,voucherNumber: 'Voucher Number'
-      ,approvedBy: 'Approved By'
-      ,processedBy: 'Processing Officer'
-      ,paidAt: 'Paid Date'
-      ,rejectionReason: 'Rejection Reason'
+      receipt: 'Receipt Attachment',
+      vendorPayee: 'Vendor / Payee',
+      approvalStatus: 'Approval Status',
+      voucherNumber: 'Voucher Number',
+      approvedBy: 'Approved By',
+      processedBy: 'Processing Officer',
+      paidAt: 'Paid Date',
+      rejectionReason: 'Rejection Reason'
     },
     placeholders: {
       details: 'Describe what was purchased or paid for',
       expenseType: 'Select expense type',
       project: 'General overhead / no project',
       spentBy: 'No assigned staff',
-      paymentMethod: 'No payment method selected'
-      ,vendorPayee: 'Google Ads, Building Landlord, Kabul Electric...'
+      paymentMethod: 'No payment method selected',
+      vendorPayee: 'Google Ads, Building Landlord, Kabul Electric...'
     },
     detail: {
       title: 'Expense Details',
+      overviewTab: 'Overview & Financials',
+      auditTab: 'Audit & Approvals',
       financial: 'Financial Breakdown',
       context: 'Expense Context',
       project: 'Linked Project',
@@ -97,8 +99,9 @@ const translations = {
       receipt: 'Receipt Preview',
       exchangeRate: 'Locked Exchange Rate',
       createdAt: 'Created',
-      updatedAt: 'Last Updated'
-      ,approval: 'Approval & Disbursement'
+      updatedAt: 'Last Updated',
+      approval: 'Approval & Disbursement',
+      systemTimestamps: 'System Timestamps'
     },
     upload: {
       upload: 'Upload',
@@ -140,8 +143,8 @@ const translations = {
       positiveInvalid: 'Enter a value greater than zero.',
       dateInvalid: 'Enter a valid expense date.',
       invalidRelation: 'One or more selected linked records are invalid.',
-      invalidReceipt: 'The receipt path is invalid. Upload the receipt again.'
-      ,vendorTooLong: 'Vendor / Payee must not exceed 191 characters.'
+      invalidReceipt: 'The receipt path is invalid. Upload the receipt again.',
+      vendorTooLong: 'Vendor / Payee must not exceed 191 characters.'
     },
     messages: {
       unauthenticated: 'Authentication is required.',
@@ -153,26 +156,28 @@ const translations = {
       created: 'Expense record created successfully.',
       updated: 'Expense record updated successfully.',
       deleted: 'Expense record deleted successfully.',
-      operationFailed: 'The expense operation could not be completed.'
-      ,approved: 'Expense approved successfully.'
-      ,rejected: 'Expense rejected successfully.'
-      ,paid: 'Expense marked as paid and posted to the general ledger.'
-      ,locked: 'Approved and paid expenses cannot be edited or deleted.'
-      ,invalidTransition: 'This expense cannot move to the requested status.'
-      ,approvalForbidden: 'Only a Finance Director or the linked Project Manager may approve this expense.'
-    }
-    ,status: {
+      operationFailed: 'The expense operation could not be completed.',
+      approved: 'Expense approved successfully.',
+      rejected: 'Expense rejected successfully.',
+      paid: 'Expense marked as paid and posted to the general ledger.',
+      locked: 'Approved and paid expenses cannot be edited or deleted.',
+      invalidTransition: 'This expense cannot move to the requested status.',
+      approvalForbidden: 'Only a Finance Director or the linked Project Manager may approve this expense.'
+    },
+    status: {
       DRAFT: 'Draft',
       PENDING_APPROVAL: 'Pending Approval',
       APPROVED: 'Approved',
       PAID: 'Paid',
       REJECTED: 'Rejected'
-    }
-    ,workflow: {
+    },
+    workflow: {
       approveTitle: 'Approve Expense',
       rejectTitle: 'Reject Expense',
       payTitle: 'Execute Disbursement',
-      approveDescription: 'Confirm that this expense has been reviewed and is ready for payment.'
+      approveDescription: 'Confirm that this expense has been reviewed and is ready for payment.',
+      approveConfirmation: 'Are you sure you want to approve {voucher}?',
+      rejectConfirmation: 'Are you sure you want to reject {voucher}?'
     }
   }
 }

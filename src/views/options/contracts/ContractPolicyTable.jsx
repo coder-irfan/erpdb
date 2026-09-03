@@ -20,7 +20,7 @@ import { toast } from 'sonner'
 
 import CustomTextField from '@core/components/mui/TextField'
 import { deleteOption, getOptionsListPaginated, toggleOptionStatus } from '@/actions/options'
-import ConfirmDeleteModal from '@/components/dialogs/ConfirmDeleteModal'
+import ConfirmationDeleteModal from '@/components/dialogs/ConfirmationDeleteModal'
 import DashboardTablePagination from '@/components/table/DashboardTablePagination'
 import EntityActionsMenu from '@/components/table/EntityActionsMenu'
 import TableEmptyStateRow from '@/components/table/TableEmptyStateRow'
@@ -323,7 +323,7 @@ const ContractPolicyTable = ({ initialResult, initialError, canCreate, canUpdate
         </DialogContent>
       </Dialog>
 
-      <ConfirmDeleteModal
+      <ConfirmationDeleteModal
         open={Boolean(deletingOption)}
         title={dictionary.contractPolicies.deleteTitle}
         description={dictionary.contractPolicies.deleteDescription}

@@ -170,9 +170,6 @@ const StaffContractDrawer = ({ open, contract, options, locale, dictionary, onCl
                 helperText={errors.staff_id?.message}
                 onChange={handleStaffChange}
               >
-                <MenuItem value='' disabled>
-                  {dictionary.placeholders.selectStaff}
-                </MenuItem>
                 {staffOptions.map(staff => (
                   <MenuItem key={staff.id} value={staff.id}>
                     {staff.full_name}
@@ -195,9 +192,6 @@ const StaffContractDrawer = ({ open, contract, options, locale, dictionary, onCl
                 error={Boolean(errors.contract_type_id)}
                 helperText={errors.contract_type_id?.message}
               >
-                <MenuItem value='' disabled>
-                  {dictionary.placeholders.selectContractType || dictionary.placeholders.selectPolicy}
-                </MenuItem>
                 {contractTypeOptions.map(type => (
                   <MenuItem key={type.id} value={type.id}>
                     {type.label}
@@ -220,9 +214,6 @@ const StaffContractDrawer = ({ open, contract, options, locale, dictionary, onCl
                 error={Boolean(errors.template_id)}
                 helperText={errors.template_id?.message}
               >
-                <MenuItem value='' disabled>
-                  {dictionary.placeholders.selectPolicy}
-                </MenuItem>
                 {options.policies.map(policy => (
                   <MenuItem key={policy.id} value={policy.id}>
                     {policy.label}
@@ -310,9 +301,6 @@ const StaffContractDrawer = ({ open, contract, options, locale, dictionary, onCl
                 error={Boolean(errors.status_id)}
                 helperText={errors.status_id?.message}
               >
-                <MenuItem value='' disabled>
-                  {dictionary.placeholders.selectStatus}
-                </MenuItem>
                 {statusOptions.map(status => (
                   <MenuItem key={status.id} value={status.id}>
                     {formatStatusLabel(status.value, dictionary.status[status.value] || status.label)}

@@ -61,7 +61,6 @@ const FinanceIncomeFormDrawer = ({ open, income, options, locale, dictionary, on
     defaultValues: emptyValues(options)
   })
 
-  const clientId = useWatch({ control, name: 'client_id' })
   const projectId = useWatch({ control, name: 'project_id' })
   const contractId = useWatch({ control, name: 'contract_id' })
   const invoiceId = useWatch({ control, name: 'invoice_id' })
@@ -73,6 +72,7 @@ const FinanceIncomeFormDrawer = ({ open, income, options, locale, dictionary, on
   const paid = toFiniteNumber(paidAmount)
   const remaining = Math.max(0, total - paid)
   const derivedStatus = total > 0 && paid >= total ? 'PAID' : paid > 0 ? 'PARTIAL' : 'PENDING'
+
   // Client, contract, and project are optional allocation fields for direct
   // income too. Selecting an invoice fills and locks them to that invoice.
   const isClientIncome = true
@@ -84,9 +84,10 @@ const FinanceIncomeFormDrawer = ({ open, income, options, locale, dictionary, on
 
   const totalUsd =
     currency === 'USD' ? total : toFiniteNumber(exchangeRate) > 0 ? total / toFiniteNumber(exchangeRate) : 0
-  const projects = options.projects.filter(project => !clientId || project.client_id === clientId)
-  const contracts = options.contracts.filter(contract => !clientId || contract.client_id === clientId)
-  const invoices = options.invoices.filter(invoice => !clientId || invoice.client_id === clientId)
+
+  const projects = options.projects
+  const contracts = options.contracts
+  const invoices = options.invoices
 
   useEffect(() => {
     if (!open) return
@@ -144,7 +145,7 @@ const FinanceIncomeFormDrawer = ({ open, income, options, locale, dictionary, on
     />
   )
 
-  const relationField = (name, label, items, placeholder, getLabel, onSelected, getDisabled, disabled = false) => (
+  const relationField = (name, label, items, getLabel, onSelected, getDisabled, disabled = false) => (
     <Controller
       name={name}
       control={control}
@@ -164,7 +165,6 @@ const FinanceIncomeFormDrawer = ({ open, income, options, locale, dictionary, on
             <CustomTextField
               {...params}
               label={label}
-              placeholder={placeholder}
               error={Boolean(errors[name])}
               helperText={errors[name]?.message}
             />
@@ -205,15 +205,94 @@ const FinanceIncomeFormDrawer = ({ open, income, options, locale, dictionary, on
           {field('name', dictionary.fields.name)}
 
           <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
+            {relationField(
+              'invoice_id',
+              dictionary.fields.invoice,
+              invoices,
+              item => item.invoice_number,
+              value => {
+                if (!value) {
+                  setValue('client_id', '', { shouldDirty: true, shouldValidate: true })
+                  setValue('contract_id', '', { shouldDirty: true, shouldValidate: true })
+                  setValue('project_id', '', { shouldDirty: true, shouldValidate: true })
+                  setValue('total_amount', '', { shouldDirty: true, shouldValidate: true })
+                  setValue('paid_amount', '0', { shouldDirty: true, shouldValidate: true })
+                  setValue('currency', options.baseCurrency || 'AFN', { shouldDirty: true, shouldValidate: true })
+                  setValue('exchange_rate', String(options.exchangeRate || '65'), {
+                    shouldDirty: true,
+                    shouldValidate: true
+                  })
+                  clearErrors(['client_id', 'contract_id', 'project_id', 'invoice_id'])
+
+                  return
+                }
+
+                setValue('client_id', value.client_id, { shouldDirty: true, shouldValidate: true })
+                setValue('contract_id', value.contract_id, { shouldDirty: true, shouldValidate: true })
+                setValue('project_id', value.project_id || '', { shouldDirty: true, shouldValidate: true })
+                clearErrors(['client_id', 'contract_id', 'project_id', 'invoice_id'])
+                const outstanding = Number(value.remaining_balance) > 0 ? value.remaining_balance : value.amount
+
+                setValue('total_amount', String(outstanding || ''), { shouldDirty: true, shouldValidate: true })
+                setValue('paid_amount', String(outstanding || ''), { shouldDirty: true, shouldValidate: true })
+                setValue('currency', value.currency || options.baseCurrency || 'AFN', {
+                  shouldDirty: true,
+                  shouldValidate: true
+                })
+                setValue('exchange_rate', String(value.exchange_rate || options.exchangeRate || '65'), {
+                  shouldDirty: true,
+                  shouldValidate: true
+                })
+              },
+              item => item.id !== income?.invoice_id && (Number(item.remaining_balance) <= 0.005 || !item.project_id)
+            )}
+            {isClientIncome &&
+              relationField(
+                'project_id',
+                dictionary.fields.project,
+                projects,
+                item => `${item.project_code} · ${item.title}`,
+                value => {
+                  if (value) {
+                    setValue('client_id', value.client_id, { shouldDirty: true, shouldValidate: true })
+                  } else if (!contractId) {
+                    setValue('client_id', '', { shouldDirty: true, shouldValidate: true })
+                  }
+                },
+                undefined,
+                Boolean(invoiceId)
+              )}
+            {isClientIncome &&
+              relationField(
+                'contract_id',
+                dictionary.fields.contract,
+                contracts,
+                item => `${item.contract_number} · ${item.title}`,
+                value => {
+                  if (value) {
+                    setValue('client_id', value.client_id, { shouldDirty: true, shouldValidate: true })
+                  } else if (!projectId) {
+                    setValue('client_id', '', { shouldDirty: true, shouldValidate: true })
+                  }
+                },
+                undefined,
+                Boolean(invoiceId)
+              )}
             {isClientIncome &&
               relationField(
                 'client_id',
                 dictionary.fields.client,
                 options.clients,
-                dictionary.placeholders.client,
                 item => item.company_name,
                 value => {
-                  if (!value) return
+                  if (!value) {
+                    setValue('project_id', '', { shouldDirty: true, shouldValidate: true })
+                    setValue('contract_id', '', { shouldDirty: true, shouldValidate: true })
+                    setValue('invoice_id', '', { shouldDirty: true, shouldValidate: true })
+
+                    return
+                  }
+
                   const selectedProject = options.projects.find(item => item.id === projectId)
                   const selectedContract = options.contracts.find(item => item.id === contractId)
                   const selectedInvoice = options.invoices.find(item => item.id === invoiceId)
@@ -243,15 +322,10 @@ const FinanceIncomeFormDrawer = ({ open, income, options, locale, dictionary, on
                   slotProps={{
                     select: {
                       displayEmpty: true,
-                      renderValue: selected =>
-                        options.incomeTypes.find(item => item.id === selected)?.label ||
-                        dictionary.placeholders.incomeType
+                      renderValue: selected => options.incomeTypes.find(item => item.id === selected)?.label || ''
                     }
                   }}
                 >
-                  <MenuItem value='' disabled>
-                    {dictionary.placeholders.incomeType}
-                  </MenuItem>
                   {options.incomeTypes.map(item => (
                     <MenuItem key={item.id} value={item.id}>
                       {item.label}
@@ -260,66 +334,16 @@ const FinanceIncomeFormDrawer = ({ open, income, options, locale, dictionary, on
                 </CustomTextField>
               )}
             />
-            {isClientIncome &&
-              relationField(
-                'project_id',
-                dictionary.fields.project,
-                projects,
-                dictionary.placeholders.project,
-                item => `${item.project_code} · ${item.title}`,
-                value => value && setValue('client_id', value.client_id),
-                undefined,
-                Boolean(invoiceId)
-              )}
-            {isClientIncome &&
-              relationField(
-                'contract_id',
-                dictionary.fields.contract,
-                contracts,
-                dictionary.placeholders.contract,
-                item => `${item.contract_number} · ${item.title}`,
-                value => value && setValue('client_id', value.client_id),
-                undefined,
-                Boolean(invoiceId)
-              )}
-            {relationField(
-              'invoice_id',
-              dictionary.fields.invoice,
-              invoices,
-              dictionary.placeholders.invoice,
-              item => item.invoice_number,
-              value => {
-                if (!value) {
-                  clearErrors(['client_id', 'contract_id', 'project_id', 'invoice_id'])
-
-                  return
-                }
-
-                setValue('client_id', value.client_id)
-                setValue('contract_id', value.contract_id)
-                setValue('project_id', value.project_id || '')
-                clearErrors(['client_id', 'contract_id', 'project_id', 'invoice_id'])
-                const outstanding = Number(value.remaining_balance) > 0 ? value.remaining_balance : value.amount
-
-                setValue('total_amount', String(outstanding || ''))
-                setValue('paid_amount', String(outstanding || ''))
-                setValue('currency', value.currency || options.baseCurrency || 'AFN')
-                setValue('exchange_rate', String(value.exchange_rate || options.exchangeRate || '65'))
-              },
-              item => item.id !== income?.invoice_id && (Number(item.remaining_balance) <= 0.005 || !item.project_id)
-            )}
             {relationField(
               'received_by_id',
               dictionary.fields.receivedBy,
               options.staff,
-              dictionary.placeholders.receivedBy,
               item => `${item.full_name} · ${item.position}`
             )}
             {relationField(
               'payment_method_id',
               dictionary.fields.paymentMethod,
               options.paymentMethods,
-              dictionary.placeholders.paymentMethod,
               item => item.label
             )}
             {field('payment_date', dictionary.fields.paymentDate, {
@@ -335,7 +359,7 @@ const FinanceIncomeFormDrawer = ({ open, income, options, locale, dictionary, on
             })}
             {field('paid_amount', dictionary.fields.paidAmount, {
               type: 'number',
-              inputProps: { min: 0, step: '0.01' }
+              inputProps: { min: 0, step: '0.01', readOnly: Boolean(invoiceId) }
             })}
             <Controller
               name='currency'
@@ -410,13 +434,11 @@ const FinanceIncomeFormDrawer = ({ open, income, options, locale, dictionary, on
             })}
           {field('notes', dictionary.fields.notes, {
             multiline: true,
-            minRows: 2,
-            placeholder: dictionary.placeholders.notes
+            minRows: 2
           })}
           {field('pay_details', dictionary.fields.paymentDetails, {
             multiline: true,
-            minRows: 3,
-            placeholder: dictionary.placeholders.paymentDetails
+            minRows: 3
           })}
         </FormSectionCards>
         <div className='form-surface-actions -mx-5 -mb-5 mt-auto flex justify-end gap-3 px-5 pt-5'>

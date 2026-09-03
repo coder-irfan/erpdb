@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 
 import { valibotResolver } from '@hookform/resolvers/valibot'
 import Autocomplete from '@mui/material/Autocomplete'
@@ -10,7 +10,7 @@ import Drawer from '@mui/material/Drawer'
 import IconButton from '@mui/material/IconButton'
 import MenuItem from '@mui/material/MenuItem'
 import Typography from '@mui/material/Typography'
-import { Controller, useForm } from 'react-hook-form'
+import { Controller, useForm, useWatch } from 'react-hook-form'
 import { toast } from 'sonner'
 
 import CustomTextField from '@core/components/mui/TextField'
@@ -38,13 +38,30 @@ const emptyValues = (options, defaultProjectId = '') => ({
 const TaskFormDrawer = ({ open, task, options, defaultProjectId = '', locale, dictionary, onClose, onSaved }) => {
   const {
     control,
+    getValues,
     handleSubmit,
     reset,
+    setValue,
     formState: { errors, isSubmitting }
   } = useForm({
     resolver: valibotResolver(createTaskSchema(dictionary.validation)),
     defaultValues: emptyValues(options, defaultProjectId)
   })
+
+  const projectId = useWatch({ control, name: 'project_id' })
+  const watchedAssigneeIds = useWatch({ control, name: 'assignee_ids' })
+  const assigneeIds = useMemo(() => watchedAssigneeIds || [], [watchedAssigneeIds])
+  const selectedProject = options.projects.find(project => project.id === projectId)
+
+  const projectMemberIds = useMemo(
+    () => new Set((selectedProject?.members || []).map(member => member.staff_id)),
+    [selectedProject]
+  )
+
+  const projectStaff = useMemo(
+    () => options.staff.filter(staff => projectMemberIds.has(staff.id)),
+    [options.staff, projectMemberIds]
+  )
 
   const today = toDateInputValue(new Date())
   const createdDate = task?.created_at ? toDateInputValue(task.created_at) : today
@@ -68,6 +85,31 @@ const TaskFormDrawer = ({ open, task, options, defaultProjectId = '', locale, di
         : emptyValues(options, defaultProjectId)
     )
   }, [defaultProjectId, open, options, reset, task])
+
+  useEffect(() => {
+    if (!open) return
+
+    const validAssigneeIds = assigneeIds.filter(id => projectMemberIds.has(id))
+
+    if (validAssigneeIds.length !== assigneeIds.length) {
+      setValue('assignee_ids', validAssigneeIds, { shouldDirty: true, shouldValidate: true })
+    }
+  }, [assigneeIds, open, projectMemberIds, setValue])
+
+  const selectProject = (field, project) => {
+    field.onChange(project?.id || '')
+
+    if (!project) {
+      setValue('assignee_ids', [], { shouldDirty: true, shouldValidate: true })
+
+      return
+    }
+
+    const memberIds = new Set((project?.members || []).map(member => member.staff_id))
+    const validAssigneeIds = (getValues('assignee_ids') || []).filter(id => memberIds.has(id))
+
+    setValue('assignee_ids', validAssigneeIds, { shouldDirty: true, shouldValidate: true })
+  }
 
   const submit = async values => {
     const result = task ? await updateTask(task.id, { ...values, locale }) : await createTask({ ...values, locale })
@@ -95,7 +137,7 @@ const TaskFormDrawer = ({ open, task, options, defaultProjectId = '', locale, di
     />
   )
 
-  const select = (name, label, items, placeholder) => (
+  const select = (name, label, items) => (
     <Controller
       name={name}
       control={control}
@@ -110,13 +152,10 @@ const TaskFormDrawer = ({ open, task, options, defaultProjectId = '', locale, di
           slotProps={{
             select: {
               displayEmpty: true,
-              renderValue: value => items.find(item => item.id === value)?.label || placeholder
+              renderValue: value => items.find(item => item.id === value)?.label || ''
             }
           }}
         >
-          <MenuItem value='' disabled>
-            {placeholder}
-          </MenuItem>
           {items.map(item => (
             <MenuItem key={item.id} value={item.id}>
               {item.label}
@@ -162,14 +201,13 @@ const TaskFormDrawer = ({ open, task, options, defaultProjectId = '', locale, di
               <Autocomplete
                 options={options.projects}
                 value={options.projects.find(project => project.id === input.value) || null}
-                onChange={(_, value) => input.onChange(value?.id || '')}
+                onChange={(_, value) => selectProject(input, value)}
                 getOptionLabel={option => `${option.project_code} · ${option.title}`}
                 isOptionEqualToValue={(option, value) => option.id === value.id}
                 renderInput={params => (
                   <CustomTextField
                     {...params}
                     label={dictionary.fields.project}
-                    placeholder={dictionary.placeholders.project}
                     error={Boolean(errors.project_id)}
                     helperText={errors.project_id?.message}
                   />
@@ -198,9 +236,10 @@ const TaskFormDrawer = ({ open, task, options, defaultProjectId = '', locale, di
             render={({ field: input }) => (
               <Autocomplete
                 multiple
-                options={options.staff}
-                value={options.staff.filter(staff => input.value?.includes(staff.id))}
+                options={projectStaff}
+                value={projectStaff.filter(staff => input.value?.includes(staff.id))}
                 onChange={(_, values) => input.onChange(values.map(value => value.id))}
+                disabled={!projectId}
                 getOptionLabel={option => option.full_name}
                 isOptionEqualToValue={(option, value) => option.id === value.id}
                 renderTags={(values, getTagProps) =>
@@ -214,17 +253,21 @@ const TaskFormDrawer = ({ open, task, options, defaultProjectId = '', locale, di
                   <CustomTextField
                     {...params}
                     label={dictionary.fields.assignees}
-                    placeholder={dictionary.placeholders.assignees}
                     error={Boolean(errors.assignee_ids)}
-                    helperText={errors.assignee_ids?.message}
+                    helperText={
+                      errors.assignee_ids?.message ||
+                      (projectId && projectStaff.length === 0
+                        ? 'No staff members are assigned to this project.'
+                        : undefined)
+                    }
                   />
                 )}
               />
             )}
           />
           <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
-            {select('status_id', dictionary.fields.status, options.statuses, dictionary.placeholders.status)}
-            {select('priority_id', dictionary.fields.priority, options.priorities, dictionary.placeholders.priority)}
+            {select('status_id', dictionary.fields.status, options.statuses)}
+            {select('priority_id', dictionary.fields.priority, options.priorities)}
             {field('estimated_hours', dictionary.fields.estimatedHours, {
               type: 'number',
               inputProps: { min: 0, step: '0.25' }

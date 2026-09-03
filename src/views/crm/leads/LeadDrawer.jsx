@@ -178,9 +178,6 @@ const LeadDrawer = ({ open, lead, options, baseCurrency, locale, dictionary, onC
                   error={Boolean(errors.source_id)}
                   helperText={errors.source_id?.message}
                 >
-                  <MenuItem value='' disabled>
-                    {dictionary.placeholders.source}
-                  </MenuItem>
                   {options.sources.map(item => (
                     <MenuItem key={item.id} value={item.id}>
                       {item.label}
@@ -201,9 +198,6 @@ const LeadDrawer = ({ open, lead, options, baseCurrency, locale, dictionary, onC
                   error={Boolean(errors.status_id)}
                   helperText={errors.status_id?.message}
                 >
-                  <MenuItem value='' disabled>
-                    {dictionary.placeholders.status}
-                  </MenuItem>
                   {options.statuses.map(item => (
                     <MenuItem key={item.id} value={item.id}>
                       {item.label}
@@ -224,7 +218,6 @@ const LeadDrawer = ({ open, lead, options, baseCurrency, locale, dictionary, onC
                   error={Boolean(errors.assigned_to_id)}
                   helperText={errors.assigned_to_id?.message}
                 >
-                  <MenuItem value=''>{dictionary.placeholders.unassigned}</MenuItem>
                   {options.staff.map(item => (
                     <MenuItem key={item.id} value={item.id}>
                       {item.full_name}

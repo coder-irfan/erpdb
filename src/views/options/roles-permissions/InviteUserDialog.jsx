@@ -67,7 +67,6 @@ const InviteUserDialog = ({ open, roles, staff, onClose, onSubmit, translations 
           <CustomTextField
             fullWidth
             label={translations.inviteForm.fullName}
-            placeholder={translations.inviteForm.fullNamePlaceholder}
             autoComplete='name'
             error={Boolean(errors.name)}
             helperText={errors.name?.message}
@@ -78,7 +77,6 @@ const InviteUserDialog = ({ open, roles, staff, onClose, onSubmit, translations 
             fullWidth
             type='email'
             label={translations.inviteForm.email}
-            placeholder={translations.inviteForm.emailPlaceholder}
             autoComplete='email'
             error={Boolean(errors.email)}
             helperText={errors.email?.message}
@@ -95,9 +93,6 @@ const InviteUserDialog = ({ open, roles, staff, onClose, onSubmit, translations 
             disabled={isSubmitting}
             {...register('roleId')}
           >
-            <MenuItem value='' disabled>
-              {translations.inviteForm.selectRole}
-            </MenuItem>
             {roles.map(role => (
               <MenuItem key={role.id} value={role.id}>
                 {role.displayName}
@@ -114,7 +109,7 @@ const InviteUserDialog = ({ open, roles, staff, onClose, onSubmit, translations 
             disabled={isSubmitting}
             {...register('staffId', { setValueAs: value => value || null })}
           >
-            <MenuItem value=''>{staff.length > 0 ? translations.inviteForm.selectEmployee : translations.inviteForm.noStaffAvailable}</MenuItem>
+            <MenuItem value=''>{staff.length > 0 ? '' : translations.inviteForm.noStaffAvailable}</MenuItem>
             {staff.map(employee => (
               <MenuItem key={employee.id} value={employee.id}>
                 {`${employee.name} — ${employee.position}`}

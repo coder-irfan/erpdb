@@ -16,7 +16,7 @@ import {
   getFinanceIncomes,
   markFinanceIncomePaid
 } from '@/actions/financeIncome'
-import ConfirmDeleteModal from '@/components/dialogs/ConfirmDeleteModal'
+import ConfirmationDeleteModal from '@/components/dialogs/ConfirmationDeleteModal'
 import TableFiltersPopover from '@/components/table/TableFiltersPopover'
 import FinancePrintDialog from '@/views/finance/FinancePrintDialog'
 
@@ -186,12 +186,12 @@ const FinanceIncomeView = ({ locale, dictionary, canWrite, canDelete, setup }) =
                 }}
                 getOptionLabel={option => option.company_name}
                 isOptionEqualToValue={(option, value) => option.id === value.id}
-                renderInput={params => <CustomTextField {...params} label={dictionary.filters.client} placeholder={dictionary.filters.allClients} />}
+                renderInput={params => <CustomTextField {...params} label={dictionary.filters.client} />}
               />
               <CustomTextField select label={dictionary.filters.project} value={projectId} onChange={event => { setProjectId(event.target.value); setPage(0) }} className='is-full'>
                 <MenuItem value=''>{dictionary.filters.allProjects}</MenuItem>
                 {options.projects.filter(project => !clientId || project.client_id === clientId).map(project => (
-                  <MenuItem key={project.id} value={project.id}>{project.project_code} · {project.title}</MenuItem>
+                  <MenuItem key={project.id} value={project.id}>{project.project_code} Â· {project.title}</MenuItem>
                 ))}
               </CustomTextField>
               <CustomTextField select label={dictionary.filters.type} value={typeId} onChange={event => { setTypeId(event.target.value); setPage(0) }} className='is-full'>
@@ -254,7 +254,7 @@ const FinanceIncomeView = ({ locale, dictionary, canWrite, canDelete, setup }) =
       <FinancePrintDialog open={Boolean(printTarget)} title='OFFICIAL PAYMENT RECEIPT' printLabel={dictionary.actions.printReceipt} closeLabel={dictionary.actions.close} onClose={() => setPrintTarget(null)}>
         {printTarget && <FinanceIncomePrint income={printTarget} setup={setup} locale={locale} />}
       </FinancePrintDialog>
-      <ConfirmDeleteModal
+      <ConfirmationDeleteModal
         open={Boolean(deleteTarget)}
         title={dictionary.delete.title}
         description={dictionary.delete.description}

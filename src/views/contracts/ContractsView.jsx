@@ -11,7 +11,7 @@ import { toast } from 'sonner'
 
 import CustomTextField from '@core/components/mui/TextField'
 import { deleteContract, getContractFormOptions, getContracts, runContractExpirationAudit, updateContractStatus } from '@/actions/contracts'
-import ConfirmDeleteModal from '@/components/dialogs/ConfirmDeleteModal'
+import ConfirmationDeleteModal from '@/components/dialogs/ConfirmationDeleteModal'
 import TableFiltersPopover from '@/components/table/TableFiltersPopover'
 import NativeDateTimeInput from '@/components/inputs/NativeDateTimeInput'
 import { CONTRACT_TYPE_DOMAINS } from '@/data/contractTypes'
@@ -173,7 +173,7 @@ const ContractsView = ({ locale, dictionary, setup, canWrite, canDelete, canRunA
                 <MenuItem value=''>{dictionary.filters.allServices}</MenuItem>
                 {filterTypeOptions.map(option => <MenuItem key={option.id} value={option.id}>{option.label}</MenuItem>)}
               </CustomTextField>
-              {scope !== 'OTHERS' && <Autocomplete options={formOptions.clients} value={formOptions.clients.find(client => client.id === clientId) || null} onChange={(_, value) => { setClientId(value?.id || ''); setPage(0) }} getOptionLabel={option => option.company_name} isOptionEqualToValue={(option, value) => option.id === value.id} renderInput={params => <CustomTextField {...params} label={dictionary.filters.client} placeholder={dictionary.filters.allClients} />} />}
+              {scope !== 'OTHERS' && <Autocomplete options={formOptions.clients} value={formOptions.clients.find(client => client.id === clientId) || null} onChange={(_, value) => { setClientId(value?.id || ''); setPage(0) }} getOptionLabel={option => option.company_name} isOptionEqualToValue={(option, value) => option.id === value.id} renderInput={params => <CustomTextField {...params} label={dictionary.filters.client} />} />}
               <div className='grid grid-cols-1 gap-3 sm:grid-cols-2'>
                 <NativeDateTimeInput locale={locale} label={dictionary.filters.fromDate} value={fromDate} onChange={event => { setFromDate(event.target.value); setPage(0) }} />
                 <NativeDateTimeInput locale={locale} label={dictionary.filters.toDate} value={toDate} onChange={event => { setToDate(event.target.value); setPage(0) }} />
@@ -189,7 +189,7 @@ const ContractsView = ({ locale, dictionary, setup, canWrite, canDelete, canRunA
       <ContractFormDrawer open={formOpen} contract={editingContract} formOptions={formOptions} locale={locale} dictionary={dictionary} contractContext={contractContext} onClose={() => setFormOpen(false)} onSaved={refresh} />
       <ContractDetailModal open={Boolean(detailId)} contractId={detailId} locale={locale} baseCurrency={data.baseCurrency} dictionary={dictionary} canWrite={canWrite} refreshKey={detailRefresh} contractContext={contractContext} onClose={() => setDetailId(null)} onEdit={edit} />
       <ContractPrintModal open={Boolean(printId)} contractId={printId} setup={setup} locale={locale} dictionary={dictionary} other={scope === 'OTHERS'} onClose={() => setPrintId(null)} />
-      <ConfirmDeleteModal open={Boolean(deleteTarget)} title={dictionary.delete.title} description={dictionary.delete.description} itemName={deleteTarget?.contract_number} confirmText={dictionary.actions.delete} cancelText={dictionary.actions.cancel} loading={deleting} onConfirm={remove} onClose={() => setDeleteTarget(null)} />
+      <ConfirmationDeleteModal open={Boolean(deleteTarget)} title={dictionary.delete.title} description={dictionary.delete.description} itemName={deleteTarget?.contract_number} confirmText={dictionary.actions.delete} cancelText={dictionary.actions.cancel} loading={deleting} onConfirm={remove} onClose={() => setDeleteTarget(null)} />
       <ContractTerminationDialog
         open={Boolean(terminationTarget)}
         contract={terminationTarget?.contract}

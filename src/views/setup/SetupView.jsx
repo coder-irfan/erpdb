@@ -18,7 +18,7 @@ import { useSettings } from '@core/hooks/useSettings'
 import FileUpload from '@/components/common/FileUpload'
 import LoadingButtonContent from '@/components/LoadingButtonContent'
 import ColorPickerField from '@/components/inputs/ColorPickerField'
-import ConfirmationComponent from '@/components/dialogs/ConfirmationComponent'
+import ConfirmationDeleteModal from '@/components/dialogs/ConfirmationDeleteModal'
 import NativeDateTimeInput from '@/components/inputs/NativeDateTimeInput'
 import themeConfig from '@/configs/themeConfig'
 
@@ -598,7 +598,7 @@ const SetupView = ({ dictionary, initialSettings, locale }) => {
         </div>
       </div>
 
-      <ConfirmationComponent
+      <ConfirmationDeleteModal
         open={discardDialogOpen}
         title={dictionary.discardChangesTitle}
         message={dictionary.discardChangesMessage}

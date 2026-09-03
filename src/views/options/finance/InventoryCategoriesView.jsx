@@ -15,7 +15,7 @@ import Typography from '@mui/material/Typography'
 import { toast } from 'sonner'
 
 import CustomTextField from '@core/components/mui/TextField'
-import ConfirmDeleteModal from '@/components/dialogs/ConfirmDeleteModal'
+import ConfirmationDeleteModal from '@/components/dialogs/ConfirmationDeleteModal'
 import LoadingButtonContent from '@/components/LoadingButtonContent'
 import EntityActionsMenu from '@/components/table/EntityActionsMenu'
 import TableEmptyStateRow from '@/components/table/TableEmptyStateRow'
@@ -28,7 +28,7 @@ const TYPE_QUERY = 'type=INVENTORY_CATEGORY'
 const localeMap = { en: 'en-US', fa: 'fa-AF', ps: 'ps-AF' }
 
 const formatDate = (value, locale) => {
-  if (!value) return '—'
+  if (!value) return 'â€”'
 
   return new Intl.DateTimeFormat(localeMap[locale] || 'en-US', {
     year: 'numeric',
@@ -196,7 +196,7 @@ const InventoryCategoriesView = ({ locale, dictionary, canWrite, canDelete }) =>
         renderMobilePrimary={option => (
           <div className='min-is-0'>
             <Typography className='truncate font-medium'>{option.label}</Typography>
-            <Typography color='text.secondary' className='line-clamp-2'>{option.description || '—'}</Typography>
+            <Typography color='text.secondary' className='line-clamp-2'>{option.description || 'â€”'}</Typography>
           </div>
         )}
         renderMobileStatus={option => (
@@ -236,9 +236,9 @@ const InventoryCategoriesView = ({ locale, dictionary, canWrite, canDelete }) =>
                     <Typography className='font-medium'>{option.label}</Typography>
                   </td>
                   <td>
-                    <Tooltip title={option.description || '—'}>
+                    <Tooltip title={option.description || 'â€”'}>
                     <Typography color='text.secondary' className='max-is-[440px] truncate'>
-                      {option.description || '—'}
+                      {option.description || 'â€”'}
                     </Typography>
                     </Tooltip>
                   </td>
@@ -298,7 +298,7 @@ const InventoryCategoriesView = ({ locale, dictionary, canWrite, canDelete }) =>
           </Button>
         </DialogActions>
       </Dialog>
-      <ConfirmDeleteModal
+      <ConfirmationDeleteModal
         open={Boolean(deleteTarget)}
         title={dictionary.categoryDelete.title}
         description={dictionary.categoryDelete.description}

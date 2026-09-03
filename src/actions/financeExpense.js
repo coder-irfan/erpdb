@@ -15,7 +15,7 @@ import { prisma } from '@/libs/prisma'
 import { serializeData } from '@/libs/serialize'
 import { createFinanceExpenseSchema } from '@/schemas/financeExpense'
 import { toUtcDateOnly } from '@/utils/contractDuration'
-import { SYSTEM_BASE_CURRENCY, convertToBaseCurrency, effectiveAfnExchangeRate, normalizeToAfn, toFiniteNumber } from '@/utils/formatCurrency'
+import { SYSTEM_BASE_CURRENCY, convertToBaseCurrency, normalizeToAfn, toFiniteNumber } from '@/utils/formatCurrency'
 import { hasAdministrativeRole, hasAnyPermission } from '@/utils/rbac'
 
 const READ_PERMISSIONS = ['finance:read', 'finance_expense:read']
@@ -41,6 +41,8 @@ const projectSelect = {
   project_code: true,
   title: true,
   client_id: true,
+  currency: true,
+  exchange_rate: true,
   client: { select: { id: true, company_name: true } }
 }
 
@@ -152,8 +154,13 @@ const prepareExpenseData = async (values, translations, current = null) => {
   const typeId = normalizeId(values.expense_type_id)
   const paymentMethodId = normalizeId(values.payment_method_id)
 
-  const [project, staff, expenseType, paymentMethod, setup] = await Promise.all([
-    projectId ? prisma.project.findUnique({ where: { id: projectId }, select: { id: true } }) : null,
+  const [project, staff, expenseType, paymentMethod] = await Promise.all([
+    projectId
+      ? prisma.project.findUnique({
+          where: { id: projectId },
+          select: { id: true, currency: true, exchange_rate: true }
+        })
+      : null,
     staffId ? prisma.hrmstaff.findUnique({ where: { id: staffId }, select: { id: true } }) : null,
     prisma.option.findFirst({
       where: { id: typeId, category: 'EXPENSE_TYPE', is_active: true },
@@ -164,8 +171,7 @@ const prepareExpenseData = async (values, translations, current = null) => {
           where: { id: paymentMethodId, category: 'PAYMENT_METHOD', is_active: true },
           select: { id: true }
         })
-      : null,
-    getCompanySetupRecord()
+      : null
   ])
 
   if ((projectId && !project) || (staffId && !staff) || !expenseType || (paymentMethodId && !paymentMethod)) {
@@ -180,11 +186,11 @@ const prepareExpenseData = async (values, translations, current = null) => {
 
   const quantity = Number.parseInt(values.quantity, 10)
   const unitPrice = toFiniteNumber(values.unit_price)
-  const currency = current?.currency || values.currency
+  const currency = project?.currency || values.currency
+  const exchangeRate = toFiniteNumber(project?.exchange_rate || values.exchange_rate)
 
-  const exchangeRate = current
-    ? toFiniteNumber(current.exchange_rate)
-    : effectiveAfnExchangeRate(currency, setup.usd_afn_exchange_rate)
+  const financialSettingsChanged =
+    !current || current.currency !== currency || toFiniteNumber(current.exchange_rate) !== exchangeRate
 
   if (!Number.isSafeInteger(quantity) || quantity <= 0 || unitPrice <= 0 || exchangeRate <= 0) {
     return { success: false, error: translations.validation.positiveInvalid }
@@ -212,7 +218,7 @@ const prepareExpenseData = async (values, translations, current = null) => {
       unit_price: new Prisma.Decimal(unitPrice),
       sub_total: new Prisma.Decimal(subTotal),
       exchange_rate: new Prisma.Decimal(exchangeRate),
-      fx_snapshot_at: current?.fx_snapshot_at || new Date(),
+      fx_snapshot_at: financialSettingsChanged ? new Date() : current.fx_snapshot_at || new Date(),
       amount_base: new Prisma.Decimal(amountBase),
       currency
     }
@@ -327,7 +333,10 @@ export const getFinanceExpenseFormOptions = async (payload = {}) => {
       data: {
         expenseTypes,
         paymentMethods,
-        projects,
+        projects: projects.map(project => ({
+          ...project,
+          exchange_rate: numberString(project.exchange_rate, 4)
+        })),
         staff: staff.map(withFullName),
         baseCurrency: SYSTEM_BASE_CURRENCY,
         exchangeRate: setup.usd_afn_exchange_rate || '65.0000'

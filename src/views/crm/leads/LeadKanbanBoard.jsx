@@ -11,7 +11,7 @@ import Typography from '@mui/material/Typography'
 import UserAvatar from '@/components/common/UserAvatar'
 import DualCurrencyAmount from '@/components/currency/DualCurrencyAmount'
 import KanbanCardSkeleton from '@/components/common/KanbanCardSkeleton'
-import ConfirmationComponent from '@/components/dialogs/ConfirmationComponent'
+import ConfirmationDeleteModal from '@/components/dialogs/ConfirmationDeleteModal'
 import CustomTextField from '@core/components/mui/TextField'
 import { formatCurrency } from '@/utils/formatCurrency'
 
@@ -170,12 +170,12 @@ const LeadKanbanBoard = ({
           )
         })}
       </div>
-      <ConfirmationComponent
+      <ConfirmationDeleteModal
         open={Boolean(pendingChange)}
-        title={locale === 'en' ? 'Confirm Status Change' : locale === 'fa' ? 'تأیید تغییر وضعیت' : 'د حالت بدلون تایید'}
-        message={locale === 'en' ? `Change this lead's status to “${pendingChange?.status?.label || ''}”?` : `«${pendingChange?.status?.label || ''}»`}
-        confirmText={locale === 'en' ? 'Change Status' : locale === 'fa' ? 'تغییر وضعیت' : 'حالت بدلول'}
-        cancelText={locale === 'en' ? 'Cancel' : 'لغو'}
+        title={locale === 'en' ? 'Confirm Status Change' : locale === 'fa' ? 'ØªØ£ÛŒÛŒØ¯ ØªØºÛŒÛŒØ± ÙˆØ¶Ø¹ÛŒØª' : 'Ø¯ Ø­Ø§Ù„Øª Ø¨Ø¯Ù„ÙˆÙ† ØªØ§ÛŒÛŒØ¯'}
+        message={locale === 'en' ? `Change this lead's status to â€œ${pendingChange?.status?.label || ''}â€?` : `Â«${pendingChange?.status?.label || ''}Â»`}
+        confirmText={locale === 'en' ? 'Change Status' : locale === 'fa' ? 'ØªØºÛŒÛŒØ± ÙˆØ¶Ø¹ÛŒØª' : 'Ø­Ø§Ù„Øª Ø¨Ø¯Ù„ÙˆÙ„'}
+        cancelText={locale === 'en' ? 'Cancel' : 'Ù„ØºÙˆ'}
         onClose={() => setPendingChange(null)}
         onConfirm={async () => {
           await onStatusChange(pendingChange.lead, pendingChange.status.id)

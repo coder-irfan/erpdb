@@ -3036,6 +3036,8 @@
       "month": "Payroll Month",
       "status": "Status",
       "allStatuses": "All statuses",
+      "currentPeriod": "Current Period (In Progress)",
+      "futurePeriod": "Future payroll periods cannot be processed",
       "clear": "Clear filters"
     },
     "table": {
@@ -3049,9 +3051,12 @@
       "actions": "Actions"
     },
     "actions": {
-      "generate": "Generate Payroll for {month}",
+      "generate": "Generate Payslips for {month}",
       "generating": "Generating payroll...",
       "payrollGenerated": "Payroll Generated",
+      "finalize": "Finalize Payroll for {month}",
+      "payrollFinalized": "Payroll Finalized",
+      "currentPeriod": "Current Period (In Progress)",
       "view": "View Details",
       "edit": "Add Bonus / Adjust Payroll",
       "markPaid": "Mark as Paid",
@@ -3140,6 +3145,7 @@
     },
     "status": {
       "DRAFT": "Draft",
+      "FINALIZED": "Finalized",
       "PAID": "Paid"
     },
     "common": {
@@ -3196,6 +3202,12 @@
       "created": "Payroll record created successfully.",
       "paid": "Salary marked paid and loan repayment posted successfully.",
       "alreadyPaid": "This salary has already been paid.",
+      "finalized": "Payroll finalized. Attendance for this period is now locked.",
+      "alreadyFinalized": "Payroll for this period is already finalized.",
+      "payrollNotFound": "Generate draft payroll before finalizing this period.",
+      "notFinalized": "Payroll must be finalized before it can be paid.",
+      "finalizedLocked": "Finalized or paid payroll records cannot be changed or deleted.",
+      "activePeriodBlocked": "Payroll cannot be generated or processed for an active, unfinished month.",
       "earlyConfirmationRequired": "Early payroll execution requires explicit confirmation.",
       "paidLocked": "Paid payroll records cannot be changed or deleted.",
       "deleted": "Draft payroll record deleted successfully.",

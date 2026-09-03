@@ -12,7 +12,7 @@ import { toast } from 'sonner'
 
 import CustomTextField from '@core/components/mui/TextField'
 import { deleteTask, getTaskFormOptions, getTasks, updateTaskStatus } from '@/actions/tasks'
-import ConfirmDeleteModal from '@/components/dialogs/ConfirmDeleteModal'
+import ConfirmationDeleteModal from '@/components/dialogs/ConfirmationDeleteModal'
 import TableFiltersPopover from '@/components/table/TableFiltersPopover'
 
 import TaskDetailModal from './TaskDetailModal'
@@ -254,7 +254,7 @@ const TasksView = ({ locale, dictionary, canManage, canUpdate, canDelete, fixedP
                 setProjectId,
                 options.projects,
                 dictionary.filters.allProjects,
-                item => `${item.project_code} · ${item.title}`
+                item => `${item.project_code} Â· ${item.title}`
               )}
               {filterSelect(
                 dictionary.filters.priority,
@@ -346,7 +346,7 @@ const TasksView = ({ locale, dictionary, canManage, canUpdate, canDelete, fixedP
         onClose={() => setHoursTask(null)}
         onSaved={refresh}
       />
-      <ConfirmDeleteModal
+      <ConfirmationDeleteModal
         open={Boolean(deleteTarget)}
         title={dictionary.delete.title}
         description={dictionary.delete.description}

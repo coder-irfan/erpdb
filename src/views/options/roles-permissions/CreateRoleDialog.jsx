@@ -79,7 +79,6 @@ const CreateRoleDialog = ({ open, groups, onClose, onSubmit, translations }) => 
             <CustomTextField
               fullWidth
               label={translations.createRoleForm.name}
-              placeholder={translations.createRoleForm.namePlaceholder}
               error={Boolean(errors.name)}
               helperText={errors.name?.message}
               disabled={isSubmitting}
@@ -88,7 +87,6 @@ const CreateRoleDialog = ({ open, groups, onClose, onSubmit, translations }) => 
             <CustomTextField
               fullWidth
               label={translations.createRoleForm.displayName}
-              placeholder={translations.createRoleForm.displayNamePlaceholder}
               error={Boolean(errors.displayName)}
               helperText={errors.displayName?.message}
               disabled={isSubmitting}
@@ -100,7 +98,6 @@ const CreateRoleDialog = ({ open, groups, onClose, onSubmit, translations }) => 
             multiline
             minRows={3}
             label={translations.createRoleForm.descriptionLabel}
-            placeholder={translations.createRoleForm.descriptionPlaceholder}
             error={Boolean(errors.description)}
             helperText={errors.description?.message}
             disabled={isSubmitting}

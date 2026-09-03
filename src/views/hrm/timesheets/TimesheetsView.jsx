@@ -16,7 +16,7 @@ import { toast } from 'sonner'
 import CustomTextField from '@core/components/mui/TextField'
 import QuickContact from '@/components/common/QuickContact'
 import UserAvatar from '@/components/common/UserAvatar'
-import ConfirmDeleteModal from '@/components/dialogs/ConfirmDeleteModal'
+import ConfirmationDeleteModal from '@/components/dialogs/ConfirmationDeleteModal'
 import DashboardTablePagination from '@/components/table/DashboardTablePagination'
 import EntityActionsMenu from '@/components/table/EntityActionsMenu'
 import TableEmptyStateRow from '@/components/table/TableEmptyStateRow'
@@ -663,7 +663,7 @@ const TimesheetsView = ({
         dictionary={dictionary}
         onClose={() => setViewingRecord(null)}
       />
-      <ConfirmDeleteModal
+      <ConfirmationDeleteModal
         open={Boolean(deleteTarget)}
         title={dictionary.messages.deleteTitle}
         description={dictionary.messages.deleteDescription}

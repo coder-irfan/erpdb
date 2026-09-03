@@ -237,7 +237,7 @@ const ContractFormDrawer = ({
     )
   }
 
-  const selectField = (name, label, options, placeholder) => (
+  const selectField = (name, label, options) => (
     <Controller
       name={name}
       control={control}
@@ -252,11 +252,10 @@ const ContractFormDrawer = ({
           slotProps={{
             select: {
               displayEmpty: true,
-              renderValue: selected => options.find(option => option.id === selected)?.label || placeholder
+              renderValue: selected => options.find(option => option.id === selected)?.label || ''
             }
           }}
         >
-          <MenuItem value=''>{placeholder}</MenuItem>
           {options.map(option => (
             <MenuItem key={option.id} value={option.id}>
               {option.label}
@@ -282,7 +281,6 @@ const ContractFormDrawer = ({
             <CustomTextField
               {...params}
               label='Customer / Client'
-              placeholder={dictionary.placeholders.client}
               error={Boolean(errors.client_id)}
               helperText={errors.client_id?.message}
             />
@@ -331,8 +329,7 @@ const ContractFormDrawer = ({
               {selectField(
                 'staff_id',
                 dictionary.fields.staffMember,
-                (formOptions.staff || []).map(person => ({ ...person, label: person.full_name })),
-                dictionary.placeholders.staffMember
+                (formOptions.staff || []).map(person => ({ ...person, label: person.full_name }))
               )}
               {selectedStaff && (
                 <div className='grid grid-cols-1 gap-3 rounded border border-primary/20 bg-primaryLighter p-4 sm:grid-cols-2'>
@@ -356,14 +353,12 @@ const ContractFormDrawer = ({
                 {selectField(
                   'contract_type_id',
                   dictionary.fields.contractType,
-                  typeOptions,
-                  dictionary.placeholders.contractType
+                  typeOptions
                 )}
                 {selectField(
                   'template_id',
                   dictionary.fields.template,
-                  formOptions.templates || [],
-                  dictionary.placeholders.template
+                  formOptions.templates || []
                 )}
                 {field('start_date', dictionary.fields.startDate, {
                   type: 'date',
@@ -399,14 +394,12 @@ const ContractFormDrawer = ({
               {selectField(
                 'lead_id',
                 'Linked Lead (Optional)',
-                (formOptions.leads || []).map(lead => ({ ...lead, label: lead.title })),
-                'Select lead'
+                (formOptions.leads || []).map(lead => ({ ...lead, label: lead.title }))
               )}
               {selectField(
                 'template_id',
                 'Agreement Template',
-                formOptions.templates || [],
-                'Select agreement template'
+                formOptions.templates || []
               )}
               {field('title', dictionary.fields.title)}
             </>
@@ -423,7 +416,17 @@ const ContractFormDrawer = ({
                     value={(formOptions.vendors || []).find(vendor => vendor.id === field.value) || null}
                     onChange={(_, vendor) => {
                       field.onChange(vendor?.id || '')
-                      if (!vendor) return
+
+                      if (!vendor) {
+                        setValue('vendor_name', '', { shouldDirty: true, shouldValidate: true })
+                        setValue('vendor_contact_name', '', { shouldDirty: true, shouldValidate: true })
+                        setValue('vendor_contact_email', '', { shouldDirty: true, shouldValidate: true })
+                        setValue('vendor_phone', '', { shouldDirty: true })
+                        setValue('vendor_address', '', { shouldDirty: true })
+
+                        return
+                      }
+
                       setValue('vendor_name', vendor.company_name, { shouldValidate: true })
                       setValue('vendor_contact_name', vendor.contact_name, { shouldValidate: true })
                       setValue('vendor_contact_email', vendor.email, { shouldValidate: true })
@@ -446,7 +449,6 @@ const ContractFormDrawer = ({
                       <CustomTextField
                         {...params}
                         label='Select Existing Vendor (Optional)'
-                        placeholder='Search saved vendors'
                       />
                     )}
                   />
@@ -455,7 +457,6 @@ const ContractFormDrawer = ({
               <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
                 {field('vendor_name', 'Third-Party Company / Vendor Name', {
                   required: true,
-                  placeholder: 'e.g. Azizi Bank'
                 })}
                 {field('vendor_contact_name', 'Vendor Representative / Contact Person', { required: true })}
                 {field('vendor_contact_email', 'Vendor Contact Email', { required: true, type: 'email' })}
@@ -471,12 +472,11 @@ const ContractFormDrawer = ({
             <>
               {field('title', 'Agreement Title / Subject')}
               <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
-                {selectField('contract_type_id', 'Contract Type', typeOptions, 'Select contract type')}
+                {selectField('contract_type_id', 'Contract Type', typeOptions)}
                 {selectField(
                   'template_id',
                   'Contract Template',
-                  formOptions.templates || [],
-                  'Select contract template'
+                  formOptions.templates || []
                 )}
                 {selectField(
                   'account_manager_id',
@@ -484,10 +484,9 @@ const ContractFormDrawer = ({
                   (formOptions.staff || []).map(person => ({
                     ...person,
                     label: `${person.full_name}${person.position ? ` - ${person.position}` : ''}`
-                  })),
-                  'Select responsible employee'
+                  }))
                 )}
-                {selectField('country_id', 'Country', formOptions.options.COUNTRY || [], 'Select country')}
+                {selectField('country_id', 'Country', formOptions.options.COUNTRY || [])}
               </div>
               <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
                 {field('start_date', dictionary.fields.startDate, {
@@ -516,8 +515,7 @@ const ContractFormDrawer = ({
                 {selectField(
                   'contract_type_id',
                   'Contract Type',
-                  typeOptions,
-                  'Select contract type'
+                  typeOptions
                 )}
                 {field('start_date', dictionary.fields.startDate, {
                   type: 'date',
@@ -615,7 +613,7 @@ const ContractFormDrawer = ({
           )}
 
           <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
-            {selectField('status_id', dictionary.fields.status, statusOptions, dictionary.placeholders.status)}
+            {selectField('status_id', dictionary.fields.status, statusOptions)}
           </div>
 
 
@@ -628,7 +626,6 @@ const ContractFormDrawer = ({
               {field('termination_reason', 'Termination Reason', {
                 multiline: true,
                 minRows: 3,
-                placeholder: 'Explain why this contract is being terminated.'
               })}
             </div>
           )}

@@ -113,7 +113,6 @@ const RoleDialog = ({ open, setOpen, title }) => {
             label='Role Name'
             variant='outlined'
             fullWidth
-            placeholder='Enter Role Name'
             defaultValue={title}
             onChange={e => e.target.value}
           />

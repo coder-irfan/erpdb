@@ -48,20 +48,54 @@ const ProjectFormDrawer = ({ open, project, options, locale, dictionary, onClose
     control,
     handleSubmit,
     reset,
+    setValue,
     formState: { errors, isSubmitting }
   } = useForm({
     resolver: valibotResolver(createProjectSchema(dictionary.validation)),
     defaultValues: emptyValues(options)
   })
+
   const clientId = useWatch({ control, name: 'client_id' })
+  const contractId = useWatch({ control, name: 'contract_id' })
   const budget = useWatch({ control, name: 'budget' })
   const currency = useWatch({ control, name: 'currency' })
   const exchangeRate = useWatch({ control, name: 'exchange_rate' })
+
   const baseAmount = useMemo(
     () => convertToBaseCurrency(budget, currency, exchangeRate, options.baseCurrency),
     [budget, currency, exchangeRate, options.baseCurrency]
   )
-  const contracts = options.contracts.filter(contract => !clientId || contract.client_id === clientId)
+
+  const contracts = contractId
+    ? options.contracts
+    : options.contracts.filter(contract => !clientId || contract.client_id === clientId)
+
+  const selectContract = contract => {
+    setValue('contract_id', contract?.id || '', { shouldDirty: true, shouldValidate: true })
+
+    if (!contract) {
+      setValue('client_id', '', { shouldDirty: true, shouldValidate: true })
+      setValue('currency', options.baseCurrency || 'AFN', { shouldDirty: true, shouldValidate: true })
+      setValue('exchange_rate', String(options.exchangeRate || '65'), {
+        shouldDirty: true,
+        shouldValidate: true
+      })
+      setValue('budget', '', { shouldDirty: true, shouldValidate: true })
+
+      return
+    }
+
+    setValue('client_id', contract.client_id || '', { shouldDirty: true, shouldValidate: true })
+    setValue('currency', contract.currency || options.baseCurrency || 'AFN', {
+      shouldDirty: true,
+      shouldValidate: true
+    })
+    setValue('exchange_rate', String(contract.exchange_rate || options.exchangeRate || '65'), {
+      shouldDirty: true,
+      shouldValidate: true
+    })
+    setValue('budget', String(contract.total_amount ?? ''), { shouldDirty: true, shouldValidate: true })
+  }
 
   useEffect(() => {
     if (!open) return
@@ -117,7 +151,8 @@ const ProjectFormDrawer = ({ open, project, options, locale, dictionary, onClose
       )}
     />
   )
-  const select = (name, label, items, placeholder, allowEmpty = false) => (
+
+  const select = (name, label, items) => (
     <Controller
       name={name}
       control={control}
@@ -132,11 +167,10 @@ const ProjectFormDrawer = ({ open, project, options, locale, dictionary, onClose
           slotProps={{
             select: {
               displayEmpty: true,
-              renderValue: value => items.find(item => item.id === value)?.label || placeholder
+              renderValue: value => items.find(item => item.id === value)?.label || ''
             }
           }}
         >
-          {allowEmpty && <MenuItem value=''>{placeholder}</MenuItem>}
           {items.map(item => (
             <MenuItem key={item.id} value={item.id}>
               {item.label}
@@ -176,6 +210,51 @@ const ProjectFormDrawer = ({ open, project, options, locale, dictionary, onClose
           ]}
         >
           {field('title', dictionary.fields.title)}
+          <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
+            <Controller
+              name='contract_id'
+              control={control}
+              render={({ field: input }) => (
+                <Autocomplete
+                  options={contracts}
+                  value={contracts.find(contract => contract.id === input.value) || null}
+                  onChange={(_, value) => selectContract(value)}
+                  getOptionLabel={option => `${option.contract_number} · ${option.title}`}
+                  isOptionEqualToValue={(option, value) => option.id === value.id}
+                  renderInput={params => (
+                    <CustomTextField
+                      {...params}
+                      label={dictionary.fields.contract}
+                      error={Boolean(errors.contract_id)}
+                      helperText={errors.contract_id?.message}
+                    />
+                  )}
+                />
+              )}
+            />
+            <Controller
+              name='client_id'
+              control={control}
+              render={({ field: input }) => (
+                <Autocomplete
+                  options={options.clients}
+                  value={options.clients.find(client => client.id === input.value) || null}
+                  onChange={(_, value) => input.onChange(value?.id || '')}
+                  disabled={Boolean(contractId)}
+                  getOptionLabel={option => option.company_name}
+                  isOptionEqualToValue={(option, value) => option.id === value.id}
+                  renderInput={params => (
+                    <CustomTextField
+                      {...params}
+                      label={dictionary.fields.client}
+                      error={Boolean(errors.client_id)}
+                      helperText={errors.client_id?.message}
+                    />
+                  )}
+                />
+              )}
+            />
+          </div>
           <Controller
             name='description'
             control={control}
@@ -193,50 +272,6 @@ const ProjectFormDrawer = ({ open, project, options, locale, dictionary, onClose
           />
           <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
             <Controller
-              name='client_id'
-              control={control}
-              render={({ field: input }) => (
-                <Autocomplete
-                  options={options.clients}
-                  value={options.clients.find(client => client.id === input.value) || null}
-                  onChange={(_, value) => input.onChange(value?.id || '')}
-                  getOptionLabel={option => option.company_name}
-                  isOptionEqualToValue={(option, value) => option.id === value.id}
-                  renderInput={params => (
-                    <CustomTextField
-                      {...params}
-                      label={dictionary.fields.client}
-                      placeholder={dictionary.placeholders.client}
-                      error={Boolean(errors.client_id)}
-                      helperText={errors.client_id?.message}
-                    />
-                  )}
-                />
-              )}
-            />
-            <Controller
-              name='contract_id'
-              control={control}
-              render={({ field: input }) => (
-                <Autocomplete
-                  options={contracts}
-                  value={contracts.find(contract => contract.id === input.value) || null}
-                  onChange={(_, value) => input.onChange(value?.id || '')}
-                  getOptionLabel={option => `${option.contract_number} · ${option.title}`}
-                  isOptionEqualToValue={(option, value) => option.id === value.id}
-                  renderInput={params => (
-                    <CustomTextField
-                      {...params}
-                      label={dictionary.fields.contract}
-                      placeholder={dictionary.placeholders.contract}
-                      error={Boolean(errors.contract_id)}
-                      helperText={errors.contract_id?.message}
-                    />
-                  )}
-                />
-              )}
-            />
-            <Controller
               name='project_manager_id'
               control={control}
               render={({ field: input }) => (
@@ -250,7 +285,6 @@ const ProjectFormDrawer = ({ open, project, options, locale, dictionary, onClose
                     <CustomTextField
                       {...params}
                       label={dictionary.fields.manager}
-                      placeholder={dictionary.placeholders.manager}
                       error={Boolean(errors.project_manager_id)}
                       helperText={errors.project_manager_id?.message}
                     />
@@ -258,8 +292,8 @@ const ProjectFormDrawer = ({ open, project, options, locale, dictionary, onClose
                 />
               )}
             />
-            {select('status_id', dictionary.fields.status, options.statuses, dictionary.placeholders.status)}
-            {select('priority_id', dictionary.fields.priority, options.priorities, dictionary.placeholders.priority)}
+            {select('status_id', dictionary.fields.status, options.statuses)}
+            {select('priority_id', dictionary.fields.priority, options.priorities)}
             {field('estimated_hours', dictionary.fields.estimatedHours, {
               type: 'number',
               inputProps: { min: 0, step: '0.25' }

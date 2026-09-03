@@ -27,7 +27,6 @@ const DataBase = ({ activeStep, isLastStep, handleNext, handlePrev }) => {
       <CustomTextField
         fullWidth
         label='Database Name'
-        placeholder={`${themeConfig.templateName.toLowerCase().replace(/\s+/g, '_')}_database`}
       />
       <div className='flex flex-col md:gap-4 gap-2'>
         <Typography variant='h5'>Select Database Engine</Typography>

@@ -145,7 +145,7 @@ const ShareProject = ({ open, setOpen }) => {
             id='add-member'
             getOptionLabel={option => option.name}
             renderInput={params => (
-              <CustomTextField {...params} size='small' placeholder='Add project members...' label='Add Members' />
+              <CustomTextField {...params} size='small' label='Add Members' />
             )}
             renderOption={(props, option) => {
               const { key, ...rest } = props

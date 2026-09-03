@@ -130,7 +130,7 @@ const getPayrollReport = async ({ start, end, staffId, months }) => {
         original_currency: amounts.original.currency,
         exchange_rate: amounts.original.exchangeRate.toFixed(4),
         status: record.status,
-        status_label: record.status === 'PAID' ? 'Paid' : 'Draft',
+        status_label: record.status === 'PAID' ? 'Paid' : record.status === 'FINALIZED' ? 'Finalized' : 'Draft',
         payment_method: null,
         payment_date: record.payment_date?.toISOString() || null
       }
@@ -162,6 +162,7 @@ const getAttendanceReport = async ({ start, end, staffId, months }) => {
   ])
 
   const workingDays = countAfghanistanWorkingDays(start, end, holidays.map(item => item.date))
+
   const presentCount = records.filter(record => record.status === 'PRESENT').length
   const totalHours = records.reduce((total, record) => total + Number(record.hours_worked || 0), 0)
 

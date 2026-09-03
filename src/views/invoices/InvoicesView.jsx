@@ -11,7 +11,7 @@ import { toast } from 'sonner'
 
 import CustomTextField from '@core/components/mui/TextField'
 import { deleteInvoice, getInvoiceFormOptions, getInvoices, updateInvoiceStatus } from '@/actions/invoices'
-import ConfirmDeleteModal from '@/components/dialogs/ConfirmDeleteModal'
+import ConfirmationDeleteModal from '@/components/dialogs/ConfirmationDeleteModal'
 import TableFiltersPopover from '@/components/table/TableFiltersPopover'
 import NativeDateTimeInput from '@/components/inputs/NativeDateTimeInput'
 
@@ -222,7 +222,6 @@ const InvoicesView = ({ locale, dictionary, setup, canWrite, canDelete }) => {
                   <CustomTextField
                     {...params}
                     label={dictionary.filters.client}
-                    placeholder={dictionary.filters.allClients}
                   />
                 )}
               />
@@ -239,7 +238,6 @@ const InvoicesView = ({ locale, dictionary, setup, canWrite, canDelete }) => {
                   <CustomTextField
                     {...params}
                     label={dictionary.filters.contract}
-                    placeholder={dictionary.filters.allContracts}
                   />
                 )}
               />
@@ -353,7 +351,7 @@ const InvoicesView = ({ locale, dictionary, setup, canWrite, canDelete }) => {
         dictionary={dictionary}
         onClose={() => setPrintInvoice(null)}
       />
-      <ConfirmDeleteModal
+      <ConfirmationDeleteModal
         open={Boolean(deleteTarget)}
         title={dictionary.delete.title}
         description={dictionary.delete.description}

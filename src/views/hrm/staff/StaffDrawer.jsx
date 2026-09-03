@@ -96,6 +96,9 @@ const StaffDrawer = ({ open, staff, users, locale, dictionary, baseCurrency, onC
     register,
     handleSubmit,
     reset,
+    getFieldState,
+    getValues,
+    setValue,
     formState: { errors, isSubmitting }
   } = useForm({
     resolver: valibotResolver(createStaffSchema(dictionary.validation)),
@@ -134,6 +137,34 @@ const StaffDrawer = ({ open, staff, users, locale, dictionary, baseCurrency, onC
       active = false
     }
   }, [dictionary.messages.positionsLoadFailed, locale, open])
+
+  const handleSystemUserChange = userId => {
+    setValue('user_id', userId, { shouldDirty: true, shouldValidate: true })
+
+    const user = availableUsers.find(option => option.id === userId)
+
+    if (!user) {
+      setValue('first_name', '', { shouldDirty: true, shouldValidate: true })
+      setValue('last_name', '', { shouldDirty: true, shouldValidate: true })
+      setValue('email', '', { shouldDirty: true, shouldValidate: true })
+
+      return
+    }
+
+    const [firstName = '', ...lastNameParts] = (user.name || '').trim().split(/\s+/)
+
+    const identityValues = {
+      first_name: firstName,
+      last_name: lastNameParts.join(' '),
+      email: user.email || ''
+    }
+
+    Object.entries(identityValues).forEach(([fieldName, value]) => {
+      if (value && (!getValues(fieldName) || !getFieldState(fieldName).isDirty)) {
+        setValue(fieldName, value, { shouldDirty: true, shouldValidate: true })
+      }
+    })
+  }
 
   const handleClose = () => {
     if (!isSubmitting) onClose()
@@ -185,6 +216,29 @@ const StaffDrawer = ({ open, staff, users, locale, dictionary, baseCurrency, onC
       <form onSubmit={handleSubmit(submitForm)} noValidate className='flex min-bs-0 flex-1 flex-col'>
         <div className='form-surface-scroll flex flex-1 flex-col gap-6 p-6'>
           <FormSectionCards labels={[dictionary.sections.personal, dictionary.sections.employment, dictionary.sections.guarantor]}>
+          <Controller
+            name='user_id'
+            control={control}
+            render={({ field }) => (
+              <CustomTextField
+                {...field}
+                fullWidth
+                select
+                label={dictionary.fields.systemUser}
+                value={field.value || ''}
+                onChange={event => handleSystemUserChange(event.target.value)}
+                disabled={isSubmitting}
+              >
+                <MenuItem value=''>{dictionary.fields.noSystemUser}</MenuItem>
+                {availableUsers.map(user => (
+                  <MenuItem key={user.id} value={user.id}>
+                    {user.name || user.email}
+                  </MenuItem>
+                ))}
+              </CustomTextField>
+            )}
+          />
+
           <SectionTitle>{dictionary.sections.personal}</SectionTitle>
           <div className='grid grid-cols-1 gap-5 sm:grid-cols-2'>
             <CustomTextField fullWidth label={dictionary.fields.firstName} {...fieldProps('first_name')} />
@@ -228,7 +282,7 @@ const StaffDrawer = ({ open, staff, users, locale, dictionary, baseCurrency, onC
                         ? dictionary.actions.loadingPositions
                         : availablePositions.length === 0
                           ? dictionary.actions.noPositions
-                          : dictionary.actions.selectPosition}
+                          : ''}
                     </MenuItem>
                     {availablePositions.map(position => (
                       <MenuItem key={position} value={position}>
@@ -281,27 +335,6 @@ const StaffDrawer = ({ open, staff, users, locale, dictionary, baseCurrency, onC
                   {STAFF_STATUSES.map(status => (
                     <MenuItem key={status} value={status}>
                       {dictionary.status[status]}
-                    </MenuItem>
-                  ))}
-                </CustomTextField>
-              )}
-            />
-            <Controller
-              name='user_id'
-              control={control}
-              render={({ field }) => (
-                <CustomTextField
-                  {...field}
-                  fullWidth
-                  select
-                  label={dictionary.fields.systemUser}
-                  value={field.value || ''}
-                  disabled={isSubmitting}
-                >
-                  <MenuItem value=''>{dictionary.fields.noSystemUser}</MenuItem>
-                  {availableUsers.map(user => (
-                    <MenuItem key={user.id} value={user.id}>
-                      {user.name || user.email}
                     </MenuItem>
                   ))}
                 </CustomTextField>

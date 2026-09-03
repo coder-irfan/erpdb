@@ -184,7 +184,15 @@ const validateTaskRelations = async (values, current = null) => {
     prisma.project.findUnique({ where: { id: values.project_id }, select: { id: true } }),
     prisma.option.findFirst({ where: { id: values.status_id, category: 'TASK_STATUS', ...(current?.status_id === values.status_id ? {} : { is_active: true }) }, select: { id: true, value: true } }),
     prisma.option.findFirst({ where: { id: values.priority_id, category: 'TASK_PRIORITY', ...(current?.priority_id === values.priority_id ? {} : { is_active: true }) }, select: { id: true } }),
-    assigneeIds.length ? prisma.hrmstaff.count({ where: { id: { in: assigneeIds }, status: { not: 'TERMINATED' } } }) : 0
+    assigneeIds.length
+      ? prisma.projectmember.count({
+          where: {
+            project_id: values.project_id,
+            staff_id: { in: assigneeIds },
+            staff: { is: { status: { not: 'TERMINATED' } } }
+          }
+        })
+      : 0
   ])
 
   return { valid: Boolean(project && status && priority && staffCount === assigneeIds.length), status, assigneeIds }
@@ -243,7 +251,7 @@ export const getTaskFormOptions = async (payload = {}) => {
     const projectWhere = context.globalRead ? {} : context.staffId ? { OR: [{ project_manager_id: context.staffId }, { members: { some: { staff_id: context.staffId } } }, { tasks: { some: visibilityWhere(context) } }] } : { id: '__NONE__' }
 
     const [projects, staff, options] = await Promise.all([
-      prisma.project.findMany({ where: projectWhere, select: { id: true, project_code: true, title: true, status: { select: { value: true } } }, orderBy: { title: 'asc' }, take: 500 }),
+      prisma.project.findMany({ where: projectWhere, select: { id: true, project_code: true, title: true, status: { select: { value: true } }, members: { select: { staff_id: true } } }, orderBy: { title: 'asc' }, take: 500 }),
       prisma.hrmstaff.findMany({ where: context.globalRead ? { status: { not: 'TERMINATED' } } : { id: context.staffId || '__NONE__' }, select: staffSelect, orderBy: [{ first_name: 'asc' }, { last_name: 'asc' }], take: 500 }),
       prisma.option.findMany({ where: { category: { in: ['TASK_STATUS', 'TASK_PRIORITY'] }, is_active: true }, select: { ...optionSelect, category: true }, orderBy: [{ category: 'asc' }, { sort_order: 'asc' }, { label: 'asc' }] })
     ])
@@ -346,7 +354,17 @@ export const syncTaskAssignees = async (taskId, staffIds = [], payload = {}) => 
   const ids = uniqueIds(staffIds)
 
   try {
-    const [task, count] = await Promise.all([prisma.task.findUnique({ where: { id }, select: { id: true } }), ids.length ? prisma.hrmstaff.count({ where: { id: { in: ids }, status: { not: 'TERMINATED' } } }) : 0])
+    const task = await prisma.task.findUnique({ where: { id }, select: { id: true, project_id: true } })
+
+    const count = task && ids.length
+      ? await prisma.projectmember.count({
+          where: {
+            project_id: task.project_id,
+            staff_id: { in: ids },
+            staff: { is: { status: { not: 'TERMINATED' } } }
+          }
+        })
+      : 0
 
     if (!task) return { success: false, code: 'NOT_FOUND', error: context.translations.messages.notFound }
     if (count !== ids.length) return { success: false, code: 'VALIDATION_ERROR', error: context.translations.validation.invalidRelation }

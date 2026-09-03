@@ -44,7 +44,6 @@ const ContractTerminationDialog = ({ open, contract, loading, onClose, onConfirm
             multiline
             minRows={4}
             label='Termination Reason'
-            placeholder='Record the business reason for terminating this agreement.'
             value={reason}
             error={attempted && !reason.trim()}
             helperText={attempted && !reason.trim() ? 'A termination reason is required.' : 'This reason is stored in the audit log.'}

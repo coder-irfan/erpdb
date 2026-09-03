@@ -14,7 +14,7 @@ import MenuItem from '@mui/material/MenuItem'
 import Typography from '@mui/material/Typography'
 
 import CustomTextField from '@core/components/mui/TextField'
-import ConfirmDeleteModal from '@/components/dialogs/ConfirmDeleteModal'
+import ConfirmationDeleteModal from '@/components/dialogs/ConfirmationDeleteModal'
 import LoadingButtonContent from '@/components/LoadingButtonContent'
 import UserAvatar from '@/components/common/UserAvatar'
 import DashboardTablePagination from '@/components/table/DashboardTablePagination'
@@ -373,7 +373,7 @@ const UsersTable = ({
         </DialogActions>
       </Dialog>
 
-      <ConfirmDeleteModal
+      <ConfirmationDeleteModal
         open={Boolean(confirmAction)}
         title={confirmAction?.type === 'revoke' ? translations.revokeInvitation : translations.removeUserAccess}
         description={

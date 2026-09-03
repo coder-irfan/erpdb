@@ -2,10 +2,10 @@
 
 import { useEffect, useRef, useState } from 'react'
 
-import ConfirmDeleteModal from '@/components/dialogs/ConfirmDeleteModal'
+import ConfirmationDeleteModal from '@/components/dialogs/ConfirmationDeleteModal'
 
 const OVERLAY_SELECTOR = '.MuiDialog-root, .MuiDrawer-root'
-const CLOSE_LABEL_PATTERN = /^(cancel|close|dismiss|back|لغو|بستن|تړل|شاته)$/i
+const CLOSE_LABEL_PATTERN = /^(cancel|close|dismiss|back|Ù„ØºÙˆ|Ø¨Ø³ØªÙ†|ØªÚ“Ù„|Ø´Ø§ØªÙ‡)$/i
 
 const getOverlay = target => target instanceof Element ? target.closest(OVERLAY_SELECTOR) : null
 
@@ -40,10 +40,10 @@ const copyKeyboardEvent = event =>
 const messagesFor = locale => {
   if (locale === 'fa' || locale === 'ps') {
     return {
-      title: 'تغییرات ذخیره نشده',
-      description: 'شما تغییرات ذخیره‌نشده دارید. آیا از لغو آن مطمئن هستید؟',
-      discard: 'لغو',
-      keepEditing: 'ادامه ویرایش'
+      title: 'ØªØºÛŒÛŒØ±Ø§Øª Ø°Ø®ÛŒØ±Ù‡ Ù†Ø´Ø¯Ù‡',
+      description: 'Ø´Ù…Ø§ ØªØºÛŒÛŒØ±Ø§Øª Ø°Ø®ÛŒØ±Ù‡â€ŒÙ†Ø´Ø¯Ù‡ Ø¯Ø§Ø±ÛŒØ¯. Ø¢ÛŒØ§ Ø§Ø² Ù„ØºÙˆ Ø¢Ù† Ù…Ø·Ù…Ø¦Ù† Ù‡Ø³ØªÛŒØ¯ØŸ',
+      discard: 'Ù„ØºÙˆ',
+      keepEditing: 'Ø§Ø¯Ø§Ù…Ù‡ ÙˆÛŒØ±Ø§ÛŒØ´'
     }
   }
 
@@ -195,7 +195,7 @@ const UnsavedChangesGuard = ({ children }) => {
     <>
       {children}
       <div data-unsaved-confirmation='true'>
-        <ConfirmDeleteModal
+        <ConfirmationDeleteModal
           open={Boolean(pendingClose)}
           title={messages.title}
           description={messages.description}

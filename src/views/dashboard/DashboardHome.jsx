@@ -163,27 +163,25 @@ const KpiCard = ({ title, value, hint, trend, series, color = 'primary', icon, v
         </span>
       </div>
       <div className='mt-auto flex items-end justify-between gap-3'>
-        <div className='min-is-0 pb-1'>
-          {typeof trend === 'number' && (
-            <span
-              className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-bold ${
-                (inverseTrend ? trend <= 0 : trend >= 0)
-                  ? 'bg-successLight text-success'
-                  : 'bg-errorLight text-error'
-              }`}
-            >
-              {trend >= 0 ? '+' : ''}
-              {trend.toFixed(1)}%
-            </span>
-          )}
-          <Typography variant='caption' color='text.secondary' className='mt-1 block max-is-[155px] truncate'>
-            {hint}
-          </Typography>
-        </div>
-        <div className='h-14 min-is-[92px] flex-1'>
+        {typeof trend === 'number' && (
+          <span
+            className={`mb-1 inline-flex shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold ${
+              (inverseTrend ? trend <= 0 : trend >= 0)
+                ? 'bg-successLighter text-success'
+                : 'bg-errorLighter text-error'
+            }`}
+          >
+            {trend >= 0 ? '+' : ''}
+            {trend.toFixed(1)}%
+          </span>
+        )}
+        <div className='h-12 min-is-[92px] flex-1'>
           <MiniSparkline values={series} color={color} variant={variant} />
         </div>
       </div>
+      <Typography variant='caption' color='text.secondary' className='mt-1 block w-full truncate'>
+        {hint}
+      </Typography>
     </CardContent>
   </Card>
 )

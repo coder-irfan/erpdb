@@ -30,7 +30,7 @@ import {
   updateTaskSubtask
 } from '@/actions/tasks'
 import UserAvatar from '@/components/common/UserAvatar'
-import ConfirmDeleteModal from '@/components/dialogs/ConfirmDeleteModal'
+import ConfirmationDeleteModal from '@/components/dialogs/ConfirmationDeleteModal'
 
 const relativeTime = (value, locale) => {
   const seconds = Math.round((new Date(value).getTime() - Date.now()) / 1000)
@@ -400,7 +400,7 @@ const TaskCollaborationPanels = ({ task, locale, dictionary, canUpdate, onChange
                 <span className='z-[1] flex size-8 shrink-0 items-center justify-center rounded-full bg-actionHover text-primary'><i className={entry.icon} /></span>
                 <div className='min-is-0 grow'>
                   <Typography variant='body2' className='font-medium'>{entry.label}</Typography>
-                  <Typography variant='caption' color='text.secondary'>{[entry.person, relativeTime(entry.at, locale)].filter(Boolean).join(' · ')}</Typography>
+                  <Typography variant='caption' color='text.secondary'>{[entry.person, relativeTime(entry.at, locale)].filter(Boolean).join(' Â· ')}</Typography>
                 </div>
               </div>
             ))}
@@ -408,11 +408,11 @@ const TaskCollaborationPanels = ({ task, locale, dictionary, canUpdate, onChange
         </CardContent>
       </Card>}
       </div>
-      <ConfirmDeleteModal
+      <ConfirmationDeleteModal
         open={Boolean(subtaskToDelete)}
         locale={locale}
         title={dictionary.collaboration.deleteSubtask || 'Delete sub-task?'}
-        description={dictionary.collaboration.deleteSubtaskConfirm || 'Delete “{name}” and all of its nested sub-tasks?'}
+        description={dictionary.collaboration.deleteSubtaskConfirm || 'Delete â€œ{name}â€ and all of its nested sub-tasks?'}
         itemName={subtaskToDelete?.title}
         confirmText={dictionary.actions.delete || 'Delete'}
         cancelText={dictionary.actions.cancel}
@@ -422,11 +422,11 @@ const TaskCollaborationPanels = ({ task, locale, dictionary, canUpdate, onChange
         }}
         onClose={() => setSubtaskToDelete(null)}
       />
-      <ConfirmDeleteModal
+      <ConfirmationDeleteModal
         open={Boolean(attachmentToDelete)}
         locale={locale}
         title={dictionary.collaboration.removeAttachment || 'Remove attachment?'}
-        description={dictionary.collaboration.removeAttachmentConfirm || 'Remove “{name}”?'}
+        description={dictionary.collaboration.removeAttachmentConfirm || 'Remove â€œ{name}â€?'}
         itemName={attachmentToDelete?.name}
         confirmText={dictionary.collaboration.removeAttachment || 'Remove'}
         cancelText={dictionary.actions.cancel}
@@ -436,7 +436,7 @@ const TaskCollaborationPanels = ({ task, locale, dictionary, canUpdate, onChange
         }}
         onClose={() => setAttachmentToDelete(null)}
       />
-      <ConfirmDeleteModal
+      <ConfirmationDeleteModal
         open={Boolean(commentToDelete)}
         locale={locale}
         title={dictionary.collaboration.deleteComment || 'Delete comment?'}

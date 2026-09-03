@@ -19,12 +19,14 @@ import {
   financeSalaryAdjustmentSchema,
   financeSalaryMonthSchema
 } from '@/schemas/financeSalary'
-import { SYSTEM_BASE_CURRENCY, convertToBaseCurrency, effectiveAfnExchangeRate, normalizeToAfn, toFiniteNumber } from '@/utils/formatCurrency'
 import {
-  getPayrollMonthCalendar,
-  getWorkingDaysThroughDate,
-  isEarlyPayrollExecution
-} from '@/utils/payrollCalendar'
+  SYSTEM_BASE_CURRENCY,
+  convertToBaseCurrency,
+  effectiveAfnExchangeRate,
+  normalizeToAfn,
+  toFiniteNumber
+} from '@/utils/formatCurrency'
+import { getPayrollMonthCalendar, getWorkingDaysThroughDate, isEarlyPayrollExecution } from '@/utils/payrollCalendar'
 import { hasPayrollPayoutRole } from '@/utils/rbac'
 import { getDateKeyInTimeZone } from '@/utils/utcDate'
 
@@ -35,6 +37,8 @@ const DEFAULT_PAGE_SIZE = 10
 const MAX_PAGE_SIZE = 100
 const ACTIVE_LOAN_VALUES = ACTIVE_LOAN_STATUSES
 const PAYROLL_LEDGER_ACCOUNT = 'Payroll Expenses'
+const PAYROLL_EDITABLE_STATUS = 'DRAFT'
+const PAYROLL_LOCKED_STATUSES = ['FINALIZED', 'PAID']
 
 const staffSelect = {
   id: true,
@@ -83,6 +87,15 @@ const normalizeId = value => (typeof value === 'string' ? value.trim() : '')
 const iso = value => value?.toISOString() || null
 const moneyString = (value, scale = 2) => (value == null ? null : toFiniteNumber(value).toFixed(scale))
 const fullName = staff => `${staff?.first_name || ''} ${staff?.last_name || ''}`.trim()
+const currentPayrollMonth = () => getDateKeyInTimeZone('Asia/Kabul').slice(0, 7)
+const isActiveOrFuturePayrollMonth = month => month >= currentPayrollMonth()
+
+const activePayrollPeriodError = translations => ({
+  success: false,
+  status: 400,
+  code: 'ACTIVE_PAYROLL_PERIOD',
+  error: translations.messages.activePeriodBlocked
+})
 
 const withStaffName = staff =>
   staff
@@ -94,27 +107,30 @@ const withStaffName = staff =>
       }
     : null
 
-const normalizeSalary = salary => serializeData({
-  ...salary,
-  worked_days: moneyString(salary.worked_days, 1),
-  off_days: moneyString(salary.off_days, 1),
-  base_salary: moneyString(salary.base_salary),
-  base_daily_rate: moneyString(salary.base_daily_rate),
-  earned_salary: moneyString(salary.earned_salary),
-  bonus_amount: moneyString(salary.bonus_amount),
-  loan_deduction: moneyString(salary.loan_deduction),
-  unpaid_leave_deduction: moneyString(salary.unpaid_leave_deduction),
-  payable_amount: moneyString(salary.payable_amount),
-  exchange_rate: moneyString(salary.exchange_rate, 4),
-  fx_snapshot_at: iso(salary.fx_snapshot_at),
-  payable_usd: moneyString(convertToBaseCurrency(salary.payable_amount, salary.currency, salary.exchange_rate, 'USD')),
-  amount_base: moneyString(salary.amount_base),
-  payment_date: iso(salary.payment_date),
-  created_at: iso(salary.created_at),
-  updated_at: iso(salary.updated_at),
-  staff: withStaffName(salary.staff),
-  processed_by: withStaffName(salary.processed_by)
-})
+const normalizeSalary = salary =>
+  serializeData({
+    ...salary,
+    worked_days: moneyString(salary.worked_days, 1),
+    off_days: moneyString(salary.off_days, 1),
+    base_salary: moneyString(salary.base_salary),
+    base_daily_rate: moneyString(salary.base_daily_rate),
+    earned_salary: moneyString(salary.earned_salary),
+    bonus_amount: moneyString(salary.bonus_amount),
+    loan_deduction: moneyString(salary.loan_deduction),
+    unpaid_leave_deduction: moneyString(salary.unpaid_leave_deduction),
+    payable_amount: moneyString(salary.payable_amount),
+    exchange_rate: moneyString(salary.exchange_rate, 4),
+    fx_snapshot_at: iso(salary.fx_snapshot_at),
+    payable_usd: moneyString(
+      convertToBaseCurrency(salary.payable_amount, salary.currency, salary.exchange_rate, 'USD')
+    ),
+    amount_base: moneyString(salary.amount_base),
+    payment_date: iso(salary.payment_date),
+    created_at: iso(salary.created_at),
+    updated_at: iso(salary.updated_at),
+    staff: withStaffName(salary.staff),
+    processed_by: withStaffName(salary.processed_by)
+  })
 
 const getContext = async (payload, permissions) => {
   const locale = normalizeLocale(payload?.locale)
@@ -282,7 +298,8 @@ const getPreparedAdjustment = async (salary, values, translations) => {
       exchange_rate: new Prisma.Decimal(exchangeRate),
       amount_base: new Prisma.Decimal(calculation.amountBase),
       currency: values.currency,
-      timesheet_summary: values.timesheet_summary === undefined ? salary.timesheet_summary : values.timesheet_summary || null,
+      timesheet_summary:
+        values.timesheet_summary === undefined ? salary.timesheet_summary : values.timesheet_summary || null,
       loan_status: loanDeduction > 0 ? 'PENDING' : 'NOT_APPLICABLE'
     }
   }
@@ -302,7 +319,7 @@ export const getFinanceSalaries = async (payload = {}) => {
   const page = Math.max(1, Number.parseInt(payload.page, 10) || 1)
   const limit = Math.min(MAX_PAGE_SIZE, Math.max(1, Number.parseInt(payload.limit, 10) || DEFAULT_PAGE_SIZE))
   const search = typeof payload.search === 'string' ? payload.search.trim() : ''
-  const status = ['DRAFT', 'PAID'].includes(payload.status) ? payload.status : ''
+  const status = ['DRAFT', 'FINALIZED', 'PAID'].includes(payload.status) ? payload.status : ''
 
   const where = {
     timesheet_month: month,
@@ -367,6 +384,9 @@ export const getFinanceSalaries = async (payload = {}) => {
         salaries: salaries.map(normalizeSalary),
         totalCount,
         hasGeneratedPayroll: summaryRows.length > 0,
+        hasDraftPayroll: summaryRows.some(row => row.status === PAYROLL_EDITABLE_STATUS),
+        isPayrollFinalized:
+          summaryRows.length > 0 && summaryRows.every(row => PAYROLL_LOCKED_STATUSES.includes(row.status)),
         page,
         baseCurrency: SYSTEM_BASE_CURRENCY,
         summary,
@@ -482,6 +502,7 @@ export const generateMonthlyPayroll = async (month, payload = {}) => {
   const validation = safeParse(financeSalaryMonthSchema(context.translations.validation), { month })
 
   if (!validation.success) return { success: false, code: 'VALIDATION_ERROR', error: validation.issues[0]?.message }
+  if (isActiveOrFuturePayrollMonth(validation.output.month)) return activePayrollPeriodError(context.translations)
 
   const range = getMonthRange(validation.output.month)
 
@@ -632,15 +653,13 @@ export const generateMonthlyPayroll = async (month, payload = {}) => {
               !presentPayableDates.has(key)
           )
 
-          paidLeaveDays += leave.duration_type === 'HALF_DAY' ? Math.min(0.5, availableLeaveDates.length) : availableLeaveDates.length
+          paidLeaveDays +=
+            leave.duration_type === 'HALF_DAY' ? Math.min(0.5, availableLeaveDates.length) : availableLeaveDates.length
         }
 
         paidLeaveDays = Math.round(paidLeaveDays * 2) / 2
 
-        const payableDays = Math.min(
-          eligibleWorkingDates.length,
-          presentPayableDates.size + paidLeaveDays
-        )
+        const payableDays = Math.min(eligibleWorkingDates.length, presentPayableDates.size + paidLeaveDays)
 
         const absentDays = Math.max(0, eligibleWorkingDates.length - payableDays)
         const maximumGross = (salaryAmount / workingDates.length) * payableDays
@@ -651,14 +670,7 @@ export const generateMonthlyPayroll = async (month, payload = {}) => {
 
           return (
             total +
-            convertCurrency(
-              loanAmount,
-              loan.currency,
-              loan.exchange_rate,
-              currency,
-              exchangeRate,
-              SYSTEM_BASE_CURRENCY
-            )
+            convertCurrency(loanAmount, loan.currency, loan.exchange_rate, currency, exchangeRate, SYSTEM_BASE_CURRENCY)
           )
         }, 0)
 
@@ -749,6 +761,10 @@ export const createFinanceSalary = async (payload = {}) => {
   })
 
   if (!validation.success) return { success: false, code: 'VALIDATION_ERROR', error: validation.issues[0]?.message }
+
+  if (isActiveOrFuturePayrollMonth(validation.output.timesheet_month)) {
+    return activePayrollPeriodError(context.translations)
+  }
 
   try {
     const range = getMonthRange(validation.output.timesheet_month)
@@ -854,37 +870,121 @@ export const updateFinanceSalary = async (id, payload = {}) => {
     })
 
     if (!current) return { success: false, code: 'NOT_FOUND', error: context.translations.messages.notFound }
-    if (current.status === 'PAID')
-      return { success: false, code: 'PAID_LOCKED', error: context.translations.messages.paidLocked }
+    if (current.status !== PAYROLL_EDITABLE_STATUS)
+      return { success: false, code: 'PAYROLL_LOCKED', error: context.translations.messages.finalizedLocked }
 
     const prepared = await getPreparedAdjustment(current, validation.output, context.translations)
 
     if (!prepared.success) return { success: false, code: 'VALIDATION_ERROR', error: prepared.error }
 
-    const updated = await prisma.$transaction(async transaction => {
-      const salary = await transaction.financesalary.update({
-        where: { id: current.id },
-        data: prepared.data,
-        select: salarySelect
-      })
+    const updated = await prisma.$transaction(
+      async transaction => {
+        const updateResult = await transaction.financesalary.updateMany({
+          where: { id: current.id, status: PAYROLL_EDITABLE_STATUS },
+          data: prepared.data
+        })
 
-      await transaction.auditlog.create({
-        data: {
-          user_id: context.session.user.id,
-          action: 'FINANCE_SALARY_UPDATED',
-          module: 'FINANCE',
-          details: { salaryId: salary.id, staffId: salary.staff_id, timesheetMonth: salary.timesheet_month }
-        }
-      })
+        if (updateResult.count !== 1) return null
 
-      return salary
-    })
+        const salary = await transaction.financesalary.findUnique({
+          where: { id: current.id },
+          select: salarySelect
+        })
+
+        await transaction.auditlog.create({
+          data: {
+            user_id: context.session.user.id,
+            action: 'FINANCE_SALARY_UPDATED',
+            module: 'FINANCE',
+            details: { salaryId: salary.id, staffId: salary.staff_id, timesheetMonth: salary.timesheet_month }
+          }
+        })
+
+        return salary
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable }
+    )
+
+    if (!updated) {
+      return { success: false, code: 'PAYROLL_LOCKED', error: context.translations.messages.finalizedLocked }
+    }
 
     revalidateSalaryPages()
 
     return { success: true, data: normalizeSalary(updated), message: context.translations.messages.updated }
   } catch {
     return { success: false, code: 'SALARY_UPDATE_FAILED', error: context.translations.messages.operationFailed }
+  }
+}
+
+export const finalizeMonthlyPayroll = async (month, payload = {}) => {
+  const context = await getContext(payload, WRITE_PERMISSIONS)
+
+  if (!context.authorized) return { success: false, code: context.code, error: context.error }
+
+  const validation = safeParse(financeSalaryMonthSchema(context.translations.validation), { month })
+
+  if (!validation.success) return { success: false, code: 'VALIDATION_ERROR', error: validation.issues[0]?.message }
+  if (isActiveOrFuturePayrollMonth(validation.output.month)) return activePayrollPeriodError(context.translations)
+
+  try {
+    const result = await prisma.$transaction(
+      async transaction => {
+        const payroll = await transaction.financesalary.findMany({
+          where: { timesheet_month: validation.output.month },
+          select: { id: true, status: true }
+        })
+
+        if (payroll.length === 0) return { error: 'NOT_FOUND' }
+
+        if (payroll.some(item => ![PAYROLL_EDITABLE_STATUS, ...PAYROLL_LOCKED_STATUSES].includes(item.status))) {
+          return { error: 'INVALID_STATUS' }
+        }
+
+        const draftIds = payroll.filter(item => item.status === PAYROLL_EDITABLE_STATUS).map(item => item.id)
+
+        if (draftIds.length === 0) return { error: 'ALREADY_FINALIZED' }
+
+        await transaction.financesalary.updateMany({
+          where: { id: { in: draftIds }, status: PAYROLL_EDITABLE_STATUS },
+          data: { status: 'FINALIZED' }
+        })
+
+        await transaction.auditlog.create({
+          data: {
+            user_id: context.session.user.id,
+            action: 'FINANCE_PAYROLL_FINALIZED',
+            module: 'FINANCE',
+            details: { timesheetMonth: validation.output.month, salaryIds: draftIds, count: draftIds.length }
+          }
+        })
+
+        return { count: draftIds.length }
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable }
+    )
+
+    if (result.error === 'NOT_FOUND') {
+      return { success: false, code: 'NOT_FOUND', error: context.translations.messages.payrollNotFound }
+    }
+
+    if (result.error === 'ALREADY_FINALIZED') {
+      return { success: false, code: 'ALREADY_FINALIZED', error: context.translations.messages.alreadyFinalized }
+    }
+
+    if (result.error === 'INVALID_STATUS') {
+      return { success: false, code: 'INVALID_PAYROLL_STATUS', error: context.translations.messages.operationFailed }
+    }
+
+    revalidateSalaryPages()
+
+    return {
+      success: true,
+      data: { count: result.count, month: validation.output.month },
+      message: context.translations.messages.finalized
+    }
+  } catch {
+    return { success: false, code: 'PAYROLL_FINALIZATION_FAILED', error: context.translations.messages.operationFailed }
   }
 }
 
@@ -910,14 +1010,12 @@ export const markSalaryPaid = async (salaryId, payload = {}) => {
         const salary = await transaction.financesalary.findUnique({ where: { id }, select: salarySelect })
 
         if (!salary) return { error: 'NOT_FOUND' }
+        if (isActiveOrFuturePayrollMonth(salary.timesheet_month)) return { error: 'ACTIVE_PAYROLL_PERIOD' }
         if (salary.status === 'PAID') return { error: 'ALREADY_PAID' }
+        if (salary.status !== 'FINALIZED') return { error: 'NOT_FINALIZED' }
 
         const currentDate = getDateKeyInTimeZone('Asia/Kabul')
         const earlyExecution = isEarlyPayrollExecution(salary.timesheet_month, currentDate)
-
-        if (earlyExecution && payload?.confirmEarlyExecution !== true) {
-          return { error: 'EARLY_CONFIRMATION_REQUIRED' }
-        }
 
         const salaryRange = getMonthRange(salary.timesheet_month)
 
@@ -943,7 +1041,10 @@ export const markSalaryPaid = async (salaryId, payload = {}) => {
           snapshotRate,
           SYSTEM_BASE_CURRENCY
         )
-        const loans = remainingDeductionBase > 0 ? await getActiveLoans(transaction, [salary.staff_id], salaryRange.end) : []
+
+        const loans =
+          remainingDeductionBase > 0 ? await getActiveLoans(transaction, [salary.staff_id], salaryRange.end) : []
+
         const appliedLoans = []
 
         for (const loan of loans) {
@@ -998,12 +1099,8 @@ export const markSalaryPaid = async (salaryId, payload = {}) => {
 
         const appliedDeductionBase = Math.max(
           0,
-          convertToBaseCurrency(
-            salary.loan_deduction,
-            salary.currency,
-            snapshotRate,
-            SYSTEM_BASE_CURRENCY
-          ) - remainingDeductionBase
+          convertToBaseCurrency(salary.loan_deduction, salary.currency, snapshotRate, SYSTEM_BASE_CURRENCY) -
+            remainingDeductionBase
         )
 
         const appliedDeduction = fromBaseCurrency(
@@ -1134,12 +1231,14 @@ export const markSalaryPaid = async (salaryId, payload = {}) => {
       return { success: false, code: 'NOT_FOUND', error: context.translations.messages.notFound }
     if (result.error === 'ALREADY_PAID')
       return { success: false, code: 'ALREADY_PAID', error: context.translations.messages.alreadyPaid }
-    if (result.error === 'EARLY_CONFIRMATION_REQUIRED')
+    if (result.error === 'NOT_FINALIZED')
       return {
         success: false,
-        code: 'EARLY_CONFIRMATION_REQUIRED',
-        error: context.translations.messages.earlyConfirmationRequired
+        status: 400,
+        code: 'PAYROLL_NOT_FINALIZED',
+        error: context.translations.messages.notFinalized
       }
+    if (result.error === 'ACTIVE_PAYROLL_PERIOD') return activePayrollPeriodError(context.translations)
     if (result.error === 'CONTRACT_PAYROLL_FROZEN')
       return {
         success: false,
@@ -1167,20 +1266,34 @@ export const deleteFinanceSalary = async (id, payload = {}) => {
     })
 
     if (!current) return { success: false, code: 'NOT_FOUND', error: context.translations.messages.notFound }
-    if (current.status === 'PAID')
-      return { success: false, code: 'PAID_LOCKED', error: context.translations.messages.paidLocked }
+    if (current.status !== PAYROLL_EDITABLE_STATUS)
+      return { success: false, code: 'PAYROLL_LOCKED', error: context.translations.messages.finalizedLocked }
 
-    await prisma.$transaction([
-      prisma.financesalary.delete({ where: { id: current.id } }),
-      prisma.auditlog.create({
-        data: {
-          user_id: context.session.user.id,
-          action: 'FINANCE_SALARY_DELETED',
-          module: 'FINANCE',
-          details: { salaryId: current.id, staffId: current.staff_id, timesheetMonth: current.timesheet_month }
-        }
-      })
-    ])
+    const deleted = await prisma.$transaction(
+      async transaction => {
+        const deleteResult = await transaction.financesalary.deleteMany({
+          where: { id: current.id, status: PAYROLL_EDITABLE_STATUS }
+        })
+
+        if (deleteResult.count !== 1) return false
+
+        await transaction.auditlog.create({
+          data: {
+            user_id: context.session.user.id,
+            action: 'FINANCE_SALARY_DELETED',
+            module: 'FINANCE',
+            details: { salaryId: current.id, staffId: current.staff_id, timesheetMonth: current.timesheet_month }
+          }
+        })
+
+        return true
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable }
+    )
+
+    if (!deleted) {
+      return { success: false, code: 'PAYROLL_LOCKED', error: context.translations.messages.finalizedLocked }
+    }
 
     revalidateSalaryPages()
 

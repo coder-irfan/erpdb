@@ -15,7 +15,7 @@ import { Avatar } from '@mui/material'
 
 import CustomTextField from '@core/components/mui/TextField'
 import { deleteOption, getOptionsListPaginated, toggleOptionStatus } from '@/actions/options'
-import ConfirmDeleteModal from '@/components/dialogs/ConfirmDeleteModal'
+import ConfirmationDeleteModal from '@/components/dialogs/ConfirmationDeleteModal'
 import DashboardTablePagination from '@/components/table/DashboardTablePagination'
 import EntityActionsMenu from '@/components/table/EntityActionsMenu'
 import TableEmptyStateRow from '@/components/table/TableEmptyStateRow'
@@ -322,7 +322,7 @@ const PositionTable = ({ initialResult, initialError, canCreate, canUpdate, canD
         onClose={() => setFormOpen(false)}
         onSaved={refreshData}
       />
-      <ConfirmDeleteModal
+      <ConfirmationDeleteModal
         open={Boolean(deleteTarget)}
         title={dictionary.positions.deleteTitle || dictionary.common.delete}
         description={dictionary.positions.deleteDescription || dictionary.contractPolicies.deleteDescription}

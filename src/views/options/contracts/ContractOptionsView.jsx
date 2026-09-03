@@ -24,7 +24,7 @@ import {
   toggleOptionStatus,
   updateOption
 } from '@/actions/options'
-import ConfirmDeleteModal from '@/components/dialogs/ConfirmDeleteModal'
+import ConfirmationDeleteModal from '@/components/dialogs/ConfirmationDeleteModal'
 import LoadingButtonContent from '@/components/LoadingButtonContent'
 import EntityActionsMenu from '@/components/table/EntityActionsMenu'
 import TableEmptyStateRow from '@/components/table/TableEmptyStateRow'
@@ -95,7 +95,7 @@ const LegalClauseEditor = ({ value, disabled, onChange }) => {
 }
 
 const OptionDescription = ({ option, mobile = false }) => {
-  if (!option.description) return <span>—</span>
+  if (!option.description) return <span>â€”</span>
   if (option.category !== 'CONTRACT_CLAUSE') return <span>{option.description}</span>
 
   return (
@@ -368,7 +368,7 @@ const ContractOptionsView = ({
         </DialogActions>
       </Dialog>
 
-      <ConfirmDeleteModal
+      <ConfirmationDeleteModal
         open={Boolean(deleteTarget)}
         title={managementDictionary.common.delete}
         description={dictionary.deleteDescription}

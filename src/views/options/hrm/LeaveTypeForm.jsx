@@ -78,7 +78,6 @@ const LeaveTypeForm = ({ open, option, locale, dictionary, onClose, onSaved }) =
           <CustomTextField
             fullWidth
             label={dictionary.leaveTypes.fields.name}
-            placeholder={dictionary.leaveTypes.fields.namePlaceholder}
             error={Boolean(errors.name)}
             helperText={errors.name?.message}
             disabled={isSubmitting}
@@ -110,7 +109,6 @@ const LeaveTypeForm = ({ open, option, locale, dictionary, onClose, onSaved }) =
             multiline
             minRows={4}
             label={dictionary.leaveTypes.fields.description}
-            placeholder={dictionary.leaveTypes.fields.descriptionPlaceholder}
             error={Boolean(errors.description)}
             helperText={errors.description?.message}
             disabled={isSubmitting}

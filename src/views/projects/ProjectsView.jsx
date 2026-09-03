@@ -12,7 +12,7 @@ import { toast } from 'sonner'
 
 import CustomTextField from '@core/components/mui/TextField'
 import { deleteProject, getProjectFormOptions, getProjects, updateProjectStatus } from '@/actions/projects'
-import ConfirmDeleteModal from '@/components/dialogs/ConfirmDeleteModal'
+import ConfirmationDeleteModal from '@/components/dialogs/ConfirmationDeleteModal'
 import TableFiltersPopover from '@/components/table/TableFiltersPopover'
 
 import ProjectDetailModal from './ProjectDetailModal'
@@ -178,7 +178,7 @@ const ProjectsView = ({ locale, dictionary, taskDictionary, canWrite, canDelete,
       </Card>
       <ProjectFormDrawer open={formOpen} project={editing} options={options} locale={locale} dictionary={dictionary} onClose={() => setFormOpen(false)} onSaved={refresh} />
       <ProjectDetailModal open={Boolean(detailId)} projectId={detailId} initialTab={detailTab} locale={locale} baseCurrency={data.baseCurrency} dictionary={dictionary} taskDictionary={taskDictionary} options={options} canWrite={canWrite} canTaskManage={canTaskManage} canTaskUpdate={canTaskUpdate} canTaskDelete={canTaskDelete} refreshKey={refreshKey} onClose={() => setDetailId(null)} onEdit={project => { setDetailId(null); openEdit(project) }} onChanged={refresh} />
-      <ConfirmDeleteModal open={Boolean(deleteTarget)} title={dictionary.delete.title} description={dictionary.delete.description} itemName={deleteTarget?.project_code} confirmText={dictionary.actions.delete} cancelText={dictionary.actions.cancel} loading={deleting} onConfirm={remove} onClose={() => setDeleteTarget(null)} />
+      <ConfirmationDeleteModal open={Boolean(deleteTarget)} title={dictionary.delete.title} description={dictionary.delete.description} itemName={deleteTarget?.project_code} confirmText={dictionary.actions.delete} cancelText={dictionary.actions.cancel} loading={deleting} onConfirm={remove} onClose={() => setDeleteTarget(null)} />
     </div>
   )
 }

@@ -23,6 +23,8 @@ const initials = name =>
     .slice(0, 2)
     .toUpperCase() || '?'
 
+const STATUS_COLORS = { DRAFT: 'warning', FINALIZED: 'info', PAID: 'success' }
+
 const FinanceSalaryTable = ({
   data,
   loading,
@@ -31,9 +33,9 @@ const FinanceSalaryTable = ({
   rowsPerPage,
   locale,
   dictionary,
-  canWrite,
   canDelete,
   canExecutePayout,
+  activeMonth,
   onPageChange,
   onRowsPerPageChange,
   onView,
@@ -54,8 +56,9 @@ const FinanceSalaryTable = ({
             icon: 'tabler-gift',
             onClick: () => onEdit(salary)
           },
-        canWrite &&
-          salary.status === 'DRAFT' && {
+        canExecutePayout &&
+          salary.status === 'FINALIZED' &&
+          salary.timesheet_month < activeMonth && {
             label: dictionary.actions.markPaid,
             icon: 'tabler-circle-check',
             disabled: busyId === salary.id,
@@ -94,7 +97,7 @@ const FinanceSalaryTable = ({
           <Chip
             size='small'
             variant='tonal'
-            color={salary.status === 'PAID' ? 'success' : 'warning'}
+            color={STATUS_COLORS[salary.status] || 'default'}
             label={dictionary.status[salary.status] || salary.status}
           />
         )}
@@ -109,25 +112,54 @@ const FinanceSalaryTable = ({
           {
             id: 'base',
             label: dictionary.table.baseSalary,
-            render: salary => <DualCurrencyAmount amount={salary.base_salary} currency={salary.currency} exchangeRate={salary.exchange_rate} locale={locale} />
+            render: salary => (
+              <DualCurrencyAmount
+                amount={salary.base_salary}
+                currency={salary.currency}
+                exchangeRate={salary.exchange_rate}
+                locale={locale}
+              />
+            )
           },
           {
             id: 'earned',
             label: dictionary.table.earnedBonus,
-            render: salary => <DualCurrencyAmount amount={salary.earned_salary} currency={salary.currency} exchangeRate={salary.exchange_rate} locale={locale} />
+            render: salary => (
+              <DualCurrencyAmount
+                amount={salary.earned_salary}
+                currency={salary.currency}
+                exchangeRate={salary.exchange_rate}
+                locale={locale}
+              />
+            )
           },
           {
             id: 'deduction',
             label: dictionary.table.loanDeduction,
             render: salary =>
-              toFiniteNumber(salary.loan_deduction) > 0
-                ? <DualCurrencyAmount amount={salary.loan_deduction} currency={salary.currency} exchangeRate={salary.exchange_rate} locale={locale} />
-                : dictionary.common.noLoan
+              toFiniteNumber(salary.loan_deduction) > 0 ? (
+                <DualCurrencyAmount
+                  amount={salary.loan_deduction}
+                  currency={salary.currency}
+                  exchangeRate={salary.exchange_rate}
+                  locale={locale}
+                />
+              ) : (
+                dictionary.common.noLoan
+              )
           },
           {
             id: 'payable',
             label: dictionary.table.payable,
-            render: salary => <DualCurrencyAmount amount={salary.payable_amount} amountBase={salary.amount_base} currency={salary.currency} exchangeRate={salary.exchange_rate} locale={locale} />
+            render: salary => (
+              <DualCurrencyAmount
+                amount={salary.payable_amount}
+                amountBase={salary.amount_base}
+                currency={salary.currency}
+                exchangeRate={salary.exchange_rate}
+                locale={locale}
+              />
+            )
           }
         ]}
         emptyState={{
@@ -194,13 +226,23 @@ const FinanceSalaryTable = ({
                       <Tooltip
                         title={`${dictionary.fields.dailyRate}: ${formatCurrency(salary.base_daily_rate, locale, salary.currency)}`}
                       >
-                        <DualCurrencyAmount amount={salary.base_salary} currency={salary.currency} exchangeRate={salary.exchange_rate} locale={locale} className='min-is-[140px]' />
+                        <DualCurrencyAmount
+                          amount={salary.base_salary}
+                          currency={salary.currency}
+                          exchangeRate={salary.exchange_rate}
+                          locale={locale}
+                          className='min-is-[140px]'
+                        />
                       </Tooltip>
                     </td>
                     <td>
                       <div className='min-is-[160px]'>
-                        <DualCurrencyAmount amount={salary.earned_salary} currency={salary.currency} exchangeRate={salary.exchange_rate} locale={locale} />
-                        {" "}
+                        <DualCurrencyAmount
+                          amount={salary.earned_salary}
+                          currency={salary.currency}
+                          exchangeRate={salary.exchange_rate}
+                          locale={locale}
+                        />{' '}
                         <Typography variant='caption' color='text.secondary' className='whitespace-nowrap'>
                           {dictionary.common.bonus.replace(
                             '{amount}',
@@ -211,7 +253,14 @@ const FinanceSalaryTable = ({
                     </td>
                     <td>
                       {toFiniteNumber(salary.loan_deduction) > 0 ? (
-                        <DualCurrencyAmount amount={salary.loan_deduction} currency={salary.currency} exchangeRate={salary.exchange_rate} locale={locale} className='min-is-[130px]' primaryClassName='text-error' />
+                        <DualCurrencyAmount
+                          amount={salary.loan_deduction}
+                          currency={salary.currency}
+                          exchangeRate={salary.exchange_rate}
+                          locale={locale}
+                          className='min-is-[130px]'
+                          primaryClassName='text-error'
+                        />
                       ) : (
                         <Typography variant='body2' color='text.secondary'>
                           {dictionary.common.noLoan}
@@ -222,14 +271,22 @@ const FinanceSalaryTable = ({
                       <Tooltip
                         title={`${dictionary.fields.baseAmount}: ${formatCurrency(salary.amount_base, locale, data.baseCurrency)}`}
                       >
-                        <DualCurrencyAmount amount={salary.payable_amount} amountBase={salary.amount_base} currency={salary.currency} exchangeRate={salary.exchange_rate} locale={locale} className='min-is-[155px]' primaryClassName='text-primary' />
+                        <DualCurrencyAmount
+                          amount={salary.payable_amount}
+                          amountBase={salary.amount_base}
+                          currency={salary.currency}
+                          exchangeRate={salary.exchange_rate}
+                          locale={locale}
+                          className='min-is-[155px]'
+                          primaryClassName='text-primary'
+                        />
                       </Tooltip>
                     </td>
                     <td>
                       <Chip
                         size='small'
                         variant='tonal'
-                        color={salary.status === 'PAID' ? 'success' : 'warning'}
+                        color={STATUS_COLORS[salary.status] || 'default'}
                         label={dictionary.status[salary.status] || salary.status}
                       />
                     </td>

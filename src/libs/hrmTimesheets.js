@@ -66,13 +66,16 @@ export const resolveOpenProjectTimeTarget = async ({ projectId, taskId }) => {
 export const getAttendanceDateGuard = async date => {
   const today = getKabulToday()
   const isFuture = date > today
+  const attendanceMonth = date.slice(0, 7)
+  const currentMonth = today.slice(0, 7)
+  const isHistoricalMonth = attendanceMonth < currentMonth
   const attendanceDate = toUtcDateOnly(date)
 
   const [paidPayroll, holiday] = await Promise.all([
-    isFuture
+    isFuture || !isHistoricalMonth
       ? null
       : prisma.financesalary.findFirst({
-          where: { timesheet_month: date.slice(0, 7), status: 'PAID' },
+          where: { timesheet_month: attendanceMonth, status: { in: ['FINALIZED', 'PAID'] } },
           select: { id: true }
         }),
     attendanceDate
@@ -121,19 +124,19 @@ export const normalizeAttendance = (record, leaveLabels = new Map()) => {
   const leaveLabel = leaveId ? leaveLabels.get(leaveId) : null
 
   return {
-  ...record,
-  date: dateToString(record.date),
-  check_in_time: timeToString(record.check_in_time),
-  check_out_time: timeToString(record.check_out_time),
-  hours_worked: record.hours_worked?.toFixed(2) ?? null,
-  created_at: record.created_at.toISOString(),
-  updated_at: record.updated_at.toISOString(),
-  notes: leaveMatch ? `Approved Leave Request${leaveLabel ? ` (${leaveLabel})` : ''}` : record.notes,
-  leave_request_id: leaveId,
-  staff: {
-    ...record.staff,
-    full_name: `${record.staff.first_name} ${record.staff.last_name}`.trim()
-  }
+    ...record,
+    date: dateToString(record.date),
+    check_in_time: timeToString(record.check_in_time),
+    check_out_time: timeToString(record.check_out_time),
+    hours_worked: record.hours_worked?.toFixed(2) ?? null,
+    created_at: record.created_at.toISOString(),
+    updated_at: record.updated_at.toISOString(),
+    notes: leaveMatch ? `Approved Leave Request${leaveLabel ? ` (${leaveLabel})` : ''}` : record.notes,
+    leave_request_id: leaveId,
+    staff: {
+      ...record.staff,
+      full_name: `${record.staff.first_name} ${record.staff.last_name}`.trim()
+    }
   }
 }
 
@@ -239,7 +242,9 @@ export const getAttendanceDashboard = async ({
     .filter(staff => !markedIds.has(staff.id))
     .map(staff => ({ ...staff, full_name: `${staff.first_name} ${staff.last_name}`.trim() }))
 
-  const dailyRecordByStaffId = new Map(dailyRecords.map(record => [record.staff_id, normalizeAttendance(record, leaveLabels)]))
+  const dailyRecordByStaffId = new Map(
+    dailyRecords.map(record => [record.staff_id, normalizeAttendance(record, leaveLabels)])
+  )
 
   const attendanceStaff = expectedStaff.map(staff => ({
     ...staff,

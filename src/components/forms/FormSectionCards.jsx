@@ -38,7 +38,7 @@ const FormSectionCards = ({ children, labels = ['General information'] }) => {
   const sections = splitIntoSections(children, labels)
 
   return (
-    <div className='col-span-full flex w-full min-w-0 self-stretch flex-col gap-4 sm:col-span-2'>
+    <div className='col-span-full flex w-full min-w-0 self-stretch flex-col gap-6 sm:col-span-2'>
       {sections.map((section, index) => (
         <section key={`${section.label}-${index}`} className='form-section-card col-span-full w-full min-w-0 self-stretch space-y-4'>
           <h4 className='border-be border-divider/80 pb-2 text-xs font-semibold uppercase tracking-wider text-textSecondary'>

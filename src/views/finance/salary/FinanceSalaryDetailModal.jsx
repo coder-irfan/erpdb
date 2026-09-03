@@ -81,7 +81,7 @@ const FinanceSalaryDetailModal = ({ open, salaryId, locale, dictionary, refreshK
             <Chip
               size='small'
               variant='tonal'
-              color={salary.status === 'PAID' ? 'success' : 'warning'}
+              color={salary.status === 'PAID' ? 'success' : salary.status === 'FINALIZED' ? 'info' : 'warning'}
               label={dictionary.status[salary.status] || salary.status}
             />
           )}
@@ -97,7 +97,10 @@ const FinanceSalaryDetailModal = ({ open, salaryId, locale, dictionary, refreshK
           <Alert severity='error'>{error}</Alert>
         ) : salary ? (
           <div className='flex flex-col gap-5'>
-            <Card variant='outlined border border-primary/30 bg-primaryLighter'>
+            <Card
+              variant='outlined'
+              className='border border-primary/30 bg-primaryLighter/50 shadow-xs dark:bg-primaryLighter'
+            >
               <CardContent>
                 <Typography variant='h6' className='mb-4'>
                   {print.employeeInformation}
@@ -176,7 +179,7 @@ const FinanceSalaryDetailModal = ({ open, salaryId, locale, dictionary, refreshK
               </Card>
             </div>
 
-            <Card className='border border-primary/30 bg-primaryLighter'>
+            <Card className='border border-primary/30 bg-primaryLighter/50 shadow-xs dark:bg-primaryLighter'>
               <CardContent className='flex flex-wrap items-center justify-between gap-4'>
                 <div>
                   <Typography variant='caption' color='text.secondary'>

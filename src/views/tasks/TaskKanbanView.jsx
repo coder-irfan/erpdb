@@ -13,7 +13,7 @@ import Typography from '@mui/material/Typography'
 import UserAvatar from '@/components/common/UserAvatar'
 import KanbanCardSkeleton from '@/components/common/KanbanCardSkeleton'
 import EntityActionsMenu from '@/components/table/EntityActionsMenu'
-import ConfirmationComponent from '@/components/dialogs/ConfirmationComponent'
+import ConfirmationDeleteModal from '@/components/dialogs/ConfirmationDeleteModal'
 import { toDateInputValue } from '@/utils/contractDuration'
 
 import { optionChipProps } from './taskUi'
@@ -98,7 +98,7 @@ const TaskKanbanView = ({
                             size='small'
                             variant='outlined'
                             color='primary'
-                            label={`${task.project.project_code} · ${task.project.title}`}
+                            label={`${task.project.project_code} Â· ${task.project.title}`}
                             className='mt-2 max-is-full'
                           />
                         </div>
@@ -201,7 +201,7 @@ const TaskKanbanView = ({
         )
       })}
       </div>
-      <ConfirmationComponent
+      <ConfirmationDeleteModal
         open={Boolean(pendingMove)}
         title={dictionary.actions.changeStatus}
         message={pendingMove?.guardedMove ? dictionary.kanban.zeroHoursConfirm : `${dictionary.actions.changeStatus}: ${pendingMove?.destination?.label || ''}?`}

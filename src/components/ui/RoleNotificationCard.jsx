@@ -20,20 +20,40 @@ const PRIORITY = {
 
 const CATEGORY_ICONS = {
   CONTRACT: 'tabler-file-time',
+  CRM: 'tabler-user-search',
   HRM: 'tabler-users',
   TASK: 'tabler-list-check',
   PROJECT: 'tabler-briefcase',
   FINANCE: 'tabler-cash-banknote',
   PAYROLL: 'tabler-receipt',
-  INVENTORY: 'tabler-package'
+  INVENTORY: 'tabler-package',
+  SYSTEM: 'tabler-settings-exclamation'
 }
 
 const VIEW_MORE = { en: 'View More', fa: 'مشاهده بیشتر', ps: 'نور کتل' }
 
 const TEXT = {
-  en: { view: 'View details', dismissAll: 'Dismiss all', more: '{count} more alerts', next: 'Show next', priorities: { CRITICAL: 'Critical', URGENT: 'Urgent', WARNING: 'Warning', INFO: 'Info' } },
-  fa: { view: 'مشاهده جزئیات', dismissAll: 'بستن همه', more: '{count} اعلان دیگر', next: 'نمایش بعدی', priorities: { CRITICAL: 'بحرانی', URGENT: 'عاجل', WARNING: 'هشدار', INFO: 'اطلاعات' } },
-  ps: { view: 'جزیات کتل', dismissAll: 'ټول بندول', more: '{count} نور خبرتیاوې', next: 'راتلونکي ښودل', priorities: { CRITICAL: 'بحراني', URGENT: 'بېړنی', WARNING: 'خبرتیا', INFO: 'معلومات' } }
+  en: {
+    view: 'View details',
+    dismissAll: 'Dismiss all',
+    more: '{count} more alerts',
+    next: 'Show next',
+    priorities: { CRITICAL: 'Critical', URGENT: 'Urgent', WARNING: 'Warning', INFO: 'Info' }
+  },
+  fa: {
+    view: 'مشاهده جزئیات',
+    dismissAll: 'بستن همه',
+    more: '{count} اعلان دیگر',
+    next: 'نمایش بعدی',
+    priorities: { CRITICAL: 'بحرانی', URGENT: 'عاجل', WARNING: 'هشدار', INFO: 'اطلاعات' }
+  },
+  ps: {
+    view: 'جزیات کتل',
+    dismissAll: 'ټول بندول',
+    more: '{count} نور خبرتیاوې',
+    next: 'راتلونکي ښودل',
+    priorities: { CRITICAL: 'بحراني', URGENT: 'بېړنی', WARNING: 'خبرتیا', INFO: 'معلومات' }
+  }
 }
 
 export const RoleNotificationCard = ({ notification, locale, onAction, onDismiss }) => {
@@ -43,10 +63,12 @@ export const RoleNotificationCard = ({ notification, locale, onAction, onDismiss
   return (
     <article
       dir={locale === 'fa' || locale === 'ps' ? 'rtl' : 'ltr'}
-      className='pointer-events-auto w-[min(380px,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-divider bg-backgroundPaper shadow-[0_16px_48px_rgba(0,0,0,0.18)]'
+      className='pointer-events-auto w-full overflow-hidden bg-backgroundPaper'
     >
       <div className='flex items-center gap-2 border-b border-divider px-4 py-3'>
-        <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide ${appearance.className}`}>
+        <span
+          className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide ${appearance.className}`}
+        >
           <i className={`${appearance.icon} text-sm`} aria-hidden='true' />
           {labels.priorities[notification.priority] || notification.priority}
         </span>
@@ -67,7 +89,13 @@ export const RoleNotificationCard = ({ notification, locale, onAction, onDismiss
       </div>
       {notification.actionUrl && (
         <div className='border-t border-divider px-4 py-3'>
-          <Button fullWidth size='small' variant='tonal' onClick={() => onAction(notification)} endIcon={<i className={locale === 'en' ? 'tabler-arrow-right' : 'tabler-arrow-left'} />}>
+          <Button
+            fullWidth
+            size='small'
+            variant='tonal'
+            onClick={() => onAction(notification)}
+            endIcon={<i className={locale === 'en' ? 'tabler-arrow-right' : 'tabler-arrow-left'} />}
+          >
             {labels.view}
           </Button>
         </div>
@@ -111,32 +139,46 @@ const RoleNotificationStack = () => {
 
   return (
     <aside
-      className='pointer-events-none fixed bottom-6 end-4 z-[1300] flex max-h-[calc(100vh-3rem)] flex-col gap-5 overflow-y-auto sm:end-6'
+      className='pointer-events-none fixed bottom-6 end-4 z-[1300] max-h-[calc(100vh-3rem)] overflow-y-auto sm:end-6'
       aria-label='Priority notifications'
     >
-      <div className='pointer-events-auto flex items-center justify-end gap-2 rounded-xl border border-divider bg-backgroundPaper/95 px-3 py-2 shadow-lg backdrop-blur'>
-        {queued.length > 0 && (
+      <div className='pointer-events-auto w-[min(380px,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-divider bg-backgroundPaper shadow-2xl'>
+        <div className='grid min-h-12 grid-cols-[1fr_auto_1fr] items-center gap-2 border-b border-divider bg-backgroundPaper/95 px-3 py-2 backdrop-blur'>
           <Button size='small' variant='text' onClick={viewMore}>
-            {labels.more.replace('{count}', hiddenCount)} · {labels.next}
+            {labels.next}
           </Button>
-        )}
-        <Button size='small' color='error' variant='text' onClick={dismissAll}>{labels.dismissAll}</Button>
-      </div>
-      <div
-        className='pointer-events-auto relative w-[min(380px,calc(100vw-2rem))]'
-        style={{ height: expanded ? undefined : '232px' }}
-        onMouseEnter={() => setExpanded(true)}
-        onMouseLeave={() => setExpanded(false)}
-      >
-        {visible.map((notification, index) => (
-          <div
-            key={notification.id}
-            className={`transition-[transform,opacity] duration-300 ease-out ${expanded ? 'relative mb-3 last:mb-0' : 'absolute inset-x-0 bottom-0'}`}
-            style={expanded ? { zIndex: 30 - index, opacity: 1, transform: 'translateY(0) scale(1)' } : { ...stackDepth[index], transformOrigin: 'bottom center' }}
+
+          <span
+            aria-hidden={hiddenCount === 0}
+            className={`truncate text-xs font-medium text-textSecondary ${hiddenCount === 0 ? 'invisible' : ''}`}
           >
-            <RoleNotificationCard notification={notification} locale={locale} onAction={act} onDismiss={dismiss} />
-          </div>
-        ))}
+            {labels.more.replace('{count}', hiddenCount)}
+          </span>
+
+          <Button className='justify-self-end' size='small' color='error' variant='text' onClick={dismissAll}>
+            {labels.dismissAll}
+          </Button>
+        </div>
+        <div
+          className='relative w-full'
+          style={{ height: expanded ? undefined : '232px' }}
+          onMouseEnter={() => setExpanded(true)}
+          onMouseLeave={() => setExpanded(false)}
+        >
+          {visible.map((notification, index) => (
+            <div
+              key={notification.id}
+              className={`border-divider transition-[transform,opacity] duration-300 ease-out ${expanded ? 'relative border-b last:border-b-0' : 'absolute inset-x-0 bottom-0'}`}
+              style={
+                expanded
+                  ? { zIndex: 30 - index, opacity: 1, transform: 'translateY(0) scale(1)' }
+                  : { ...stackDepth[index], transformOrigin: 'bottom center' }
+              }
+            >
+              <RoleNotificationCard notification={notification} locale={locale} onAction={act} onDismiss={dismiss} />
+            </div>
+          ))}
+        </div>
       </div>
     </aside>
   )

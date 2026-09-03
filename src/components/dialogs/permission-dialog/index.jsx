@@ -22,7 +22,6 @@ const AddContent = ({ handleClose }) => {
           fullWidth
           label='Permission Name'
           variant='outlined'
-          placeholder='Enter Permission Name'
           className='mbe-2'
         />
         <FormControlLabel control={<Checkbox />} label='Set as core permission' />
@@ -54,7 +53,6 @@ const EditContent = ({ handleClose, data }) => {
           defaultValue={data}
           variant='outlined'
           label='Permission Name'
-          placeholder='Enter Permission Name'
         />
         <Button variant='contained' onClick={handleClose}>
           Update

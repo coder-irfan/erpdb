@@ -608,8 +608,13 @@ body,
   grid-column: 1 / -1 !important;
   border: 1px solid var(--mui-palette-divider);
   border-radius: 0.75rem;
-  background: var(--mui-palette-action-hover);
+  /* A tinted paper surface remains light in light mode without changing dark drawers. */
+  background: color-mix(in srgb, var(--mui-palette-background-paper) 96%, var(--mui-palette-primary-main));
   padding: 1rem;
+}
+
+[data-dark] .form-section-card {
+  background: var(--mui-palette-action-hover);
 }
 
 .form-section-card > .grid > :is(div, section):has(> .grid) {

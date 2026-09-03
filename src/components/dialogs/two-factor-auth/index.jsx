@@ -57,7 +57,7 @@ const SMSDialog = handleAuthDialogClose => {
         </Typography>
       </DialogTitle>
       <DialogContent className='overflow-visible pbs-0 sm:pbe-16 sm:pli-16'>
-        <CustomTextField fullWidth type='number' label='Mobile Number' placeholder='123 456 7890' />
+        <CustomTextField fullWidth type='number' label='Mobile Number' />
       </DialogContent>
       <DialogActions className='pbs-0 sm:pbe-16 sm:pli-16'>
         <Button variant='tonal' type='reset' color='secondary' onClick={handleAuthDialogClose}>
@@ -99,7 +99,7 @@ const AppDialog = handleAuthDialogClose => {
             <AlertTitle>ASDLKNASDA9AHS678dGhASD78AB</AlertTitle>
             If you having trouble using the QR code, select manual entry on your app
           </Alert>
-          <CustomTextField fullWidth label='Enter Authentication Code' placeholder='Enter Authentication Code' />
+          <CustomTextField fullWidth label='Enter Authentication Code' />
         </div>
       </DialogContent>
       <DialogActions className='pbs-0 sm:pbe-16 sm:pli-16'>

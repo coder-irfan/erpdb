@@ -108,7 +108,6 @@ const ProjectTimesheetTable = ({ rows, tasks, dictionary, canAttach, locked, wor
               <td className='min-is-[190px] p-3'>
                 {canAttach ? (
                   <CustomTextField select size='small' value={row.task_id || ''} disabled={locked || working} onChange={event => onAttach(row.id, event.target.value)}>
-                    <MenuItem value='' disabled>{dictionary.placeholders.task}</MenuItem>
                     {tasks.map(task => <MenuItem key={task.id} value={task.id}>{task.title}</MenuItem>)}
                   </CustomTextField>
                 ) : row.task?.title || '—'}
@@ -448,7 +447,6 @@ const ProjectDetailModal = ({
                         value={staffId}
                         onChange={event => setStaffId(event.target.value)}
                       >
-                        <MenuItem value=''>{dictionary.placeholders.member}</MenuItem>
                         {eligibleStaff.map(staff => (
                           <MenuItem key={staff.id} value={staff.id}>
                             {staff.full_name} · {staff.position}
@@ -457,7 +455,6 @@ const ProjectDetailModal = ({
                       </CustomTextField>
                       <CustomTextField
                         label={dictionary.fields.role}
-                        placeholder={dictionary.placeholders.role}
                         value={role}
                         onChange={event => setRole(event.target.value)}
                       />
@@ -521,7 +518,6 @@ const ProjectDetailModal = ({
                         value={contractId}
                         onChange={event => setContractId(event.target.value)}
                       >
-                        <MenuItem value=''>{dictionary.placeholders.contract}</MenuItem>
                         {eligibleContracts.map(contract => (
                           <MenuItem key={contract.id} value={contract.id}>
                             {contract.contract_number} · {contract.title}

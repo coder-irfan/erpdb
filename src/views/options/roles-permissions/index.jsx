@@ -21,7 +21,7 @@ import {
   revokeUserInvitation,
   updateUserStatus
 } from '@/app/actions/userActions'
-import ConfirmDeleteModal from '@/components/dialogs/ConfirmDeleteModal'
+import ConfirmationDeleteModal from '@/components/dialogs/ConfirmationDeleteModal'
 
 import CreateRoleDialog from './CreateRoleDialog'
 import InviteUserDialog from './InviteUserDialog'
@@ -355,7 +355,7 @@ const RolesPermissionsView = ({
         translations={dictionary}
       />
 
-      <ConfirmDeleteModal
+      <ConfirmationDeleteModal
         open={Boolean(roleToDelete)}
         title={dictionary.deleteRole}
         description={dictionary.deleteRoleConfirmation}
