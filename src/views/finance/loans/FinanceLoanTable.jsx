@@ -25,27 +25,102 @@ const FinanceLoanTable = ({
   locale,
   dictionary,
   canWrite,
+  canManageStatus,
+  statusUpdating,
   onPageChange,
   onRowsPerPageChange,
   onView,
   onPrint,
-  onRepay
+  onRepay,
+  onStatusChange,
+  onApproveAndDisburse
 }) => {
-  const renderActions = loan => (
-    <EntityActionsMenu
-      moreActionsLabel={dictionary.table.actions}
-      actions={[
-        { label: dictionary.actions.view, icon: 'tabler-eye', onClick: () => onView(loan) },
-        canWrite &&
-          toFiniteNumber(loan.remaining_balance) > 0 && {
-            label: dictionary.actions.repay,
-            icon: 'tabler-cash',
-            onClick: () => onRepay(loan)
-          },
-        { label: dictionary.actions.printVoucher, icon: 'tabler-printer', onClick: () => onPrint(loan) }
-      ]}
-    />
-  )
+  const statusActions = loan => {
+    if (!canManageStatus) return []
+
+    const common = { disabled: statusUpdating === loan.id, requiresConfirmation: true }
+
+    if (loan.status?.value === 'REQUESTED' && loan.loan_type === 'STAFF') {
+      return [
+        {
+          ...common,
+          label: 'Approve & Disburse',
+          icon: 'tabler-cash-banknote',
+          requiresConfirmation: false,
+          onClick: () => onApproveAndDisburse(loan)
+        },
+        {
+          ...common,
+          label: dictionary.actions.reject,
+          icon: 'tabler-x',
+          color: 'error',
+          onClick: () => onStatusChange(loan, 'REJECTED')
+        }
+      ]
+    }
+
+    if (loan.status?.value === 'APPROVED' && loan.loan_type === 'STAFF') {
+      return [
+        {
+          ...common,
+          label: 'Disburse',
+          icon: 'tabler-cash-banknote',
+          requiresConfirmation: false,
+          onClick: () => onApproveAndDisburse(loan)
+        }
+      ]
+    }
+
+    const hasRepayments = toFiniteNumber(loan.repaid_amount) > 0 || (loan.repayments?.length || 0) > 0
+
+    if (loan.status?.value === 'ACTIVE' && !hasRepayments) {
+      return [
+        {
+          ...common,
+          label: dictionary.actions.void,
+          icon: 'tabler-ban',
+          color: 'error',
+          onClick: () => onStatusChange(loan, 'CANCELLED')
+        }
+      ]
+    }
+
+    return []
+  }
+
+  const renderActions = loan => {
+    const isActive = loan.status?.value === 'ACTIVE'
+
+    const fallbackActions = [
+      { label: dictionary.actions.view, icon: 'tabler-eye', onClick: () => onView(loan) },
+      { label: dictionary.actions.printVoucher, icon: 'tabler-printer', onClick: () => onPrint(loan) }
+    ]
+
+    const activeActions = [
+      canWrite &&
+        toFiniteNumber(loan.remaining_balance) > 0 && {
+          label: dictionary.actions.repay,
+          icon: 'tabler-cash',
+          skipConfirmation: true,
+          onClick: () => onRepay(loan)
+        },
+      { label: 'View Schedule', icon: 'tabler-calendar-dollar', onClick: () => onView(loan) },
+      ...statusActions(loan)
+    ]
+
+    return (
+      <EntityActionsMenu
+        moreActionsLabel={dictionary.table.actions}
+        actions={
+          loan.status?.value === 'REQUESTED' || loan.status?.value === 'APPROVED'
+            ? statusActions(loan)
+            : isActive
+              ? activeActions
+              : fallbackActions
+        }
+      />
+    )
+  }
 
   return (
     <>
@@ -87,22 +162,51 @@ const FinanceLoanTable = ({
           {
             id: 'total',
             label: dictionary.table.total,
-            render: loan => <DualCurrencyAmount amount={loan.total_amount} amountBase={loan.amount_base} currency={loan.currency} exchangeRate={loan.exchange_rate} locale={locale} />
+            render: loan => (
+              <DualCurrencyAmount
+                amount={loan.total_amount}
+                amountBase={loan.amount_base}
+                currency={loan.currency}
+                exchangeRate={loan.exchange_rate}
+                locale={locale}
+              />
+            )
           },
           {
             id: 'monthly',
             label: dictionary.table.monthly,
-            render: loan => <DualCurrencyAmount amount={loan.monthly_deduction} currency={loan.currency} exchangeRate={loan.exchange_rate} locale={locale} />
+            render: loan => (
+              <DualCurrencyAmount
+                amount={loan.monthly_deduction}
+                currency={loan.currency}
+                exchangeRate={loan.exchange_rate}
+                locale={locale}
+              />
+            )
           },
           {
             id: 'repaid',
             label: dictionary.table.repaid,
-            render: loan => <DualCurrencyAmount amount={loan.repaid_amount} currency={loan.currency} exchangeRate={loan.exchange_rate} locale={locale} />
+            render: loan => (
+              <DualCurrencyAmount
+                amount={loan.repaid_amount}
+                currency={loan.currency}
+                exchangeRate={loan.exchange_rate}
+                locale={locale}
+              />
+            )
           },
           {
             id: 'remaining',
             label: dictionary.table.remaining,
-            render: loan => <DualCurrencyAmount amount={loan.remaining_balance} currency={loan.currency} exchangeRate={loan.exchange_rate} locale={locale} />
+            render: loan => (
+              <DualCurrencyAmount
+                amount={loan.remaining_balance}
+                currency={loan.currency}
+                exchangeRate={loan.exchange_rate}
+                locale={locale}
+              />
+            )
           },
           { id: 'date', label: dictionary.table.date, render: loan => toDateInputValue(loan.issue_date) }
         ]}
@@ -172,16 +276,43 @@ const FinanceLoanTable = ({
                         </div>
                       </td>
                       <td className='text-end'>
-                        <DualCurrencyAmount amount={loan.total_amount} amountBase={loan.amount_base} currency={loan.currency} exchangeRate={loan.exchange_rate} locale={locale} className='min-is-[130px] items-end' />
+                        <DualCurrencyAmount
+                          amount={loan.total_amount}
+                          amountBase={loan.amount_base}
+                          currency={loan.currency}
+                          exchangeRate={loan.exchange_rate}
+                          locale={locale}
+                          className='min-is-[130px] items-end'
+                        />
                       </td>
                       <td className='text-end'>
-                        <DualCurrencyAmount amount={loan.monthly_deduction} currency={loan.currency} exchangeRate={loan.exchange_rate} locale={locale} className='min-is-[130px] items-end' />
+                        <DualCurrencyAmount
+                          amount={loan.monthly_deduction}
+                          currency={loan.currency}
+                          exchangeRate={loan.exchange_rate}
+                          locale={locale}
+                          className='min-is-[130px] items-end'
+                        />
                       </td>
                       <td className='text-end'>
-                        <DualCurrencyAmount amount={loan.repaid_amount} currency={loan.currency} exchangeRate={loan.exchange_rate} locale={locale} className='min-is-[125px] items-end' primaryClassName='text-success' />
+                        <DualCurrencyAmount
+                          amount={loan.repaid_amount}
+                          currency={loan.currency}
+                          exchangeRate={loan.exchange_rate}
+                          locale={locale}
+                          className='min-is-[125px] items-end'
+                          primaryClassName='text-success'
+                        />
                       </td>
                       <td className='text-end'>
-                        <DualCurrencyAmount amount={loan.remaining_balance} currency={loan.currency} exchangeRate={loan.exchange_rate} locale={locale} className='min-is-[135px] items-end' primaryClassName={toFiniteNumber(loan.remaining_balance) > 0 ? 'text-error' : 'text-success'} />
+                        <DualCurrencyAmount
+                          amount={loan.remaining_balance}
+                          currency={loan.currency}
+                          exchangeRate={loan.exchange_rate}
+                          locale={locale}
+                          className='min-is-[135px] items-end'
+                          primaryClassName={toFiniteNumber(loan.remaining_balance) > 0 ? 'text-error' : 'text-success'}
+                        />
                       </td>
                       <td>
                         <Chip size='small' variant='tonal' color={statusColor} label={loan.status.label} />

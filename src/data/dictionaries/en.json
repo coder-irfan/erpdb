@@ -1857,7 +1857,8 @@
       "OUT_OF_STOCK": "Out of Stock",
       "CANCELLED": "Cancelled",
       "CLOSED": "Closed",
-      "REPAID": "Repaid"
+      "REPAID": "Fully Paid",
+      "PAID_OFF": "Fully Paid"
     },
     "loanTypes": {
       "STAFF": "Staff",
@@ -3264,6 +3265,10 @@
       "repay": "Record Repayment",
       "print": "Print Statement",
       "printVoucher": "Print Voucher",
+      "approve": "Approve Loan",
+      "reject": "Reject Loan",
+      "activate": "Disburse / Mark Active",
+      "void": "Cancel / Void",
       "delete": "Delete Loan"
     },
     "fields": {
@@ -3319,6 +3324,7 @@
       "entityRequired": "Enter the external entity name.",
       "staffRequired": "Select a staff member.",
       "monthlyTooHigh": "Monthly deduction cannot exceed the total amount.",
+      "repaymentExceedsBalance": "Repayment amount cannot exceed the remaining balance of {balance}.",
       "reasonTooLong": "Reason must not exceed 5,000 characters."
     },
     "messages": {

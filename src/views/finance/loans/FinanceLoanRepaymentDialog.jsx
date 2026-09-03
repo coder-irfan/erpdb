@@ -17,6 +17,17 @@ import { formatCurrency, toFiniteNumber } from '@/utils/formatCurrency'
 const FinanceLoanRepaymentDialog = ({ open, loan, locale, dictionary, onClose, onSaved }) => {
   const [amount, setAmount] = useState('')
   const [saving, setSaving] = useState(false)
+  const remainingBalance = toFiniteNumber(loan?.remaining_balance)
+  const enteredAmount = toFiniteNumber(amount)
+
+  const repaymentExceedsBalanceMessage =
+    dictionary.validation?.repaymentExceedsBalance ||
+    'Repayment amount cannot exceed the remaining balance of {balance}.'
+
+  const overBalanceError =
+    amount && enteredAmount > remainingBalance
+      ? repaymentExceedsBalanceMessage.replace('{balance}', formatCurrency(remainingBalance, locale, loan?.currency))
+      : ''
 
   useEffect(() => {
     if (open)
@@ -27,6 +38,8 @@ const FinanceLoanRepaymentDialog = ({ open, loan, locale, dictionary, onClose, o
 
   const submit = async () => {
     if (toFiniteNumber(amount) <= 0) return toast.error(dictionary.validation.amountInvalid)
+    if (overBalanceError) return
+
     setSaving(true)
 
     const response = await fetch(`/api/finance/loans/${loan.id}/repay`, {
@@ -48,7 +61,7 @@ const FinanceLoanRepaymentDialog = ({ open, loan, locale, dictionary, onClose, o
   }
 
   return (
-    <Dialog open={open} onClose={saving ? undefined : onClose} fullWidth maxWidth='xs'>
+    <Dialog open={open} onClose={saving ? undefined : onClose} fullWidth maxWidth='lg'>
       <DialogTitle>{dictionary.repayment.title}</DialogTitle>
       <DialogContent dividers className='flex flex-col gap-4'>
         <Typography color='text.secondary'>
@@ -68,14 +81,21 @@ const FinanceLoanRepaymentDialog = ({ open, loan, locale, dictionary, onClose, o
           label={dictionary.fields.repayment}
           value={amount}
           onChange={event => setAmount(event.target.value)}
-          inputProps={{ min: 0.01, max: loan?.remaining_balance, step: '0.01' }}
+          error={Boolean(overBalanceError)}
+          helperText={overBalanceError}
+          inputProps={{ min: 0.01, max: remainingBalance, step: '0.01' }}
         />
       </DialogContent>
       <DialogActions className='gap-2 p-5'>
         <Button variant='tonal' color='secondary' disabled={saving} onClick={onClose}>
           {dictionary.actions.cancel}
         </Button>
-        <Button variant='contained' color='success' disabled={saving} onClick={submit}>
+        <Button
+          variant='contained'
+          color='success'
+          disabled={saving || enteredAmount <= 0 || Boolean(overBalanceError)}
+          onClick={submit}
+        >
           <LoadingButtonContent loading={saving} loadingLabel={dictionary.actions.saving}>
             {dictionary.repayment.confirm}
           </LoadingButtonContent>

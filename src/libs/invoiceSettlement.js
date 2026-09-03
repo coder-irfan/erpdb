@@ -4,7 +4,7 @@ import { Prisma } from '@prisma/client'
 
 import { CENT_TOLERANCE, deriveSettlementStatus } from '@/libs/financialStatuses'
 import { ensureSystemOption } from '@/libs/systemOptions'
-import { toFiniteNumber } from '@/utils/formatCurrency'
+import { roundMoney, subtractMoney, toFiniteNumber } from '@/utils/formatCurrency'
 
 export class InvoiceSettlementError extends Error {
   constructor(code, message) {
@@ -13,8 +13,6 @@ export class InvoiceSettlementError extends Error {
     this.code = code
   }
 }
-
-const roundMoney = value => Math.round((toFiniteNumber(value) + Number.EPSILON) * 100) / 100
 
 const getSettlementStatus = (paidAmount, invoiceAmount) => deriveSettlementStatus(invoiceAmount, paidAmount)
 
@@ -42,7 +40,7 @@ export const syncInvoiceSettlement = async (transaction, invoiceId) => {
   }
 
   const normalizedPaid = Math.min(invoiceAmount, Math.max(0, paidAmount))
-  const remainingBalance = roundMoney(Math.max(0, invoiceAmount - normalizedPaid))
+  const remainingBalance = Math.max(0, subtractMoney(invoiceAmount, normalizedPaid))
   const statusValue = getSettlementStatus(normalizedPaid, invoiceAmount)
 
   if (invoice.status.value === 'CANCELLED') {

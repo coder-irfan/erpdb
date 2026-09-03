@@ -27,6 +27,7 @@ const STATUS_COLORS = {
   OUT_OF_STOCK: 'error',
   CANCELLED: 'secondary',
   CLOSED: 'secondary',
+  PAID_OFF: 'success',
   REPAID: 'info',
   RECORDED: 'info'
 }

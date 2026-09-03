@@ -1857,7 +1857,8 @@
       "OUT_OF_STOCK": "نه موجود",
       "CANCELLED": "لغوه شوی",
       "CLOSED": "تړل شوی",
-      "REPAID": "تصفیه شوی"
+      "REPAID": "تصفیه شوی",
+      "PAID_OFF": "تصفیه شوی"
     },
     "loanTypes": {
       "STAFF": "کارکوونکی",
@@ -3264,6 +3265,10 @@
       "repay": "بېرته ورکړه ثبتول",
       "print": "حساب چاپول",
       "printVoucher": "د پور سند چاپول",
+      "approve": "پور تصویب کړئ",
+      "reject": "پور رد کړئ",
+      "activate": "ورکړه / فعال یې کړئ",
+      "void": "لغوه / باطل کړئ",
       "delete": "پور ړنګول"
     },
     "fields": {
@@ -3314,6 +3319,7 @@
     "validation": {
       "required": "دا ډګر اړین دی.",
       "amountInvalid": "له صفر لوړ مبلغ ولیکئ.",
+      "repaymentExceedsBalance": "د بېرته ورکړې مبلغ نشي کولی د {balance} پاتې بیلانس څخه زیات وي.",
       "rateInvalid": "له صفر لوړ د تبادلې نرخ ولیکئ.",
       "dateInvalid": "د صدور سمه نېټه وټاکئ.",
       "entityRequired": "د بهرنۍ ادارې نوم ولیکئ.",

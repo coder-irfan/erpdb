@@ -22,32 +22,40 @@ import FormSectionCards from '@/components/forms/FormSectionCards'
 import { createFinanceLoanSchema } from '@/schemas/financeLoan'
 import { toDateInputValue } from '@/utils/contractDuration'
 import { convertToBaseCurrency, formatCurrency, toFiniteNumber } from '@/utils/formatCurrency'
-import { calculateAmortizationSchedule } from '@/utils/loanCalculations'
+import { addUtcMonths, calculateAmortizationSchedule } from '@/utils/loanCalculations'
 import DualCurrencyAmount from '@/components/currency/DualCurrencyAmount'
 
-const emptyValues = (options, loanType = 'STAFF') => ({
-  loan_type: loanType,
-  staff_id: '',
-  entity_name: '',
-  lender_type: 'BANK',
-  total_amount: '',
-  monthly_deduction: '',
-  currency: options.baseCurrency || 'AFN',
-  exchange_rate: String(options.exchangeRate || '65'),
-  issue_date: toDateInputValue(new Date()),
-  repayment_start_date: toDateInputValue(new Date()),
-  auto_deduct: true,
-  annual_interest_rate: '0',
-  tenure_months: '12',
-  disbursement_bank_account: '',
-  reason: ''
-})
+const emptyValues = (options, loanType = 'STAFF') => {
+  const issueDate = new Date()
+
+  return {
+    loan_type: loanType,
+    staff_id: '',
+    entity_name: '',
+    lender_type: 'BANK',
+    total_amount: '',
+
+    // Corporate loans calculate their own payment, but the shared schema still
+    // needs a valid value for this staff-only field.
+    monthly_deduction: '1',
+    currency: options.baseCurrency || 'AFN',
+    exchange_rate: String(options.exchangeRate || '65'),
+    issue_date: toDateInputValue(issueDate),
+    repayment_start_date: toDateInputValue(addUtcMonths(issueDate, 1)),
+    auto_deduct: true,
+    annual_interest_rate: '0',
+    tenure_months: '12',
+    disbursement_bank_account: '',
+    reason: ''
+  }
+}
 
 const FinanceLoanFormDrawer = ({ open, initialLoanType = 'STAFF', options, locale, dictionary, onClose, onSaved }) => {
   const {
     control,
     handleSubmit,
     reset,
+    setValue,
     formState: { errors, isSubmitting }
   } = useForm({
     resolver: valibotResolver(createFinanceLoanSchema(dictionary.validation)),
@@ -61,6 +69,7 @@ const FinanceLoanFormDrawer = ({ open, initialLoanType = 'STAFF', options, local
   const interestRate = useWatch({ control, name: 'annual_interest_rate' })
   const tenureMonths = useWatch({ control, name: 'tenure_months' })
   const issueDate = useWatch({ control, name: 'issue_date' })
+  const repaymentStartDate = useWatch({ control, name: 'repayment_start_date' })
 
   const amountBase = useMemo(
     () => convertToBaseCurrency(totalAmount, currency, exchangeRate, 'AFN'),
@@ -73,29 +82,50 @@ const FinanceLoanFormDrawer = ({ open, initialLoanType = 'STAFF', options, local
         principal: totalAmount,
         annualInterestRate: interestRate,
         tenureMonths,
-        issueDate
+        issueDate,
+        repaymentStartDate
       }),
-    [interestRate, issueDate, tenureMonths, totalAmount]
+    [interestRate, issueDate, repaymentStartDate, tenureMonths, totalAmount]
   )
 
   useEffect(() => {
     if (open) reset(emptyValues(options, initialLoanType))
   }, [initialLoanType, open, options, reset])
 
+  useEffect(() => {
+    if (!issueDate) return
+
+    const nextStartDate = addUtcMonths(issueDate, 1)
+
+    if (!Number.isNaN(nextStartDate.getTime())) {
+      setValue('repayment_start_date', toDateInputValue(nextStartDate))
+    }
+  }, [issueDate, setValue])
+
   const submit = async values => {
-    const response = await fetch('/api/finance/loans', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...values, locale })
-    })
+    try {
+      const response = await fetch('/api/finance/loans', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...values, locale })
+      })
 
-    const result = await response.json()
+      const result = await response.json()
 
-    if (!response.ok || !result.success) return toast.error(result.error || dictionary.messages.operationFailed)
+      if (!response.ok || !result.success) return toast.error(result.error || dictionary.messages.operationFailed)
 
-    toast.success(result.message)
-    onClose()
-    await onSaved()
+      toast.success(result.message)
+      onClose()
+      await onSaved()
+    } catch {
+      toast.error(dictionary.messages.operationFailed)
+    }
+  }
+
+  const submitInvalid = formErrors => {
+    const firstError = Object.values(formErrors).find(error => error?.message)
+
+    toast.error(firstError?.message || dictionary.messages.operationFailed)
   }
 
   const field = (name, label, props = {}) => (
@@ -133,7 +163,7 @@ const FinanceLoanFormDrawer = ({ open, initialLoanType = 'STAFF', options, local
       </div>
       <form
         className='form-surface-scroll flex flex-1 flex-col gap-5 px-5 pt-5'
-        onSubmit={handleSubmit(submit)}
+        onSubmit={handleSubmit(submit, submitInvalid)}
         noValidate
       >
         <FormSectionCards
@@ -217,12 +247,11 @@ const FinanceLoanFormDrawer = ({ open, initialLoanType = 'STAFF', options, local
               type: 'date',
               slotProps: { inputLabel: { shrink: true } }
             })}
-            {loanType === 'STAFF' ? (
-              field('repayment_start_date', 'Repayment Start Date', {
-                type: 'date',
-                slotProps: { inputLabel: { shrink: true } }
-              })
-            ) : (
+            {field('repayment_start_date', 'Repayment Start Date', {
+              type: 'date',
+              slotProps: { inputLabel: { shrink: true } }
+            })}
+            {loanType === 'CORPORATE' && (
               <>
                 {field('annual_interest_rate', 'Annual Interest Rate (%)', {
                   type: 'number',
@@ -283,6 +312,9 @@ const FinanceLoanFormDrawer = ({ open, initialLoanType = 'STAFF', options, local
                 <Typography variant='h6' className='mb-3'>
                   Calculated Amortization Schedule
                 </Typography>
+                <Typography variant='body2' color='text.secondary' className='mb-3'>
+                  Amounts shown in {currency}
+                </Typography>
                 <div className='max-h-72 overflow-auto'>
                   <table className='w-full text-sm'>
                     <thead>
@@ -300,12 +332,18 @@ const FinanceLoanFormDrawer = ({ open, initialLoanType = 'STAFF', options, local
                         <tr key={row.installment_number} className='border-bs border-divider'>
                           <td className='p-2'>{row.installment_number}</td>
                           <td className='p-2'>{toDateInputValue(row.due_date)}</td>
-                          <td className='p-2 text-end'>{formatCurrency(row.principal_amount, locale, currency)}</td>
-                          <td className='p-2 text-end'>{formatCurrency(row.interest_amount, locale, currency)}</td>
-                          <td className='p-2 text-end font-semibold'>
+                          <td className='whitespace-nowrap p-2 text-end'>
+                            {formatCurrency(row.principal_amount, locale, currency)}
+                          </td>
+                          <td className='whitespace-nowrap p-2 text-end'>
+                            {formatCurrency(row.interest_amount, locale, currency)}
+                          </td>
+                          <td className='whitespace-nowrap p-2 text-end font-semibold'>
                             {formatCurrency(row.payment_amount, locale, currency)}
                           </td>
-                          <td className='p-2 text-end'>{formatCurrency(row.remaining_principal, locale, currency)}</td>
+                          <td className='whitespace-nowrap p-2 text-end'>
+                            {formatCurrency(row.remaining_principal, locale, currency)}
+                          </td>
                         </tr>
                       ))}
                     </tbody>

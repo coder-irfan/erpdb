@@ -10,7 +10,7 @@ import { getSharedDictionary } from '@/data/dictionaries/shared'
 
 const toneClasses = {
   error: 'bg-errorLighter text-error',
-  warning: 'bg-warningLighter text-warning',
+  warning: 'bg-secondaryLighter text-warning',
   primary: 'bg-primaryLighter text-primary',
   success: 'bg-successLighter text-success',
   info: 'bg-infoLighter text-info',

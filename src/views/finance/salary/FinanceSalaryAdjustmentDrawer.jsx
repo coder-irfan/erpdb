@@ -153,7 +153,7 @@ const FinanceSalaryAdjustmentDrawer = ({ open, salary, baseCurrency, locale, dic
               <Typography variant='h6' className='mb-4'>
                 Timesheet Summary
               </Typography>
-              <div className='grid grid-cols-2 gap-3 sm:grid-cols-4'>
+              <div className='grid grid-cols-2 gap-3 sm:grid-cols-3'>
                 <div className='rounded-lg bg-actionHover p-3'>
                   <Typography variant='caption' color='text.secondary'>
                     Working Days
@@ -173,12 +173,6 @@ const FinanceSalaryAdjustmentDrawer = ({ open, salary, baseCurrency, locale, dic
                   <Typography className='mt-1 font-semibold'>
                     {timesheetSummary.absentDays ?? '---'} Absent · {timesheetSummary.paidLeaveDays ?? 0} Paid Leave
                   </Typography>
-                </div>
-                <div className='rounded-lg bg-actionHover p-3'>
-                  <Typography variant='caption' color='text.secondary'>
-                    Logged Hours
-                  </Typography>
-                  <Typography className='mt-1 font-semibold'>{timesheetSummary.loggedHours ?? '---'} hrs</Typography>
                 </div>
               </div>
             </CardContent>

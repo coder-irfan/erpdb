@@ -1,14 +1,15 @@
 const PAYMENT_METHOD_LABELS = {
   BANK_TRANSFER: 'Bank Transfer',
-  CASH: 'Cash',
+  CASH: 'Manual Cash',
   CREDIT_CARD: 'Credit Card',
   DEBIT_CARD: 'Debit Card',
   MOBILE_MONEY: 'Mobile Money',
   CHEQUE: 'Cheque',
   CHECK: 'Check',
   MANUAL_CASH: 'Manual Cash',
-  MANUAL_BANK: 'Manual Bank',
-  SALARY_DEDUCTION: 'Salary Deduction'
+  MANUAL_BANK: 'Bank Transfer',
+  PAYROLL_DEDUCTION: 'Payroll Deduction',
+  SALARY_DEDUCTION: 'Payroll Deduction'
 }
 
 const humanizeKey = value =>

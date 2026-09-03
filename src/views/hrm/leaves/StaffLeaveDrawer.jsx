@@ -184,9 +184,7 @@ const StaffLeaveDrawer = ({
     console.error('HRM leave form validation failed:', formErrors)
 
     const firstError =
-      formErrors.root ||
-      formErrors.total_days ||
-      Object.values(formErrors).find(error => error?.message)
+      formErrors.root || formErrors.total_days || Object.values(formErrors).find(error => error?.message)
 
     toast.error(firstError?.message || dictionary.messages.operationFailed)
   }
@@ -366,7 +364,7 @@ const StaffLeaveDrawer = ({
               </Typography>
               {!isPaid && (
                 <Typography
-                  className='mt-2 inline-flex rounded bg-warningLighter px-2 py-1'
+                  className='mt-2 inline-flex rounded bg-secondaryLighter px-2 py-1'
                   color='warning.dark'
                   variant='body2'
                 >

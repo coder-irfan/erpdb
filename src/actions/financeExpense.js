@@ -15,7 +15,13 @@ import { prisma } from '@/libs/prisma'
 import { serializeData } from '@/libs/serialize'
 import { createFinanceExpenseSchema } from '@/schemas/financeExpense'
 import { toUtcDateOnly } from '@/utils/contractDuration'
-import { SYSTEM_BASE_CURRENCY, convertToBaseCurrency, normalizeToAfn, toFiniteNumber } from '@/utils/formatCurrency'
+import {
+  SYSTEM_BASE_CURRENCY,
+  convertToBaseCurrency,
+  normalizeToAfn,
+  roundMoney,
+  toFiniteNumber
+} from '@/utils/formatCurrency'
 import { hasAdministrativeRole, hasAnyPermission } from '@/utils/rbac'
 
 const READ_PERMISSIONS = ['finance:read', 'finance_expense:read']
@@ -91,25 +97,26 @@ const normalizeLocale = locale => (i18n.locales.includes(locale) ? locale : i18n
 const normalizeId = value => (typeof value === 'string' ? value.trim() : '')
 const iso = value => value?.toISOString() || null
 const numberString = (value, scale = 2) => (value == null ? null : toFiniteNumber(value).toFixed(scale))
-const withFullName = staff => staff ? { ...staff, full_name: `${staff.first_name} ${staff.last_name}`.trim() } : null
+const withFullName = staff => (staff ? { ...staff, full_name: `${staff.first_name} ${staff.last_name}`.trim() } : null)
 
-const normalizeExpense = expense => serializeData({
-  ...expense,
-  unit_price: numberString(expense.unit_price),
-  sub_total: numberString(expense.sub_total),
-  exchange_rate: numberString(expense.exchange_rate, 4),
-  fx_snapshot_at: iso(expense.fx_snapshot_at),
-  approved_at: iso(expense.approved_at),
-  paid_at: iso(expense.paid_at),
-  total_usd: numberString(convertToBaseCurrency(expense.sub_total, expense.currency, expense.exchange_rate, 'USD')),
-  amount_base: numberString(expense.amount_base),
-  expense_date: iso(expense.expense_date),
-  created_at: iso(expense.created_at),
-  updated_at: iso(expense.updated_at),
-  spent_by: withFullName(expense.spent_by),
-  approved_by: withFullName(expense.approved_by),
-  processed_by: withFullName(expense.processed_by)
-})
+const normalizeExpense = expense =>
+  serializeData({
+    ...expense,
+    unit_price: numberString(expense.unit_price),
+    sub_total: numberString(expense.sub_total),
+    exchange_rate: numberString(expense.exchange_rate, 4),
+    fx_snapshot_at: iso(expense.fx_snapshot_at),
+    approved_at: iso(expense.approved_at),
+    paid_at: iso(expense.paid_at),
+    total_usd: numberString(convertToBaseCurrency(expense.sub_total, expense.currency, expense.exchange_rate, 'USD')),
+    amount_base: numberString(expense.amount_base),
+    expense_date: iso(expense.expense_date),
+    created_at: iso(expense.created_at),
+    updated_at: iso(expense.updated_at),
+    spent_by: withFullName(expense.spent_by),
+    approved_by: withFullName(expense.approved_by),
+    processed_by: withFullName(expense.processed_by)
+  })
 
 const getContext = async (payload, permissions) => {
   const locale = normalizeLocale(payload?.locale)
@@ -120,7 +127,10 @@ const getContext = async (payload, permissions) => {
     return {
       authorized: false,
       code: authorization.code,
-      error: authorization.code === 'UNAUTHENTICATED' ? translations.messages.unauthenticated : translations.messages.forbidden,
+      error:
+        authorization.code === 'UNAUTHENTICATED'
+          ? translations.messages.unauthenticated
+          : translations.messages.forbidden,
       translations
     }
   }
@@ -273,8 +283,14 @@ export const getFinanceExpenses = async (payload = {}) => {
         take: limit
       }),
       prisma.financeexpense.aggregate({ where: { approval_status: 'PAID' }, _sum: { amount_base: true } }),
-      prisma.financeexpense.aggregate({ where: { project_id: { not: null }, approval_status: 'PAID' }, _sum: { amount_base: true } }),
-      prisma.financeexpense.aggregate({ where: { project_id: null, approval_status: 'PAID' }, _sum: { amount_base: true } }),
+      prisma.financeexpense.aggregate({
+        where: { project_id: { not: null }, approval_status: 'PAID' },
+        _sum: { amount_base: true }
+      }),
+      prisma.financeexpense.aggregate({
+        where: { project_id: null, approval_status: 'PAID' },
+        _sum: { amount_base: true }
+      }),
       prisma.financeexpense.aggregate({
         where: { expense_date: { gte: monthStart, lt: nextMonth }, approval_status: 'PAID' },
         _sum: { amount_base: true }
@@ -289,10 +305,10 @@ export const getFinanceExpenses = async (payload = {}) => {
         page,
         baseCurrency: SYSTEM_BASE_CURRENCY,
         summary: {
-          total: toFiniteNumber(total._sum.amount_base),
-          project: toFiniteNumber(project._sum.amount_base),
-          overhead: toFiniteNumber(overhead._sum.amount_base),
-          month: toFiniteNumber(month._sum.amount_base)
+          total: roundMoney(total._sum.amount_base),
+          project: roundMoney(project._sum.amount_base),
+          overhead: roundMoney(overhead._sum.amount_base),
+          month: roundMoney(month._sum.amount_base)
         }
       }
     }
@@ -343,7 +359,11 @@ export const getFinanceExpenseFormOptions = async (payload = {}) => {
       }
     }
   } catch {
-    return { success: false, code: 'EXPENSE_OPTIONS_LOAD_FAILED', error: context.translations.messages.optionsLoadFailed }
+    return {
+      success: false,
+      code: 'EXPENSE_OPTIONS_LOAD_FAILED',
+      error: context.translations.messages.optionsLoadFailed
+    }
   }
 }
 
@@ -424,7 +444,11 @@ export const updateFinanceExpense = async (id, payload = {}) => {
   const validation = safeParse(createFinanceExpenseSchema(context.translations.validation), validationPayload(payload))
 
   if (!expenseId || !validation.success) {
-    return { success: false, code: 'VALIDATION_ERROR', error: validation.issues?.[0]?.message || context.translations.messages.notFound }
+    return {
+      success: false,
+      code: 'VALIDATION_ERROR',
+      error: validation.issues?.[0]?.message || context.translations.messages.notFound
+    }
   }
 
   try {
@@ -472,12 +496,17 @@ export const updateFinanceExpense = async (id, payload = {}) => {
   }
 }
 
-const getActiveStaffForUser = userId => prisma.hrmstaff.findFirst({
-  where: { user_id: userId, status: { not: 'TERMINATED' } },
-  select: { id: true }
-})
+const getActiveStaffForUser = userId =>
+  prisma.hrmstaff.findFirst({
+    where: { user_id: userId, status: { not: 'TERMINATED' } },
+    select: { id: true }
+  })
 
-const normalizeRole = role => String(role || '').trim().toLowerCase().replace(/[\s-]+/g, '_')
+const normalizeRole = role =>
+  String(role || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[\s-]+/g, '_')
 
 const hasOrganizationApprovalAccess = session => {
   const roles = new Set((session?.user?.roles || []).map(normalizeRole))
@@ -495,8 +524,9 @@ const canApproveExpenseScope = (session, expense, staffId) => {
 
   const roles = new Set((session?.user?.roles || []).map(normalizeRole))
 
-  return roles.has('project_manager') && Boolean(
-    expense.project_id && staffId && expense.project?.project_manager_id === staffId
+  return (
+    roles.has('project_manager') &&
+    Boolean(expense.project_id && staffId && expense.project?.project_manager_id === staffId)
   )
 }
 
@@ -547,7 +577,12 @@ export const approveFinanceExpense = async (id, payload = {}) => {
     await prisma.$transaction([
       prisma.financeexpense.update({
         where: { id: expense.id },
-        data: { approval_status: 'APPROVED', approved_by_id: staff?.id || null, approved_at: approvedAt, rejection_reason: null }
+        data: {
+          approval_status: 'APPROVED',
+          approved_by_id: staff?.id || null,
+          approved_at: approvedAt,
+          rejection_reason: null
+        }
       }),
       prisma.auditlog.create({
         data: {
@@ -606,7 +641,12 @@ export const rejectFinanceExpense = async (id, payload = {}) => {
     await prisma.$transaction([
       prisma.financeexpense.update({
         where: { id: expense.id },
-        data: { approval_status: 'REJECTED', rejection_reason: reason || null, approved_by_id: staff?.id || null, approved_at: new Date() }
+        data: {
+          approval_status: 'REJECTED',
+          rejection_reason: reason || null,
+          approved_by_id: staff?.id || null,
+          approved_at: new Date()
+        }
       }),
       prisma.auditlog.create({
         data: {
@@ -739,7 +779,15 @@ export const deleteFinanceExpense = async (id, payload = {}) => {
   try {
     const expense = await prisma.financeexpense.findUnique({
       where: { id: expenseId },
-      select: { id: true, approval_status: true, details: true, project_id: true, receipt_url: true, sub_total: true, currency: true }
+      select: {
+        id: true,
+        approval_status: true,
+        details: true,
+        project_id: true,
+        receipt_url: true,
+        sub_total: true,
+        currency: true
+      }
     })
 
     if (!expense) return { success: false, code: 'NOT_FOUND', error: context.translations.messages.notFound }

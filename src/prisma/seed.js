@@ -315,8 +315,9 @@ const loanStatuses = [
   { label: 'Requested', value: 'REQUESTED', color_code: 'secondary', sort_order: 1, is_default: true },
   { label: 'Approved', value: 'APPROVED', color_code: 'info', sort_order: 2 },
   { label: 'Active', value: 'ACTIVE', color_code: 'warning', sort_order: 3 },
-  { label: 'Fully Paid', value: 'REPAID', color_code: 'success', sort_order: 4 },
-  { label: 'Rejected', value: 'REJECTED', color_code: 'error', sort_order: 5 }
+  { label: 'Fully Paid', value: 'PAID_OFF', color_code: 'success', sort_order: 4 },
+  { label: 'Rejected', value: 'REJECTED', color_code: 'error', sort_order: 5 },
+  { label: 'Cancelled', value: 'CANCELLED', color_code: 'secondary', sort_order: 6 }
 ]
 
 const inventoryStatuses = [

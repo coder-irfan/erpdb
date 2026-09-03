@@ -22,6 +22,8 @@ import {
 import {
   SYSTEM_BASE_CURRENCY,
   convertToBaseCurrency,
+  roundMoney,
+  subtractMoney,
   effectiveAfnExchangeRate,
   normalizeToAfn,
   toFiniteNumber
@@ -39,6 +41,19 @@ const ACTIVE_LOAN_VALUES = ACTIVE_LOAN_STATUSES
 const PAYROLL_LEDGER_ACCOUNT = 'Payroll Expenses'
 const PAYROLL_EDITABLE_STATUS = 'DRAFT'
 const PAYROLL_LOCKED_STATUSES = ['FINALIZED', 'PAID']
+
+const repairLegacyPayrollStatuses = () =>
+  prisma.$executeRaw(Prisma.sql`
+    UPDATE financesalary AS salary
+    LEFT JOIN financeexpense AS payment
+      ON payment.payroll_salary_id = salary.id
+    SET salary.status = CASE
+      WHEN payment.id IS NOT NULL OR salary.payment_date IS NOT NULL THEN 'PAID'
+      ELSE 'DRAFT'
+    END
+    WHERE salary.status IS NULL
+       OR salary.status NOT IN ('DRAFT', 'FINALIZED', 'PAID')
+  `)
 
 const staffSelect = {
   id: true,
@@ -200,11 +215,19 @@ const calculateSalary = ({
   baseCurrency
 }) => {
   const dailyRate = totalDays > 0 ? baseSalary / totalDays : 0
-  const earnedSalary = dailyRate * workedDays
-  const payableAmount = Math.max(0, earnedSalary + bonusAmount - loanDeduction - unpaidLeaveDeduction)
+  const earnedSalary = roundMoney(dailyRate * workedDays)
+  const availableForLoan = Math.max(0, subtractMoney(earnedSalary, unpaidLeaveDeduction))
+
+  const appliedLoanDeduction = roundMoney(
+    Math.min(Math.max(0, toFiniteNumber(loanDeduction)), availableForLoan)
+  )
+
+  const grossPay = roundMoney(earnedSalary + bonusAmount)
+  const totalDeductions = roundMoney(appliedLoanDeduction + unpaidLeaveDeduction)
+  const payableAmount = Math.max(0, subtractMoney(grossPay, totalDeductions))
   const amountBase = convertToBaseCurrency(payableAmount, currency, exchangeRate, baseCurrency)
 
-  return { dailyRate, earnedSalary, payableAmount, amountBase }
+  return { dailyRate, earnedSalary, loanDeduction: appliedLoanDeduction, payableAmount, amountBase }
 }
 
 const getActiveLoans = (client, staffIds, repaymentThrough = null) =>
@@ -229,6 +252,111 @@ const getActiveLoans = (client, staffIds, repaymentThrough = null) =>
     },
     orderBy: [{ issue_date: 'asc' }, { created_at: 'asc' }]
   })
+
+const applyPayrollLoanDeductions = async (transaction, salary, setup, userId, executionTimestamp) => {
+  if (salary.loan_status === 'DEDUCTED') {
+    return {
+      appliedDeduction: toFiniteNumber(salary.loan_deduction),
+      appliedLoans: []
+    }
+  }
+
+  const salaryRate = effectiveAfnExchangeRate(salary.currency, setup.usd_afn_exchange_rate)
+
+  const salaryCeiling = Math.max(
+    0,
+    subtractMoney(toFiniteNumber(salary.earned_salary), toFiniteNumber(salary.unpaid_leave_deduction))
+  )
+
+  const requestedDeduction = Math.min(toFiniteNumber(salary.loan_deduction), salaryCeiling)
+  let remainingDeductionBase = convertToBaseCurrency(
+    requestedDeduction,
+    salary.currency,
+    salaryRate,
+    SYSTEM_BASE_CURRENCY
+  )
+
+  const salaryRange = getMonthRange(salary.timesheet_month)
+
+  const loans =
+    remainingDeductionBase > 0.005
+      ? await getActiveLoans(transaction, [salary.staff_id], salaryRange.end)
+      : []
+
+  const appliedLoans = []
+
+  for (const loan of loans) {
+    if (remainingDeductionBase <= 0.005) break
+
+    const loanRate = effectiveAfnExchangeRate(loan.currency, setup.usd_afn_exchange_rate)
+    const loanRemaining = toFiniteNumber(loan.remaining_balance)
+    const scheduledInstallment = Math.min(toFiniteNumber(loan.monthly_deduction), loanRemaining)
+
+    const installmentBase = convertToBaseCurrency(
+      scheduledInstallment,
+      loan.currency,
+      loanRate,
+      SYSTEM_BASE_CURRENCY
+    )
+
+    const appliedBase = Math.min(remainingDeductionBase, installmentBase)
+
+    const appliedLoanCurrency = roundMoney(
+      Math.min(
+        scheduledInstallment,
+        fromBaseCurrency(appliedBase, loan.currency, loanRate, SYSTEM_BASE_CURRENCY)
+      )
+    )
+
+    if (appliedLoanCurrency <= 0) continue
+
+    const repayment = await applyLoanRepayment(transaction, {
+      loanId: loan.id,
+      amount: appliedLoanCurrency,
+      source: 'SALARY_DEDUCTION',
+      repaymentDate: executionTimestamp,
+      referenceId: salary.id,
+      createdByUserId: userId,
+      notes: `Payroll deduction for ${salary.timesheet_month}`,
+      baseCurrency: SYSTEM_BASE_CURRENCY,
+      fxSnapshotRate: loan.exchange_rate,
+      fxSnapshotAt: executionTimestamp
+    })
+
+    const actualAppliedBase = convertToBaseCurrency(
+      repayment.appliedAmount,
+      loan.currency,
+      loanRate,
+      SYSTEM_BASE_CURRENCY
+    )
+
+    remainingDeductionBase = Math.max(0, subtractMoney(remainingDeductionBase, actualAppliedBase))
+    appliedLoans.push({
+      loanId: loan.id,
+      repaymentId: repayment.repayment.id,
+      amount: repayment.appliedAmount.toFixed(2),
+      currency: loan.currency
+    })
+  }
+
+  const requestedDeductionBase = convertToBaseCurrency(
+    requestedDeduction,
+    salary.currency,
+    salaryRate,
+    SYSTEM_BASE_CURRENCY
+  )
+
+  const appliedDeductionBase = Math.max(0, subtractMoney(requestedDeductionBase, remainingDeductionBase))
+
+  const appliedDeduction = roundMoney(
+    Math.min(
+      salaryCeiling,
+      fromBaseCurrency(appliedDeductionBase, salary.currency, salaryRate, SYSTEM_BASE_CURRENCY)
+    )
+  )
+
+  return { appliedDeduction, appliedLoans }
+}
 
 const adjustmentPayload = payload => ({
   worked_days: String(payload?.worked_days ?? ''),
@@ -293,14 +421,14 @@ const getPreparedAdjustment = async (salary, values, translations) => {
       base_daily_rate: new Prisma.Decimal(calculation.dailyRate),
       earned_salary: new Prisma.Decimal(calculation.earnedSalary),
       bonus_amount: new Prisma.Decimal(bonusAmount),
-      loan_deduction: new Prisma.Decimal(loanDeduction),
+      loan_deduction: new Prisma.Decimal(calculation.loanDeduction),
       payable_amount: new Prisma.Decimal(calculation.payableAmount),
       exchange_rate: new Prisma.Decimal(exchangeRate),
       amount_base: new Prisma.Decimal(calculation.amountBase),
       currency: values.currency,
       timesheet_summary:
         values.timesheet_summary === undefined ? salary.timesheet_summary : values.timesheet_summary || null,
-      loan_status: loanDeduction > 0 ? 'PENDING' : 'NOT_APPLICABLE'
+      loan_status: calculation.loanDeduction > 0 ? 'PENDING' : 'NOT_APPLICABLE'
     }
   }
 }
@@ -338,6 +466,9 @@ export const getFinanceSalaries = async (payload = {}) => {
   }
 
   try {
+    // Prisma cannot deserialize legacy enum values, so repair them before any typed salary query runs.
+    await repairLegacyPayrollStatuses()
+
     const range = getMonthRange(month)
     const currentDate = getDateKeyInTimeZone('Asia/Kabul')
 
@@ -377,6 +508,10 @@ export const getFinanceSalaries = async (payload = {}) => {
       },
       { total: 0, paid: 0, pending: 0, loanDeductions: 0 }
     )
+
+    Object.keys(summary).forEach(key => {
+      summary[key] = roundMoney(summary[key])
+    })
 
     return {
       success: true,
@@ -706,11 +841,11 @@ export const generateMonthlyPayroll = async (month, payload = {}) => {
             base_daily_rate: new Prisma.Decimal(calculation.dailyRate),
             earned_salary: new Prisma.Decimal(calculation.earnedSalary),
             bonus_amount: new Prisma.Decimal(0),
-            loan_deduction: new Prisma.Decimal(loanDeduction),
+            loan_deduction: new Prisma.Decimal(calculation.loanDeduction),
             unpaid_leave_deduction: new Prisma.Decimal(0),
             payable_amount: new Prisma.Decimal(calculation.payableAmount),
             exchange_rate: new Prisma.Decimal(exchangeRate),
-            loan_status: loanDeduction > 0 ? 'PENDING' : 'NOT_APPLICABLE',
+            loan_status: calculation.loanDeduction > 0 ? 'PENDING' : 'NOT_APPLICABLE',
             amount_base: new Prisma.Decimal(calculation.amountBase),
             currency,
             status: 'DRAFT',
@@ -928,11 +1063,13 @@ export const finalizeMonthlyPayroll = async (month, payload = {}) => {
   if (isActiveOrFuturePayrollMonth(validation.output.month)) return activePayrollPeriodError(context.translations)
 
   try {
+    const setup = await getCompanySetupRecord()
+
     const result = await prisma.$transaction(
       async transaction => {
         const payroll = await transaction.financesalary.findMany({
           where: { timesheet_month: validation.output.month },
-          select: { id: true, status: true }
+          select: salarySelect
         })
 
         if (payroll.length === 0) return { error: 'NOT_FOUND' }
@@ -941,14 +1078,48 @@ export const finalizeMonthlyPayroll = async (month, payload = {}) => {
           return { error: 'INVALID_STATUS' }
         }
 
-        const draftIds = payroll.filter(item => item.status === PAYROLL_EDITABLE_STATUS).map(item => item.id)
+        const drafts = payroll.filter(item => item.status === PAYROLL_EDITABLE_STATUS)
+        const draftIds = drafts.map(item => item.id)
 
         if (draftIds.length === 0) return { error: 'ALREADY_FINALIZED' }
 
-        await transaction.financesalary.updateMany({
-          where: { id: { in: draftIds }, status: PAYROLL_EDITABLE_STATUS },
-          data: { status: 'FINALIZED' }
-        })
+        const executionTimestamp = new Date()
+
+        for (const salary of drafts) {
+          const settlement = await applyPayrollLoanDeductions(
+            transaction,
+            salary,
+            setup,
+            context.session.user.id,
+            executionTimestamp
+          )
+
+          const correctedPayable = Math.max(
+            0,
+            subtractMoney(
+              toFiniteNumber(salary.earned_salary) + toFiniteNumber(salary.bonus_amount),
+              settlement.appliedDeduction + toFiniteNumber(salary.unpaid_leave_deduction)
+            )
+          )
+
+          await transaction.financesalary.update({
+            where: { id: salary.id },
+            data: {
+              status: 'FINALIZED',
+              loan_deduction: new Prisma.Decimal(settlement.appliedDeduction),
+              loan_status: settlement.appliedDeduction > 0.005 ? 'DEDUCTED' : 'NOT_APPLICABLE',
+              payable_amount: new Prisma.Decimal(correctedPayable),
+              amount_base: new Prisma.Decimal(
+                convertToBaseCurrency(
+                  correctedPayable,
+                  salary.currency,
+                  salary.exchange_rate,
+                  SYSTEM_BASE_CURRENCY
+                )
+              )
+            }
+          })
+        }
 
         await transaction.auditlog.create({
           data: {
@@ -961,7 +1132,11 @@ export const finalizeMonthlyPayroll = async (month, payload = {}) => {
 
         return { count: draftIds.length }
       },
-      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable }
+      {
+        isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
+        maxWait: 10_000,
+        timeout: 60_000
+      }
     )
 
     if (result.error === 'NOT_FOUND') {
@@ -1035,87 +1210,23 @@ export const markSalaryPaid = async (salaryId, payload = {}) => {
         const executionTimestamp = new Date()
         const snapshotRate = effectiveAfnExchangeRate(salary.currency, setup.usd_afn_exchange_rate)
 
-        let remainingDeductionBase = convertToBaseCurrency(
-          salary.loan_deduction,
-          salary.currency,
-          snapshotRate,
-          SYSTEM_BASE_CURRENCY
+        const settlement = await applyPayrollLoanDeductions(
+          transaction,
+          salary,
+          setup,
+          context.session.user.id,
+          executionTimestamp
         )
 
-        const loans =
-          remainingDeductionBase > 0 ? await getActiveLoans(transaction, [salary.staff_id], salaryRange.end) : []
-
-        const appliedLoans = []
-
-        for (const loan of loans) {
-          if (remainingDeductionBase <= 0.005) break
-
-          const loanRemaining = toFiniteNumber(loan.remaining_balance)
-
-          const loanRemainingBase = convertToBaseCurrency(
-            loanRemaining,
-            loan.currency,
-            effectiveAfnExchangeRate(loan.currency, setup.usd_afn_exchange_rate),
-            SYSTEM_BASE_CURRENCY
-          )
-
-          const appliedBase = Math.min(remainingDeductionBase, loanRemainingBase)
-
-          const appliedLoanCurrency = fromBaseCurrency(
-            appliedBase,
-            loan.currency,
-            effectiveAfnExchangeRate(loan.currency, setup.usd_afn_exchange_rate),
-            SYSTEM_BASE_CURRENCY
-          )
-
-          const repayment = await applyLoanRepayment(transaction, {
-            loanId: loan.id,
-            amount: appliedLoanCurrency,
-            source: 'SALARY_DEDUCTION',
-            repaymentDate: new Date(),
-            referenceId: salary.id,
-            createdByUserId: context.session.user.id,
-            notes: `Payroll deduction for ${salary.timesheet_month}`,
-            baseCurrency: SYSTEM_BASE_CURRENCY,
-            fxSnapshotRate: loan.exchange_rate,
-            fxSnapshotAt: executionTimestamp
-          })
-
-          const actualAppliedBase = convertToBaseCurrency(
-            repayment.appliedAmount,
-            loan.currency,
-            effectiveAfnExchangeRate(loan.currency, setup.usd_afn_exchange_rate),
-            SYSTEM_BASE_CURRENCY
-          )
-
-          remainingDeductionBase = Math.max(0, remainingDeductionBase - actualAppliedBase)
-          appliedLoans.push({
-            loanId: loan.id,
-            repaymentId: repayment.repayment.id,
-            amount: repayment.appliedAmount.toFixed(2),
-            currency: loan.currency
-          })
-        }
-
-        const appliedDeductionBase = Math.max(
-          0,
-          convertToBaseCurrency(salary.loan_deduction, salary.currency, snapshotRate, SYSTEM_BASE_CURRENCY) -
-            remainingDeductionBase
-        )
-
-        const appliedDeduction = fromBaseCurrency(
-          appliedDeductionBase,
-          salary.currency,
-          snapshotRate,
-          SYSTEM_BASE_CURRENCY
-        )
+        const appliedDeduction = settlement.appliedDeduction
+        const appliedLoans = settlement.appliedLoans
 
         const correctedPayable = Math.max(
           0,
-          toFiniteNumber(salary.earned_salary) +
-            toFiniteNumber(salary.bonus_amount) -
-            appliedDeduction -
-            toFiniteNumber(salary.unpaid_leave_deduction)
+          subtractMoney(
+            toFiniteNumber(salary.earned_salary) + toFiniteNumber(salary.bonus_amount),
+            appliedDeduction + toFiniteNumber(salary.unpaid_leave_deduction)
+          )
         )
 
         const correctedAmountBase = convertToBaseCurrency(

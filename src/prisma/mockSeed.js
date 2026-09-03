@@ -1261,7 +1261,7 @@ const seedLoansAndPayroll = async (transaction, options, attendanceRows, holiday
     ['seed-loan-02', 'SLN-2026-002', 'seed-staff-07', 45000, 7500, 0, 'APPROVED', 'AFN'],
     ['seed-loan-03', 'SLN-2026-003', 'seed-staff-04', 90000, 15000, 30000, 'ACTIVE', 'AFN'],
     ['seed-loan-04', 'SLN-2026-004', 'seed-staff-05', 1200, 200, 400, 'ACTIVE', 'USD'],
-    ['seed-loan-05', 'SLN-2026-005', 'seed-staff-06', 50000, 10000, 50000, 'REPAID', 'AFN'],
+    ['seed-loan-05', 'SLN-2026-005', 'seed-staff-06', 50000, 10000, 50000, 'PAID_OFF', 'AFN'],
     ['seed-loan-06', 'SLN-2026-006', 'seed-staff-02', 700, 140, 0, 'REJECTED', 'USD']
   ]
 
@@ -1287,7 +1287,7 @@ const seedLoansAndPayroll = async (transaction, options, attendanceRows, holiday
         'Family support',
         'Non-eligible request'
       ][index],
-      approved_by_id: ['APPROVED', 'ACTIVE', 'REPAID'].includes(loan[6]) ? 'seed-staff-03' : null,
+      approved_by_id: ['APPROVED', 'ACTIVE', 'PAID_OFF', 'REPAID'].includes(loan[6]) ? 'seed-staff-03' : null,
       currency: loan[7],
       exchange_rate: decimal(USD_AFN_RATE),
       amount_base: amountInBase(loan[3], loan[7])

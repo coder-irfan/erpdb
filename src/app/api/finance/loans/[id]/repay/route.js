@@ -7,7 +7,7 @@ import { applyLoanRepayment, getLoanSetup, LoanLedgerError, LOAN_WRITE_PERMISSIO
 import { prisma } from '@/libs/prisma'
 import { repayFinanceLoanSchema } from '@/schemas/financeLoan'
 import { toUtcDateOnly } from '@/utils/contractDuration'
-import { SYSTEM_BASE_CURRENCY, effectiveAfnExchangeRate } from '@/utils/formatCurrency'
+import { SYSTEM_BASE_CURRENCY, effectiveAfnExchangeRate, formatCurrency, toFiniteNumber } from '@/utils/formatCurrency'
 
 const localeFrom = value => (['en', 'fa', 'ps'].includes(value) ? value : 'en')
 const errorResponse = (error, status, code) => Response.json({ success: false, error, code }, { status })
@@ -19,6 +19,11 @@ export async function PATCH(request, routeContext) {
   try { payload = await request.json() } catch { return errorResponse('Invalid request body.', 400, 'INVALID_REQUEST') }
 
   const dictionary = getFinanceLoanDictionary(localeFrom(payload?.locale))
+
+  const repaymentExceedsBalanceMessage =
+    dictionary.validation?.repaymentExceedsBalance ||
+    'Repayment amount cannot exceed the remaining balance of {balance}.'
+
   const authorization = await authorizeAction(LOAN_WRITE_PERMISSIONS)
 
   if (!authorization.authorized) return errorResponse(authorization.code === 'FORBIDDEN' ? dictionary.messages.forbidden : dictionary.messages.unauthenticated, authorization.code === 'FORBIDDEN' ? 403 : 401, authorization.code)
@@ -46,6 +51,27 @@ export async function PATCH(request, routeContext) {
       const source =
         validation.output.source === 'MANUAL_BANK' ? 'MANUAL_BANK' : 'MANUAL_CASH'
 
+      const currentLoan = await transaction.financeloan.findUnique({
+        where: { id },
+        select: { remaining_balance: true, currency: true }
+      })
+
+      if (!currentLoan) throw new LoanLedgerError('LOAN_NOT_FOUND', 'Loan not found.')
+
+      const remainingBalance = toFiniteNumber(currentLoan.remaining_balance)
+      const requestedAmount = toFiniteNumber(validation.output.repayment_amount)
+
+      if (requestedAmount - remainingBalance > 0.005) {
+        throw new LoanLedgerError(
+          'LOAN_OVERPAYMENT',
+          repaymentExceedsBalanceMessage.replace(
+            '{balance}',
+            formatCurrency(remainingBalance, localeFrom(payload?.locale), currentLoan.currency)
+          ),
+          { remainingBalance, currency: currentLoan.currency }
+        )
+      }
+
       const applied = await applyLoanRepayment(transaction, {
         loanId: id,
         amount: validation.output.repayment_amount,
@@ -68,9 +94,17 @@ export async function PATCH(request, routeContext) {
     return Response.json({ success: true, data: normalizeLoan(result.loan), appliedAmount: result.appliedAmount, repaymentId: result.repayment.id, message: dictionary.messages.repaid })
   } catch (error) {
     if (error instanceof LoanLedgerError) {
-      const status = error.code === 'LOAN_NOT_FOUND' ? 404 : 409
+      const status = error.code === 'LOAN_NOT_FOUND' ? 404 : error.code === 'LOAN_OVERPAYMENT' ? 400 : 409
 
-      return errorResponse(error.message, status, error.code)
+      const message =
+        error.code === 'LOAN_OVERPAYMENT'
+          ? repaymentExceedsBalanceMessage.replace(
+              '{balance}',
+              formatCurrency(error.remainingBalance, localeFrom(payload?.locale), error.currency)
+            )
+          : error.message
+
+      return errorResponse(message, status, error.code)
     }
 
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {

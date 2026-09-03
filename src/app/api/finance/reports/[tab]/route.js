@@ -3,14 +3,20 @@ import { getCompanySetupRecord } from '@/libs/companySetup'
 import { ACTIVE_LOAN_STATUSES, isActiveStatus } from '@/libs/financialStatuses'
 import { ensureInventoryLedgerBaseline, getInventoryBalances } from '@/libs/inventory'
 import { prisma } from '@/libs/prisma'
-import { SYSTEM_BASE_CURRENCY, normalizeCurrency, normalizeToAfn, toFiniteNumber } from '@/utils/formatCurrency'
+import {
+  SYSTEM_BASE_CURRENCY,
+  normalizeCurrency,
+  normalizeToAfn,
+  roundMoney,
+  toFiniteNumber
+} from '@/utils/formatCurrency'
 import { parseUtcDate, utcDateKey } from '@/utils/utcDate'
 
 const REPORT_TABS = new Set(['income', 'expenses', 'salary', 'inventory', 'loans'])
 const REPORT_PERMISSIONS = ['finance_reports:read', 'finance:read']
 
 const responseError = (error, status, code) => Response.json({ success: false, error, code }, { status })
-const money = value => Number(toFiniteNumber(value).toFixed(2))
+const money = value => roundMoney(value)
 const dateKey = utcDateKey
 const staffName = staff => (staff ? `${staff.first_name} ${staff.last_name}`.trim() : '')
 
@@ -95,7 +101,13 @@ const getIncomeReport = async ({ start, end, displayCurrency, reportRate }) => {
   const sourceTotals = new Map()
 
   const rows = records.map(record => {
-    const converted = convertAmount(record.total_amount, record.currency, record.exchange_rate, displayCurrency, reportRate)
+    const converted = convertAmount(
+      record.total_amount,
+      record.currency,
+      record.exchange_rate,
+      displayCurrency,
+      reportRate
+    )
 
     totalUsd += converted.usd
     addToMap(monthlyTotals, dateKey(record.created_at).slice(0, 7), converted.display)
@@ -105,7 +117,10 @@ const getIncomeReport = async ({ start, end, displayCurrency, reportRate }) => {
       id: record.id,
       date: dateKey(record.created_at),
       reference:
-        record.invoice?.invoice_number || record.contract?.contract_number || record.project?.project_code || record.id.slice(-8).toUpperCase(),
+        record.invoice?.invoice_number ||
+        record.contract?.contract_number ||
+        record.project?.project_code ||
+        record.id.slice(-8).toUpperCase(),
       name: record.name,
       source: optionName(record.income_type),
       source_detail: record.client?.company_name || record.project?.title || record.client?.primary_contact_name || '',
@@ -139,27 +154,27 @@ const getExpenseReport = async ({ start, end, displayCurrency, reportRate }) => 
   const records = await prisma.financeexpense.findMany({
     where: { expense_date: { gte: start, lte: end } },
     select: {
-        id: true,
-        details: true,
-        expense_date: true,
-        sub_total: true,
-        currency: true,
-        exchange_rate: true,
-        approval_status: true,
-        vendor_payee: true,
-        expense_type: { select: { label: true, value: true } },
-        payment_method: { select: { label: true, value: true } },
-        project: { select: { project_code: true, title: true } },
-        spent_by: {
-          select: {
-            id: true,
-            first_name: true,
-            last_name: true,
-            email: true,
-            position: true,
-            user: { select: { image: true } }
-          }
+      id: true,
+      details: true,
+      expense_date: true,
+      sub_total: true,
+      currency: true,
+      exchange_rate: true,
+      approval_status: true,
+      vendor_payee: true,
+      expense_type: { select: { label: true, value: true } },
+      payment_method: { select: { label: true, value: true } },
+      project: { select: { project_code: true, title: true } },
+      spent_by: {
+        select: {
+          id: true,
+          first_name: true,
+          last_name: true,
+          email: true,
+          position: true,
+          user: { select: { image: true } }
         }
+      }
     },
     orderBy: { created_at: 'desc' }
   })
@@ -170,7 +185,13 @@ const getExpenseReport = async ({ start, end, displayCurrency, reportRate }) => 
   const monthlyTotals = new Map()
 
   const rows = records.map(record => {
-    const converted = convertAmount(record.sub_total, record.currency, record.exchange_rate, displayCurrency, reportRate)
+    const converted = convertAmount(
+      record.sub_total,
+      record.currency,
+      record.exchange_rate,
+      displayCurrency,
+      reportRate
+    )
     const category = optionName(record.expense_type) || 'Uncategorized'
     const isRecorded = ['APPROVED', 'PAID'].includes(record.approval_status)
 
@@ -214,7 +235,9 @@ const getExpenseReport = async ({ start, end, displayCurrency, reportRate }) => 
       trend: { type: 'bar', ...sortedMapChart(monthlyTotals), series_key: 'expenses' },
       distribution: {
         type: 'donut',
-        ...distributionChart(new Map([...categoryTotals].map(([key, value]) => [key, usdToDisplay(value, displayCurrency, reportRate)])))
+        ...distributionChart(
+          new Map([...categoryTotals].map(([key, value]) => [key, usdToDisplay(value, displayCurrency, reportRate)]))
+        )
       }
     }
   }
@@ -257,8 +280,20 @@ const getSalaryReport = async ({ start, end, displayCurrency, reportRate }) => {
   const rows = records.map(record => {
     const base = convertAmount(record.base_salary, record.currency, record.exchange_rate, displayCurrency, reportRate)
     const bonus = convertAmount(record.bonus_amount, record.currency, record.exchange_rate, displayCurrency, reportRate)
-    const deduction = convertAmount(record.loan_deduction, record.currency, record.exchange_rate, displayCurrency, reportRate)
-    const payable = convertAmount(record.payable_amount, record.currency, record.exchange_rate, displayCurrency, reportRate)
+    const deduction = convertAmount(
+      record.loan_deduction,
+      record.currency,
+      record.exchange_rate,
+      displayCurrency,
+      reportRate
+    )
+    const payable = convertAmount(
+      record.payable_amount,
+      record.currency,
+      record.exchange_rate,
+      displayCurrency,
+      reportRate
+    )
 
     deductionsUsd += deduction.usd
     addToMap(monthlyBase, record.timesheet_month, base.display)
@@ -333,7 +368,11 @@ const getInventoryReport = async ({ end, displayCurrency, reportRate }) => {
     orderBy: { created_at: 'desc' }
   })
 
-  const balances = await getInventoryBalances(prisma, records.map(record => record.id), end)
+  const balances = await getInventoryBalances(
+    prisma,
+    records.map(record => record.id),
+    end
+  )
 
   let valuationUsd = 0
   let lowStockCount = 0
@@ -343,7 +382,13 @@ const getInventoryReport = async ({ end, displayCurrency, reportRate }) => {
   const rows = records.map(record => {
     const quantity = balances.get(record.id) || 0
     const unit = convertAmount(record.unit_price, record.currency, record.exchange_rate, displayCurrency, reportRate)
-    const total = convertAmount(toFiniteNumber(record.unit_price) * quantity, record.currency, record.exchange_rate, displayCurrency, reportRate)
+    const total = convertAmount(
+      toFiniteNumber(record.unit_price) * quantity,
+      record.currency,
+      record.exchange_rate,
+      displayCurrency,
+      reportRate
+    )
     const lowStock = quantity <= Number(record.reorder_level || 0)
 
     valuationUsd += total.usd
@@ -379,8 +424,14 @@ const getInventoryReport = async ({ end, displayCurrency, reportRate }) => {
     charts: {
       trend: {
         type: 'bar',
-        categories: [...rows].sort((left, right) => right.total_value - left.total_value).slice(0, 10).map(row => row.name),
-        values: [...rows].sort((left, right) => right.total_value - left.total_value).slice(0, 10).map(row => row.total_value),
+        categories: [...rows]
+          .sort((left, right) => right.total_value - left.total_value)
+          .slice(0, 10)
+          .map(row => row.name),
+        values: [...rows]
+          .sort((left, right) => right.total_value - left.total_value)
+          .slice(0, 10)
+          .map(row => row.total_value),
         series_key: 'stockValue'
       },
       distribution: { type: 'donut', ...distributionChart(categoryQuantities), value_kind: 'quantity' }
@@ -426,9 +477,27 @@ const getLoansReport = async ({ start, end, displayCurrency, reportRate }) => {
 
   const rows = records.map(record => {
     const total = convertAmount(record.total_amount, record.currency, record.exchange_rate, displayCurrency, reportRate)
-    const repaid = convertAmount(record.repaid_amount, record.currency, record.exchange_rate, displayCurrency, reportRate)
-    const remaining = convertAmount(record.remaining_balance, record.currency, record.exchange_rate, displayCurrency, reportRate)
-    const monthly = convertAmount(record.monthly_deduction, record.currency, record.exchange_rate, displayCurrency, reportRate)
+    const repaid = convertAmount(
+      record.repaid_amount,
+      record.currency,
+      record.exchange_rate,
+      displayCurrency,
+      reportRate
+    )
+    const remaining = convertAmount(
+      record.remaining_balance,
+      record.currency,
+      record.exchange_rate,
+      displayCurrency,
+      reportRate
+    )
+    const monthly = convertAmount(
+      record.monthly_deduction,
+      record.currency,
+      record.exchange_rate,
+      displayCurrency,
+      reportRate
+    )
     const status = optionName(record.status)
     const isActive = isActiveStatus(record.status?.value || status, ACTIVE_LOAN_STATUSES)
 
@@ -469,7 +538,9 @@ const getLoansReport = async ({ start, end, displayCurrency, reportRate }) => {
       distribution: {
         type: 'donut',
         labels: ['issued', 'repaid', 'remaining'],
-        series: [issuedUsd, repaidUsd, remainingUsd].map(value => money(usdToDisplay(value, displayCurrency, reportRate)))
+        series: [issuedUsd, repaidUsd, remainingUsd].map(value =>
+          money(usdToDisplay(value, displayCurrency, reportRate))
+        )
       }
     }
   }
@@ -499,14 +570,16 @@ export async function GET(request, context) {
   const end = parseDate(url.searchParams.get('end_date'), true)
   const displayCurrency = normalizeCurrency(url.searchParams.get('currency') || SYSTEM_BASE_CURRENCY)
 
-  if (!start || !end || start > end) return responseError('A valid report date range is required.', 400, 'INVALID_DATE_RANGE')
+  if (!start || !end || start > end)
+    return responseError('A valid report date range is required.', 400, 'INVALID_DATE_RANGE')
 
   try {
     const setup = await getCompanySetupRecord()
     const requestedRate = toFiniteNumber(url.searchParams.get('exchange_rate'))
     const reportRate = requestedRate > 0 ? requestedRate : toFiniteNumber(setup.usd_afn_exchange_rate)
 
-    if (reportRate <= 0) return responseError('A valid USD/AFN exchange rate is required.', 400, 'INVALID_EXCHANGE_RATE')
+    if (reportRate <= 0)
+      return responseError('A valid USD/AFN exchange rate is required.', 400, 'INVALID_EXCHANGE_RATE')
 
     const report = await reportLoaders[tab]({ start, end, displayCurrency, reportRate })
 

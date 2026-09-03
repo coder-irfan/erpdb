@@ -204,14 +204,13 @@ const FinanceSalaryDetailModal = ({ open, salaryId, locale, dictionary, refreshK
                   <Typography variant='h6' className='mb-4'>
                     Timesheet Summary
                   </Typography>
-                  <div className='grid grid-cols-2 gap-3 sm:grid-cols-4'>
+                  <div className='grid grid-cols-2 gap-3 sm:grid-cols-3'>
                     <SummaryMetric label='Working Days' value={`${timesheetSummary.workingDays ?? '---'} Days`} />
                     <SummaryMetric label='Payable Days' value={`${timesheetSummary.payableDays ?? '---'} Days`} />
                     <SummaryMetric
                       label='Absent / Leave'
                       value={`${timesheetSummary.absentDays ?? '---'} Absent · ${timesheetSummary.paidLeaveDays ?? 0} Paid Leave`}
                     />
-                    <SummaryMetric label='Logged Hours' value={`${timesheetSummary.loggedHours ?? '---'} hrs`} />
                   </div>
                   {(timesheetSummary.contractNumber || timesheetSummary.unpaidDays !== null) && (
                     <div className='mt-4 flex flex-wrap gap-2'>

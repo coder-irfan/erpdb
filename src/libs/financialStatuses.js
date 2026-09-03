@@ -4,8 +4,8 @@ import { toFiniteNumber } from '@/utils/formatCurrency'
 
 export const CENT_TOLERANCE = 0.005
 export const ACTIVE_OPERATIONAL_STATUSES = Object.freeze(['ACTIVE', 'IN_PROGRESS'])
-export const ACTIVE_LOAN_STATUSES = Object.freeze(['ACTIVE'])
-export const CLOSED_LOAN_STATUSES = Object.freeze(['REPAID', 'REJECTED', 'CLOSED', 'CANCELLED'])
+export const ACTIVE_LOAN_STATUSES = Object.freeze(['APPROVED', 'ACTIVE'])
+export const CLOSED_LOAN_STATUSES = Object.freeze(['PAID_OFF', 'REPAID', 'REJECTED', 'CLOSED', 'CANCELLED'])
 
 export const deriveSettlementStatus = (total, paid, {
   unpaid = 'UNPAID',

@@ -5,7 +5,6 @@ import { useCallback, useEffect, useState } from 'react'
 import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
-import Chip from '@mui/material/Chip'
 import Dialog from '@mui/material/Dialog'
 import DialogContent from '@mui/material/DialogContent'
 import MenuItem from '@mui/material/MenuItem'
@@ -209,7 +208,6 @@ const FinanceSalaryView = ({ locale, dictionary, canWrite, canDelete, canExecute
     )
 
   const selectedMonthLabel = formatMonth(month)
-  const ongoingMonthLabel = formatMonth(ongoingMonth)
   const payDescriptionParts = dictionary.pay.description.split('{name}')
   const hasPayNameToken = payDescriptionParts.length > 1
 
@@ -261,13 +259,6 @@ const FinanceSalaryView = ({ locale, dictionary, canWrite, canDelete, canExecute
               }}
               slotProps={{ inputLabel: { shrink: true }, htmlInput: { pattern: '\\d{4}-(0[1-9]|1[0-2])' } }}
               className='is-full sm:is-[180px]'
-            />
-            <Chip
-              size='small'
-              variant='tonal'
-              color='warning'
-              icon={<i className='tabler-progress-clock' />}
-              label={`${ongoingMonthLabel} · ${dictionary.filters.currentPeriod}`}
             />
           </div>
           <div className='grid is-full grid-cols-2 gap-2 sm:flex sm:is-auto sm:flex-wrap sm:gap-3 sm:justify-end'>

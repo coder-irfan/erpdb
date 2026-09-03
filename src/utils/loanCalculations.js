@@ -13,38 +13,41 @@ export const addUtcMonths = (value, months) => {
   return date
 }
 
-export const calculateAmortizationSchedule = ({ principal, annualInterestRate, tenureMonths, issueDate }) => {
+export const calculateAmortizationSchedule = ({
+  principal,
+  annualInterestRate,
+  tenureMonths,
+  repaymentStartDate,
+  issueDate
+}) => {
   const amount = toFiniteNumber(principal)
   const annualRate = toFiniteNumber(annualInterestRate)
   const months = Math.max(0, Math.trunc(toFiniteNumber(tenureMonths)))
-  const start = new Date(issueDate)
+  const start = repaymentStartDate ? new Date(repaymentStartDate) : addUtcMonths(issueDate, 1)
 
   if (amount <= 0 || months <= 0 || Number.isNaN(start.getTime())) return []
 
   const monthlyRate = annualRate / 1200
 
-  const regularPayment = monthlyRate > 0
-    ? amount * monthlyRate / (1 - Math.pow(1 + monthlyRate, -months))
-    : amount / months
+  const regularPayment =
+    monthlyRate > 0 ? (amount * monthlyRate) / (1 - Math.pow(1 + monthlyRate, -months)) : amount / months
 
-  const roundedPayment = Number(regularPayment.toFixed(2))
+  const roundedPayment = Math.round(regularPayment)
   let balance = Number(amount.toFixed(2))
 
   return Array.from({ length: months }, (_, index) => {
-    const interest = Number((monthlyRate > 0 ? balance * monthlyRate : 0).toFixed(2))
+    const interest = Math.round(monthlyRate > 0 ? balance * monthlyRate : 0)
 
-    const principalPayment = index === months - 1
-      ? balance
-      : Math.min(balance, Number((roundedPayment - interest).toFixed(2)))
+    const principalPayment = index === months - 1 ? balance : Math.min(balance, Math.max(0, roundedPayment - interest))
 
-    const payment = Number((principalPayment + interest).toFixed(2))
+    const payment = principalPayment + interest
     const opening = balance
 
-    balance = Number(Math.max(0, balance - principalPayment).toFixed(2))
+    balance = index === months - 1 ? 0 : Math.max(0, balance - principalPayment)
 
     return {
       installment_number: index + 1,
-      due_date: addUtcMonths(start, index + 1),
+      due_date: addUtcMonths(start, index),
       opening_principal: opening,
       principal_amount: principalPayment,
       interest_amount: interest,

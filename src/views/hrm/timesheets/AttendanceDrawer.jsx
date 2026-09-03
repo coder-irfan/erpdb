@@ -224,10 +224,7 @@ const AttendanceDrawer = ({
               const showTimes = entry.status === 'PRESENT'
 
               return (
-                <div
-                  key={entry.staff_id}
-                  className='rounded-xl border border-divider bg-backgroundDefault p-4 shadow-xs'
-                >
+                <div key={entry.staff_id} className='rounded-xl border border-divider bg-actionActive p-4 shadow-xs'>
                   <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
                     <div className='flex min-is-0 items-center gap-3'>
                       <Avatar

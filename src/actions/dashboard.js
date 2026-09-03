@@ -5,10 +5,12 @@ import { SYSTEM_STATUS_VALUES } from '@/data/systemStatuses'
 import { authorizeAction } from '@/libs/actionAuthorization'
 import { getCompanySetupRecord } from '@/libs/companySetup'
 import { ACTIVE_OPERATIONAL_STATUSES, CLOSED_LOAN_STATUSES } from '@/libs/financialStatuses'
+import { normalizeLoanStatusOption } from '@/libs/financeLoans'
 import { prisma } from '@/libs/prisma'
 import { formatAfghanDate, formatAfghanMonthYear } from '@/utils/afghanDate'
 import { resolveDashboardPeriod } from '@/utils/dashboardPeriod'
 import { hasPermission } from '@/utils/rbac'
+import { roundMoney, subtractMoney } from '@/utils/formatCurrency'
 
 const DAY_IN_MS = 86_400_000
 const CLOSED_LEADS = ['WON', 'LOST', 'CONVERTED', 'CLOSED']
@@ -23,7 +25,7 @@ const toNumber = value => {
   return Number.isFinite(number) ? number : 0
 }
 
-const round = value => Number(toNumber(value).toFixed(2))
+const round = value => roundMoney(value)
 const iso = value => value?.toISOString() || null
 const fullName = staff => [staff?.first_name, staff?.last_name].filter(Boolean).join(' ').trim()
 
@@ -98,7 +100,11 @@ const buildPeriodBuckets = ({ range, dates = [], locale }) => {
   const keyFor = unit === 'DAY' ? dayKey : unit === 'MONTH' ? monthKey : yearKey
   const buckets = []
 
-  for (let cursor = first; cursor < endExclusive; cursor = unit === 'DAY' ? addDays(cursor, 1) : unit === 'MONTH' ? addMonths(cursor, 1) : addYears(cursor, 1)) {
+  for (
+    let cursor = first;
+    cursor < endExclusive;
+    cursor = unit === 'DAY' ? addDays(cursor, 1) : unit === 'MONTH' ? addMonths(cursor, 1) : addYears(cursor, 1)
+  ) {
     buckets.push({
       key: keyFor(cursor),
       month:
@@ -191,11 +197,7 @@ const loadFinanceAnalytics = async ({ range, locale }) => {
 
   const { buckets, keyFor } = buildPeriodBuckets({
     range,
-    dates: [
-      ...income.map(row => row.created_at),
-      ...expenses.map(row => row.expense_date),
-      ...salaryDates
-    ],
+    dates: [...income.map(row => row.created_at), ...expenses.map(row => row.expense_date), ...salaryDates],
     locale
   })
 
@@ -228,10 +230,7 @@ const loadFinanceAnalytics = async ({ range, locale }) => {
 
   const incomeTotals = rows => ({
     total: rows.reduce((sum, row) => sum + toNumber(row.amount_base), 0),
-    collected: rows.reduce(
-      (sum, row) => sum + (row.status === 'PAID' ? toNumber(row.amount_base) : paidBase(row)),
-      0
-    ),
+    collected: rows.reduce((sum, row) => sum + (row.status === 'PAID' ? toNumber(row.amount_base) : paidBase(row)), 0),
     pending: rows.reduce((sum, row) => sum + (row.status === 'PAID' ? 0 : outstandingBase(row)), 0)
   })
 
@@ -240,13 +239,17 @@ const loadFinanceAnalytics = async ({ range, locale }) => {
   const previousIncomeTotals = incomeTotals(previousIncome)
   const currentExpense = sumAmount(expenses) + sumAmount(salaries)
   const previousExpense = sumAmount(previousExpenses) + sumAmount(previousSalaries)
-  const currentNet = currentIncome.total - currentExpense
-  const previousNet = previousIncomeTotals.total - previousExpense
+  const currentNet = subtractMoney(currentIncome.total, currentExpense)
+  const previousNet = subtractMoney(previousIncomeTotals.total, previousExpense)
   const incomeGroups = new Map()
   const expenseGroups = new Map()
 
-  income.forEach(row => incomeGroups.set(row.income_type_id, toNumber(incomeGroups.get(row.income_type_id)) + toNumber(row.amount_base)))
-  expenses.forEach(row => expenseGroups.set(row.expense_type_id, toNumber(expenseGroups.get(row.expense_type_id)) + toNumber(row.amount_base)))
+  income.forEach(row =>
+    incomeGroups.set(row.income_type_id, toNumber(incomeGroups.get(row.income_type_id)) + toNumber(row.amount_base))
+  )
+  expenses.forEach(row =>
+    expenseGroups.set(row.expense_type_id, toNumber(expenseGroups.get(row.expense_type_id)) + toNumber(row.amount_base))
+  )
 
   const options = await prisma.option.findMany({
     where: { id: { in: [...incomeGroups.keys(), ...expenseGroups.keys()] } },
@@ -683,7 +686,7 @@ const loadUrgentActions = async ({ capabilities, today, staffId }) => {
         currency: row.currency,
         exchangeRate: toNumber(row.exchange_rate),
         staff: row.staff,
-        status: row.status,
+        status: normalizeLoanStatusOption(row.status),
         borrower: fullName(row.staff) || row.entity_name || row.loan_number,
         issueDate: iso(row.issue_date)
       }
@@ -727,7 +730,12 @@ const loadPersonalSnapshot = async ({ staffId, today, range }) => {
         remaining_balance: { gt: 0 },
         status: { is: { value: { notIn: CLOSED_LOANS } } }
       },
-      select: { total_amount: true, remaining_balance: true, amount_base: true, repayments: { select: { amount_base: true } } }
+      select: {
+        total_amount: true,
+        remaining_balance: true,
+        amount_base: true,
+        repayments: { select: { amount_base: true } }
+      }
     })
   ])
 

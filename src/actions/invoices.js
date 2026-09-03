@@ -21,6 +21,7 @@ import { toUtcDateOnly } from '@/utils/contractDuration'
 import {
   SYSTEM_BASE_CURRENCY,
   convertToBaseCurrency,
+  roundMoney,
   effectiveAfnExchangeRate,
   normalizeToAfn,
   toFiniteNumber
@@ -383,11 +384,11 @@ export const getInvoices = async (payload = {}) => {
         baseCurrency: SYSTEM_BASE_CURRENCY,
         statuses,
         summary: {
-          totalInvoiced: toFiniteNumber(totalInvoiced._sum.amount_base),
-          paidRevenue: toFiniteNumber(paid._sum.amount_base),
+          totalInvoiced: roundMoney(totalInvoiced._sum.amount_base),
+          paidRevenue: roundMoney(paid._sum.amount_base),
           overdueCount: overdue.length,
-          overdueAmount: sumRemainingBase(overdue),
-          outstandingBalance: sumRemainingBase(outstanding)
+          overdueAmount: roundMoney(sumRemainingBase(overdue)),
+          outstandingBalance: roundMoney(sumRemainingBase(outstanding))
         }
       }
     }

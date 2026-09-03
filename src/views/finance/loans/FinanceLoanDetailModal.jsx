@@ -1,8 +1,5 @@
 'use client'
 
-import { useEffect } from 'react'
-
-import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import Chip from '@mui/material/Chip'
@@ -27,36 +24,23 @@ const Item = ({ label, value, className = '' }) => (
   </div>
 )
 
-const FinanceLoanDetailModal = ({ open, loan, locale, dictionary, autoPrint, onClose }) => {
-  useEffect(() => {
-    if (!open || !autoPrint) return undefined
-
-    const timeout = window.setTimeout(() => window.print(), 250)
-
-    return () => window.clearTimeout(timeout)
-  }, [autoPrint, open])
-
+const FinanceLoanDetailModal = ({ open, loan, locale, dictionary, onClose }) => {
   if (!loan) return null
   const borrower = loan.staff?.full_name || loan.entity_name
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth='md'>
-      <DialogTitle className='loan-print-toolbar flex items-center justify-between gap-4'>
+      <DialogTitle className='flex items-center justify-between gap-4'>
         <div>
           <Typography variant='h5'>{loan.loan_number}</Typography>
           <Typography color='text.secondary'>{borrower}</Typography>
         </div>
-        <div className='flex gap-2'>
-          <Button variant='contained' startIcon={<i className='tabler-printer' />} onClick={() => window.print()}>
-            {dictionary.actions.print}
-          </Button>
-          <IconButton onClick={onClose}>
-            <i className='tabler-x' />
-          </IconButton>
-        </div>
+        <IconButton onClick={onClose} aria-label={dictionary.actions.close}>
+          <i className='tabler-x' />
+        </IconButton>
       </DialogTitle>
       <DialogContent dividers>
-        <div className='finance-loan-print flex flex-col gap-5'>
+        <div className='flex flex-col gap-5'>
           <div className='flex items-start justify-between gap-4 border-be-2 border-primary pb-4'>
             <div>
               <Typography variant='h4'>{dictionary.detail.statement}</Typography>
@@ -144,7 +128,7 @@ const FinanceLoanDetailModal = ({ open, loan, locale, dictionary, autoPrint, onC
                     <div key={repayment.id} className='grid grid-cols-1 gap-2 border-be border-divider pb-3 last:border-0 last:pb-0 sm:grid-cols-4'>
                       <Item label='Date' value={toDateInputValue(repayment.repayment_date)} />
                       <Item label='Amount' value={<DualCurrencyAmount amount={repayment.amount} amountBase={repayment.amount_base} currency={repayment.currency} exchangeRate={repayment.exchange_rate} locale={locale} />} />
-                      <Item label='Payment Method' value={formatPaymentMethod(repayment.payment_method) || formatLedgerText(repayment.source)} />
+                      <Item label='Payment Method' value={formatPaymentMethod(repayment.payment_method || repayment.source) || formatLedgerText(repayment.source)} />
                       <Item label='Notes' value={formatLedgerText(repayment.notes) || dictionary.common.notAvailable} />
                     </div>
                   ))}
@@ -154,28 +138,6 @@ const FinanceLoanDetailModal = ({ open, loan, locale, dictionary, autoPrint, onC
           )}
         </div>
       </DialogContent>
-      <style jsx global>{`
-        @media print {
-          body * {
-            visibility: hidden !important;
-          }
-          .finance-loan-print,
-          .finance-loan-print * {
-            visibility: visible !important;
-          }
-          .finance-loan-print {
-            position: fixed;
-            inset: 0;
-            width: 100%;
-            padding: 28px;
-            background: white !important;
-            color: black !important;
-          }
-          .loan-print-toolbar {
-            display: none !important;
-          }
-        }
-      `}</style>
     </Dialog>
   )
 }

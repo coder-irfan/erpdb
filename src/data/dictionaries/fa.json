@@ -1857,7 +1857,8 @@
       "OUT_OF_STOCK": "ناموجود",
       "CANCELLED": "لغوشده",
       "CLOSED": "بسته",
-      "REPAID": "تسویه‌شده"
+      "REPAID": "تسویه‌شده",
+      "PAID_OFF": "تسویه‌شده"
     },
     "loanTypes": {
       "STAFF": "کارمند",
@@ -3264,6 +3265,10 @@
       "repay": "ثبت بازپرداخت",
       "print": "چاپ صورت‌حساب",
       "printVoucher": "چاپ سند قرضه",
+      "approve": "تأیید قرضه",
+      "reject": "رد قرضه",
+      "activate": "پرداخت / فعال‌سازی",
+      "void": "لغو / ابطال",
       "delete": "حذف قرضه"
     },
     "fields": {
@@ -3319,6 +3324,7 @@
       "entityRequired": "نام نهاد بیرونی را وارد کنید.",
       "staffRequired": "یک کارمند انتخاب کنید.",
       "monthlyTooHigh": "کسر ماهانه نمی‌تواند از مبلغ مجموعی بیشتر باشد.",
+      "repaymentExceedsBalance": "مبلغ بازپرداخت نمی‌تواند از مانده {balance} بیشتر باشد.",
       "reasonTooLong": "دلیل نباید بیشتر از ۵۰۰۰ نویسه باشد."
     },
     "messages": {

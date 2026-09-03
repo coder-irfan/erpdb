@@ -10,7 +10,15 @@ import { prisma } from '@/libs/prisma'
 import { serializeData } from '@/libs/serialize'
 import { nextSequentialNumber } from '@/libs/sequentialNumbers'
 import { toUtcDateOnly } from '@/utils/contractDuration'
-import { SYSTEM_BASE_CURRENCY, convertAfnToUsd, convertToBaseCurrency, normalizeToAfn, toFiniteNumber } from '@/utils/formatCurrency'
+import {
+  SYSTEM_BASE_CURRENCY,
+  convertAfnToUsd,
+  convertToBaseCurrency,
+  normalizeToAfn,
+  roundMoney,
+  subtractMoney,
+  toFiniteNumber
+} from '@/utils/formatCurrency'
 import { formatLedgerText } from '@/utils/ledgerDisplay'
 import { calculateAmortizationSchedule } from '@/utils/loanCalculations'
 
@@ -18,22 +26,25 @@ export const LOAN_READ_PERMISSIONS = ['finance:read', 'finance_loan:read']
 export const LOAN_WRITE_PERMISSIONS = ['finance:write', 'finance_loan:write']
 export const LOAN_DELETE_PERMISSIONS = ['finance:delete', 'finance_loan:delete']
 export const ACTIVE_LOAN_VALUES = ACTIVE_LOAN_STATUSES
-export const LOAN_STATUS_VALUES = ['REQUESTED', 'APPROVED', 'ACTIVE', 'REPAID', 'REJECTED']
+export const LOAN_STATUS_VALUES = ['REQUESTED', 'APPROVED', 'ACTIVE', 'PAID_OFF', 'REPAID', 'REJECTED', 'CANCELLED']
 export const LOAN_REPAYMENT_SOURCES = ['SALARY_DEDUCTION', 'MANUAL_CASH', 'MANUAL_BANK', 'LEGACY_MIGRATION']
 
 const LOAN_TRANSITIONS = {
-  REQUESTED: ['APPROVED', 'REJECTED'],
+  REQUESTED: ['ACTIVE', 'REJECTED'],
   APPROVED: ['ACTIVE', 'REJECTED'],
-  ACTIVE: [],
+  ACTIVE: ['CANCELLED'],
+  PAID_OFF: [],
   REPAID: [],
-  REJECTED: []
+  REJECTED: [],
+  CANCELLED: []
 }
 
 export class LoanLedgerError extends Error {
-  constructor(code, message) {
+  constructor(code, message, details = {}) {
     super(message)
     this.name = 'LoanLedgerError'
     this.code = code
+    Object.assign(this, details)
   }
 }
 
@@ -100,52 +111,63 @@ export const loanSelect = {
 }
 
 const iso = value => value?.toISOString() || null
-const numberString = (value, scale = 2) => value == null ? null : toFiniteNumber(value).toFixed(scale)
+const numberString = (value, scale = 2) => (value == null ? null : toFiniteNumber(value).toFixed(scale))
 const fullName = staff => `${staff?.first_name || ''} ${staff?.last_name || ''}`.trim()
-const normalizeStaff = staff => staff ? { ...staff, full_name: fullName(staff) } : null
+const normalizeStaff = staff => (staff ? { ...staff, full_name: fullName(staff) } : null)
 
-export const normalizeLoan = loan => serializeData({
-  ...loan,
-  total_amount: numberString(loan.total_amount),
-  monthly_deduction: numberString(loan.monthly_deduction),
-  repaid_amount: numberString(loan.repaid_amount),
-  remaining_balance: numberString(loan.remaining_balance),
-  amount_base: numberString(loan.amount_base),
-  amount_usd: numberString(convertAfnToUsd(loan.amount_base, loan.exchange_rate)),
-  monthly_deduction_usd: numberString(convertAfnToUsd(normalizeToAfn(loan.monthly_deduction, loan.currency, loan.exchange_rate), loan.exchange_rate)),
-  repaid_amount_usd: numberString(convertAfnToUsd(normalizeToAfn(loan.repaid_amount, loan.currency, loan.exchange_rate), loan.exchange_rate)),
-  remaining_balance_usd: numberString(convertAfnToUsd(normalizeToAfn(loan.remaining_balance, loan.currency, loan.exchange_rate), loan.exchange_rate)),
-  exchange_rate: numberString(loan.exchange_rate, 4),
-  annual_interest_rate: numberString(loan.annual_interest_rate, 4),
-  fx_snapshot_at: iso(loan.fx_snapshot_at),
-  issue_date: iso(loan.issue_date),
-  repayment_start_date: iso(loan.repayment_start_date),
-  created_at: iso(loan.created_at),
-  updated_at: iso(loan.updated_at),
-  staff: normalizeStaff(loan.staff),
-  approved_by: normalizeStaff(loan.approved_by),
-  repayment_schedule: (loan.repayment_schedule || []).map(item => ({
-    ...item,
-    due_date: iso(item.due_date),
-    paid_at: iso(item.paid_at),
-    created_at: iso(item.created_at),
-    opening_principal: numberString(item.opening_principal),
-    principal_amount: numberString(item.principal_amount),
-    interest_amount: numberString(item.interest_amount),
-    payment_amount: numberString(item.payment_amount),
-    remaining_principal: numberString(item.remaining_principal)
-  })),
-  repayments: (loan.repayments || []).map(repayment => ({
-    ...repayment,
-    amount: numberString(repayment.amount),
-    amount_base: numberString(repayment.amount_base),
-    exchange_rate: numberString(repayment.exchange_rate, 4),
-    fx_snapshot_at: iso(repayment.fx_snapshot_at),
-    repayment_date: iso(repayment.repayment_date),
-    created_at: iso(repayment.created_at),
-    notes: formatLedgerText(repayment.notes)
-  }))
-})
+export const normalizeLoanStatusOption = status =>
+  status && ['PAID_OFF', 'REPAID'].includes(status.value) ? { ...status, label: 'Fully Paid' } : status
+
+export const normalizeLoan = loan =>
+  serializeData({
+    ...loan,
+    total_amount: numberString(loan.total_amount),
+    monthly_deduction: numberString(loan.monthly_deduction),
+    repaid_amount: numberString(loan.repaid_amount),
+    remaining_balance: numberString(loan.remaining_balance),
+    amount_base: numberString(loan.amount_base),
+    amount_usd: numberString(convertAfnToUsd(loan.amount_base, loan.exchange_rate)),
+    monthly_deduction_usd: numberString(
+      convertAfnToUsd(normalizeToAfn(loan.monthly_deduction, loan.currency, loan.exchange_rate), loan.exchange_rate)
+    ),
+    repaid_amount_usd: numberString(
+      convertAfnToUsd(normalizeToAfn(loan.repaid_amount, loan.currency, loan.exchange_rate), loan.exchange_rate)
+    ),
+    remaining_balance_usd: numberString(
+      convertAfnToUsd(normalizeToAfn(loan.remaining_balance, loan.currency, loan.exchange_rate), loan.exchange_rate)
+    ),
+    exchange_rate: numberString(loan.exchange_rate, 4),
+    annual_interest_rate: numberString(loan.annual_interest_rate, 4),
+    fx_snapshot_at: iso(loan.fx_snapshot_at),
+    issue_date: iso(loan.issue_date),
+    repayment_start_date: iso(loan.repayment_start_date),
+    created_at: iso(loan.created_at),
+    updated_at: iso(loan.updated_at),
+    staff: normalizeStaff(loan.staff),
+    approved_by: normalizeStaff(loan.approved_by),
+    status: normalizeLoanStatusOption(loan.status),
+    repayment_schedule: (loan.repayment_schedule || []).map(item => ({
+      ...item,
+      due_date: iso(item.due_date),
+      paid_at: iso(item.paid_at),
+      created_at: iso(item.created_at),
+      opening_principal: numberString(item.opening_principal),
+      principal_amount: numberString(item.principal_amount),
+      interest_amount: numberString(item.interest_amount),
+      payment_amount: numberString(item.payment_amount),
+      remaining_principal: numberString(item.remaining_principal)
+    })),
+    repayments: (loan.repayments || []).map(repayment => ({
+      ...repayment,
+      amount: numberString(repayment.amount),
+      amount_base: numberString(repayment.amount_base),
+      exchange_rate: numberString(repayment.exchange_rate, 4),
+      fx_snapshot_at: iso(repayment.fx_snapshot_at),
+      repayment_date: iso(repayment.repayment_date),
+      created_at: iso(repayment.created_at),
+      notes: formatLedgerText(repayment.notes)
+    }))
+  })
 
 export const cleanLoanText = value => sanitizeHtml(value || '', { allowedTags: [], allowedAttributes: {} }).trim()
 
@@ -174,7 +196,9 @@ export const prepareLoanData = async (values, messages, setup, current = null) =
   if (values.loan_type === 'STAFF' && !staffId) return { success: false, error: messages.staffRequired }
   if (values.loan_type !== 'STAFF' && !entityName) return { success: false, error: messages.entityRequired }
 
-  const staff = staffId ? await prisma.hrmstaff.findFirst({ where: { id: staffId, status: { not: 'TERMINATED' } }, select: { id: true } }) : null
+  const staff = staffId
+    ? await prisma.hrmstaff.findFirst({ where: { id: staffId, status: { not: 'TERMINATED' } }, select: { id: true } })
+    : null
 
   if (staffId && !staff) return { success: false, error: messages.staffRequired }
 
@@ -184,16 +208,25 @@ export const prepareLoanData = async (values, messages, setup, current = null) =
   const annualInterestRate = toFiniteNumber(values.annual_interest_rate)
   const tenureMonths = Math.trunc(toFiniteNumber(values.tenure_months))
 
-  if (values.loan_type === 'STAFF' && monthlyDeduction > totalAmount) return { success: false, error: messages.monthlyTooHigh }
+  if (values.loan_type === 'STAFF' && monthlyDeduction > totalAmount)
+    return { success: false, error: messages.monthlyTooHigh }
 
   const issueDate = toUtcDateOnly(values.issue_date)
   const repaymentStartDate = toUtcDateOnly(values.repayment_start_date || values.issue_date)
 
-  if (!issueDate || !repaymentStartDate || exchangeRate <= 0 || annualInterestRate < 0 || tenureMonths < 1) return { success: false, error: messages.rateInvalid }
+  if (!issueDate || !repaymentStartDate || exchangeRate <= 0 || annualInterestRate < 0 || tenureMonths < 1)
+    return { success: false, error: messages.rateInvalid }
 
-  const schedule = values.loan_type === 'CORPORATE'
-    ? calculateAmortizationSchedule({ principal: totalAmount, annualInterestRate, tenureMonths, issueDate })
-    : []
+  const schedule =
+    values.loan_type === 'CORPORATE'
+      ? calculateAmortizationSchedule({
+          principal: totalAmount,
+          annualInterestRate,
+          tenureMonths,
+          issueDate,
+          repaymentStartDate
+        })
+      : []
 
   const scheduledMonthlyPayment = schedule[0]?.payment_amount || monthlyDeduction
 
@@ -213,11 +246,9 @@ export const prepareLoanData = async (values, messages, setup, current = null) =
   // validated rate supplied for a new loan (or a pre-repayment currency change).
   // Falling back to the setup rate here silently discarded the entered quote.
   const effectiveExchangeRate =
-    current && current.currency === values.currency
-      ? toFiniteNumber(current.exchange_rate)
-      : exchangeRate
+    current && current.currency === values.currency ? toFiniteNumber(current.exchange_rate) : exchangeRate
 
-  const remainingBalance = Math.max(0, totalAmount - repaidAmount)
+  const remainingBalance = Math.max(0, subtractMoney(totalAmount, repaidAmount))
 
   return {
     success: true,
@@ -235,7 +266,8 @@ export const prepareLoanData = async (values, messages, setup, current = null) =
       auto_deduct: values.loan_type === 'STAFF' && values.auto_deduct,
       annual_interest_rate: new Prisma.Decimal(values.loan_type === 'CORPORATE' ? annualInterestRate : 0),
       tenure_months: values.loan_type === 'CORPORATE' ? tenureMonths : null,
-      disbursement_bank_account: values.loan_type === 'CORPORATE' ? cleanLoanText(values.disbursement_bank_account) || null : null,
+      disbursement_bank_account:
+        values.loan_type === 'CORPORATE' ? cleanLoanText(values.disbursement_bank_account) || null : null,
       reason: cleanLoanText(values.reason) || null,
       amount_base: new Prisma.Decimal(
         convertToBaseCurrency(totalAmount, values.currency, effectiveExchangeRate, SYSTEM_BASE_CURRENCY)
@@ -247,20 +279,19 @@ export const prepareLoanData = async (values, messages, setup, current = null) =
   }
 }
 
-export const applyLoanStatusTransition = async (
-  transaction,
-  { loanId, nextStatusValue, approvedById = null }
-) => {
+export const applyLoanStatusTransition = async (transaction, { loanId, nextStatusValue, approvedById = null }) => {
   const loan = await transaction.financeloan.findUnique({
     where: { id: loanId },
     select: {
       id: true,
       remaining_balance: true,
+      repaid_amount: true,
       total_amount: true,
       currency: true,
       exchange_rate: true,
       fx_snapshot_at: true,
-      status: { select: { value: true } }
+      status: { select: { value: true } },
+      _count: { select: { repayments: true } }
     }
   })
 
@@ -274,12 +305,21 @@ export const applyLoanStatusTransition = async (
 
   if (currentStatus === nextStatusValue) return loan
 
-  if (nextStatusValue === 'REPAID') {
+  if (['PAID_OFF', 'REPAID'].includes(nextStatusValue)) {
     if (toFiniteNumber(loan.remaining_balance) > 0.005) {
       throw new LoanLedgerError('LOAN_BALANCE_REMAINING', 'A loan with an outstanding balance cannot be marked repaid.')
     }
+  } else if (
+    currentStatus === 'ACTIVE' &&
+    nextStatusValue === 'CANCELLED' &&
+    (loan._count.repayments > 0 || toFiniteNumber(loan.repaid_amount) > 0)
+  ) {
+    throw new LoanLedgerError('LOAN_CANCELLATION_BLOCKED', 'A loan with recorded repayments cannot be cancelled.')
   } else if (!(LOAN_TRANSITIONS[currentStatus] || []).includes(nextStatusValue)) {
-    throw new LoanLedgerError('INVALID_LOAN_TRANSITION', `Cannot move a loan from ${currentStatus} to ${nextStatusValue}.`)
+    throw new LoanLedgerError(
+      'INVALID_LOAN_TRANSITION',
+      `Cannot move a loan from ${currentStatus} to ${nextStatusValue}.`
+    )
   }
 
   const nextStatus = await transaction.option.findUnique({
@@ -306,7 +346,7 @@ export const applyLoanStatusTransition = async (
             fx_snapshot_at: snapshotAt
           }
         : {}),
-      ...(nextStatusValue === 'APPROVED' ? { approved_by_id: approvedById } : {})
+      ...(['APPROVED', 'ACTIVE'].includes(nextStatusValue) && approvedById ? { approved_by_id: approvedById } : {})
     },
     select: loanSelect
   })
@@ -350,8 +390,8 @@ export const applyLoanRepayment = async (
 
   const postingRate = toFiniteNumber(fxSnapshotRate || loan.exchange_rate)
 
-  if (loan.status.value !== 'ACTIVE') {
-    throw new LoanLedgerError('LOAN_NOT_ACTIVE', 'Only active loans can receive repayments.')
+  if (!ACTIVE_LOAN_VALUES.includes(loan.status.value)) {
+    throw new LoanLedgerError('LOAN_NOT_ACTIVE', 'Only approved or active loans can receive repayments.')
   }
 
   if (paymentMethodId) {
@@ -372,7 +412,7 @@ export const applyLoanRepayment = async (
   const legacyRepaid = toFiniteNumber(loan.repaid_amount)
 
   if (legacyRepaid - authoritativeRepaid > 0.005) {
-    const legacyAmount = legacyRepaid - authoritativeRepaid
+    const legacyAmount = subtractMoney(legacyRepaid, authoritativeRepaid)
 
     await transaction.loanrepayment.create({
       data: {
@@ -384,9 +424,7 @@ export const applyLoanRepayment = async (
         currency: loan.currency,
         exchange_rate: loan.exchange_rate,
         fx_snapshot_at: loan.issue_date,
-        amount_base: new Prisma.Decimal(
-          normalizeToAfn(legacyAmount, loan.currency, loan.exchange_rate)
-        ),
+        amount_base: new Prisma.Decimal(normalizeToAfn(legacyAmount, loan.currency, loan.exchange_rate)),
         notes: 'Opening repayment balance migrated from the legacy aggregate.'
       }
     })
@@ -394,33 +432,45 @@ export const applyLoanRepayment = async (
   }
 
   const totalAmount = toFiniteNumber(loan.total_amount)
-  const outstanding = Math.max(0, totalAmount - authoritativeRepaid)
-  const requestedAmount = Number(toFiniteNumber(amount).toFixed(2))
+  const outstanding = Math.max(0, subtractMoney(totalAmount, authoritativeRepaid))
+  const requestedAmount = roundMoney(amount)
 
   if (outstanding <= 0.005) throw new LoanLedgerError('LOAN_ALREADY_REPAID', 'The loan is already repaid.')
   if (requestedAmount <= 0) throw new LoanLedgerError('INVALID_REPAYMENT_AMOUNT', 'Repayment amount must be positive.')
+
+  if (requestedAmount - outstanding > 0.005) {
+    throw new LoanLedgerError('LOAN_OVERPAYMENT', 'Repayment exceeds the outstanding loan balance.', {
+      remainingBalance: outstanding,
+      currency: loan.currency
+    })
+  }
 
   if (!repaymentDate || Number.isNaN(repaymentDate.getTime()) || repaymentDate < loan.issue_date) {
     throw new LoanLedgerError('INVALID_REPAYMENT_DATE', 'Repayment date cannot be before the loan issue date.')
   }
 
-  if (requestedAmount - outstanding > 0.005) {
-    throw new LoanLedgerError('LOAN_OVERPAYMENT', 'Repayment exceeds the outstanding loan balance.')
-  }
+  const appliedAmount = roundMoney(Math.min(requestedAmount, outstanding))
+  const nextRepaid = Math.min(totalAmount, roundMoney(authoritativeRepaid + appliedAmount))
+  const nextRemaining = Math.max(0, subtractMoney(totalAmount, nextRepaid))
 
-  const appliedAmount = Math.min(requestedAmount, outstanding)
-  const nextRepaid = Math.min(totalAmount, authoritativeRepaid + appliedAmount)
-  const nextRemaining = Math.max(0, totalAmount - nextRepaid)
-
-  const repaidStatus =
+  const paidOffStatus =
     nextRemaining <= 0.005
-      ? await transaction.option.findUnique({
-          where: { category_value: { category: 'LOAN_STATUS', value: 'REPAID' } },
+      ? await transaction.option.upsert({
+          where: { category_value: { category: 'LOAN_STATUS', value: 'PAID_OFF' } },
+          update: { label: 'Fully Paid', color_code: 'success', is_active: true },
+          create: {
+            category: 'LOAN_STATUS',
+            label: 'Fully Paid',
+            value: 'PAID_OFF',
+            color_code: 'success',
+            sort_order: 4,
+            is_active: true
+          },
           select: { id: true }
         })
       : null
 
-  if (nextRemaining <= 0.005 && !repaidStatus) {
+  if (nextRemaining <= 0.005 && !paidOffStatus) {
     throw new LoanLedgerError('LOAN_STATUS_NOT_CONFIGURED', 'Repaid loan status is not configured.')
   }
 
@@ -435,9 +485,7 @@ export const applyLoanRepayment = async (
       currency: loan.currency,
       exchange_rate: new Prisma.Decimal(postingRate),
       fx_snapshot_at: fxSnapshotAt,
-      amount_base: new Prisma.Decimal(
-        normalizeToAfn(appliedAmount, loan.currency, postingRate)
-      ),
+      amount_base: new Prisma.Decimal(normalizeToAfn(appliedAmount, loan.currency, postingRate)),
       created_by_user_id: createdByUserId,
       notes: cleanLoanText(notes) || null
     }
@@ -448,7 +496,7 @@ export const applyLoanRepayment = async (
     data: {
       repaid_amount: new Prisma.Decimal(nextRepaid),
       remaining_balance: new Prisma.Decimal(nextRemaining),
-      ...(repaidStatus ? { status_id: repaidStatus.id } : {})
+      ...(paidOffStatus ? { status_id: paidOffStatus.id } : {})
     },
     select: loanSelect
   })
@@ -461,5 +509,8 @@ export const getLoanSetup = getCompanySetupRecord
 export const nextLoanNumber = async (client = prisma, loanType = 'STAFF') => {
   const year = new Date().getUTCFullYear()
 
-  return nextSequentialNumber(client, 'loan', { prefix: `${loanType === 'CORPORATE' ? 'CLN' : 'SLN'}-${year}-`, digits: 3 })
+  return nextSequentialNumber(client, 'loan', {
+    prefix: `${loanType === 'CORPORATE' ? 'CLN' : 'SLN'}-${year}-`,
+    digits: 3
+  })
 }

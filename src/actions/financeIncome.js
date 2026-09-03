@@ -22,6 +22,8 @@ import {
   convertToBaseCurrency,
   effectiveAfnExchangeRate,
   normalizeToAfn,
+  roundMoney,
+  subtractMoney,
   toFiniteNumber
 } from '@/utils/formatCurrency'
 
@@ -223,7 +225,7 @@ const validationPayload = payload => ({
 })
 
 const derivePaymentValues = (totalAmount, paidAmount) => {
-  const remaining = Math.max(0, totalAmount - paidAmount)
+  const remaining = Math.max(0, subtractMoney(totalAmount, paidAmount))
   const status = deriveReceivableStatus(totalAmount, paidAmount)
 
   return { remaining, status }
@@ -479,6 +481,10 @@ export const getFinanceIncomes = async (payload = {}) => {
       },
       { totalIncome: 0, totalCollected: 0, pendingReceivables: 0, overdueReceivables: 0 }
     )
+
+    Object.keys(summary).forEach(key => {
+      summary[key] = roundMoney(summary[key])
+    })
 
     return {
       success: true,
