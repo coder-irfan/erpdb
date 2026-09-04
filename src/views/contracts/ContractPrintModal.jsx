@@ -68,46 +68,57 @@ const ContractPrintModal = ({ open, contractId, setup, locale, dictionary, other
     >
       <div className='flex flex-col gap-6 pb-2'>
         {other ? (
-          <section>
-            <h2 className='enterprise-section-title'>Agreement Metadata</h2>
-            <div className='grid grid-cols-2 gap-4'>
-              <div className='rounded border border-gray-200 bg-gray-50/50 p-3 text-xs'>
-                <p>
-                  <strong>{dictionary.fields.startDate}:</strong> {toDateInputValue(contract.start_date)}
-                </p>
-                <p>
-                  <strong>{dictionary.fields.endDate}:</strong> {toDateInputValue(contract.end_date)}
-                </p>
-                <p>
-                  <strong>{dictionary.fields.amount}:</strong>{' '}
-                  {formatCurrency(contract.total_amount, locale, contract.currency)}
-                </p>
+          <>
+            <section>
+              <h2 className='enterprise-section-title'>Agreement Metadata</h2>
+              <div className='grid grid-cols-2 gap-4'>
+                <div className='rounded border border-gray-200 bg-gray-50/50 p-3 text-xs'>
+                  <p>
+                    <strong>{dictionary.fields.startDate}:</strong> {toDateInputValue(contract.start_date)}
+                  </p>
+                  <p>
+                    <strong>{dictionary.fields.endDate}:</strong> {toDateInputValue(contract.end_date)}
+                  </p>
+                  <p>
+                    <strong>{dictionary.fields.amount}:</strong>{' '}
+                    {formatCurrency(contract.total_amount, locale, contract.currency)}
+                  </p>
+                </div>
+                <div className='rounded border border-gray-200 bg-gray-50/50 p-3 text-xs'>
+                  <p>
+                    <strong>{dictionary.fields.serviceType}:</strong> {contract.contract_type?.label || '—'}
+                  </p>
+                  <p>
+                    <strong>Renewal Status:</strong> {contract.renewal_status || '—'}
+                  </p>
+                  <p>
+                    <strong>Third-Party Company / Vendor:</strong> {contract.vendor?.company_name || '—'}
+                  </p>
+                  <p>
+                    <strong>Vendor Representative:</strong> {contract.vendor?.contact_name || '—'}
+                  </p>
+                  <p>
+                    <strong>Vendor Email:</strong> {contract.vendor?.email || '—'}
+                  </p>
+                  <p>
+                    <strong>Internal Owner:</strong> {contract.account_manager?.full_name || '—'}
+                  </p>
+                  <p>
+                    <strong>{dictionary.fields.country}:</strong> {contract.country?.label || '—'}
+                  </p>
+                </div>
               </div>
-              <div className='rounded border border-gray-200 bg-gray-50/50 p-3 text-xs'>
-                <p>
-                  <strong>{dictionary.fields.serviceType}:</strong> {contract.contract_type?.label || '—'}
-                </p>
-                <p>
-                  <strong>Renewal Status:</strong> {contract.renewal_status || '—'}
-                </p>
-                <p>
-                  <strong>Third-Party Company / Vendor:</strong> {contract.vendor?.company_name || '—'}
-                </p>
-                <p>
-                  <strong>Vendor Representative:</strong> {contract.vendor?.contact_name || '—'}
-                </p>
-                <p>
-                  <strong>Vendor Email:</strong> {contract.vendor?.email || '—'}
-                </p>
-                <p>
-                  <strong>Internal Owner:</strong> {contract.account_manager?.full_name || '—'}
-                </p>
-                <p>
-                  <strong>{dictionary.fields.country}:</strong> {contract.country?.label || '—'}
-                </p>
-              </div>
-            </div>
-          </section>
+            </section>
+            <section>
+              <h2 className='enterprise-section-title'>Agreement Terms & Clauses</h2>
+              <div
+                className='enterprise-legal-content print-document-body rounded border border-gray-200 bg-white px-4 py-3 text-justify text-xs leading-relaxed text-gray-800'
+                dangerouslySetInnerHTML={{
+                  __html: contract.content_html || '<p>No agreement template was saved with this contract.</p>'
+                }}
+              />
+            </section>
+          </>
         ) : (
           <>
             <section>

@@ -17,7 +17,13 @@ import { compileCustomerContractTemplate } from '@/libs/customerContractTemplate
 import { prisma } from '@/libs/prisma'
 import { nextSequentialNumber, withSequentialNumberRetry } from '@/libs/sequentialNumbers'
 import { createContractSchema } from '@/schemas/contracts'
-import { formatDateRangeDuration, getRemainingDays, toUtcDateOnly } from '@/utils/contractDuration'
+import { appendContractClauses } from '@/utils/contractClauses'
+import {
+  calculateContractEndDate,
+  formatDateRangeDuration,
+  getRemainingDays,
+  toUtcDateOnly
+} from '@/utils/contractDuration'
 import { SYSTEM_BASE_CURRENCY, convertToBaseCurrency, toFiniteNumber } from '@/utils/formatCurrency'
 import { getDictionary } from '@/utils/getDictionary'
 
@@ -85,6 +91,7 @@ const contractSelect = {
   contract_type_id: true,
   template_id: true,
   content_html: true,
+  legal_clause_ids: true,
   country_id: true,
   percentage: true,
   currency: true,
@@ -200,15 +207,16 @@ const getTabWhere = tab => {
 }
 
 const validateRelations = async (values, currentContract = null) => {
-  const countryCategory = values.target_category === 'OTHERS' ? 'COUNTRY' : 'CONTRACT_COUNTRY'
+  const countryCategory = 'COUNTRY'
 
   const categories = [
     ['status', values.status_id, 'CONTRACT_STATUS', currentContract?.status_id],
+    ['duration', values.contract_duration, 'CONTRACT_DURATION', currentContract?.contract_duration],
     ['country', values.country_id, countryCategory, currentContract?.country_id],
     ['level', values.level_id, 'CONTRACT_LEVEL', currentContract?.level_id]
   ]
 
-  const [client, lead, manager, contractType, template, setup, ...optionResults] = await Promise.all([
+  const [client, lead, manager, contractType, template, clauses, setup, ...optionResults] = await Promise.all([
     values.client_id
       ? prisma.crmclient.findUnique({
           where: { id: values.client_id },
@@ -250,6 +258,13 @@ const validateRelations = async (values, currentContract = null) => {
           select: { id: true, label: true, value: true, description: true }
         })
       : null,
+    values.legal_clause_ids.length
+      ? prisma.option.findMany({
+          where: { id: { in: values.legal_clause_ids }, category: 'CONTRACT_CLAUSE', is_active: true },
+          select: { id: true, label: true, description: true, sort_order: true },
+          orderBy: [{ sort_order: 'asc' }, { label: 'asc' }]
+        })
+      : [],
     getCompanySetupRecord(),
     ...categories.map(([, id, category, currentId]) =>
       id
@@ -273,6 +288,7 @@ const validateRelations = async (values, currentContract = null) => {
     manager,
     contractType,
     template,
+    clauses,
     setup,
     ...Object.fromEntries(
       categories.map(([key], index) => [key, key === 'status' && !statusIsCanonical ? null : optionResults[index]])
@@ -293,6 +309,8 @@ const validationPayload = (payload, contractContext) => ({
   title: payload?.title,
   contract_type_id: payload?.contract_type_id,
   template_id: payload?.template_id || '',
+  contract_duration: payload?.contract_duration || '',
+  legal_clause_ids: Array.isArray(payload?.legal_clause_ids) ? payload.legal_clause_ids : [],
   total_amount: String(payload?.total_amount ?? ''),
   currency: payload?.currency,
   exchange_rate: String(payload?.exchange_rate ?? ''),
@@ -315,7 +333,9 @@ const prepareContractData = async (values, translations, currentContract = null)
     (!isOther && !relations.client) ||
     !relations.contractType ||
     ((isCustomer || isOther) && !relations.template) ||
-    !relations.status
+    !relations.status ||
+    (values.contract_duration && !relations.duration) ||
+    relations.clauses.length !== new Set(values.legal_clause_ids).size
   ) {
     return { success: false, error: translations.validation.invalidOption }
   }
@@ -343,7 +363,8 @@ const prepareContractData = async (values, translations, currentContract = null)
 
   const startDate = toUtcDateOnly(values.start_date)
 
-  const endDate = toUtcDateOnly(values.end_date)
+  const calculatedEndDate = relations.duration ? calculateContractEndDate(startDate, relations.duration) : null
+  const endDate = calculatedEndDate || toUtcDateOnly(values.end_date)
 
   const amount = toFiniteNumber(values.total_amount)
   const exchangeRate = toFiniteNumber(values.exchange_rate)
@@ -367,9 +388,10 @@ const prepareContractData = async (values, translations, currentContract = null)
       title: values.title,
       status_id: values.status_id,
       total_amount: new Prisma.Decimal(amount),
-      contract_duration: null,
+      contract_duration: values.contract_duration || null,
       contract_type_id: values.contract_type_id,
       template_id: values.template_id,
+      legal_clause_ids: values.legal_clause_ids,
       country_id: values.country_id || null,
       level_id: values.level_id || null,
       currency: values.currency,
@@ -402,7 +424,7 @@ const compileCustomerContent = (prepared, contractNumber) => {
     : null
 
   return compileCustomerContractTemplate({
-    template: prepared.relations.template.description,
+    template: appendContractClauses(prepared.relations.template.description, prepared.relations.clauses),
     contract: prepared.data,
     client: prepared.relations.client,
     accountManager: manager,
@@ -422,7 +444,7 @@ const compileOtherContent = (prepared, contractNumber, values) => {
     : null
 
   return compileCustomerContractTemplate({
-    template: prepared.relations.template.description,
+    template: appendContractClauses(prepared.relations.template.description, prepared.relations.clauses),
     contract: prepared.data,
     client: {
       company_name: values.vendor_name,

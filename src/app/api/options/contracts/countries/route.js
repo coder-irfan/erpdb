@@ -1,7 +1,19 @@
 import { authorizeAction } from '@/libs/actionAuthorization'
 import { prisma } from '@/libs/prisma'
 
-const READ_PERMISSIONS = ['options:read', 'contracts:read', 'contracts:write']
+const READ_PERMISSIONS = [
+  'options:read',
+  'contracts:read',
+  'contracts:write',
+  'crm:read',
+  'crm:write',
+  'crm_lead:read',
+  'crm_lead:write',
+  'crm_client:read',
+  'crm_client:write',
+  'projects:read',
+  'projects:write'
+]
 
 export async function GET() {
   const authorization = await authorizeAction(READ_PERMISSIONS)

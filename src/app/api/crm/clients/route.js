@@ -42,10 +42,11 @@ export async function GET(request) {
   }
 
   try {
-    const [clients, totalCount, summaryClients, staff] = await Promise.all([
+    const [clients, totalCount, summaryClients, staff, countries] = await Promise.all([
       prisma.crmclient.findMany({
         where,
         include: {
+          country: { select: { id: true, label: true, value: true } },
           account_manager: {
             select: {
               id: true,
@@ -65,7 +66,8 @@ export async function GET(request) {
       }),
       prisma.crmclient.count({ where }),
       prisma.crmclient.findMany({ where, select: { status: true, projects: { select: { status: { select: { value: true } } } }, invoices: { select: { amount_base: true, status: { select: { value: true } } } } } }),
-      prisma.hrmstaff.findMany({ where: { status: 'ACTIVE' }, select: { id: true, first_name: true, last_name: true, position: true }, orderBy: [{ first_name: 'asc' }, { last_name: 'asc' }] })
+      prisma.hrmstaff.findMany({ where: { status: 'ACTIVE' }, select: { id: true, first_name: true, last_name: true, position: true }, orderBy: [{ first_name: 'asc' }, { last_name: 'asc' }] }),
+      prisma.option.findMany({ where: { category: 'COUNTRY', is_active: true }, select: { id: true, label: true, value: true }, orderBy: [{ sort_order: 'asc' }, { label: 'asc' }] })
     ])
 
     const allInvoices = summaryClients.flatMap(client => client.invoices)
@@ -85,7 +87,7 @@ export async function GET(request) {
           activeProjects: summaryClients.reduce((total, client) => total + client.projects.filter(project => project.status.value === 'ACTIVE').length, 0),
           pendingBalance: pendingInvoices.reduce((total, invoice) => total + toFiniteNumber(invoice.amount_base), 0).toFixed(2)
         },
-        options: { staff: staff.map(item => ({ ...item, full_name: `${item.first_name} ${item.last_name}`.trim() })) }
+        options: { staff: staff.map(item => ({ ...item, full_name: `${item.first_name} ${item.last_name}`.trim() })), countries }
       }
     })
   } catch (error) {
@@ -110,13 +112,15 @@ export async function POST(request) {
 
     const values = parsed.output
 
-    const [existing, manager] = await Promise.all([
+    const [existing, manager, country] = await Promise.all([
       prisma.crmclient.findUnique({ where: { email: values.email.toLowerCase() }, select: { id: true } }),
-      values.account_manager_id ? prisma.hrmstaff.findFirst({ where: { id: values.account_manager_id, status: 'ACTIVE' }, select: { id: true } }) : null
+      values.account_manager_id ? prisma.hrmstaff.findFirst({ where: { id: values.account_manager_id, status: 'ACTIVE' }, select: { id: true } }) : null,
+      values.country_id ? prisma.option.findFirst({ where: { id: values.country_id, category: 'COUNTRY', is_active: true }, select: { id: true } }) : null
     ])
 
     if (existing) return errorResponse(dictionary.messages.emailExists, 409, 'EMAIL_EXISTS')
     if (values.account_manager_id && !manager) return errorResponse(dictionary.messages.invalidManager, 400, 'INVALID_MANAGER')
+    if (values.country_id && !country) return errorResponse(dictionary.validation.invalid, 400, 'INVALID_COUNTRY')
 
     const client = await prisma.$transaction(async transaction => {
       const created = await transaction.crmclient.create({ data: {
@@ -125,6 +129,7 @@ export async function POST(request) {
         email: values.email.toLowerCase(),
         phone: cleanText(values.phone),
         address: cleanText(values.address) || null,
+        country_id: values.country_id || null,
         tax_id: cleanText(values.tax_number) || null,
         account_manager_id: values.account_manager_id || null,
         status: values.status,

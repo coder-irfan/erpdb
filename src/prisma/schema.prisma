@@ -110,6 +110,7 @@ model contract {
   contract_type_id   String
   template_id        String?
   content_html       String?                @db.Text
+  legal_clause_ids   Json?
   country_id         String?
   percentage         Decimal?               @db.Decimal(5, 2)
   currency           String                 @default("USD")
@@ -233,6 +234,7 @@ model crmclient {
   email                String            @unique(map: "CrmClient_email_key")
   phone                String?
   address              String?           @db.Text
+  country_id           String?
   tax_id               String?
   account_manager_id   String?
   status               String            @default("ACTIVE")
@@ -244,10 +246,12 @@ model crmclient {
   activities           crmactivity[]
   account_manager      hrmstaff?         @relation(fields: [account_manager_id], references: [id], map: "CrmClient_account_manager_id_fkey")
   lead                 crmlead?          @relation(fields: [lead_id], references: [id], map: "CrmClient_lead_id_fkey")
+  country              option?           @relation("crmclient_country_idTooption", fields: [country_id], references: [id], map: "CrmClient_country_id_fkey")
   incomes              financeincome[]
   projects             project[]
 
   @@index([account_manager_id], map: "CrmClient_account_manager_id_fkey")
+  @@index([country_id], map: "CrmClient_country_id_fkey")
 }
 
 model crmlead {
@@ -257,6 +261,7 @@ model crmlead {
   contact_name        String
   email               String
   phone               String?
+  country_id          String?
   source_id           String
   status_id           String
   assigned_to_id      String?
@@ -272,11 +277,13 @@ model crmlead {
   activities          crmactivity[]
   converted_client    crmclient?
   assigned_to         hrmstaff?     @relation(fields: [assigned_to_id], references: [id], map: "CrmLead_assigned_to_id_fkey")
+  country             option?       @relation("crmlead_country_idTooption", fields: [country_id], references: [id], map: "CrmLead_country_id_fkey")
   source              option        @relation("crmlead_source_idTooption", fields: [source_id], references: [id], map: "CrmLead_source_id_fkey")
   status              option        @relation("crmlead_status_idTooption", fields: [status_id], references: [id], map: "CrmLead_status_id_fkey")
   origin_visitor      crmvisitor?
 
   @@index([assigned_to_id], map: "CrmLead_assigned_to_id_fkey")
+  @@index([country_id], map: "CrmLead_country_id_fkey")
   @@index([source_id], map: "CrmLead_source_id_fkey")
   @@index([status_id, created_at], map: "CrmLead_status_id_created_at_idx")
 }
@@ -602,6 +609,7 @@ model hrmstaffcontract {
   created_at                DateTime  @default(now())
   updated_at                DateTime  @updatedAt
   content_html              String?   @db.Text
+  legal_clause_ids          Json?
   probation_days            Int       @default(90)
   notice_period_days        Int       @default(30)
   termination_date          DateTime? @db.Date
@@ -779,11 +787,14 @@ model option {
   contract_types_ref       contract[]         @relation("contract_contract_type_idTooption")
   contract_templates_ref   contract[]         @relation("contract_template_idTooption")
   contract_countries       contract[]         @relation("contract_country_idTooption")
+  crm_client_countries     crmclient[]        @relation("crmclient_country_idTooption")
+  crm_lead_countries       crmlead[]          @relation("crmlead_country_idTooption")
   contract_levels          contract[]         @relation("contract_level_idTooption")
   contract_statuses_ref    contract[]         @relation("contract_status_idTooption")
   invoice_statuses         contractinvoice[]
   lead_sources             crmlead[]          @relation("crmlead_source_idTooption")
   lead_statuses            crmlead[]          @relation("crmlead_status_idTooption")
+  project_countries        project[]          @relation("project_country_idTooption")
   expense_types            financeexpense[]
   expense_payment_methods  financeexpense[]   @relation("financeexpense_payment_method_idTooption")
   income_payment_methods   financeincome[]    @relation("financeincome_payment_method_idTooption")
@@ -828,6 +839,7 @@ model project {
   project_area        String?
   project_sponsor     String?
   project_manager_id  String?
+  country_id          String?
   estimated_hours     Decimal?            @db.Decimal(8, 2)
   actual_hours        Decimal?            @default(0.00) @db.Decimal(8, 2)
   budget              Decimal             @db.Decimal(12, 2)
@@ -844,6 +856,7 @@ model project {
   timesheets          hrmstafftimesheet[]
   client              crmclient           @relation(fields: [client_id], references: [id], map: "Project_client_id_fkey")
   contract            contract?           @relation(fields: [contract_id], references: [id], map: "Project_contract_id_fkey")
+  country             option?             @relation("project_country_idTooption", fields: [country_id], references: [id], map: "Project_country_id_fkey")
   priority            option              @relation("project_priority_idTooption", fields: [priority_id], references: [id], map: "Project_priority_id_fkey")
   project_manager     hrmstaff?           @relation(fields: [project_manager_id], references: [id], map: "Project_project_manager_id_fkey")
   status              option              @relation("project_status_idTooption", fields: [status_id], references: [id], map: "Project_status_id_fkey")
@@ -854,6 +867,7 @@ model project {
 
   @@index([client_id, status_id], map: "Project_client_id_status_id_idx")
   @@index([contract_id], map: "Project_contract_id_fkey")
+  @@index([country_id], map: "Project_country_id_fkey")
   @@index([priority_id], map: "Project_priority_id_fkey")
   @@index([project_manager_id], map: "Project_project_manager_id_fkey")
   @@index([status_id], map: "Project_status_id_fkey")

@@ -17,7 +17,8 @@ import { prisma } from '@/libs/prisma'
 import { nextSequentialNumber, withSequentialNumberRetry } from '@/libs/sequentialNumbers'
 import { getBrandingSettings } from '@/libs/systemSettings'
 import { createStaffContractSchema } from '@/schemas/hrm/contracts'
-import { formatDateRangeDuration, getRemainingDays } from '@/utils/contractDuration'
+import { appendContractClauses } from '@/utils/contractClauses'
+import { calculateContractEndDate, formatDateRangeDuration, getRemainingDays } from '@/utils/contractDuration'
 import { SYSTEM_BASE_CURRENCY } from '@/utils/formatCurrency'
 import { getDictionary } from '@/utils/getDictionary'
 import { toUtcDateOnly, utcDateKey } from '@/utils/utcDate'
@@ -92,7 +93,7 @@ const sanitizeContractHtml = html =>
     }
   }).trim()
 
-const compileTemplate = ({ template, staff, values, setup, contractNumber, contractType, duration }) => {
+const compileTemplate = ({ template, clauses, staff, values, setup, contractNumber, contractType, duration }) => {
   const staffName = `${staff.first_name} ${staff.last_name}`.trim()
   const startDate = toDateOnly(toDate(values.start_date))
   const endDate = values.end_date ? toDateOnly(toDate(values.end_date)) : 'Open-ended'
@@ -110,7 +111,10 @@ const compileTemplate = ({ template, staff, values, setup, contractNumber, contr
     ORG_NAME: setup.company_name
   }
 
-  const source = template || '<p>{STAFF_NAME} is employed as {POSITION} by {COMPANY_NAME} from {START_DATE}.</p>'
+  const source = appendContractClauses(
+    template || '<p>{STAFF_NAME} is employed as {POSITION} by {COMPANY_NAME} from {START_DATE}.</p>',
+    clauses
+  )
 
   const compiled = Object.entries(replacements).reduce(
     (result, [key, value]) => result.replaceAll(`{${key}}`, escapeHtml(value)),
@@ -170,6 +174,7 @@ const contractSelect = {
   end_date: true,
   document_url: true,
   content_html: true,
+  legal_clause_ids: true,
   probation_days: true,
   notice_period_days: true,
   termination_date: true,
@@ -224,12 +229,12 @@ const normalizeContract = contract => ({
   duration_label: formatDateRangeDuration(contract.start_date, contract.end_date),
   created_at: contract.created_at.toISOString(),
   updated_at: contract.updated_at.toISOString(),
-    staff: {
+  staff: {
     ...contract.staff,
     full_name: `${contract.staff.first_name} ${contract.staff.last_name}`.trim(),
     salary: contract.staff.salary.toFixed(2),
-      salary_exchange_rate: contract.staff.salary_exchange_rate.toFixed(4),
-      amount_base: contract.staff.amount_base.toFixed(2)
+    salary_exchange_rate: contract.staff.salary_exchange_rate.toFixed(4),
+    amount_base: contract.staff.amount_base.toFixed(2)
   }
 })
 
@@ -259,6 +264,8 @@ const validateContract = (payload, translations) =>
     staff_id: payload?.staff_id,
     contract_type_id: payload?.contract_type_id,
     template_id: payload?.template_id,
+    contract_duration: payload?.contract_duration || '',
+    legal_clause_ids: Array.isArray(payload?.legal_clause_ids) ? payload.legal_clause_ids : [],
     start_date: payload?.start_date,
     end_date: payload?.end_date || '',
     document_url: payload?.document_url || '',
@@ -276,7 +283,7 @@ const validateDateRange = values => {
 }
 
 const getValidatedRelations = async (values, currentContract = null) => {
-  const [staff, contractType, policy, status, setup] = await Promise.all([
+  const [staff, contractType, policy, duration, clauses, status, setup] = await Promise.all([
     prisma.hrmstaff.findUnique({
       where: { id: values.staff_id },
       select: {
@@ -317,6 +324,23 @@ const getValidatedRelations = async (values, currentContract = null) => {
       },
       select: { id: true, label: true, description: true }
     }),
+    values.contract_duration
+      ? prisma.option.findFirst({
+          where: {
+            id: values.contract_duration,
+            category: 'CONTRACT_DURATION',
+            ...(currentContract?.duration_id === values.contract_duration ? {} : { is_active: true })
+          },
+          select: { id: true, label: true, value: true, description: true }
+        })
+      : null,
+    values.legal_clause_ids.length
+      ? prisma.option.findMany({
+          where: { id: { in: values.legal_clause_ids }, category: 'CONTRACT_CLAUSE', is_active: true },
+          select: { id: true, label: true, description: true, sort_order: true },
+          orderBy: [{ sort_order: 'asc' }, { label: 'asc' }]
+        })
+      : [],
     prisma.option.findFirst({
       where: {
         id: values.status_id,
@@ -332,6 +356,8 @@ const getValidatedRelations = async (values, currentContract = null) => {
     staff,
     contractType,
     policy,
+    duration,
+    clauses,
     status:
       status && (CONTRACT_STATUS_VALUES.includes(status.value) || currentContract?.status_id === status.id)
         ? status
@@ -401,7 +427,7 @@ const syncStaffAccess = async (transaction, { staffId, status, terminationDate =
       status === 'ACTIVE'
         ? {
             status: 'ACTIVE',
-            termination_date: null,
+            termination_date: null
           }
         : { status: 'TERMINATED', termination_date: terminationDate },
     select: { user_id: true }
@@ -492,25 +518,27 @@ export const getStaffContracts = async (payload = {}) => {
     inThirtyDays.setUTCDate(inThirtyDays.getUTCDate() + 30)
     inThirtyDays.setUTCHours(23, 59, 59, 999)
 
-    const [totalCount, contracts, activeCount, expiringSoonCount, draftCount, compensation] = await prisma.$transaction([
-      prisma.hrmstaffcontract.count({ where }),
-      prisma.hrmstaffcontract.findMany({
-        where,
-        select: contractSelect,
-        orderBy: { created_at: 'desc' },
-        skip: (page - 1) * limit,
-        take: limit
-      }),
-      prisma.hrmstaffcontract.count({ where: { status: { is: { value: 'ACTIVE' } } } }),
-      prisma.hrmstaffcontract.count({
-        where: {
-          status: { is: { value: 'ACTIVE' } },
-          end_date: { gte: today, lte: inThirtyDays }
-        }
-      }),
-      prisma.hrmstaffcontract.count({ where: { status: { is: { value: 'DRAFT' } } } }),
-      prisma.hrmstaffcontract.findMany({ select: { staff: { select: { amount_base: true } } } })
-    ])
+    const [totalCount, contracts, activeCount, expiringSoonCount, draftCount, compensation] = await prisma.$transaction(
+      [
+        prisma.hrmstaffcontract.count({ where }),
+        prisma.hrmstaffcontract.findMany({
+          where,
+          select: contractSelect,
+          orderBy: { created_at: 'desc' },
+          skip: (page - 1) * limit,
+          take: limit
+        }),
+        prisma.hrmstaffcontract.count({ where: { status: { is: { value: 'ACTIVE' } } } }),
+        prisma.hrmstaffcontract.count({
+          where: {
+            status: { is: { value: 'ACTIVE' } },
+            end_date: { gte: today, lte: inThirtyDays }
+          }
+        }),
+        prisma.hrmstaffcontract.count({ where: { status: { is: { value: 'DRAFT' } } } }),
+        prisma.hrmstaffcontract.findMany({ select: { staff: { select: { amount_base: true } } } })
+      ]
+    )
 
     return {
       success: true,
@@ -541,7 +569,7 @@ export const getContractFormOptions = async (payload = {}) => {
   if (!context.authorized) return { success: false, code: context.code, error: context.error }
 
   try {
-    const [staff, contractTypes, policies, statuses, setup, clients, leads, invoices, commonOptions] =
+    const [staff, contractTypes, policies, clauses, statuses, setup, clients, leads, invoices, commonOptions] =
       await Promise.all([
         prisma.hrmstaff.findMany({
           where: { status: { not: 'TERMINATED' } },
@@ -562,6 +590,11 @@ export const getContractFormOptions = async (payload = {}) => {
           where: { category: 'CONTRACT_POLICY', is_active: true },
           select: { id: true, label: true, value: true, description: true },
           orderBy: { label: 'asc' }
+        }),
+        prisma.option.findMany({
+          where: { category: 'CONTRACT_CLAUSE', is_active: true },
+          select: { id: true, label: true, value: true, description: true, is_default: true, sort_order: true },
+          orderBy: [{ sort_order: 'asc' }, { label: 'asc' }]
         }),
         getContractStatusOptions(),
         getCompanySetupRecord(),
@@ -599,6 +632,7 @@ export const getContractFormOptions = async (payload = {}) => {
         })),
         contractTypes: contractTypes.filter(option => option.category === CONTRACT_TYPE_DOMAINS.HRM),
         policies,
+        clauses,
         statuses,
         setup,
         clients,
@@ -681,13 +715,17 @@ export const createStaffContract = async (payload = {}) => {
 
     if (!relations.staff)
       return { success: false, code: 'STAFF_NOT_FOUND', error: context.translations.messages.staffNotFound }
-    if (!relations.contractType || !relations.policy)
+    if (!relations.contractType || !relations.policy || (validation.output.contract_duration && !relations.duration))
       return { success: false, code: 'POLICY_NOT_FOUND', error: context.translations.messages.policyNotFound }
+    if (relations.clauses.length !== new Set(validation.output.legal_clause_ids).size)
+      return { success: false, code: 'CLAUSE_NOT_FOUND', error: context.translations.validation.invalidSubmission }
     if (!relations.status)
       return { success: false, code: 'STATUS_NOT_FOUND', error: context.translations.messages.statusNotFound }
 
     const values = {
       ...validation.output,
+      end_date:
+        calculateContractEndDate(validation.output.start_date, relations.duration) || validation.output.end_date,
       position_title: relations.staff.position,
       base_salary: relations.staff.salary,
       currency: relations.staff.salary_currency,
@@ -706,6 +744,7 @@ export const createStaffContract = async (payload = {}) => {
 
           const contentHtml = compileTemplate({
             template: relations.policy.description,
+            clauses: relations.clauses,
             staff: relations.staff,
             values,
             setup: relations.setup,
@@ -720,9 +759,10 @@ export const createStaffContract = async (payload = {}) => {
               contract_number: contractNumber,
               contract_type_id: values.contract_type_id,
               template_id: values.template_id,
-              duration_id: null,
+              duration_id: values.contract_duration || null,
+              legal_clause_ids: values.legal_clause_ids,
               start_date: toDate(validation.output.start_date),
-              end_date: toDate(validation.output.end_date),
+              end_date: toDate(values.end_date),
               document_url: nullableText(validation.output.document_url),
               content_html: contentHtml,
               status_id: validation.output.status_id,
@@ -736,7 +776,7 @@ export const createStaffContract = async (payload = {}) => {
           await syncStaffAccess(transaction, {
             staffId: created.staff_id,
             status: relations.status.value,
-            terminationDate: effects.termination_date,
+            terminationDate: effects.termination_date
           })
 
           await transaction.auditlog.create({
@@ -812,13 +852,17 @@ export const updateStaffContract = async (id, payload = {}) => {
 
     if (!relations.staff)
       return { success: false, code: 'STAFF_NOT_FOUND', error: context.translations.messages.staffNotFound }
-    if (!relations.contractType || !relations.policy)
+    if (!relations.contractType || !relations.policy || (validation.output.contract_duration && !relations.duration))
       return { success: false, code: 'POLICY_NOT_FOUND', error: context.translations.messages.policyNotFound }
+    if (relations.clauses.length !== new Set(validation.output.legal_clause_ids).size)
+      return { success: false, code: 'CLAUSE_NOT_FOUND', error: context.translations.validation.invalidSubmission }
     if (!relations.status)
       return { success: false, code: 'STATUS_NOT_FOUND', error: context.translations.messages.statusNotFound }
 
     const values = {
       ...validation.output,
+      end_date:
+        calculateContractEndDate(validation.output.start_date, relations.duration) || validation.output.end_date,
       position_title: relations.staff.position,
       base_salary: relations.staff.salary,
       currency: relations.staff.salary_currency,
@@ -833,6 +877,7 @@ export const updateStaffContract = async (id, payload = {}) => {
 
     const contentHtml = compileTemplate({
       template: relations.policy.description,
+      clauses: relations.clauses,
       staff: relations.staff,
       values,
       setup: relations.setup,
@@ -848,9 +893,10 @@ export const updateStaffContract = async (id, payload = {}) => {
           staff_id: values.staff_id,
           contract_type_id: values.contract_type_id,
           template_id: values.template_id,
-          duration_id: null,
+          duration_id: values.contract_duration || null,
+          legal_clause_ids: values.legal_clause_ids,
           start_date: toDate(validation.output.start_date),
-          end_date: toDate(validation.output.end_date),
+          end_date: toDate(values.end_date),
           document_url: nullableText(validation.output.document_url),
           content_html: contentHtml,
           status_id: validation.output.status_id,
@@ -864,7 +910,7 @@ export const updateStaffContract = async (id, payload = {}) => {
       await syncStaffAccess(transaction, {
         staffId: updated.staff_id,
         status: relations.status.value,
-        terminationDate: effects.termination_date,
+        terminationDate: effects.termination_date
       })
 
       await transaction.auditlog.create({
@@ -973,7 +1019,7 @@ export const updateStaffContractStatus = async (id, statusId, payload = {}) => {
       await syncStaffAccess(transaction, {
         staffId: updated.staff_id,
         status: status.value,
-        terminationDate: effects.termination_date,
+        terminationDate: effects.termination_date
       })
 
       await transaction.auditlog.create({

@@ -1,4 +1,5 @@
 import {
+  array,
   boolean,
   email,
   literal,
@@ -42,6 +43,8 @@ export const createContractSchema = customMessages => {
     title: pipe(string(messages.required), trim(), nonEmpty(messages.required), maxLength(191, messages.titleTooLong)),
     contract_type_id: pipe(string(messages.required), trim(), nonEmpty(messages.required)),
     template_id: optional(pipe(string(), trim()), ''),
+    contract_duration: optional(pipe(string(), trim()), ''),
+    legal_clause_ids: optional(array(pipe(string(), trim(), nonEmpty(messages.required))), []),
     total_amount: pipe(string(messages.amountInvalid), trim(), regex(POSITIVE_NUMBER_PATTERN, messages.amountInvalid)),
     currency: picklist(['AFN', 'USD'], messages.required),
     exchange_rate: pipe(

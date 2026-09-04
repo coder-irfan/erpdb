@@ -26,7 +26,7 @@ const EMPTY = {
   leads: [],
   totalCount: 0,
   summary: { totalActive: 0, pipelineValue: 0, followUpsToday: 0, conversionRate: 0 },
-  options: { statuses: [], sources: [], staff: [] }
+  options: { statuses: [], sources: [], staff: [], countries: [] }
 }
 
 const CrmLeadsView = ({ locale, dictionary, currencyCode, canWrite, canDelete }) => {

@@ -21,6 +21,7 @@ export const resolveActivityStaffId = async (userId, fallbackStaffIds = []) => {
 }
 
 export const leadInclude = {
+  country: { select: { id: true, label: true, value: true } },
   source: { select: { id: true, label: true, value: true, color_code: true } },
   status: { select: { id: true, label: true, value: true, color_code: true } },
   assigned_to: {

@@ -34,6 +34,7 @@ export const createClientSchema = customMessages => {
     ),
     phone: pipe(string(messages.required), trim(), nonEmpty(messages.required), maxLength(50, messages.tooLong)),
     address: optional(pipe(string(), trim(), maxLength(5000, messages.tooLong)), ''),
+    country_id: optional(pipe(string(), trim()), ''),
     tax_number: optional(pipe(string(), trim(), maxLength(191, messages.tooLong)), ''),
     account_manager_id: optional(pipe(string(), trim()), ''),
     status: pipe(string(messages.statusInvalid), trim(), regex(STATUS_PATTERN, messages.statusInvalid)),

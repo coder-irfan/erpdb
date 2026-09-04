@@ -37,16 +37,18 @@ export async function PUT(request, context) {
 
     const values = parsed.output
 
-    const [existing, source, status, assignedStaff, setup] = await Promise.all([
-      prisma.crmlead.findUnique({ where: { id }, select: { id: true, currency: true, exchange_rate: true } }),
+    const existing = await prisma.crmlead.findUnique({ where: { id }, select: { id: true, country_id: true, currency: true, exchange_rate: true } })
+
+    const [source, status, assignedStaff, country, setup] = await Promise.all([
       prisma.option.findFirst({ where: { id: values.source_id, category: 'LEAD_SOURCE', is_active: true }, select: { id: true } }),
       prisma.option.findFirst({ where: { id: values.status_id, category: 'LEAD_STATUS', value: { in: LEAD_STATUS_VALUES }, is_active: true }, select: { id: true } }),
       values.assigned_to_id ? prisma.hrmstaff.findFirst({ where: { id: values.assigned_to_id, status: 'ACTIVE' }, select: { id: true } }) : null,
+      values.country_id ? prisma.option.findFirst({ where: { id: values.country_id, category: 'COUNTRY', ...(existing?.country_id === values.country_id ? {} : { is_active: true }) }, select: { id: true } }) : null,
       getCompanySetupRecord()
     ])
 
     if (!existing) return errorResponse(dictionary.messages.notFound, 404, 'LEAD_NOT_FOUND')
-    if (!source || !status || (values.assigned_to_id && !assignedStaff)) return errorResponse(dictionary.messages.invalidRelations, 400, 'INVALID_RELATIONS')
+    if (!source || !status || (values.assigned_to_id && !assignedStaff) || (values.country_id && !country)) return errorResponse(dictionary.messages.invalidRelations, 400, 'INVALID_RELATIONS')
 
     const lead = await prisma.$transaction(async transaction => {
       const updated = await transaction.crmlead.update({
@@ -57,6 +59,7 @@ export async function PUT(request, context) {
           company_name: cleanText(values.company_name) || null,
           email: values.email.toLowerCase(),
           phone: cleanText(values.phone) || null,
+          country_id: values.country_id || null,
           source_id: values.source_id,
           status_id: values.status_id,
           assigned_to_id: values.assigned_to_id || null,

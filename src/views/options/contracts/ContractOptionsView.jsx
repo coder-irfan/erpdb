@@ -31,6 +31,7 @@ import LoadingButtonContent from '@/components/LoadingButtonContent'
 import EntityActionsMenu from '@/components/table/EntityActionsMenu'
 import TableEmptyStateRow from '@/components/table/TableEmptyStateRow'
 import ResponsiveDataTable from '@/components/tables/ResponsiveDataTable'
+import { parseDurationOption } from '@/utils/contractDuration'
 
 import tableStyles from '@core/styles/table.module.css'
 
@@ -83,13 +84,53 @@ const LegalClauseEditor = ({ value, disabled, onChange }) => {
   return (
     <div className='overflow-hidden rounded border border-divider transition-colors focus-within:border-primary'>
       <div className='flex items-center gap-1 border-be border-divider bg-actionHover p-2'>
-        <ClauseEditorButton label='Bold' icon='tabler-bold' active={editor?.isActive('bold')} disabled={editorDisabled} onClick={() => editor?.chain().focus().toggleBold().run()} />
-        <ClauseEditorButton label='Italic' icon='tabler-italic' active={editor?.isActive('italic')} disabled={editorDisabled} onClick={() => editor?.chain().focus().toggleItalic().run()} />
-        <ClauseEditorButton label='Bulleted list' icon='tabler-list' active={editor?.isActive('bulletList')} disabled={editorDisabled} onClick={() => editor?.chain().focus().toggleBulletList().run()} />
-        <ClauseEditorButton label='Numbered list' icon='tabler-list-numbers' active={editor?.isActive('orderedList')} disabled={editorDisabled} onClick={() => editor?.chain().focus().toggleOrderedList().run()} />
-        <ClauseEditorButton label='Quoted clause' icon='tabler-blockquote' active={editor?.isActive('blockquote')} disabled={editorDisabled} onClick={() => editor?.chain().focus().toggleBlockquote().run()} />
-        <ClauseEditorButton label='Undo' icon='tabler-arrow-back-up' disabled={editorDisabled || !editor?.can().chain().focus().undo().run()} onClick={() => editor?.chain().focus().undo().run()} />
-        <ClauseEditorButton label='Redo' icon='tabler-arrow-forward-up' disabled={editorDisabled || !editor?.can().chain().focus().redo().run()} onClick={() => editor?.chain().focus().redo().run()} />
+        <ClauseEditorButton
+          label='Bold'
+          icon='tabler-bold'
+          active={editor?.isActive('bold')}
+          disabled={editorDisabled}
+          onClick={() => editor?.chain().focus().toggleBold().run()}
+        />
+        <ClauseEditorButton
+          label='Italic'
+          icon='tabler-italic'
+          active={editor?.isActive('italic')}
+          disabled={editorDisabled}
+          onClick={() => editor?.chain().focus().toggleItalic().run()}
+        />
+        <ClauseEditorButton
+          label='Bulleted list'
+          icon='tabler-list'
+          active={editor?.isActive('bulletList')}
+          disabled={editorDisabled}
+          onClick={() => editor?.chain().focus().toggleBulletList().run()}
+        />
+        <ClauseEditorButton
+          label='Numbered list'
+          icon='tabler-list-numbers'
+          active={editor?.isActive('orderedList')}
+          disabled={editorDisabled}
+          onClick={() => editor?.chain().focus().toggleOrderedList().run()}
+        />
+        <ClauseEditorButton
+          label='Quoted clause'
+          icon='tabler-blockquote'
+          active={editor?.isActive('blockquote')}
+          disabled={editorDisabled}
+          onClick={() => editor?.chain().focus().toggleBlockquote().run()}
+        />
+        <ClauseEditorButton
+          label='Undo'
+          icon='tabler-arrow-back-up'
+          disabled={editorDisabled || !editor?.can().chain().focus().undo().run()}
+          onClick={() => editor?.chain().focus().undo().run()}
+        />
+        <ClauseEditorButton
+          label='Redo'
+          icon='tabler-arrow-forward-up'
+          disabled={editorDisabled || !editor?.can().chain().focus().redo().run()}
+          onClick={() => editor?.chain().focus().redo().run()}
+        />
       </div>
       <EditorContent editor={editor} />
     </div>
@@ -107,6 +148,13 @@ const OptionDescription = ({ option, mobile = false }) => {
     />
   )
 }
+
+const localeMap = { en: 'en-US', fa: 'fa-AF', ps: 'ps-AF' }
+
+const formatDate = (value, locale) =>
+  new Intl.DateTimeFormat(localeMap[locale] || 'en-US', { dateStyle: 'medium' }).format(new Date(value))
+
+const INVALID_DURATION_MESSAGE = 'Please use English numbers and units (e.g., 1 Year, 6 Months, 90 Days).'
 
 export const CONTRACT_OPTION_SECTIONS = [
   { category: 'CONTRACT_DURATION', key: 'durations', icon: 'tabler-calendar-time' },
@@ -130,6 +178,7 @@ const ContractOptionsView = ({
   const [formCategory, setFormCategory] = useState(null)
   const [editingOption, setEditingOption] = useState(null)
   const [deleteTarget, setDeleteTarget] = useState(null)
+  const [viewingClause, setViewingClause] = useState(null)
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [isActive, setIsActive] = useState(true)
@@ -169,13 +218,26 @@ const ContractOptionsView = ({
 
   const submit = async () => {
     if (!name.trim()) return setNameError(managementDictionary.validation.required)
+
+    if (formCategory === 'CONTRACT_DURATION' && !parseDurationOption(name)) {
+      setNameError(INVALID_DURATION_MESSAGE)
+
+      return
+    }
+
     setLoading(true)
 
     try {
       const payload = { name, description, category: formCategory, is_active: isActive, locale }
       const result = editingOption ? await updateOption(editingOption.id, payload) : await createOption(payload)
 
-      if (!result.success) return toast.error(result.error)
+      if (!result.success) {
+        if (result.code === 'INVALID_CONTRACT_DURATION') setNameError(INVALID_DURATION_MESSAGE)
+        else toast.error(result.error)
+
+        return
+      }
+
       toast.success(result.message)
       await refreshCategory(formCategory)
       resetForm()
@@ -219,9 +281,30 @@ const ContractOptionsView = ({
   const renderActions = option => (
     <EntityActionsMenu
       actions={[
-        canWrite && { label: managementDictionary.common.edit, icon: 'tabler-edit', disabled: busyId === option.id, onClick: () => openEdit(option) },
-        canWrite && { label: option.is_active ? dictionary.common.deactivate : dictionary.common.activate, icon: option.is_active ? 'tabler-toggle-right' : 'tabler-toggle-left', disabled: busyId === option.id, onClick: () => toggle(option) },
-        canDelete && { label: managementDictionary.common.delete, icon: 'tabler-trash', color: 'error', disabled: busyId === option.id, onClick: () => setDeleteTarget(option) }
+        option.category === 'CONTRACT_CLAUSE' && {
+          label: dictionary.common.viewDetails || 'View Details',
+          icon: 'tabler-eye',
+          onClick: () => setViewingClause(option)
+        },
+        canWrite && {
+          label: managementDictionary.common.edit,
+          icon: 'tabler-edit',
+          disabled: busyId === option.id,
+          onClick: () => openEdit(option)
+        },
+        canWrite && {
+          label: option.is_active ? dictionary.common.deactivate : dictionary.common.activate,
+          icon: option.is_active ? 'tabler-toggle-right' : 'tabler-toggle-left',
+          disabled: busyId === option.id,
+          onClick: () => toggle(option)
+        },
+        canDelete && {
+          label: managementDictionary.common.delete,
+          icon: 'tabler-trash',
+          color: 'error',
+          disabled: busyId === option.id,
+          onClick: () => setDeleteTarget(option)
+        }
       ]}
       moreActionsLabel={dictionary.common.actions}
     />
@@ -259,59 +342,81 @@ const ContractOptionsView = ({
             getMobileRowId={option => option.id}
             renderMobilePrimary={option => (
               <div className='min-is-0'>
-                <Typography className='truncate font-medium' color='text.primary'>{option.name}</Typography>
+                <Typography className='truncate font-medium' color='text.primary'>
+                  {option.name}
+                </Typography>
                 <OptionDescription option={option} mobile />
               </div>
             )}
             renderMobileStatus={option => (
-              <Chip size='small' variant='tonal' color={option.is_active ? 'success' : 'secondary'} label={option.is_active ? dictionary.common.active : dictionary.common.inactive} />
+              <Chip
+                size='small'
+                variant='tonal'
+                color={option.is_active ? 'success' : 'secondary'}
+                label={option.is_active ? dictionary.common.active : dictionary.common.inactive}
+              />
             )}
             renderMobileActions={renderActions}
-            emptyState={{ icon: section.icon, title: dictionary.common.empty, actionLabel: canWrite ? dictionary.common.create : undefined, onAction: canWrite ? () => openCreate(section.category) : undefined }}
+            mobileMetadata={[
+              {
+                id: 'created',
+                label: managementDictionary.common.createdDate,
+                render: option => formatDate(option.created_at, locale)
+              }
+            ]}
+            emptyState={{
+              icon: section.icon,
+              title: dictionary.common.empty,
+              actionLabel: canWrite ? dictionary.common.create : undefined,
+              onAction: canWrite ? () => openCreate(section.category) : undefined
+            }}
           >
             <div className='no-scrollbar overflow-x-auto'>
-            <table className={tableStyles.table}>
-              <thead>
-                <tr>
-                  <th>{dictionary.common.name}</th>
-                  <th>{dictionary.common.status}</th>
-                  <th className='text-end'>{dictionary.common.actions}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data[section.category].length === 0 ? (
-                  <TableEmptyStateRow
-                    colSpan={3}
-                    icon={section.icon}
-                    title={dictionary.common.empty}
-                    actionLabel={canWrite ? dictionary.common.create : null}
-                    onAction={canWrite ? () => openCreate(section.category) : null}
-                  />
-                ) : (
-                  data[section.category].map(option => (
-                    <tr key={option.id}>
-                      <td>
-                        <Typography className='font-medium' color='text.primary'>
-                          {option.name}
-                        </Typography>
-                        <OptionDescription option={option} />
-                      </td>
-                      <td>
-                        <Chip
-                          size='small'
-                          variant='tonal'
-                          color={option.is_active ? 'success' : 'secondary'}
-                          label={option.is_active ? dictionary.common.active : dictionary.common.inactive}
-                        />
-                      </td>
-                      <td className='text-end'>
-                        {renderActions(option)}
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+              <table className={tableStyles.table}>
+                <thead>
+                  <tr>
+                    <th>{dictionary.common.name}</th>
+                    <th>{dictionary.common.description}</th>
+                    <th>{dictionary.common.status}</th>
+                    <th title={managementDictionary.common.createdDate}>{managementDictionary.common.createdDate}</th>
+                    <th className='text-end'>{dictionary.common.actions}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data[section.category].length === 0 ? (
+                    <TableEmptyStateRow
+                      colSpan={5}
+                      icon={section.icon}
+                      title={dictionary.common.empty}
+                      actionLabel={canWrite ? dictionary.common.create : null}
+                      onAction={canWrite ? () => openCreate(section.category) : null}
+                    />
+                  ) : (
+                    data[section.category].map(option => (
+                      <tr key={option.id}>
+                        <td>
+                          <Typography className='font-medium' color='text.primary'>
+                            {option.name}
+                          </Typography>
+                        </td>
+                        <td>
+                          <OptionDescription option={option} />
+                        </td>
+                        <td>
+                          <Chip
+                            size='small'
+                            variant='tonal'
+                            color={option.is_active ? 'success' : 'secondary'}
+                            label={option.is_active ? dictionary.common.active : dictionary.common.inactive}
+                          />
+                        </td>
+                        <td>{formatDate(option.created_at, locale)}</td>
+                        <td className='text-end'>{renderActions(option)}</td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
             </div>
           </ResponsiveDataTable>
         </Card>
@@ -320,11 +425,7 @@ const ContractOptionsView = ({
       <Dialog open={Boolean(formCategory)} onClose={loading ? undefined : resetForm} fullWidth maxWidth='sm'>
         <DialogTitle className='flex items-center justify-between gap-4'>
           <span>{editingOption ? dictionary.common.edit : dictionary.common.add}</span>
-          <IconButton
-            onClick={resetForm}
-            disabled={loading}
-            aria-label={managementDictionary.common.close || 'Close'}
-          >
+          <IconButton onClick={resetForm} disabled={loading} aria-label={managementDictionary.common.close || 'Close'}>
             <i className='tabler-x' />
           </IconButton>
         </DialogTitle>
@@ -380,6 +481,72 @@ const ContractOptionsView = ({
             <LoadingButtonContent loading={loading} loadingLabel={dictionary.common.saving}>
               {editingOption ? dictionary.common.save : dictionary.common.create}
             </LoadingButtonContent>
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={Boolean(viewingClause)}
+        onClose={() => setViewingClause(null)}
+        fullWidth
+        maxWidth='md'
+        PaperProps={{ className: 'overflow-hidden rounded-xl' }}
+      >
+        <DialogTitle className='border-be border-divider bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-0'>
+          <div className='flex items-start justify-between gap-4 p-6'>
+            <div className='flex min-w-0 items-start gap-4'>
+              <span className='flex size-12 shrink-0 items-center justify-center rounded-xl bg-primary text-white shadow-sm'>
+                <i className='tabler-scale text-2xl' />
+              </span>
+              <div className='min-w-0'>
+                <Typography variant='overline' color='primary'>
+                  Legal clause
+                </Typography>
+                <Typography variant='h5' className='break-words'>
+                  {viewingClause?.name}
+                </Typography>
+                <div className='mt-2 flex flex-wrap gap-2'>
+                  <Chip
+                    size='small'
+                    variant='tonal'
+                    color={viewingClause?.is_active ? 'success' : 'secondary'}
+                    label={viewingClause?.is_active ? dictionary.common.active : dictionary.common.inactive}
+                  />
+                  {viewingClause?.created_at && (
+                    <Chip
+                      size='small'
+                      variant='outlined'
+                      icon={<i className='tabler-calendar' />}
+                      label={formatDate(viewingClause.created_at, locale)}
+                    />
+                  )}
+                </div>
+              </div>
+            </div>
+            <IconButton
+              onClick={() => setViewingClause(null)}
+              aria-label={managementDictionary.common.close || 'Close'}
+            >
+              <i className='tabler-x' />
+            </IconButton>
+          </div>
+        </DialogTitle>
+        <DialogContent className='bg-actionHover p-4 sm:p-7'>
+          {viewingClause?.description ? (
+            <article
+              className='policy-document-preview min-bs-[280px] rounded-xl border border-divider bg-backgroundPaper p-6 shadow-sm sm:p-8'
+              dangerouslySetInnerHTML={{ __html: viewingClause.description }}
+            />
+          ) : (
+            <div className='flex min-bs-[240px] flex-col items-center justify-center rounded-xl border border-dashed border-divider bg-backgroundPaper text-center'>
+              <i className='tabler-file-off mb-3 text-4xl text-textDisabled' />
+              <Typography color='text.secondary'>No clause text has been provided.</Typography>
+            </div>
+          )}
+        </DialogContent>
+        <DialogActions className='border-bs border-divider px-6 py-4'>
+          <Button variant='tonal' color='secondary' onClick={() => setViewingClause(null)}>
+            {managementDictionary.common.close || 'Close'}
           </Button>
         </DialogActions>
       </Dialog>

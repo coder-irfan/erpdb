@@ -44,6 +44,7 @@ export const createLeadSchema = customMessages => {
       maxLength(191, messages.tooLong)
     ),
     phone: optional(pipe(string(), trim(), maxLength(50, messages.tooLong)), ''),
+    country_id: optional(pipe(string(), trim()), ''),
     source_id: pipe(string(messages.required), trim(), nonEmpty(messages.required)),
     status_id: pipe(string(messages.required), trim(), nonEmpty(messages.required)),
     assigned_to_id: optional(pipe(string(), trim()), ''),

@@ -90,8 +90,8 @@ const ContractsView = ({ locale, dictionary, setup, canWrite, canDelete, canRunA
     setDetailRefresh(value => value + 1)
   }
 
-  const openCreate = () => { setPage(0); setEditingContract(null); setFormOpen(true) }
-  const edit = contract => { setEditingContract(contract); setFormOpen(true) }
+  const openCreate = () => { setPage(0); setEditingContract(null); setFormOpen(true); loadOptions() }
+  const edit = contract => { setEditingContract(contract); setFormOpen(true); loadOptions() }
 
   const performStatusChange = async (contract, statusId, reason = '') => {
     if (statusId === contract.status_id) return

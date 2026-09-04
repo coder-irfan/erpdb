@@ -75,6 +75,7 @@ const projectSelect = {
   project_area: true,
   project_sponsor: true,
   project_manager_id: true,
+  country_id: true,
   estimated_hours: true,
   actual_hours: true,
   budget: true,
@@ -89,6 +90,7 @@ const projectSelect = {
   client: { select: { id: true, company_name: true, primary_contact_name: true, email: true, phone: true, address: true } },
   contract: { select: { id: true, contract_number: true, title: true, total_amount: true, currency: true, amount_base: true, start_date: true, end_date: true, status: { select: optionSelect }, contract_type: { select: optionSelect } } },
   project_manager: { select: staffSelect },
+  country: { select: optionSelect },
   status: { select: optionSelect },
   priority: { select: optionSelect },
   members: { select: { id: true, role: true, assigned_at: true, staff: { select: staffSelect } }, orderBy: { assigned_at: 'asc' } }
@@ -135,6 +137,7 @@ const validationPayload = payload => ({
   client_id: payload?.client_id,
   contract_id: payload?.contract_id || '',
   project_manager_id: payload?.project_manager_id || '',
+  country_id: payload?.country_id || '',
   status_id: payload?.status_id,
   priority_id: payload?.priority_id,
   project_area: payload?.project_area || '',
@@ -150,16 +153,17 @@ const validationPayload = payload => ({
 })
 
 const prepareProjectData = async (values, translations, current = null) => {
-  const [client, contract, manager, status, priority, setup] = await Promise.all([
+  const [client, contract, manager, country, status, priority, setup] = await Promise.all([
     prisma.crmclient.findUnique({ where: { id: values.client_id }, select: { id: true } }),
     values.contract_id ? prisma.contract.findUnique({ where: { id: values.contract_id }, select: { id: true, client_id: true } }) : null,
     values.project_manager_id ? prisma.hrmstaff.findFirst({ where: { id: values.project_manager_id, status: 'ACTIVE', contracts: activeStaffContractRelation({ startDate: new Date() }) }, select: { id: true } }) : null,
+    values.country_id ? prisma.option.findFirst({ where: { id: values.country_id, category: 'COUNTRY', ...(current?.country_id === values.country_id ? {} : { is_active: true }) }, select: { id: true } }) : null,
     prisma.option.findFirst({ where: { id: values.status_id, category: 'PROJECT_STATUS', value: { in: PROJECT_STATUS_VALUES }, ...(current?.status_id === values.status_id ? {} : { is_active: true }) }, select: { id: true, value: true } }),
     prisma.option.findFirst({ where: { id: values.priority_id, category: 'PROJECT_PRIORITY', ...(current?.priority_id === values.priority_id ? {} : { is_active: true }) }, select: { id: true } }),
     getCompanySetupRecord()
   ])
 
-  if (!client || !status || !priority || (values.contract_id && (!contract || contract.client_id !== values.client_id)) || (values.project_manager_id && !manager)) {
+  if (!client || !status || !priority || (values.contract_id && (!contract || contract.client_id !== values.client_id)) || (values.project_manager_id && !manager) || (values.country_id && !country)) {
     return { success: false, error: translations.validation.invalidRelation }
   }
 
@@ -179,6 +183,7 @@ const prepareProjectData = async (values, translations, current = null) => {
       client_id: values.client_id,
       contract_id: values.contract_id || null,
       project_manager_id: values.project_manager_id || null,
+      country_id: values.country_id || null,
       status_id: values.status_id,
       priority_id: values.priority_id,
       project_area: values.project_area || null,
@@ -255,11 +260,11 @@ export const getProjectFormOptions = async (payload = {}) => {
       prisma.crmclient.findMany({ where: { status: 'ACTIVE' }, select: { id: true, company_name: true, primary_contact_name: true }, orderBy: { company_name: 'asc' }, take: 500 }),
       prisma.hrmstaff.findMany({ where: { status: 'ACTIVE', contracts: activeStaffContractRelation({ startDate: new Date() }) }, select: staffSelect, orderBy: [{ first_name: 'asc' }, { last_name: 'asc' }], take: 500 }),
       prisma.contract.findMany({ where: { client_id: { not: null } }, select: { id: true, client_id: true, contract_number: true, title: true, total_amount: true, currency: true, exchange_rate: true, amount_base: true }, orderBy: { created_at: 'desc' }, take: 500 }),
-      prisma.option.findMany({ where: { category: { in: ['PROJECT_STATUS', 'PROJECT_PRIORITY'] }, is_active: true, OR: [{ category: 'PROJECT_PRIORITY' }, { value: { in: PROJECT_STATUS_VALUES } }] }, select: { ...optionSelect, category: true }, orderBy: [{ category: 'asc' }, { sort_order: 'asc' }, { label: 'asc' }] }),
+      prisma.option.findMany({ where: { category: { in: ['PROJECT_STATUS', 'PROJECT_PRIORITY', 'COUNTRY'] }, is_active: true, OR: [{ category: { in: ['PROJECT_PRIORITY', 'COUNTRY'] } }, { value: { in: PROJECT_STATUS_VALUES } }] }, select: { ...optionSelect, category: true }, orderBy: [{ category: 'asc' }, { sort_order: 'asc' }, { label: 'asc' }] }),
       getCompanySetupRecord()
     ])
 
-    return { success: true, data: { clients, staff: staff.map(withFullName), contracts: contracts.map(contract => ({ ...contract, total_amount: numberString(contract.total_amount), exchange_rate: numberString(contract.exchange_rate, 4), amount_base: numberString(contract.amount_base) })), statuses: options.filter(option => option.category === 'PROJECT_STATUS'), priorities: options.filter(option => option.category === 'PROJECT_PRIORITY'), baseCurrency: SYSTEM_BASE_CURRENCY, exchangeRate: setup.usd_afn_exchange_rate || '65.0000' } }
+    return { success: true, data: { clients, staff: staff.map(withFullName), contracts: contracts.map(contract => ({ ...contract, total_amount: numberString(contract.total_amount), exchange_rate: numberString(contract.exchange_rate, 4), amount_base: numberString(contract.amount_base) })), statuses: options.filter(option => option.category === 'PROJECT_STATUS'), priorities: options.filter(option => option.category === 'PROJECT_PRIORITY'), countries: options.filter(option => option.category === 'COUNTRY'), baseCurrency: SYSTEM_BASE_CURRENCY, exchangeRate: setup.usd_afn_exchange_rate || '65.0000' } }
   } catch {
     return { success: false, code: 'OPTIONS_LOAD_FAILED', error: context.translations.messages.optionsLoadFailed }
   }
@@ -341,7 +346,7 @@ export const updateProject = async (id, payload = {}) => {
   if (!projectId || !validation.success) return { success: false, code: 'VALIDATION_ERROR', error: validation.issues?.[0]?.message || context.translations.messages.notFound }
 
   try {
-    const current = await prisma.project.findUnique({ where: { id: projectId }, select: { id: true, project_code: true, status_id: true, priority_id: true, actual_hours: true, actual_end_date: true } })
+    const current = await prisma.project.findUnique({ where: { id: projectId }, select: { id: true, project_code: true, country_id: true, status_id: true, priority_id: true, actual_hours: true, actual_end_date: true } })
 
     if (!current) return { success: false, code: 'NOT_FOUND', error: context.translations.messages.notFound }
     const prepared = await prepareProjectData(validation.output, context.translations, current)

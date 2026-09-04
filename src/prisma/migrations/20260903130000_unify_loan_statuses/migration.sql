@@ -11,7 +11,8 @@ INSERT INTO `option` (
     `value`,
     `color_code`,
     `sort_order`,
-    `is_active`
+    `is_active`,
+    `updated_at`
 )
 VALUES (
     'system-loan-status-cancelled',
@@ -20,7 +21,8 @@ VALUES (
     'CANCELLED',
     'secondary',
     6,
-    true
+    true,
+    CURRENT_TIMESTAMP(3)
 )
 ON DUPLICATE KEY UPDATE
     `label` = VALUES(`label`),

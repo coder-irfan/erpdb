@@ -69,7 +69,7 @@ export async function GET(request) {
   }
 
   try {
-    const [leads, totalCount, summaryLeads, statuses, sources, staff] = await Promise.all([
+    const [leads, totalCount, summaryLeads, statuses, sources, staff, countries] = await Promise.all([
       prisma.crmlead.findMany({
         where,
         include: leadInclude,
@@ -89,7 +89,8 @@ export async function GET(request) {
       }),
       prisma.option.findMany({ where: { category: 'LEAD_STATUS', value: { in: LEAD_STATUS_VALUES }, is_active: true }, select: { id: true, label: true, value: true, color_code: true }, orderBy: { sort_order: 'asc' } }),
       prisma.option.findMany({ where: { category: 'LEAD_SOURCE', is_active: true }, select: { id: true, label: true, value: true, color_code: true }, orderBy: { sort_order: 'asc' } }),
-      prisma.hrmstaff.findMany({ where: { status: 'ACTIVE' }, select: { id: true, first_name: true, last_name: true, position: true }, orderBy: [{ first_name: 'asc' }, { last_name: 'asc' }] })
+      prisma.hrmstaff.findMany({ where: { status: 'ACTIVE' }, select: { id: true, first_name: true, last_name: true, position: true }, orderBy: [{ first_name: 'asc' }, { last_name: 'asc' }] }),
+      prisma.option.findMany({ where: { category: 'COUNTRY', is_active: true }, select: { id: true, label: true, value: true }, orderBy: [{ sort_order: 'asc' }, { label: 'asc' }] })
     ])
 
     const today = new Date()
@@ -115,7 +116,8 @@ export async function GET(request) {
         options: {
           statuses,
           sources,
-          staff: staff.map(item => ({ ...item, full_name: `${item.first_name} ${item.last_name}`.trim() }))
+          staff: staff.map(item => ({ ...item, full_name: `${item.first_name} ${item.last_name}`.trim() })),
+          countries
         }
       }
     })
@@ -149,15 +151,16 @@ export async function POST(request) {
 
     const values = parsed.output
 
-    const [source, status, assignedStaff, currentStaffId, setup] = await Promise.all([
+    const [source, status, assignedStaff, country, currentStaffId, setup] = await Promise.all([
       prisma.option.findFirst({ where: { id: values.source_id, category: 'LEAD_SOURCE', is_active: true }, select: { id: true } }),
       prisma.option.findFirst({ where: { id: values.status_id, category: 'LEAD_STATUS', value: { in: LEAD_STATUS_VALUES }, is_active: true }, select: { id: true } }),
       values.assigned_to_id ? prisma.hrmstaff.findFirst({ where: { id: values.assigned_to_id, status: 'ACTIVE' }, select: { id: true } }) : null,
+      values.country_id ? prisma.option.findFirst({ where: { id: values.country_id, category: 'COUNTRY', is_active: true }, select: { id: true } }) : null,
       getCurrentStaffId(authorization.session.user.id),
       getCompanySetupRecord()
     ])
 
-    if (!source || !status || (values.assigned_to_id && !assignedStaff)) return errorResponse(dictionary.messages.invalidRelations, 400, 'INVALID_RELATIONS')
+    if (!source || !status || (values.assigned_to_id && !assignedStaff) || (values.country_id && !country)) return errorResponse(dictionary.messages.invalidRelations, 400, 'INVALID_RELATIONS')
 
     const activityStaffId = currentStaffId || assignedStaff?.id
 
@@ -171,6 +174,7 @@ export async function POST(request) {
           company_name: cleanText(values.company_name) || null,
           email: values.email.toLowerCase(),
           phone: cleanText(values.phone) || null,
+          country_id: values.country_id || null,
           source_id: values.source_id,
           status_id: values.status_id,
           assigned_to_id: values.assigned_to_id || null,

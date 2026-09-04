@@ -12,6 +12,7 @@ import { authorizeAction } from '@/libs/actionAuthorization'
 import { prisma } from '@/libs/prisma'
 import { createOptionSchema, OPTION_CATEGORY_PATTERN } from '@/schemas/options'
 import { getDictionary } from '@/utils/getDictionary'
+import { parseDurationOption } from '@/utils/contractDuration'
 
 const OPTIONS_READ_PERMISSIONS = ['options:read', 'options:write']
 const OPTIONS_WRITE_PERMISSIONS = ['options:write', 'options:create', 'options:update']
@@ -58,9 +59,7 @@ const getReadPermissions = category => [
   ...(category === 'LEAVE_TYPE' ? ['hrm:read', 'hrm:write', 'hrm_leave:read', 'hrm_leave:write'] : []),
   ...(category.startsWith('PAYROLL_') ? ['hrm_payroll:read', 'hrm_payroll:write'] : []),
   ...(category.startsWith('LEAD_') ? ['crm:read', 'crm:write', 'crm_lead:read', 'crm_lead:write'] : []),
-  ...(category === 'VISITOR_PURPOSE'
-    ? ['crm:read', 'crm:write', 'crm_visitor:read', 'crm_visitor:write']
-    : []),
+  ...(category === 'VISITOR_PURPOSE' ? ['crm:read', 'crm:write', 'crm_visitor:read', 'crm_visitor:write'] : []),
   ...(['INCOME_TYPE', 'EXPENSE_TYPE'].includes(category) ? ['finance:read', 'finance:write'] : []),
   ...(category.startsWith('CONTRACT_') ? ['contracts:read', 'contracts:write', 'hrm:read'] : [])
 ]
@@ -73,9 +72,7 @@ const getActionContext = async (payload, permissions) => {
 
   if (!authorization.authorized) {
     const error =
-      authorization.code === 'UNAUTHENTICATED'
-        ? translations.messages.unauthenticated
-        : translations.messages.forbidden
+      authorization.code === 'UNAUTHENTICATED' ? translations.messages.unauthenticated : translations.messages.forbidden
 
     return { authorized: false, code: authorization.code, error, translations }
   }
@@ -118,6 +115,9 @@ const optionDependencyCountSelect = {
   staff_contract_templates: true,
   staff_contract_durations: true,
   contract_countries: true,
+  crm_client_countries: true,
+  crm_lead_countries: true,
+  project_countries: true,
   contract_levels: true,
   invoice_statuses: true,
   income_types: true,
@@ -268,9 +268,7 @@ export const getOptionsListPaginated = async (payload = {}) => {
   const page = Number.isFinite(requestedPage) && requestedPage > 0 ? requestedPage : 1
 
   const limit =
-    Number.isFinite(requestedLimit) && requestedLimit > 0
-      ? Math.min(requestedLimit, MAX_PAGE_SIZE)
-      : DEFAULT_PAGE_SIZE
+    Number.isFinite(requestedLimit) && requestedLimit > 0 ? Math.min(requestedLimit, MAX_PAGE_SIZE) : DEFAULT_PAGE_SIZE
 
   const search = typeof payload.search === 'string' ? payload.search.trim() : ''
 
@@ -278,11 +276,7 @@ export const getOptionsListPaginated = async (payload = {}) => {
     category,
     ...(isSystemStatusCategory(category) && { value: { in: getSystemStatusValues(category) } }),
     ...(search && {
-      OR: [
-        { label: { contains: search } },
-        { value: { contains: search } },
-        { description: { contains: search } }
-      ]
+      OR: [{ label: { contains: search } }, { value: { contains: search } }, { description: { contains: search } }]
     })
   }
 
@@ -335,6 +329,14 @@ export const createOption = async (payload = {}) => {
 
   if (isSystemStatusCategory(validation.output.category)) return immutableStatusError(context.translations)
 
+  if (validation.output.category === 'CONTRACT_DURATION' && !parseDurationOption(validation.output.name)) {
+    return {
+      success: false,
+      code: 'INVALID_CONTRACT_DURATION',
+      error: 'Please use English numbers and units (e.g., 1 Year, 6 Months, 90 Days).'
+    }
+  }
+
   try {
     const duplicate = await prisma.option.findFirst({
       where: { category: validation.output.category, label: validation.output.name },
@@ -355,8 +357,7 @@ export const createOption = async (payload = {}) => {
           value,
           description: sanitizeDescription(validation.output.description, validation.output.category),
           is_active: validation.output.is_active,
-          requires_invoice:
-            validation.output.category === 'INCOME_TYPE' ? validation.output.requires_invoice : false,
+          requires_invoice: validation.output.category === 'INCOME_TYPE' ? validation.output.requires_invoice : false,
           allowed_days_per_year:
             validation.output.category === 'LEAVE_TYPE' ? validation.output.allowed_days_per_year : undefined
         }
@@ -412,6 +413,14 @@ export const updateOption = async (id, payload = {}) => {
 
   if (isSystemStatusCategory(validation.output.category)) return immutableStatusError(context.translations)
 
+  if (validation.output.category === 'CONTRACT_DURATION' && !parseDurationOption(validation.output.name)) {
+    return {
+      success: false,
+      code: 'INVALID_CONTRACT_DURATION',
+      error: 'Please use English numbers and units (e.g., 1 Year, 6 Months, 90 Days).'
+    }
+  }
+
   try {
     const [currentOption, duplicate] = await Promise.all([
       prisma.option.findUnique({ where: { id: optionId }, select: { id: true, category: true } }),
@@ -443,8 +452,7 @@ export const updateOption = async (id, payload = {}) => {
           value,
           description: sanitizeDescription(validation.output.description, validation.output.category),
           is_active: validation.output.is_active,
-          requires_invoice:
-            validation.output.category === 'INCOME_TYPE' ? validation.output.requires_invoice : false,
+          requires_invoice: validation.output.category === 'INCOME_TYPE' ? validation.output.requires_invoice : false,
           allowed_days_per_year:
             validation.output.category === 'LEAVE_TYPE' ? validation.output.allowed_days_per_year : undefined
         }
@@ -549,9 +557,7 @@ export const deleteOption = async (id, payload = {}) => {
     const relationCount = Object.values(option._count).reduce((total, count) => total + count, 0)
 
     const staffPositionCount =
-      option.category === 'STAFF_POSITION'
-        ? await prisma.hrmstaff.count({ where: { position: option.label } })
-        : 0
+      option.category === 'STAFF_POSITION' ? await prisma.hrmstaff.count({ where: { position: option.label } }) : 0
 
     const durationContractCount =
       option.category === 'CONTRACT_DURATION'

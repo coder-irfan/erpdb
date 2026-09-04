@@ -22,7 +22,7 @@ import ProjectStatsCards from './ProjectStatsCards'
 import ProjectTableView from './ProjectTableView'
 
 const EMPTY_DATA = { projects: [], totalCount: 0, baseCurrency: 'AFN', statuses: [], priorities: [], summary: { activeCount: 0, budget: 0, amountBase: 0, actualHours: 0, estimatedHours: 0, overdueCount: 0 } }
-const EMPTY_OPTIONS = { clients: [], staff: [], contracts: [], statuses: [], priorities: [], baseCurrency: 'AFN', exchangeRate: '65.0000' }
+const EMPTY_OPTIONS = { clients: [], staff: [], contracts: [], statuses: [], priorities: [], countries: [], baseCurrency: 'AFN', exchangeRate: '65.0000' }
 
 const ProjectsView = ({ locale, dictionary, taskDictionary, canWrite, canDelete, canTaskManage, canTaskUpdate, canTaskDelete }) => {
   const [view, setView] = useState('KANBAN')
@@ -76,8 +76,8 @@ const ProjectsView = ({ locale, dictionary, taskDictionary, canWrite, canDelete,
     setRefreshKey(value => value + 1)
   }
 
-  const openCreate = () => { setPage(0); setEditing(null); setFormOpen(true) }
-  const openEdit = project => { setEditing(project); setFormOpen(true) }
+  const openCreate = () => { setPage(0); setEditing(null); setFormOpen(true); loadOptions() }
+  const openEdit = project => { setEditing(project); setFormOpen(true); loadOptions() }
   const openDetail = (project, tab = 0) => { setDetailTab(tab); setDetailId(project.id) }
 
   const remove = async () => {

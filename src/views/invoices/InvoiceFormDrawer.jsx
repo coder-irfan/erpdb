@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 import { valibotResolver } from '@hookform/resolvers/valibot'
 import Autocomplete from '@mui/material/Autocomplete'
@@ -19,7 +19,7 @@ import LoadingButtonContent from '@/components/LoadingButtonContent'
 import FormSectionCards from '@/components/forms/FormSectionCards'
 import NativeDateTimeInput from '@/components/inputs/NativeDateTimeInput'
 import { createInvoiceSchema } from '@/schemas/invoices'
-import { toDateInputValue } from '@/utils/contractDuration'
+import { getContractDurationHelperText, toDateInputValue } from '@/utils/contractDuration'
 import { convertToBaseCurrency, formatCurrency, toFiniteNumber } from '@/utils/formatCurrency'
 
 const addDays = (value, days) => {
@@ -52,6 +52,8 @@ const emptyValues = options => {
 }
 
 const InvoiceFormDrawer = ({ open, invoice, options, locale, dictionary, onClose, onSaved }) => {
+  const [durationId, setDurationId] = useState('')
+
   const hasPayments = Boolean(
     invoice?.payment_incomes?.length ||
       invoice?.payment_income ||
@@ -88,6 +90,7 @@ const InvoiceFormDrawer = ({ open, invoice, options, locale, dictionary, onClose
   const issuedDate = useWatch({ control, name: 'issued_date' })
   const dueDate = useWatch({ control, name: 'due_date' })
   const selectedClientId = useWatch({ control, name: 'client_id' })
+  const durationHelperText = getContractDurationHelperText(issuedDate, dueDate)
 
   const client =
     options.clients.find(item => item.id === selectedClientId) ||
@@ -100,6 +103,8 @@ const InvoiceFormDrawer = ({ open, invoice, options, locale, dictionary, onClose
 
   useEffect(() => {
     if (!open) return
+
+    setDurationId('')
 
     const resetValues = invoice
       ? {
@@ -270,23 +275,24 @@ const InvoiceFormDrawer = ({ open, invoice, options, locale, dictionary, onClose
             </Typography>
             <Typography variant='h6'>{formatCurrency(amountBase, locale, options.baseCurrency)}</Typography>
           </div>
+          {field('issued_date', dictionary.fields.issueDate, {
+            type: 'date',
+            slotProps: { inputLabel: { shrink: true } }
+          })}
           <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
-            {field('issued_date', dictionary.fields.issueDate, {
+            <DateDurationHelper
+              startDate={issuedDate}
+              endDate={dueDate}
+              durationId={durationId}
+              durationOptions={options.durationOptions || []}
+              onDurationChange={setDurationId}
+              onEndDateChange={value => setValue('due_date', value, { shouldDirty: true, shouldValidate: true })}
+            />
+            {field('due_date', dictionary.fields.dueDate, {
               type: 'date',
+              helperText: durationHelperText,
               slotProps: { inputLabel: { shrink: true } }
             })}
-            <div className='flex flex-col gap-2'>
-              {field('due_date', dictionary.fields.dueDate, {
-                type: 'date',
-                slotProps: { inputLabel: { shrink: true } }
-              })}
-              <DateDurationHelper
-                startDate={issuedDate}
-                endDate={dueDate}
-                durationOptions={options.durationOptions || []}
-                onEndDateChange={value => setValue('due_date', value, { shouldDirty: true, shouldValidate: true })}
-              />
-            </div>
           </div>
           <Controller
             name='status_id'

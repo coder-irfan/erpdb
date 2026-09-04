@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 
 import { valibotResolver } from '@hookform/resolvers/valibot'
 import Button from '@mui/material/Button'
@@ -14,6 +14,7 @@ import { toast } from 'sonner'
 import CustomTextField from '@core/components/mui/TextField'
 import LoadingButtonContent from '@/components/LoadingButtonContent'
 import FormSectionCards from '@/components/forms/FormSectionCards'
+import useActiveCountries from '@/hooks/useActiveCountries'
 import { createClientSchema } from '@/schemas/crm/clients'
 
 const EMPTY = {
@@ -22,13 +23,22 @@ const EMPTY = {
   email: '',
   phone: '',
   address: '',
+  country_id: '',
   tax_number: '',
   account_manager_id: '',
   status: 'ACTIVE',
   notes: ''
 }
 
-const ClientFormDrawer = ({ open, client, staff, locale, dictionary, onClose, onSaved }) => {
+const ClientFormDrawer = ({ open, client, staff, countries = [], locale, dictionary, onClose, onSaved }) => {
+  const activeCountries = useActiveCountries(open, countries)
+  const countryOptions = useMemo(
+    () => client?.country && !activeCountries.some(item => item.id === client.country.id)
+      ? [...activeCountries, { ...client.country, disabled: true }]
+      : activeCountries,
+    [activeCountries, client]
+  )
+
   const {
     control,
     handleSubmit,
@@ -45,6 +55,7 @@ const ClientFormDrawer = ({ open, client, staff, locale, dictionary, onClose, on
             email: client.email || '',
             phone: client.phone || '',
             address: client.address || '',
+            country_id: client.country_id || '',
             tax_number: client.tax_id || '',
             account_manager_id: client.account_manager_id || '',
             status: client.status || 'ACTIVE',
@@ -170,6 +181,23 @@ const ClientFormDrawer = ({ open, client, staff, locale, dictionary, onClose, on
             />
           </div>
           {field('address', dictionary.fields.address, { multiline: true, minRows: 3 })}
+          <Controller
+            name='country_id'
+            control={control}
+            render={({ field: controllerField }) => (
+              <CustomTextField
+                {...controllerField}
+                select
+                value={controllerField.value || ''}
+                label={dictionary.fields.country || 'Billing Country'}
+                error={Boolean(errors.country_id)}
+                helperText={errors.country_id?.message}
+              >
+                {!countryOptions.length && <MenuItem disabled value=''>No active countries available</MenuItem>}
+                {countryOptions.map(item => <MenuItem disabled={item.disabled} key={item.id} value={item.id}>{item.label}</MenuItem>)}
+              </CustomTextField>
+            )}
+          />
           {field('notes', dictionary.fields.notes, { multiline: true, minRows: 3 })}
         </FormSectionCards>
         <div className='form-surface-actions -mx-5 -mb-5 mt-auto flex justify-end gap-3 px-5 pt-5'>

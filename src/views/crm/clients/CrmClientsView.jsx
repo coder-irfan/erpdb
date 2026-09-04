@@ -23,7 +23,7 @@ const EMPTY = {
   clients: [],
   totalCount: 0,
   summary: { totalActive: 0, lifetimeRevenue: 0, activeProjects: 0, pendingBalance: 0 },
-  options: { staff: [] }
+  options: { staff: [], countries: [] }
 }
 
 const CrmClientsView = ({ locale, dictionary, currencyCode, canWrite, canDelete }) => {
@@ -241,6 +241,7 @@ const CrmClientsView = ({ locale, dictionary, currencyCode, canWrite, canDelete 
         open={formOpen}
         client={editingClient}
         staff={data.options.staff}
+        countries={data.options.countries}
         locale={locale}
         dictionary={dictionary}
         onClose={() => setFormOpen(false)}

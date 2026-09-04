@@ -139,7 +139,7 @@
     "leaveTypes": "Leave Types",
     "payrollOptions": "Payroll Options",
     "crmManagement": "CRM Management",
-    "crmLeadOptions": "Lead Statuses & Sources",
+    "crmLeadOptions": "Lead Sources",
     "setupSettings": "Setup",
     "companySetup": "Company Setup",
     "systemAuditLogs": "System Audit Logs",
@@ -1165,6 +1165,7 @@
       "contact": "Contact Name",
       "email": "Email",
       "phone": "Phone",
+      "country": "Operational Country",
       "source": "Lead Source",
       "status": "Pipeline Status",
       "assigned": "Assigned Staff",
@@ -1413,6 +1414,7 @@
       "email": "Email Address",
       "phone": "Phone Number",
       "address": "Address",
+      "country": "Billing Country",
       "tax": "Tax ID / Registration Number",
       "manager": "Account Manager",
       "status": "Status",
@@ -2902,7 +2904,7 @@
       "totalValue": "Asset Inventory Value",
       "reorderLevel": "Reorder Level",
       "status": "Status",
-      "createdAt": "Created At",
+      "createdAt": "Created Date",
       "actions": "Actions"
     },
     "actions": {

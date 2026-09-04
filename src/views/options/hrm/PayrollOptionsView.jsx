@@ -11,6 +11,7 @@ import DialogContent from '@mui/material/DialogContent'
 import DialogTitle from '@mui/material/DialogTitle'
 import FormControlLabel from '@mui/material/FormControlLabel'
 import Switch from '@mui/material/Switch'
+import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
 import { toast } from 'sonner'
 
@@ -33,6 +34,11 @@ import tableStyles from '@core/styles/table.module.css'
 const SECTIONS = [
   { category: 'PAYROLL_PAYMENT_METHOD', key: 'paymentMethods', icon: 'tabler-credit-card' }
 ]
+
+const localeMap = { en: 'en-US', fa: 'fa-AF', ps: 'ps-AF' }
+
+const formatDate = (value, locale) =>
+  new Intl.DateTimeFormat(localeMap[locale] || 'en-US', { dateStyle: 'medium' }).format(new Date(value))
 
 const PayrollOptionsView = ({ initialData, canWrite, canDelete, locale, dictionary, managementDictionary }) => {
   const [data, setData] = useState(initialData)
@@ -182,7 +188,7 @@ const PayrollOptionsView = ({ initialData, canWrite, canDelete, locale, dictiona
   )
 
   return (
-    <div className='grid grid-cols-1 gap-6 xl:grid-cols-2'>
+    <div className='grid grid-cols-1 gap-6'>
       {SECTIONS.map(section => (
         <Card key={section.category}>
           <div className='flex items-center justify-between gap-4 p-5'>
@@ -216,6 +222,13 @@ const PayrollOptionsView = ({ initialData, canWrite, canDelete, locale, dictiona
               <Chip size='small' variant='tonal' color={option.is_active ? 'success' : 'secondary'} label={option.is_active ? dictionary.common.active : dictionary.common.inactive} />
             )}
             renderMobileActions={renderActions}
+            mobileMetadata={[
+              {
+                id: 'created',
+                label: managementDictionary.common.createdDate,
+                render: option => formatDate(option.created_at, locale)
+              }
+            ]}
             emptyState={{ icon: section.icon, title: dictionary.common.empty, actionLabel: canWrite ? dictionary.common.create : undefined, onAction: canWrite ? () => openCreate(section.category) : undefined }}
           >
             <div className='overflow-x-auto'>
@@ -223,14 +236,16 @@ const PayrollOptionsView = ({ initialData, canWrite, canDelete, locale, dictiona
               <thead>
                 <tr>
                   <th>{dictionary.common.name}</th>
+                  <th>{dictionary.common.description}</th>
                   <th>{dictionary.common.status}</th>
+                  <th title={managementDictionary.common.createdDate}>{managementDictionary.common.createdDate}</th>
                   <th className='text-end'>{dictionary.common.actions}</th>
                 </tr>
               </thead>
               <tbody>
                 {data[section.category].length === 0 ? (
                   <TableEmptyStateRow
-                    colSpan={3}
+                    colSpan={5}
                     icon={section.icon}
                     title={dictionary.common.empty}
                     actionLabel={canWrite ? dictionary.common.create : null}
@@ -243,9 +258,13 @@ const PayrollOptionsView = ({ initialData, canWrite, canDelete, locale, dictiona
                         <Typography className='font-medium' color='text.primary'>
                           {option.name}
                         </Typography>
-                        <Typography variant='body2' color='text.secondary'>
-                          {option.description}
-                        </Typography>
+                      </td>
+                      <td>
+                        <Tooltip title={option.description || managementDictionary.common.noDescription}>
+                          <Typography color='text.secondary' className='max-is-[440px] truncate'>
+                            {option.description || managementDictionary.common.noDescription}
+                          </Typography>
+                        </Tooltip>
                       </td>
                       <td>
                         <Chip
@@ -255,6 +274,7 @@ const PayrollOptionsView = ({ initialData, canWrite, canDelete, locale, dictiona
                           label={option.is_active ? dictionary.common.active : dictionary.common.inactive}
                         />
                       </td>
+                      <td>{formatDate(option.created_at, locale)}</td>
                       <td className='text-end'>
                         {renderActions(option)}
                       </td>

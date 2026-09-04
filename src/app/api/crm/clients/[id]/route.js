@@ -32,6 +32,7 @@ export async function GET(request, context) {
     const client = await prisma.crmclient.findUnique({
       where: { id },
       include: {
+        country: { select: { id: true, label: true, value: true } },
         account_manager: {
           select: {
             id: true,
@@ -75,15 +76,18 @@ export async function PUT(request, context) {
 
     const values = parsed.output
 
-    const [client, emailOwner, manager] = await Promise.all([
-      prisma.crmclient.findUnique({ where: { id }, select: { id: true } }),
+    const client = await prisma.crmclient.findUnique({ where: { id }, select: { id: true, country_id: true } })
+
+    const [emailOwner, manager, country] = await Promise.all([
       prisma.crmclient.findUnique({ where: { email: values.email.toLowerCase() }, select: { id: true } }),
-      values.account_manager_id ? prisma.hrmstaff.findFirst({ where: { id: values.account_manager_id, status: 'ACTIVE' }, select: { id: true } }) : null
+      values.account_manager_id ? prisma.hrmstaff.findFirst({ where: { id: values.account_manager_id, status: 'ACTIVE' }, select: { id: true } }) : null,
+      values.country_id ? prisma.option.findFirst({ where: { id: values.country_id, category: 'COUNTRY', ...(client?.country_id === values.country_id ? {} : { is_active: true }) }, select: { id: true } }) : null
     ])
 
     if (!client) return errorResponse(dictionary.messages.notFound, 404, 'CLIENT_NOT_FOUND')
     if (emailOwner && emailOwner.id !== id) return errorResponse(dictionary.messages.emailExists, 409, 'EMAIL_EXISTS')
     if (values.account_manager_id && !manager) return errorResponse(dictionary.messages.invalidManager, 400, 'INVALID_MANAGER')
+    if (values.country_id && !country) return errorResponse(dictionary.validation.invalid, 400, 'INVALID_COUNTRY')
 
     await prisma.$transaction([
       prisma.crmclient.update({ where: { id }, data: {
@@ -92,6 +96,7 @@ export async function PUT(request, context) {
         email: values.email.toLowerCase(),
         phone: cleanText(values.phone),
         address: cleanText(values.address) || null,
+        country_id: values.country_id || null,
         tax_id: cleanText(values.tax_number) || null,
         account_manager_id: values.account_manager_id || null,
         status: values.status,

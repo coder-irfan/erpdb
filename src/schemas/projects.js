@@ -19,6 +19,7 @@ export const createProjectSchema = customMessages => {
     client_id: pipe(string(messages.required), trim(), nonEmpty(messages.required)),
     contract_id: optional(pipe(string(), trim()), ''),
     project_manager_id: optional(pipe(string(), trim()), ''),
+    country_id: optional(pipe(string(), trim()), ''),
     status_id: pipe(string(messages.required), trim(), nonEmpty(messages.required)),
     priority_id: pipe(string(messages.required), trim(), nonEmpty(messages.required)),
     project_area: optional(pipe(string(), trim(), maxLength(191)), ''),
@@ -33,4 +34,3 @@ export const createProjectSchema = customMessages => {
     actual_end_date: optional(pipe(string(), trim()), '')
   })
 }
-

@@ -131,6 +131,22 @@ export const getDateRangeDuration = (startDate, endDate) => {
   return { isValid: true, months, days, totalDays }
 }
 
+export const getContractDurationHelperText = (startDate, endDate) => {
+  const duration = getDateRangeDuration(startDate, endDate)
+
+  if (!duration) return ''
+  if (!duration.isValid) return 'End Date must be on or after Start Date.'
+
+  const calendarParts = []
+
+  if (duration.months) calendarParts.push(`${duration.months} Month${duration.months === 1 ? '' : 's'}`)
+  if (duration.days) calendarParts.push(`${duration.days} Day${duration.days === 1 ? '' : 's'}`)
+
+  const calendarDuration = calendarParts.join(', ') || '0 Days'
+
+  return `Calculated duration: ${calendarDuration} (${duration.totalDays} Day${duration.totalDays === 1 ? '' : 's'})`
+}
+
 export const formatDateRangeDuration = (startDate, endDate) => {
   const start = toUtcDateOnly(startDate)
   const end = toUtcDateOnly(endDate)

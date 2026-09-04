@@ -11,10 +11,10 @@ import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import Chip from '@mui/material/Chip'
 import Dialog from '@mui/material/Dialog'
+import DialogActions from '@mui/material/DialogActions'
 import DialogContent from '@mui/material/DialogContent'
 import DialogTitle from '@mui/material/DialogTitle'
 import IconButton from '@mui/material/IconButton'
-import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
 import { toast } from 'sonner'
 
@@ -158,9 +158,25 @@ const ContractPolicyTable = ({ initialResult, initialError, canCreate, canUpdate
     <EntityActionsMenu
       actions={[
         { label: dictionary.common.view, icon: 'tabler-eye', onClick: () => setViewingOption(option) },
-        canUpdate && { label: dictionary.common.edit, icon: 'tabler-edit', disabled: busyId === option.id, onClick: () => openEditForm(option) },
-        canUpdate && { label: option.is_active ? dictionary.common.deactivate : dictionary.common.activate, icon: option.is_active ? 'tabler-toggle-right' : 'tabler-toggle-left', disabled: busyId === option.id, onClick: () => handleStatusToggle(option) },
-        canDelete && { label: dictionary.common.delete, icon: 'tabler-trash', color: 'error', disabled: busyId === option.id, onClick: () => setDeletingOption(option) }
+        canUpdate && {
+          label: dictionary.common.edit,
+          icon: 'tabler-edit',
+          disabled: busyId === option.id,
+          onClick: () => openEditForm(option)
+        },
+        canUpdate && {
+          label: option.is_active ? dictionary.common.deactivate : dictionary.common.activate,
+          icon: option.is_active ? 'tabler-toggle-right' : 'tabler-toggle-left',
+          disabled: busyId === option.id,
+          onClick: () => handleStatusToggle(option)
+        },
+        canDelete && {
+          label: dictionary.common.delete,
+          icon: 'tabler-trash',
+          color: 'error',
+          disabled: busyId === option.id,
+          onClick: () => setDeletingOption(option)
+        }
       ]}
       moreActionsLabel={dictionary.common.actions}
     />
@@ -203,76 +219,93 @@ const ContractPolicyTable = ({ initialResult, initialError, canCreate, canUpdate
           getMobileRowId={option => option.id}
           renderMobilePrimary={option => (
             <div className='min-is-0'>
-              <Typography color='text.primary' className='truncate font-medium'>{option.name}</Typography>
-              <Typography color='text.secondary' className='line-clamp-2'>{getDescriptionPreview(option.description) || dictionary.common.noDescription}</Typography>
+              <Typography color='text.primary' className='truncate font-medium'>
+                {option.name}
+              </Typography>
+              <Typography color='text.secondary' className='line-clamp-2'>
+                {getDescriptionPreview(option.description) || dictionary.common.noDescription}
+              </Typography>
             </div>
           )}
           renderMobileStatus={option => (
-            <Chip size='small' variant='tonal' color={option.is_active ? 'success' : 'secondary'} label={option.is_active ? dictionary.common.active : dictionary.common.inactive} />
+            <Chip
+              size='small'
+              variant='tonal'
+              color={option.is_active ? 'success' : 'secondary'}
+              label={option.is_active ? dictionary.common.active : dictionary.common.inactive}
+            />
           )}
           renderMobileActions={renderActions}
-          mobileMetadata={[{ id: 'created', label: dictionary.common.createdDate, render: option => formatDate(option.created_at, locale) }]}
-          emptyState={{ icon: 'tabler-file-description', title: dictionary.contractPolicies.emptyTitle, description: dictionary.contractPolicies.emptyDescription, actionLabel: canCreate ? dictionary.contractPolicies.addFirst : undefined, onAction: canCreate ? openCreateForm : undefined }}
+          mobileMetadata={[
+            {
+              id: 'created',
+              label: dictionary.common.createdDate,
+              render: option => formatDate(option.created_at, locale)
+            }
+          ]}
+          emptyState={{
+            icon: 'tabler-file-description',
+            title: dictionary.contractPolicies.emptyTitle,
+            description: dictionary.contractPolicies.emptyDescription,
+            actionLabel: canCreate ? dictionary.contractPolicies.addFirst : undefined,
+            onAction: canCreate ? openCreateForm : undefined
+          }}
         >
           <div className='overflow-x-auto'>
-          <table className={tableStyles.table}>
-            <thead>
-              <tr>
-                <th>{dictionary.contractPolicies.table.title}</th>
-                <th>{dictionary.contractPolicies.table.description}</th>
-                <th>{dictionary.common.status}</th>
-                <th>{dictionary.common.createdDate}</th>
-                <th className='text-end'>{dictionary.common.actions}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                <TableSkeletonRows columns={5} />
-              ) : options.length === 0 ? (
-                <TableEmptyStateRow
-                  colSpan={5}
-                  icon='tabler-file-description'
-                  title={dictionary.contractPolicies.emptyTitle}
-                  description={dictionary.contractPolicies.emptyDescription}
-                  actionLabel={canCreate ? dictionary.contractPolicies.addFirst : null}
-                  onAction={canCreate ? openCreateForm : null}
-                />
-              ) : (
-                options.map(option => {
-                  const description = getDescriptionPreview(option.description)
+            <table className={tableStyles.table}>
+              <thead>
+                <tr>
+                  <th>{dictionary.contractPolicies.table.title}</th>
+                  <th>{dictionary.contractPolicies.table.description}</th>
+                  <th>{dictionary.common.status}</th>
+                  <th>{dictionary.common.createdDate}</th>
+                  <th className='text-end'>{dictionary.common.actions}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {loading ? (
+                  <TableSkeletonRows columns={5} />
+                ) : options.length === 0 ? (
+                  <TableEmptyStateRow
+                    colSpan={5}
+                    icon='tabler-file-description'
+                    title={dictionary.contractPolicies.emptyTitle}
+                    description={dictionary.contractPolicies.emptyDescription}
+                    actionLabel={canCreate ? dictionary.contractPolicies.addFirst : null}
+                    onAction={canCreate ? openCreateForm : null}
+                  />
+                ) : (
+                  options.map(option => {
+                    const description = getDescriptionPreview(option.description)
 
-                  return (
-                    <tr key={option.id}>
-                      <td>
-                        <Typography color='text.primary' className='min-is-[200px] font-medium'>
-                          {option.name}
-                        </Typography>
-                      </td>
-                      <td>
-                        <Tooltip title={description || dictionary.common.noDescription}>
+                    return (
+                      <tr key={option.id}>
+                        <td>
+                          <Typography color='text.primary' className='min-is-[200px] font-medium'>
+                            {option.name}
+                          </Typography>
+                        </td>
+                        <td>
                           <Typography color='text.secondary' className='max-is-[440px] truncate'>
                             {description || dictionary.common.noDescription}
                           </Typography>
-                        </Tooltip>
-                      </td>
-                      <td>
-                        <Chip
-                          size='small'
-                          variant='tonal'
-                          color={option.is_active ? 'success' : 'secondary'}
-                          label={option.is_active ? dictionary.common.active : dictionary.common.inactive}
-                        />
-                      </td>
-                      <td>{formatDate(option.created_at, locale)}</td>
-                      <td className='text-end'>
-                        {renderActions(option)}
-                      </td>
-                    </tr>
-                  )
-                })
-              )}
-            </tbody>
-          </table>
+                        </td>
+                        <td>
+                          <Chip
+                            size='small'
+                            variant='tonal'
+                            color={option.is_active ? 'success' : 'secondary'}
+                            label={option.is_active ? dictionary.common.active : dictionary.common.inactive}
+                          />
+                        </td>
+                        <td>{formatDate(option.created_at, locale)}</td>
+                        <td className='text-end'>{renderActions(option)}</td>
+                      </tr>
+                    )
+                  })
+                )}
+              </tbody>
+            </table>
           </div>
         </ResponsiveDataTable>
 
@@ -301,26 +334,77 @@ const ContractPolicyTable = ({ initialResult, initialError, canCreate, canUpdate
         />
       )}
 
-      <Dialog open={Boolean(viewingOption)} onClose={() => setViewingOption(null)} fullWidth maxWidth='lg'>
-        <DialogTitle className='flex items-start justify-between gap-4'>
-          <div>
-            <Typography variant='h5'>{viewingOption?.name}</Typography>
-            <Typography color='text.secondary'>{dictionary.contractPolicies.previewTitle}</Typography>
+      <Dialog
+        open={Boolean(viewingOption)}
+        onClose={() => setViewingOption(null)}
+        fullWidth
+        maxWidth='lg'
+        PaperProps={{ className: 'overflow-hidden rounded-xl' }}
+      >
+        <DialogTitle className='border-be border-divider bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-0'>
+          <div className='flex items-start justify-between gap-4 p-6'>
+            <div className='flex min-w-0 items-start gap-4'>
+              <span className='flex size-12 shrink-0 items-center justify-center rounded-xl bg-primary text-white shadow-sm'>
+                <i className='tabler-file-description text-2xl' />
+              </span>
+              <div className='min-w-0'>
+                <Typography variant='h5' className='truncate'>
+                  {viewingOption?.name}
+                </Typography>
+                <Typography variant='body2' color='text.secondary'>
+                  {dictionary.contractPolicies.previewTitle}
+                </Typography>
+                <div className='mt-3 flex flex-wrap gap-2'>
+                  <Chip
+                    size='small'
+                    variant='tonal'
+                    color={viewingOption?.is_active ? 'success' : 'secondary'}
+                    label={viewingOption?.is_active ? dictionary.common.active : dictionary.common.inactive}
+                  />
+                  {viewingOption?.created_at && (
+                    <Chip
+                      size='small'
+                      variant='outlined'
+                      icon={<i className='tabler-calendar' />}
+                      label={formatDate(viewingOption.created_at, locale)}
+                    />
+                  )}
+                </div>
+              </div>
+            </div>
+            <IconButton onClick={() => setViewingOption(null)} aria-label={dictionary.common.close}>
+              <i className='tabler-x' />
+            </IconButton>
           </div>
-          <IconButton onClick={() => setViewingOption(null)} aria-label={dictionary.common.close}>
-            <i className='tabler-x' />
-          </IconButton>
         </DialogTitle>
-        <DialogContent dividers className='bg-actionHover'>
-          {viewingOption?.description ? (
-            <article
-              className='policy-document-preview rounded shadow-sm'
-              dangerouslySetInnerHTML={{ __html: viewingOption.description }}
-            />
-          ) : (
-            <Typography color='text.secondary'>{dictionary.common.noDescription}</Typography>
-          )}
+        <DialogContent className='bg-actionHover p-4 sm:p-7'>
+          <div className='mx-auto max-is-[850px]'>
+            <div className='mb-3 flex items-center justify-between gap-3 px-1'>
+              <Typography variant='overline' color='text.secondary'>
+                Document preview
+              </Typography>
+              <Typography variant='caption' color='text.secondary'>
+                Read-only
+              </Typography>
+            </div>
+            {viewingOption?.description ? (
+              <article
+                className='policy-document-preview min-bs-[420px] rounded-xl border border-divider bg-backgroundPaper p-6 shadow-sm sm:p-10'
+                dangerouslySetInnerHTML={{ __html: viewingOption.description }}
+              />
+            ) : (
+              <div className='flex min-bs-[320px] flex-col items-center justify-center rounded-xl border border-dashed border-divider bg-backgroundPaper text-center'>
+                <i className='tabler-file-off mb-3 text-4xl text-textDisabled' />
+                <Typography color='text.secondary'>{dictionary.common.noDescription}</Typography>
+              </div>
+            )}
+          </div>
         </DialogContent>
+        <DialogActions className='border-bs border-divider px-6 py-4'>
+          <Button variant='tonal' color='secondary' onClick={() => setViewingOption(null)}>
+            {dictionary.common.close}
+          </Button>
+        </DialogActions>
       </Dialog>
 
       <ConfirmationDeleteModal

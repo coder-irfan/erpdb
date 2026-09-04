@@ -16,6 +16,7 @@ import CustomTextField from '@core/components/mui/TextField'
 import { createProject, updateProject } from '@/actions/projects'
 import LoadingButtonContent from '@/components/LoadingButtonContent'
 import FormSectionCards from '@/components/forms/FormSectionCards'
+import useActiveCountries from '@/hooks/useActiveCountries'
 import RichTextEditor from '@/components/forms/RichTextEditor'
 import { createProjectSchema } from '@/schemas/projects'
 import { toDateInputValue } from '@/utils/contractDuration'
@@ -29,6 +30,7 @@ const emptyValues = options => ({
   client_id: '',
   contract_id: '',
   project_manager_id: '',
+  country_id: '',
   status_id: defaultOption(options.statuses),
   priority_id: defaultOption(options.priorities),
   project_area: '',
@@ -44,6 +46,14 @@ const emptyValues = options => ({
 })
 
 const ProjectFormDrawer = ({ open, project, options, locale, dictionary, onClose, onSaved }) => {
+  const countries = useActiveCountries(open, options.countries || [])
+  const countryOptions = useMemo(
+    () => project?.country && !countries.some(item => item.id === project.country.id)
+      ? [...countries, { ...project.country, disabled: true }]
+      : countries,
+    [countries, project]
+  )
+
   const {
     control,
     handleSubmit,
@@ -107,6 +117,7 @@ const ProjectFormDrawer = ({ open, project, options, locale, dictionary, onClose
             client_id: project.client_id || '',
             contract_id: project.contract_id || '',
             project_manager_id: project.project_manager_id || '',
+            country_id: project.country_id || '',
             status_id: project.status_id || defaultOption(options.statuses),
             priority_id: project.priority_id || defaultOption(options.priorities),
             project_area: project.project_area || '',
@@ -171,8 +182,9 @@ const ProjectFormDrawer = ({ open, project, options, locale, dictionary, onClose
             }
           }}
         >
+          {!items.length && <MenuItem disabled value=''>No active options available</MenuItem>}
           {items.map(item => (
-            <MenuItem key={item.id} value={item.id}>
+            <MenuItem disabled={item.disabled} key={item.id} value={item.id}>
               {item.label}
             </MenuItem>
           ))}
@@ -294,6 +306,7 @@ const ProjectFormDrawer = ({ open, project, options, locale, dictionary, onClose
             />
             {select('status_id', dictionary.fields.status, options.statuses)}
             {select('priority_id', dictionary.fields.priority, options.priorities)}
+            {select('country_id', dictionary.fields.country || 'Country / Jurisdiction', countryOptions)}
             {field('estimated_hours', dictionary.fields.estimatedHours, {
               type: 'number',
               inputProps: { min: 0, step: '0.25' }

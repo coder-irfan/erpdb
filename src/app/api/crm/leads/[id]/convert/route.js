@@ -39,6 +39,7 @@ export async function POST(request, context) {
           primary_contact_name: lead.contact_name,
           email: lead.email,
           phone: lead.phone,
+          country_id: lead.country_id,
           account_manager_id: lead.assigned_to_id,
           status: 'ACTIVE'
         }

@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo } from 'react'
 
+import Autocomplete from '@mui/material/Autocomplete'
 import Button from '@mui/material/Button'
 import Chip from '@mui/material/Chip'
 import Divider from '@mui/material/Divider'
@@ -21,15 +22,20 @@ import LoadingButtonContent from '@/components/LoadingButtonContent'
 import FormSectionCards from '@/components/forms/FormSectionCards'
 import NativeDateTimeInput from '@/components/inputs/NativeDateTimeInput'
 import { createStaffContractSchema } from '@/schemas/hrm/contracts'
+import { getContractDurationHelperText } from '@/utils/contractDuration'
 import { formatCurrency } from '@/utils/formatCurrency'
 import { formatStatusLabel } from '@/utils/formatStatusLabel'
 
 const toInputDate = value => (value ? new Date(value).toISOString().slice(0, 10) : '')
 
-const getDefaultValues = (contract, statuses) => ({
+const getDefaultValues = (contract, statuses, options = {}) => ({
   staff_id: contract?.staff_id || '',
   contract_type_id: contract?.contract_type_id || '',
   template_id: contract?.contract_type?.category === 'CONTRACT_POLICY' ? contract.contract_type_id : '',
+  contract_duration: contract?.duration_id || '',
+  legal_clause_ids: Array.isArray(contract?.legal_clause_ids)
+    ? contract.legal_clause_ids
+    : (options.clauses || []).filter(clause => clause.is_default).map(clause => clause.id),
   start_date: toInputDate(contract?.start_date) || new Date().toISOString().slice(0, 10),
   end_date: toInputDate(contract?.end_date),
   probation_days: String(contract?.probation_days ?? 90),
@@ -78,23 +84,25 @@ const StaffContractDrawer = ({ open, contract, options, locale, dictionary, onCl
     formState: { errors, isSubmitting }
   } = useForm({
     resolver: valibotResolver(createStaffContractSchema(dictionary.validation)),
-    defaultValues: getDefaultValues(contract, statusOptions)
+    defaultValues: getDefaultValues(contract, statusOptions, options)
   })
 
   const staffId = useWatch({ control, name: 'staff_id' })
   const startDate = useWatch({ control, name: 'start_date' })
   const endDate = useWatch({ control, name: 'end_date' })
+  const durationId = useWatch({ control, name: 'contract_duration' })
   const configuredDurations = options.options?.CONTRACT_DURATION
   const durationOptions = useMemo(() => configuredDurations || [], [configuredDurations])
+  const durationHelperText = getContractDurationHelperText(startDate, endDate)
   const selectedStaff = staffOptions.find(staff => staff.id === staffId) || null
 
   useEffect(() => {
     if (!open) return
 
-    const resetValues = getDefaultValues(contract, statusOptions)
+    const resetValues = getDefaultValues(contract, statusOptions, options)
 
     reset(resetValues)
-  }, [contract, open, reset, statusOptions])
+  }, [contract, open, options, reset, statusOptions])
 
   const handleStaffChange = event => {
     const selectedId = event.target.value
@@ -179,28 +187,6 @@ const StaffContractDrawer = ({ open, contract, options, locale, dictionary, onCl
             )}
           />
           <Controller
-            name='contract_type_id'
-            control={control}
-            render={({ field }) => (
-              <CustomTextField
-                {...field}
-                select
-                fullWidth
-                required
-                label={dictionary.fields.contractType}
-                value={field.value || ''}
-                error={Boolean(errors.contract_type_id)}
-                helperText={errors.contract_type_id?.message}
-              >
-                {contractTypeOptions.map(type => (
-                  <MenuItem key={type.id} value={type.id}>
-                    {type.label}
-                  </MenuItem>
-                ))}
-              </CustomTextField>
-            )}
-          />
-          <Controller
             name='template_id'
             control={control}
             render={({ field }) => (
@@ -222,6 +208,27 @@ const StaffContractDrawer = ({ open, contract, options, locale, dictionary, onCl
               </CustomTextField>
             )}
           />
+          <Controller
+            name='legal_clause_ids'
+            control={control}
+            render={({ field }) => (
+              <Autocomplete
+                multiple
+                options={options.clauses || []}
+                value={(options.clauses || []).filter(clause => (field.value || []).includes(clause.id))}
+                onChange={(_, clauses) => field.onChange(clauses.map(clause => clause.id))}
+                getOptionLabel={clause => clause.label}
+                isOptionEqualToValue={(option, value) => option.id === value.id}
+                renderInput={params => (
+                  <CustomTextField
+                    {...params}
+                    label='Select Legal Clauses to Include'
+                    helperText='Selected clauses are saved into the contract document snapshot.'
+                  />
+                )}
+              />
+            )}
+          />
           <div className='grid grid-cols-1 gap-5 sm:grid-cols-2'>
             {selectedStaff && (
               <div className='rounded border border-primary/20 bg-primaryLighter p-4 sm:col-span-2'>
@@ -238,6 +245,28 @@ const StaffContractDrawer = ({ open, contract, options, locale, dictionary, onCl
                 </Typography>
               </div>
             )}
+            <Controller
+              name='contract_type_id'
+              control={control}
+              render={({ field }) => (
+                <CustomTextField
+                  {...field}
+                  select
+                  fullWidth
+                  required
+                  label={dictionary.fields.contractType}
+                  value={field.value || ''}
+                  error={Boolean(errors.contract_type_id)}
+                  helperText={errors.contract_type_id?.message}
+                >
+                  {contractTypeOptions.map(type => (
+                    <MenuItem key={type.id} value={type.id}>
+                      {type.label}
+                    </MenuItem>
+                  ))}
+                </CustomTextField>
+              )}
+            />
             <NativeDateTimeInput
               fullWidth
               required
@@ -248,24 +277,24 @@ const StaffContractDrawer = ({ open, contract, options, locale, dictionary, onCl
               helperText={errors.start_date?.message}
               {...register('start_date')}
             />
-            <div className='flex flex-col gap-2'>
-              <NativeDateTimeInput
-                fullWidth
-                required
-                locale={locale}
-                label={dictionary.fields.endDate}
-                slotProps={{ inputLabel: { shrink: true } }}
-                error={Boolean(errors.end_date)}
-                helperText={errors.end_date?.message}
-                {...register('end_date')}
-              />
-              <DateDurationHelper
-                startDate={startDate}
-                endDate={endDate}
-                durationOptions={durationOptions}
-                onEndDateChange={value => setValue('end_date', value, { shouldDirty: true, shouldValidate: true })}
-              />
-            </div>
+            <DateDurationHelper
+              startDate={startDate}
+              endDate={endDate}
+              durationId={durationId}
+              durationOptions={durationOptions}
+              onDurationChange={value => setValue('contract_duration', value, { shouldDirty: true })}
+              onEndDateChange={value => setValue('end_date', value, { shouldDirty: true, shouldValidate: true })}
+            />
+            <NativeDateTimeInput
+              fullWidth
+              required
+              locale={locale}
+              label={dictionary.fields.endDate}
+              slotProps={{ inputLabel: { shrink: true } }}
+              error={Boolean(errors.end_date)}
+              helperText={errors.end_date?.message || durationHelperText}
+              {...register('end_date')}
+            />
             <CustomTextField
               fullWidth
               required

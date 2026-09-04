@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 
 import { valibotResolver } from '@hookform/resolvers/valibot'
 import Button from '@mui/material/Button'
@@ -14,6 +14,7 @@ import { toast } from 'sonner'
 import CustomTextField from '@core/components/mui/TextField'
 import LoadingButtonContent from '@/components/LoadingButtonContent'
 import FormSectionCards from '@/components/forms/FormSectionCards'
+import useActiveCountries from '@/hooks/useActiveCountries'
 import { createLeadSchema } from '@/schemas/crm/leads'
 
 const EMPTY_FORM = {
@@ -22,6 +23,7 @@ const EMPTY_FORM = {
   contact_name: '',
   email: '',
   phone: '',
+  country_id: '',
   source_id: '',
   status_id: '',
   assigned_to_id: '',
@@ -40,11 +42,20 @@ const getDefaults = (lead, options, baseCurrency) =>
         source_id: lead.source_id || '',
         status_id: lead.status_id || '',
         assigned_to_id: lead.assigned_to_id || '',
+        country_id: lead.country_id || '',
         next_follow_up_date: lead.next_follow_up_date?.slice(0, 16) || ''
       }
     : { ...EMPTY_FORM, currency: baseCurrency, status_id: options.statuses[0]?.id || '' }
 
 const LeadDrawer = ({ open, lead, options, baseCurrency, locale, dictionary, onClose, onSaved }) => {
+  const countries = useActiveCountries(open, options.countries || [])
+  const countryOptions = useMemo(
+    () => lead?.country && !countries.some(item => item.id === lead.country.id)
+      ? [...countries, { ...lead.country, disabled: true }]
+      : countries,
+    [countries, lead]
+  )
+
   const {
     control,
     handleSubmit,
@@ -131,6 +142,25 @@ const LeadDrawer = ({ open, lead, options, baseCurrency, locale, dictionary, onC
             {field('contact_name', dictionary.fields.contact)}
             {field('email', dictionary.fields.email, { type: 'email' })}
             {field('phone', dictionary.fields.phone)}
+            <Controller
+              name='country_id'
+              control={control}
+              render={({ field: controllerField }) => (
+                <CustomTextField
+                  {...controllerField}
+                  select
+                  value={controllerField.value || ''}
+                  label={dictionary.fields.country || 'Operational Country'}
+                  error={Boolean(errors.country_id)}
+                  helperText={errors.country_id?.message}
+                >
+                  {!countryOptions.length && <MenuItem disabled value=''>No active countries available</MenuItem>}
+                  {countryOptions.map(item => (
+                    <MenuItem disabled={item.disabled} key={item.id} value={item.id}>{item.label}</MenuItem>
+                  ))}
+                </CustomTextField>
+              )}
+            />
             <Controller
               name='estimated_value'
               control={control}

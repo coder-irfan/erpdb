@@ -1,4 +1,5 @@
 import {
+  array,
   date,
   finite,
   integer,
@@ -71,6 +72,8 @@ export const createStaffContractSchema = customMessages => {
     staff_id: requiredText(messages),
     contract_type_id: requiredText(messages),
     template_id: requiredText(messages),
+    contract_duration: optional(pipe(string(), trim()), ''),
+    legal_clause_ids: optional(array(requiredText(messages)), []),
     start_date: dateValue(messages),
     end_date: dateValue(messages),
     document_url: optionalText(messages),
