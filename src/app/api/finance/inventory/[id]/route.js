@@ -92,6 +92,7 @@ export async function PATCH(request, routeContext) {
     source_vendor: payload?.source_vendor || '',
     reason: payload?.reason || '',
     assigned_staff_id: payload?.assigned_staff_id || '',
+    project_id: payload?.project_id || '',
     notes: payload?.notes || ''
   })
 
@@ -122,11 +123,12 @@ export async function PATCH(request, routeContext) {
         sourceVendor: validation.output.source_vendor || null,
         reason: validation.output.reason || null,
         assignedStaffId: validation.output.assigned_staff_id || null,
+        projectId: validation.output.project_id || null,
         notes: validation.output.notes,
         createdByUserId: authorization.session.user.id
       })
 
-      await transaction.auditlog.create({ data: { user_id: authorization.session.user.id, action: 'INVENTORY_MOVEMENT_RECORDED', module: 'INVENTORY', details: { inventoryId: id, movementId: movement.movement.id, movementType: validation.output.movement_type, direction: validation.output.direction, quantity: movement.movement.quantity, previousQuantity: movement.movement.quantity_before, newQuantity: movement.movement.quantity_after, sourceVendor: movement.movement.source_vendor, reason: movement.movement.reason, assignedStaffId: movement.movement.assigned_staff_id } } })
+      await transaction.auditlog.create({ data: { user_id: authorization.session.user.id, action: 'INVENTORY_MOVEMENT_RECORDED', module: 'INVENTORY', details: { inventoryId: id, movementId: movement.movement.id, movementType: movement.movement.direction, movementAction: movement.movement.movement_type, quantityChanged: movement.movement.quantity, previousQuantity: movement.movement.quantity_before, newQuantity: movement.movement.quantity_after, vendorName: movement.movement.source_vendor, reason: movement.movement.reason, staffId: movement.movement.assigned_staff_id, projectId: movement.movement.project_id } } })
 
       return movement
     }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable })
@@ -134,9 +136,19 @@ export async function PATCH(request, routeContext) {
     return Response.json({ success: true, data: normalizeInventoryItem(result.item), message: dictionary.messages.adjusted })
   } catch (error) {
     if (error?.message === 'INVENTORY_NOT_FOUND') return errorResponse(dictionary.messages.notFound, 404, 'INVENTORY_NOT_FOUND')
-    if (error?.message === 'INSUFFICIENT_STOCK') return errorResponse(dictionary.messages.insufficientStock, 409, 'INSUFFICIENT_STOCK')
+
+    if (error?.message === 'INSUFFICIENT_STOCK') {
+      const current = await prisma.inventory.findUnique({ where: { id }, select: { quantity_in_stock: true } })
+
+      const message = dictionary.messages.insufficientStock
+        .replace('{quantity}', String(Math.abs(Number.parseInt(validation.output.quantity_delta, 10))))
+        .replace('{currentStock}', String(current?.quantity_in_stock ?? 0))
+
+      return errorResponse(message, 409, 'INSUFFICIENT_STOCK')
+    }
+
     if (error?.message === 'STATUS_NOT_CONFIGURED') return errorResponse(dictionary.validation.statusMissing, 409, 'STATUS_NOT_CONFIGURED')
-    if (['INVALID_INVENTORY_MOVEMENT', 'INVALID_INVENTORY_QUANTITY', 'INVALID_INVENTORY_MOVEMENT_DATE', 'BACKDATED_INVENTORY_MOVEMENT', 'INVALID_INVENTORY_REASON', 'INVALID_INVENTORY_ASSIGNEE'].includes(error?.message)) return errorResponse(dictionary.validation.adjustmentInvalid, 400, error.message)
+    if (['INVALID_INVENTORY_MOVEMENT', 'INVALID_INVENTORY_QUANTITY', 'INVALID_INVENTORY_MOVEMENT_DATE', 'BACKDATED_INVENTORY_MOVEMENT', 'INVALID_INVENTORY_REASON', 'INVALID_INVENTORY_ASSIGNEE', 'INVALID_INVENTORY_PROJECT'].includes(error?.message)) return errorResponse(dictionary.validation.adjustmentInvalid, 400, error.message)
 
     return errorResponse(dictionary.messages.operationFailed, 500, 'INVENTORY_ADJUST_FAILED')
   }

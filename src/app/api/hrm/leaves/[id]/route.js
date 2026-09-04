@@ -89,13 +89,13 @@ export async function PUT(request, routeContext) {
         },
         select: { id: true }
       }),
-      prisma.option.findFirst({ where: { id: validation.output.leave_type_id, category: 'LEAVE_TYPE', is_active: true }, select: { id: true, is_paid_leave: true } })
+      prisma.option.findFirst({ where: { id: validation.output.leave_type_id, category: 'LEAVE_TYPE', is_active: true }, select: { id: true } })
     ])
 
     if (!staff) return responseError(dictionary.messages.staffNotFound, 404, 'STAFF_NOT_FOUND')
     if (!leaveType && existing.leave_type_id !== validation.output.leave_type_id) return responseError(dictionary.messages.leaveTypeNotFound, 404, 'LEAVE_TYPE_NOT_FOUND')
 
-    const isPaid = canManage ? validation.output.is_paid : leaveType?.is_paid_leave ?? existing.is_paid
+    const isPaid = validation.output.is_paid
 
     const holidays = await getHolidayDateKeys(prisma, startDate, endDate)
     const fullDayCount = calculateLeaveWorkingDays(startDate, endDate, holidays)

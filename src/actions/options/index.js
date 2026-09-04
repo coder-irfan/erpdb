@@ -92,7 +92,6 @@ const normalizeOption = option => ({
   is_active: option.is_active,
   is_default: option.is_default,
   requires_invoice: option.requires_invoice,
-  is_paid_leave: option.is_paid_leave,
   allowed_days_per_year: option.allowed_days_per_year?.toFixed(1) ?? null,
   sort_order: option.sort_order,
   created_at: option.created_at.toISOString(),
@@ -323,7 +322,6 @@ export const createOption = async (payload = {}) => {
     description: payload.description ?? '',
     is_active: payload.is_active ?? true,
     requires_invoice: payload.requires_invoice ?? false,
-    is_paid_leave: payload.is_paid_leave ?? true,
     allowed_days_per_year: String(payload.allowed_days_per_year ?? '0')
   })
 
@@ -359,7 +357,6 @@ export const createOption = async (payload = {}) => {
           is_active: validation.output.is_active,
           requires_invoice:
             validation.output.category === 'INCOME_TYPE' ? validation.output.requires_invoice : false,
-          is_paid_leave: validation.output.category === 'LEAVE_TYPE' ? validation.output.is_paid_leave : true,
           allowed_days_per_year:
             validation.output.category === 'LEAVE_TYPE' ? validation.output.allowed_days_per_year : undefined
         }
@@ -402,7 +399,6 @@ export const updateOption = async (id, payload = {}) => {
     description: payload.description ?? '',
     is_active: payload.is_active ?? true,
     requires_invoice: payload.requires_invoice ?? false,
-    is_paid_leave: payload.is_paid_leave ?? true,
     allowed_days_per_year: String(payload.allowed_days_per_year ?? '0')
   })
 
@@ -449,7 +445,6 @@ export const updateOption = async (id, payload = {}) => {
           is_active: validation.output.is_active,
           requires_invoice:
             validation.output.category === 'INCOME_TYPE' ? validation.output.requires_invoice : false,
-          is_paid_leave: validation.output.category === 'LEAVE_TYPE' ? validation.output.is_paid_leave : true,
           allowed_days_per_year:
             validation.output.category === 'LEAVE_TYPE' ? validation.output.allowed_days_per_year : undefined
         }

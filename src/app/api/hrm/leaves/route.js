@@ -103,7 +103,7 @@ export async function GET(request) {
         }),
         prisma.hrmstaffleave.count({ where }),
         prisma.option.findMany({ where: { category: 'LEAVE_STATUS', is_active: true }, select: { id: true, label: true, value: true }, orderBy: { sort_order: 'asc' } }),
-        prisma.option.findMany({ where: { category: 'LEAVE_TYPE', is_active: true }, select: { id: true, label: true, value: true, is_paid_leave: true, allowed_days_per_year: true }, orderBy: { sort_order: 'asc' } }),
+        prisma.option.findMany({ where: { category: 'LEAVE_TYPE', is_active: true }, select: { id: true, label: true, value: true, allowed_days_per_year: true }, orderBy: { sort_order: 'asc' } }),
         prisma.hrmstaff.findMany({
           where: context.canManage
             ? { status: 'ACTIVE', contracts: activeStaffContractRelation({ startDate: todayDate }) }
@@ -202,7 +202,7 @@ export async function POST(request) {
         },
         select: { id: true }
       }),
-      prisma.option.findFirst({ where: { id: validation.output.leave_type_id, category: 'LEAVE_TYPE', is_active: true }, select: { id: true, is_paid_leave: true, allowed_days_per_year: true } }),
+      prisma.option.findFirst({ where: { id: validation.output.leave_type_id, category: 'LEAVE_TYPE', is_active: true }, select: { id: true, allowed_days_per_year: true } }),
       prisma.option.findFirst({ where: { category: 'LEAVE_STATUS', value: 'PENDING', is_active: true }, select: { id: true, value: true } }),
       context.canManage && payload?.status_id
         ? prisma.option.findFirst({ where: { id: payload.status_id, category: 'LEAVE_STATUS', value: { in: ['PENDING', 'APPROVED'] }, is_active: true }, select: { id: true, value: true } })
@@ -211,7 +211,7 @@ export async function POST(request) {
 
     const status = selectedStatus || pendingStatus
     const isApproved = status?.value === 'APPROVED'
-    const isPaid = context.canManage ? validation.output.is_paid : leaveType?.is_paid_leave
+    const isPaid = validation.output.is_paid
 
     if (!staff) return responseError(context.dictionary.messages.staffNotFound, 404, 'STAFF_NOT_FOUND')
     if (!leaveType) return responseError(context.dictionary.messages.leaveTypeNotFound, 404, 'LEAVE_TYPE_NOT_FOUND')

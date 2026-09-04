@@ -81,6 +81,7 @@ export async function POST(request, routeContext) {
     source_vendor: payload?.source_vendor || '',
     reason: payload?.reason || '',
     assigned_staff_id: payload?.assigned_staff_id || '',
+    project_id: payload?.project_id || '',
     notes: payload?.notes || ''
   })
 
@@ -116,6 +117,7 @@ export async function POST(request, routeContext) {
         sourceVendor: validation.output.source_vendor || null,
         reason: validation.output.reason || null,
         assignedStaffId: validation.output.assigned_staff_id || null,
+        projectId: validation.output.project_id || null,
         notes: validation.output.notes,
         createdByUserId: authorization.session.user.id
       })
@@ -147,8 +149,13 @@ export async function POST(request, routeContext) {
             destinationInventoryId: destination?.item.id || null,
             destinationMovementId: destination?.movement.id || null,
             referenceId,
-            movementType: validation.output.movement_type,
-            quantity: source.movement.quantity
+            movementType: source.movement.direction,
+            movementAction: source.movement.movement_type,
+            quantityChanged: source.movement.quantity,
+            reason: source.movement.reason,
+            staffId: source.movement.assigned_staff_id,
+            projectId: source.movement.project_id,
+            vendorName: source.movement.source_vendor
           }
         }
       })
@@ -172,9 +179,19 @@ export async function POST(request, routeContext) {
     }, { status: 201 })
   } catch (error) {
     if (error?.message === 'INVENTORY_NOT_FOUND') return errorResponse(dictionary.messages.notFound, 404, 'INVENTORY_NOT_FOUND')
-    if (error?.message === 'INSUFFICIENT_STOCK') return errorResponse(dictionary.messages.insufficientStock, 409, 'INSUFFICIENT_STOCK')
+
+    if (error?.message === 'INSUFFICIENT_STOCK') {
+      const current = await prisma.inventory.findUnique({ where: { id }, select: { quantity_in_stock: true } })
+
+      const message = dictionary.messages.insufficientStock
+        .replace('{quantity}', String(Math.abs(Number.parseInt(validation.output.quantity_delta, 10))))
+        .replace('{currentStock}', String(current?.quantity_in_stock ?? 0))
+
+      return errorResponse(message, 409, 'INSUFFICIENT_STOCK')
+    }
+
     if (error?.message === 'STATUS_NOT_CONFIGURED') return errorResponse(dictionary.validation.statusMissing, 409, 'STATUS_NOT_CONFIGURED')
-    if (['INVALID_INVENTORY_MOVEMENT', 'INVALID_INVENTORY_QUANTITY', 'INVALID_INVENTORY_MOVEMENT_DATE', 'BACKDATED_INVENTORY_MOVEMENT', 'INVALID_INVENTORY_REASON', 'INVALID_INVENTORY_ASSIGNEE'].includes(error?.message)) return errorResponse(dictionary.validation.adjustmentInvalid, 400, error.message)
+    if (['INVALID_INVENTORY_MOVEMENT', 'INVALID_INVENTORY_QUANTITY', 'INVALID_INVENTORY_MOVEMENT_DATE', 'BACKDATED_INVENTORY_MOVEMENT', 'INVALID_INVENTORY_REASON', 'INVALID_INVENTORY_ASSIGNEE', 'INVALID_INVENTORY_PROJECT'].includes(error?.message)) return errorResponse(dictionary.validation.adjustmentInvalid, 400, error.message)
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2003') return errorResponse(dictionary.validation.invalidRelation, 409, 'INVALID_RELATION')
 
     return errorResponse(dictionary.messages.operationFailed, 500, 'INVENTORY_MOVEMENT_FAILED')

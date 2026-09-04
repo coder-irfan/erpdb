@@ -18,7 +18,7 @@ import { createOption, updateOption } from '@/actions/options'
 import LoadingButtonContent from '@/components/LoadingButtonContent'
 import { createOptionSchema } from '@/schemas/options'
 
-const DEFAULT_VALUES = { name: '', category: 'LEAVE_TYPE', description: '', is_active: true, is_paid_leave: true, allowed_days_per_year: '18' }
+const DEFAULT_VALUES = { name: '', category: 'LEAVE_TYPE', description: '', is_active: true, allowed_days_per_year: '18' }
 
 const LeaveTypeForm = ({ open, option, locale, dictionary, onClose, onSaved }) => {
   const {
@@ -39,7 +39,6 @@ const LeaveTypeForm = ({ open, option, locale, dictionary, onClose, onSaved }) =
             category: 'LEAVE_TYPE',
             description: option.description || '',
             is_active: option.is_active,
-            is_paid_leave: option.is_paid_leave,
             allowed_days_per_year: option.allowed_days_per_year ?? '0'
           }
         : DEFAULT_VALUES
@@ -92,17 +91,6 @@ const LeaveTypeForm = ({ open, option, locale, dictionary, onClose, onSaved }) =
             helperText={errors.allowed_days_per_year?.message || 'Used to enforce each employee’s yearly balance.'}
             disabled={isSubmitting}
             {...register('allowed_days_per_year')}
-          />
-          <Controller
-            name='is_paid_leave'
-            control={control}
-            render={({ field }) => (
-              <FormControlLabel
-                control={<Switch checked={Boolean(field.value)} onChange={event => field.onChange(event.target.checked)} />}
-                label={field.value ? 'Paid leave by default' : 'Unpaid leave by default'}
-                disabled={isSubmitting}
-              />
-            )}
           />
           <CustomTextField
             fullWidth

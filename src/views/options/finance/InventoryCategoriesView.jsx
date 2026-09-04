@@ -10,6 +10,8 @@ import Dialog from '@mui/material/Dialog'
 import DialogActions from '@mui/material/DialogActions'
 import DialogContent from '@mui/material/DialogContent'
 import DialogTitle from '@mui/material/DialogTitle'
+import FormControlLabel from '@mui/material/FormControlLabel'
+import Switch from '@mui/material/Switch'
 import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
 import { toast } from 'sonner'
@@ -28,7 +30,7 @@ const TYPE_QUERY = 'type=INVENTORY_CATEGORY'
 const localeMap = { en: 'en-US', fa: 'fa-AF', ps: 'ps-AF' }
 
 const formatDate = (value, locale) => {
-  if (!value) return 'â€”'
+  if (!value) return '-'
 
   return new Intl.DateTimeFormat(localeMap[locale] || 'en-US', {
     year: 'numeric',
@@ -45,6 +47,7 @@ const InventoryCategoriesView = ({ locale, dictionary, canWrite, canDelete }) =>
   const [editing, setEditing] = useState(null)
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
+  const [isActive, setIsActive] = useState(true)
   const [nameError, setNameError] = useState('')
   const [saving, setSaving] = useState(false)
   const [busyId, setBusyId] = useState(null)
@@ -80,6 +83,7 @@ const InventoryCategoriesView = ({ locale, dictionary, canWrite, canDelete }) =>
     setEditing(option || null)
     setName(option?.label || '')
     setDescription(option?.description || '')
+    setIsActive(option?.is_active ?? true)
     setNameError('')
     setFormOpen(true)
   }
@@ -89,6 +93,7 @@ const InventoryCategoriesView = ({ locale, dictionary, canWrite, canDelete }) =>
 
     setFormOpen(false)
     setEditing(null)
+    setIsActive(true)
   }
 
   const submit = async () => {
@@ -102,7 +107,7 @@ const InventoryCategoriesView = ({ locale, dictionary, canWrite, canDelete }) =>
       const response = await fetch(`/api/options?${query}`, {
         method: editing ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, description, is_active: editing?.is_active ?? true, locale })
+        body: JSON.stringify({ name, description, is_active: isActive, locale })
       })
 
       const result = await response.json()
@@ -196,7 +201,7 @@ const InventoryCategoriesView = ({ locale, dictionary, canWrite, canDelete }) =>
         renderMobilePrimary={option => (
           <div className='min-is-0'>
             <Typography className='truncate font-medium'>{option.label}</Typography>
-            <Typography color='text.secondary' className='line-clamp-2'>{option.description || 'â€”'}</Typography>
+            <Typography color='text.secondary' className='line-clamp-2'>{option.description || '-'}</Typography>
           </div>
         )}
         renderMobileStatus={option => (
@@ -236,9 +241,9 @@ const InventoryCategoriesView = ({ locale, dictionary, canWrite, canDelete }) =>
                     <Typography className='font-medium'>{option.label}</Typography>
                   </td>
                   <td>
-                    <Tooltip title={option.description || 'â€”'}>
+                    <Tooltip title={option.description || '-'}>
                     <Typography color='text.secondary' className='max-is-[440px] truncate'>
-                      {option.description || 'â€”'}
+                      {option.description || '-'}
                     </Typography>
                     </Tooltip>
                   </td>
@@ -284,6 +289,17 @@ const InventoryCategoriesView = ({ locale, dictionary, canWrite, canDelete }) =>
             label={dictionary.categoryForm.description}
             value={description}
             onChange={event => setDescription(event.target.value)}
+            disabled={saving}
+          />
+          <FormControlLabel
+            control={
+              <Switch
+                color={isActive ? 'primary' : 'secondary'}
+                checked={isActive}
+                onChange={event => setIsActive(event.target.checked)}
+              />
+            }
+            label={isActive ? dictionary.categoryStatus.active : dictionary.categoryStatus.inactive}
             disabled={saving}
           />
         </DialogContent>

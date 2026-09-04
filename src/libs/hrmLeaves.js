@@ -32,7 +32,7 @@ export const leaveSelect = {
   created_at: true,
   updated_at: true,
   staff: { select: { id: true, first_name: true, last_name: true, position: true, email: true } },
-  leave_type: { select: { id: true, label: true, value: true, is_active: true, is_paid_leave: true, allowed_days_per_year: true } },
+  leave_type: { select: { id: true, label: true, value: true, is_active: true, allowed_days_per_year: true } },
   status: { select: { id: true, label: true, value: true, is_active: true } },
   approved_by: { select: { id: true, first_name: true, last_name: true, position: true } },
   approved_by_user: { select: { id: true, name: true, email: true } }
@@ -221,7 +221,7 @@ export const getLeaveBalance = async (client, { staffId, leaveTypeId, year, excl
   const [leaveType, holidays, leaves] = await Promise.all([
     client.option.findFirst({
       where: { id: leaveTypeId, category: 'LEAVE_TYPE' },
-      select: { id: true, is_paid_leave: true, allowed_days_per_year: true }
+      select: { id: true, allowed_days_per_year: true }
     }),
     getHolidayDateKeys(client, yearStart, yearEnd),
     client.hrmstaffleave.findMany({
@@ -270,8 +270,7 @@ export const getLeaveBalance = async (client, { staffId, leaveTypeId, year, excl
     allowed,
     taken,
     pending,
-    remaining: allowed == null ? null : Math.max(0, allowed - taken - pending),
-    isPaidDefault: leaveType.is_paid_leave
+    remaining: allowed == null ? null : Math.max(0, allowed - taken - pending)
   }
 }
 

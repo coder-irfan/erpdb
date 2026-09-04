@@ -226,7 +226,7 @@ const getExpenseReport = async ({ start, end, displayCurrency, reportRate }) => 
     summary: {
       operational_expense: money(usdToDisplay(totalUsd, displayCurrency, reportRate)),
       top_expense_category: topCategory,
-      approved_count: records.length,
+      approved_count: records.filter(record => ['APPROVED', 'PAID'].includes(record.approval_status)).length,
       pending_count: records.filter(record => record.approval_status === 'PENDING_APPROVAL').length,
       pending_expense: money(usdToDisplay(pendingUsd, displayCurrency, reportRate))
     },

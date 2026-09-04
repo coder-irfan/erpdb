@@ -247,12 +247,6 @@ const StaffLeaveDrawer = ({
             render={({ field }) => (
               <CustomTextField
                 {...field}
-                onChange={event => {
-                  field.onChange(event)
-                  const selected = leaveTypes.find(type => type.id === event.target.value)
-
-                  setValue('is_paid', selected?.is_paid_leave ?? false, { shouldDirty: true, shouldValidate: true })
-                }}
                 select
                 fullWidth
                 required

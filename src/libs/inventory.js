@@ -68,11 +68,13 @@ export const inventoryMovementSelect = {
   source_vendor: true,
   reason: true,
   assigned_staff_id: true,
+  project_id: true,
   notes: true,
   created_by_user_id: true,
   created_at: true,
   created_by_user: { select: { id: true, name: true, email: true } },
-  assigned_staff: { select: { id: true, first_name: true, last_name: true, position: true } }
+  assigned_staff: { select: { id: true, first_name: true, last_name: true, position: true } },
+  project: { select: { id: true, project_code: true, title: true, client: { select: { id: true, company_name: true } } } }
 }
 
 const numberString = (value, scale = 2) => value == null ? null : toFiniteNumber(value).toFixed(scale)
@@ -191,6 +193,7 @@ export const recordInventoryMovement = async (
     sourceVendor = null,
     reason = null,
     assignedStaffId = null,
+    projectId = null,
     notes = null,
     createdByUserId = null
   }
@@ -227,7 +230,7 @@ export const recordInventoryMovement = async (
     throw new Error('INVALID_INVENTORY_REASON')
   }
 
-  if (normalizedDirection === 'IN' && (normalizedReason || assignedStaffId)) {
+  if (normalizedDirection === 'IN' && (normalizedReason || assignedStaffId || projectId)) {
     throw new Error('INVALID_INVENTORY_REASON')
   }
 
@@ -239,6 +242,23 @@ export const recordInventoryMovement = async (
     if (!staff) throw new Error('INVALID_INVENTORY_ASSIGNEE')
   } else if (assignedStaffId) {
     throw new Error('INVALID_INVENTORY_ASSIGNEE')
+  }
+
+  if (normalizedReason === 'CLIENT_PROJECT') {
+    const project = projectId
+      ? await transaction.project.findFirst({
+          where: {
+            id: projectId,
+            client: { is: { status: 'ACTIVE' } },
+            status: { is: { value: { notIn: ['COMPLETED', 'CANCELLED'] } } }
+          },
+          select: { id: true }
+        })
+      : null
+
+    if (!project) throw new Error('INVALID_INVENTORY_PROJECT')
+  } else if (projectId) {
+    throw new Error('INVALID_INVENTORY_PROJECT')
   }
 
   const existingMovements = await transaction.inventorymovement.findMany({
@@ -300,6 +320,7 @@ export const recordInventoryMovement = async (
       source_vendor: normalizedDirection === 'IN' ? sanitizeHtml(sourceVendor || '', { allowedTags: [], allowedAttributes: {} }).trim() || null : null,
       reason: normalizedDirection === 'OUT' ? normalizedReason || null : null,
       assigned_staff_id: normalizedReason === 'ASSIGNED_TO_STAFF' ? assignedStaffId : null,
+      project_id: normalizedReason === 'CLIENT_PROJECT' ? projectId : null,
       notes: sanitizeHtml(notes || '', { allowedTags: [], allowedAttributes: {} }).trim() || null,
       created_by_user_id: createdByUserId
     },

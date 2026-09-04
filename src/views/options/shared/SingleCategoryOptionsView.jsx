@@ -50,6 +50,7 @@ const SingleCategoryOptionsView = ({
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
+  const [isActive, setIsActive] = useState(true)
   const [requiresInvoice, setRequiresInvoice] = useState(false)
   const [nameError, setNameError] = useState('')
   const [saving, setSaving] = useState(false)
@@ -76,6 +77,7 @@ const SingleCategoryOptionsView = ({
     setEditingOption(option || null)
     setName(option?.name || '')
     setDescription(option?.description || '')
+    setIsActive(option?.is_active ?? true)
     setRequiresInvoice(Boolean(option?.requires_invoice))
     setNameError('')
     setFormOpen(true)
@@ -85,6 +87,7 @@ const SingleCategoryOptionsView = ({
     if (saving) return
     setFormOpen(false)
     setEditingOption(null)
+    setIsActive(true)
   }
 
   const submit = async () => {
@@ -96,7 +99,7 @@ const SingleCategoryOptionsView = ({
         category,
         name,
         description,
-        is_active: editingOption?.is_active ?? true,
+        is_active: isActive,
         requires_invoice: category === 'INCOME_TYPE' && requiresInvoice,
         locale
       }
@@ -296,6 +299,17 @@ const SingleCategoryOptionsView = ({
             label={dictionary.fields.description}
             value={description}
             onChange={event => setDescription(event.target.value)}
+            disabled={saving}
+          />
+          <FormControlLabel
+            control={
+              <Switch
+                color={isActive ? 'primary' : 'secondary'}
+                checked={isActive}
+                onChange={event => setIsActive(event.target.checked)}
+              />
+            }
+            label={isActive ? managementDictionary.common.active : managementDictionary.common.inactive}
             disabled={saving}
           />
         </DialogContent>

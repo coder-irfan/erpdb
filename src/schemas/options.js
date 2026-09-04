@@ -44,7 +44,6 @@ export const createOptionSchema = customMessages => {
     description: optional(pipe(string(), trim(), maxLength(65000, messages.descriptionTooLong)), ''),
     is_active: optional(boolean(messages.statusInvalid), true),
     requires_invoice: optional(boolean(), false),
-    is_paid_leave: optional(boolean(), true),
     allowed_days_per_year: optional(
       pipe(string(), trim(), regex(LEAVE_ALLOWANCE_PATTERN, 'Enter yearly days in whole-day or half-day increments.')),
       '0'

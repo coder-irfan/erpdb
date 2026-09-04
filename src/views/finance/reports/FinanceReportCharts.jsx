@@ -21,6 +21,8 @@ const COLORS = [
   'var(--mui-palette-secondary-main)'
 ]
 
+const safeArray = value => Array.isArray(value) ? value.filter(item => item != null) : []
+
 const FinanceChartCard = ({ chart, title, dictionary, locale, currency, loading }) => {
   const theme = useTheme()
   const textPrimary = theme.palette.text.primary
@@ -28,22 +30,22 @@ const FinanceChartCard = ({ chart, title, dictionary, locale, currency, loading 
   const divider = theme.palette.divider
   const tooltipTheme = theme.palette.mode === 'dark' ? 'dark' : 'light'
   const isDistribution = chart?.type === 'donut'
-  const labels = (chart?.labels || []).map(label => dictionary.labels?.[label] || label)
+  const labels = safeArray(chart?.labels).map(label => dictionary.labels?.[label] || label || dictionary.empty)
 
   const formatter = value =>
     chart?.value_kind === 'quantity' ? toFiniteNumber(value).toLocaleString() : formatCurrency(value, locale, currency)
 
   const series = isDistribution
-    ? (chart?.series || []).map(toFiniteNumber)
-    : chart?.series
-      ? chart.series.map(item => ({
+    ? safeArray(chart?.series).map(toFiniteNumber)
+    : Array.isArray(chart?.series)
+      ? safeArray(chart.series).filter(item => typeof item === 'object').map(item => ({
           name: dictionary.series?.[item.key] || item.key,
-          data: (item.data || []).map(toFiniteNumber)
+          data: safeArray(item.data).map(toFiniteNumber)
         }))
       : [
           {
             name: dictionary.series?.[chart?.series_key] || chart?.series_key || '',
-            data: (chart?.values || []).map(toFiniteNumber)
+            data: safeArray(chart?.values).map(toFiniteNumber)
           }
         ]
 
@@ -118,7 +120,7 @@ const FinanceChartCard = ({ chart, title, dictionary, locale, currency, loading 
           labels: { colors: textSecondary }
         },
         xaxis: {
-          categories: chart?.categories || [],
+          categories: safeArray(chart?.categories),
           reversed: theme.direction === 'rtl',
           axisBorder: { color: divider },
           axisTicks: { show: false },
@@ -169,7 +171,7 @@ const FinanceChartCard = ({ chart, title, dictionary, locale, currency, loading 
 
 const FinanceReportCharts = ({ tab, charts, loading, dictionary, locale, currency }) => {
   const expectedCharts = tab === 'salary' ? ['trend'] : tab === 'loans' ? ['distribution'] : ['trend', 'distribution']
-  const items = expectedCharts.map(key => ({ key, chart: charts?.[key], title: dictionary.titles[tab][key] }))
+  const items = expectedCharts.map(key => ({ key, chart: charts?.[key], title: dictionary.titles?.[tab]?.[key] || key }))
 
   return (
     <div className={`grid grid-cols-1 gap-4 ${items.length > 1 ? 'xl:grid-cols-2' : ''}`}>

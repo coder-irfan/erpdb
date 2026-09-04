@@ -39,14 +39,17 @@ const InventoryFormDrawer = ({ open, item, options, locale, dictionary, onClose,
     resolver: valibotResolver(inventoryItemSchema(dictionary.validation)),
     defaultValues: defaults(options, item)
   })
+
   const unitPrice = useWatch({ control, name: 'unit_price' })
   const quantity = useWatch({ control, name: 'quantity_in_stock' })
   const currency = useWatch({ control, name: 'currency' })
   const exchangeRate = useWatch({ control, name: 'exchange_rate' })
+
   const usdUnitValue = useMemo(
     () => convertToBaseCurrency(unitPrice, currency, exchangeRate, 'USD'),
     [currency, exchangeRate, unitPrice]
   )
+
   const usdTotalValue = usdUnitValue * Number(quantity || 0)
 
   useEffect(() => {
@@ -59,6 +62,7 @@ const InventoryFormDrawer = ({ open, item, options, locale, dictionary, onClose,
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ...values, locale })
     })
+
     const result = await response.json()
 
     if (!response.ok || !result.success) return toast.error(result.error || dictionary.messages.operationFailed)
@@ -80,7 +84,7 @@ const InventoryFormDrawer = ({ open, item, options, locale, dictionary, onClose,
           value={controllerField.value ?? ''}
           label={label}
           error={Boolean(errors[name])}
-          helperText={errors[name]?.message}
+          helperText={errors[name]?.message || props.helperText}
         />
       )}
     />
@@ -141,10 +145,22 @@ const InventoryFormDrawer = ({ open, item, options, locale, dictionary, onClose,
               disabled: Boolean(item),
               inputProps: { min: 0, step: 1 }
             })}
-            {field('reorder_level', dictionary.fields.reorderLevel, {
-              type: 'number',
-              inputProps: { min: 0, step: 1 }
-            })}
+            <Controller
+              name='reorder_level'
+              control={control}
+              render={({ field: controllerField }) => (
+                <CustomTextField
+                  {...controllerField}
+                  fullWidth
+                  type='number'
+                  value={controllerField.value ?? ''}
+                  label={dictionary.fields.reorderLevel}
+                  inputProps={{ min: 0, step: 1 }}
+                  error={Boolean(errors.reorder_level)}
+                  helperText={errors.reorder_level?.message}
+                />
+              )}
+            />
             {field('unit_price', 'Purchase Unit Cost', { type: 'number', inputProps: { min: 0.01, step: '0.01' } })}
             <Controller
               name='currency'

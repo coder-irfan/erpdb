@@ -141,12 +141,12 @@ const FinanceReportsView = ({ locale, dictionary, setup, generatedAt }) => {
   )
 
   const categoryOptions = useMemo(
-    () => [...new Set((data.rows || []).map(row => rowCategory(reportType, row)).filter(Boolean))].sort(),
+    () => [...new Set((Array.isArray(data.rows) ? data.rows : []).filter(Boolean).map(row => rowCategory(reportType, row)).filter(Boolean))].sort(),
     [data.rows, reportType]
   )
 
   const rows = useMemo(() => {
-    const sourceRows = data.rows || []
+    const sourceRows = Array.isArray(data.rows) ? data.rows.filter(Boolean) : []
     const query = search.trim().toLocaleLowerCase(locale)
 
     return sourceRows.filter(row => {

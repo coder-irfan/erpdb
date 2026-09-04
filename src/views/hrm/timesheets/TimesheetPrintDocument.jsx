@@ -153,7 +153,7 @@ const TimesheetPrintDocument = ({ staff, records, period, reportDate, locale, di
                 orderedRecords.map((record, index) => (
                   <tr key={record.id} className={index % 2 ? 'bg-gray-50' : ''}>
                     {!isIndividual && (
-                      <td className='border border-gray-300 px-2 py-1'>{record.staff?.full_name || 'â€”'}</td>
+                      <td className='border border-gray-300 px-2 py-1'>{record.staff?.full_name || '-'}</td>
                     )}
                     <td className='border border-gray-300 px-2 py-1'>{record.date}</td>
                     <td className='border border-gray-300 px-2 py-1'>{formatDay(record.date, locale)}</td>

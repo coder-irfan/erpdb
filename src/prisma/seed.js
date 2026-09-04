@@ -287,10 +287,10 @@ const incomeTypes = [
 ]
 
 const leaveTypes = [
-  { label: 'Annual Leave', value: 'ANNUAL', sort_order: 1, is_paid_leave: true },
-  { label: 'Sick Leave', value: 'SICK', sort_order: 2, is_paid_leave: true },
-  { label: 'Casual Leave', value: 'CASUAL', sort_order: 3, is_paid_leave: true },
-  { label: 'Unpaid Leave', value: 'UNPAID', sort_order: 4, is_paid_leave: false }
+  { label: 'Annual Leave', value: 'ANNUAL', sort_order: 1 },
+  { label: 'Sick Leave', value: 'SICK', sort_order: 2 },
+  { label: 'Casual Leave', value: 'CASUAL', sort_order: 3 },
+  { label: 'Unpaid Leave', value: 'UNPAID', sort_order: 4 }
 ]
 
 const leaveStatuses = [

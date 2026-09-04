@@ -31,6 +31,7 @@ export const inventoryAdjustmentSchema = messages => object({
   source_vendor: optional(pipe(string(), trim(), maxLength(191, messages.descriptionTooLong)), ''),
   reason: optional(union([literal(''), picklist(['ASSIGNED_TO_STAFF', 'CLIENT_PROJECT', 'INTERNAL_OFFICE_USE', 'DAMAGED_LOST_WRITTEN_OFF'], messages.required)]), ''),
   assigned_staff_id: optional(pipe(string(), trim()), ''),
+  project_id: optional(pipe(string(), trim()), ''),
   notes: optional(pipe(string(), trim(), maxLength(2000, messages.descriptionTooLong)), '')
 })
 

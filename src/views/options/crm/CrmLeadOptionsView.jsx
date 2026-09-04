@@ -9,6 +9,8 @@ import Dialog from '@mui/material/Dialog'
 import DialogActions from '@mui/material/DialogActions'
 import DialogContent from '@mui/material/DialogContent'
 import DialogTitle from '@mui/material/DialogTitle'
+import FormControlLabel from '@mui/material/FormControlLabel'
+import Switch from '@mui/material/Switch'
 import Typography from '@mui/material/Typography'
 import { toast } from 'sonner'
 
@@ -39,6 +41,7 @@ const CrmLeadOptionsView = ({ initialData, canWrite, canDelete, locale, dictiona
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
+  const [isActive, setIsActive] = useState(true)
   const [nameError, setNameError] = useState('')
   const [loading, setLoading] = useState(false)
   const [busyId, setBusyId] = useState(null)
@@ -62,6 +65,7 @@ const CrmLeadOptionsView = ({ initialData, canWrite, canDelete, locale, dictiona
     setEditingOption(null)
     setName('')
     setDescription('')
+    setIsActive(true)
     setNameError('')
   }
 
@@ -70,6 +74,7 @@ const CrmLeadOptionsView = ({ initialData, canWrite, canDelete, locale, dictiona
     setEditingOption(null)
     setName('')
     setDescription('')
+    setIsActive(true)
     setNameError('')
   }
 
@@ -78,6 +83,7 @@ const CrmLeadOptionsView = ({ initialData, canWrite, canDelete, locale, dictiona
     setEditingOption(option)
     setName(option.name || '')
     setDescription(option.description || '')
+    setIsActive(option.is_active ?? true)
     setNameError('')
   }
 
@@ -95,7 +101,7 @@ const CrmLeadOptionsView = ({ initialData, canWrite, canDelete, locale, dictiona
         name,
         description,
         category,
-        is_active: editingOption?.is_active ?? true,
+        is_active: isActive,
         locale
       }
 
@@ -113,6 +119,7 @@ const CrmLeadOptionsView = ({ initialData, canWrite, canDelete, locale, dictiona
       setEditingOption(null)
       setName('')
       setDescription('')
+      setIsActive(true)
       setNameError('')
     } catch {
       toast.error(managementDictionary.messages.operationFailed)
@@ -205,7 +212,7 @@ const CrmLeadOptionsView = ({ initialData, canWrite, canDelete, locale, dictiona
             renderMobilePrimary={option => (
               <div className='min-is-0'>
                 <Typography className='truncate font-medium' color='text.primary'>{option.name}</Typography>
-                <Typography variant='body2' color='text.secondary' className='line-clamp-2'>{option.description || 'â€”'}</Typography>
+                <Typography variant='body2' color='text.secondary' className='line-clamp-2'>{option.description || '-'}</Typography>
               </div>
             )}
             renderMobileStatus={option => (
@@ -284,6 +291,17 @@ const CrmLeadOptionsView = ({ initialData, canWrite, canDelete, locale, dictiona
             label={dictionary.common.description}
             value={description}
             onChange={event => setDescription(event.target.value)}
+            disabled={loading}
+          />
+          <FormControlLabel
+            control={
+              <Switch
+                color={isActive ? 'primary' : 'secondary'}
+                checked={isActive}
+                onChange={event => setIsActive(event.target.checked)}
+              />
+            }
+            label={isActive ? dictionary.common.active : dictionary.common.inactive}
             disabled={loading}
           />
         </DialogContent>

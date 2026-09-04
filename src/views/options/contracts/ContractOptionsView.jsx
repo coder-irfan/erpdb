@@ -9,7 +9,9 @@ import Dialog from '@mui/material/Dialog'
 import DialogActions from '@mui/material/DialogActions'
 import DialogContent from '@mui/material/DialogContent'
 import DialogTitle from '@mui/material/DialogTitle'
+import FormControlLabel from '@mui/material/FormControlLabel'
 import IconButton from '@mui/material/IconButton'
+import Switch from '@mui/material/Switch'
 import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
 import { EditorContent, useEditor } from '@tiptap/react'
@@ -95,7 +97,7 @@ const LegalClauseEditor = ({ value, disabled, onChange }) => {
 }
 
 const OptionDescription = ({ option, mobile = false }) => {
-  if (!option.description) return <span>â€”</span>
+  if (!option.description) return <span>-</span>
   if (option.category !== 'CONTRACT_CLAUSE') return <span>{option.description}</span>
 
   return (
@@ -130,6 +132,7 @@ const ContractOptionsView = ({
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
+  const [isActive, setIsActive] = useState(true)
   const [nameError, setNameError] = useState('')
   const [loading, setLoading] = useState(false)
   const [busyId, setBusyId] = useState(null)
@@ -146,6 +149,7 @@ const ContractOptionsView = ({
     setEditingOption(null)
     setName('')
     setDescription('')
+    setIsActive(true)
     setNameError('')
   }
 
@@ -159,6 +163,7 @@ const ContractOptionsView = ({
     setEditingOption(option)
     setName(option.name || '')
     setDescription(option.description || '')
+    setIsActive(option.is_active ?? true)
     setNameError('')
   }
 
@@ -167,7 +172,7 @@ const ContractOptionsView = ({
     setLoading(true)
 
     try {
-      const payload = { name, description, category: formCategory, is_active: editingOption?.is_active ?? true, locale }
+      const payload = { name, description, category: formCategory, is_active: isActive, locale }
       const result = editingOption ? await updateOption(editingOption.id, payload) : await createOption(payload)
 
       if (!result.success) return toast.error(result.error)
@@ -223,7 +228,7 @@ const ContractOptionsView = ({
   )
 
   return (
-    <div className='grid grid-cols-1 gap-6 xl:grid-cols-2'>
+    <div className='grid grid-cols-1 gap-6'>
       {sections.map(section => (
         <Card key={section.category}>
           <div className='flex items-center justify-between gap-4 p-5'>
@@ -355,6 +360,17 @@ const ContractOptionsView = ({
               helperText={formCategory === 'CONTRACT_DURATION' ? dictionary.durationHint : undefined}
             />
           )}
+          <FormControlLabel
+            control={
+              <Switch
+                color={isActive ? 'primary' : 'secondary'}
+                checked={isActive}
+                onChange={event => setIsActive(event.target.checked)}
+              />
+            }
+            label={isActive ? dictionary.common.active : dictionary.common.inactive}
+            disabled={loading}
+          />
         </DialogContent>
         <DialogActions className='p-5'>
           <Button variant='tonal' color='secondary' disabled={loading} onClick={resetForm}>

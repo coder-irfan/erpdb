@@ -372,18 +372,18 @@ const StaffLeavesView = ({ locale, dictionary }) => {
             {
               id: 'duration',
               label: dictionary.table.duration,
-              render: leave => `${formatDate(leave.start_date, locale)} â€” ${formatDate(leave.end_date, locale)}`
+              render: leave => `${formatDate(leave.start_date, locale)} - ${formatDate(leave.end_date, locale)}`
             },
             {
               id: 'days',
               label: dictionary.table.duration,
               render: leave => dictionary.table.days.replace('{count}', leave.total_days)
             },
-            { id: 'reason', label: dictionary.table.reason, render: leave => leave.reason || 'â€”' },
+            { id: 'reason', label: dictionary.table.reason, render: leave => leave.reason || '-' },
             {
               id: 'approved-by',
               label: dictionary.table.approvedBy,
-              render: leave => leave.approved_by?.full_name || 'â€”'
+              render: leave => leave.approved_by?.full_name || '-'
             }
           ]}
           emptyState={{
@@ -471,7 +471,7 @@ const StaffLeavesView = ({ locale, dictionary }) => {
                             </Typography>
                           </Tooltip>
                         ) : (
-                          <Typography color='text.secondary'>â€”</Typography>
+                          <Typography color='text.secondary'>-</Typography>
                         )}
                       </td>
                       <td>
@@ -485,7 +485,7 @@ const StaffLeavesView = ({ locale, dictionary }) => {
                           )}
                         />
                       </td>
-                      <td>{leave.approved_by?.full_name || 'â€”'}</td>
+                      <td>{leave.approved_by?.full_name || '-'}</td>
                       <td className='text-end'>{renderLeaveActions(leave)}</td>
                     </tr>
                   ))
