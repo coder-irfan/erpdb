@@ -4,9 +4,11 @@ import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import Typography from '@mui/material/Typography'
 
-import { formatCurrency } from '@/utils/formatCurrency'
+import { useCurrency } from '@/contexts/CurrencyContext'
 
 const InventoryStatsCards = ({ summary, locale, dictionary }) => {
+  const { formatCurrency } = useCurrency()
+
   const cards = [
     {
       label: 'Total Inventory Value',

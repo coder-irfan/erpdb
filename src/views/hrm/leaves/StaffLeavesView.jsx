@@ -453,7 +453,7 @@ const StaffLeavesView = ({ locale, dictionary }) => {
                       <td>
                         <div className='min-is-[190px]'>
                           <Typography color='text.primary'>
-                            {formatDate(leave.start_date, locale)} â†’ {formatDate(leave.end_date, locale)}
+                            {formatDate(leave.start_date, locale)} {' \u2192 '} {formatDate(leave.end_date, locale)}
                           </Typography>
                           <Chip
                             size='small'

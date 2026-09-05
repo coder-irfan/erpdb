@@ -1,10 +1,15 @@
+'use client'
+
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import Typography from '@mui/material/Typography'
 
-import { formatCurrency, toFiniteNumber } from '@/utils/formatCurrency'
+import { useCurrency } from '@/contexts/CurrencyContext'
+import { toFiniteNumber } from '@/utils/formatCurrency'
 
 const StaffContractStatsCards = ({ summary, locale, currency, dictionary }) => {
+  const { formatCurrency } = useCurrency()
+
   const cards = [
     { key: 'active', label: dictionary.active, icon: 'tabler-file-check', classes: 'bg-successLighter text-success' },
     {

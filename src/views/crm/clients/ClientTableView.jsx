@@ -11,7 +11,7 @@ import EntityActionsMenu from '@/components/table/EntityActionsMenu'
 import TableEmptyStateRow from '@/components/table/TableEmptyStateRow'
 import TableSkeletonRows from '@/components/table/TableSkeletonRows'
 import ResponsiveDataTable from '@/components/tables/ResponsiveDataTable'
-import { formatCurrency } from '@/utils/formatCurrency'
+import { useCurrency } from '@/contexts/CurrencyContext'
 import { formatStatusLabel } from '@/utils/formatStatusLabel'
 
 import tableStyles from '@core/styles/table.module.css'
@@ -42,6 +42,8 @@ const ClientTableView = ({
   onStatusChange,
   onAdd
 }) => {
+  const { formatCurrency } = useCurrency()
+
   const renderActions = client => (
     <EntityActionsMenu
       locale={locale}

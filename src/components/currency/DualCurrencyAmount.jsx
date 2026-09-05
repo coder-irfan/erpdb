@@ -1,6 +1,6 @@
 'use client'
 
-import { SYSTEM_BASE_CURRENCY, convertAfnToUsd, formatCurrency, normalizeCurrency, normalizeToAfn, toFiniteNumber } from '@/utils/formatCurrency'
+import { SYSTEM_BASE_CURRENCY, normalizeCurrency, normalizeToAfn, toFiniteNumber } from '@/utils/formatCurrency'
 import { useCurrency } from '@/contexts/CurrencyContext'
 
 /**
@@ -18,28 +18,22 @@ const DualCurrencyAmount = ({
   primaryClassName = '',
   secondaryClassName = ''
 }) => {
-  const { currency: displayCurrency, exchangeRate: displayExchangeRate } = useCurrency()
+  const { currentCurrency: displayCurrency, formatCurrency } = useCurrency()
   const nativeCurrency = normalizeCurrency(currency)
 
   const baseAmount = amountBase == null
     ? normalizeToAfn(amount, nativeCurrency, exchangeRate)
     : toFiniteNumber(amountBase)
 
-  const displayAmount =
-    displayCurrency === 'USD' ? convertAfnToUsd(baseAmount, displayExchangeRate) : baseAmount
-
   const equivalentCurrency = displayCurrency === 'USD' ? 'AFN' : 'USD'
-
-  const equivalentAmount =
-    equivalentCurrency === 'USD' ? convertAfnToUsd(baseAmount, displayExchangeRate) : baseAmount
 
   return (
     <span className={`inline-flex flex-col ${className}`.trim()}>
       <span className={`whitespace-nowrap font-semibold ${primaryClassName}`.trim()}>
-        {formatCurrency(displayAmount, locale, displayCurrency)}
+        {formatCurrency(baseAmount, locale, SYSTEM_BASE_CURRENCY, displayCurrency)}
       </span>
       <span className={`whitespace-nowrap text-xs font-normal text-textSecondary ${secondaryClassName}`.trim()}>
-        ({formatCurrency(equivalentAmount, locale, equivalentCurrency)})
+        ({formatCurrency(baseAmount, locale, SYSTEM_BASE_CURRENCY, equivalentCurrency)})
       </span>
     </span>
   )

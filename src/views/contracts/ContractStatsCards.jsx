@@ -4,9 +4,12 @@ import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import Typography from '@mui/material/Typography'
 
-import { formatCurrency, toFiniteNumber } from '@/utils/formatCurrency'
+import { toFiniteNumber } from '@/utils/formatCurrency'
+import { useCurrency } from '@/contexts/CurrencyContext'
 
 const ContractStatsCards = ({ summary, locale, currency, dictionary, variant = 'default' }) => {
+  const { currentCurrency, formatCurrency } = useCurrency()
+
   const toneClasses = {
     success: 'bg-successLighter text-success',
     warning: 'bg-secondaryLighter text-secondary',
@@ -32,7 +35,7 @@ const ContractStatsCards = ({ summary, locale, currency, dictionary, variant = '
     {
       label: dictionary.kpis.monthlyRevenue,
       value: formatCurrency(toFiniteNumber(summary.monthlyActiveRevenue), locale, currency),
-      detail: dictionary.kpis.baseCurrency.replace('{currency}', currency),
+      detail: dictionary.kpis.baseCurrency.replace('{currency}', currentCurrency),
       icon: 'tabler-cash',
       tone: 'primary'
     },
@@ -70,7 +73,7 @@ const ContractStatsCards = ({ summary, locale, currency, dictionary, variant = '
     {
       label: 'Total Value',
       value: formatCurrency(toFiniteNumber(summary.totalValue), locale, currency),
-      detail: dictionary.kpis.baseCurrency.replace('{currency}', currency),
+      detail: dictionary.kpis.baseCurrency.replace('{currency}', currentCurrency),
       icon: 'tabler-cash',
       tone: 'info'
     }

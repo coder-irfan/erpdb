@@ -1,13 +1,28 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
-const useActiveCountries = (enabled, fallback = []) => {
-  const [countries, setCountries] = useState(fallback)
+const EMPTY_COUNTRIES = []
+
+const getFallbackSignature = fallback => JSON.stringify(Array.isArray(fallback) ? fallback : EMPTY_COUNTRIES)
+
+const useActiveCountries = (enabled, fallback = EMPTY_COUNTRIES) => {
+  const fallbackCache = useRef({ signature: null, value: EMPTY_COUNTRIES })
+  const fallbackSignature = getFallbackSignature(fallback)
+
+  if (fallbackCache.current.signature !== fallbackSignature) {
+    fallbackCache.current = {
+      signature: fallbackSignature,
+      value: Array.isArray(fallback) ? fallback : EMPTY_COUNTRIES
+    }
+  }
+
+  const stableFallback = fallbackCache.current.value
+  const [countries, setCountries] = useState(stableFallback)
 
   useEffect(() => {
-    setCountries(fallback)
-  }, [fallback])
+    setCountries(stableFallback)
+  }, [stableFallback])
 
   useEffect(() => {
     if (!enabled) return
@@ -25,7 +40,7 @@ const useActiveCountries = (enabled, fallback = []) => {
 
         if (response.ok && result.success) setCountries(result.data.options || [])
       } catch (error) {
-        if (error.name !== 'AbortError') setCountries(fallback)
+        if (error.name !== 'AbortError') setCountries(stableFallback)
       }
     }
 
@@ -43,7 +58,7 @@ const useActiveCountries = (enabled, fallback = []) => {
       window.removeEventListener('focus', load)
       document.removeEventListener('visibilitychange', loadWhenVisible)
     }
-  }, [enabled, fallback])
+  }, [enabled, stableFallback])
 
   return countries
 }

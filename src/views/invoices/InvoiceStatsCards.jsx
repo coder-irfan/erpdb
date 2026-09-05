@@ -4,7 +4,8 @@ import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import Typography from '@mui/material/Typography'
 
-import { formatCurrency, toFiniteNumber } from '@/utils/formatCurrency'
+import { toFiniteNumber } from '@/utils/formatCurrency'
+import { useCurrency } from '@/contexts/CurrencyContext'
 
 const STYLES = {
   primary: 'bg-primaryLighter text-primary',
@@ -14,6 +15,8 @@ const STYLES = {
 }
 
 const InvoiceStatsCards = ({ summary, locale, currency, dictionary }) => {
+  const { formatCurrency } = useCurrency()
+
   const cards = [
     {
       label: dictionary.kpis.totalInvoiced,

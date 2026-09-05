@@ -35,6 +35,7 @@ import { getDashboardData } from '@/actions/dashboard'
 import UserAvatar from '@/components/common/UserAvatar'
 import DualCurrencyAmount from '@/components/currency/DualCurrencyAmount'
 import DashboardSkeleton from '@/views/dashboard/DashboardSkeleton'
+import { useCurrency } from '@/contexts/CurrencyContext'
 import { formatAfghanDate, formatAfghanTime, getAppLocale } from '@/utils/afghanDate'
 import { DASHBOARD_PERIOD_KEYS, DASHBOARD_PERIOD_OPTIONS, getDashboardPresetDates } from '@/utils/dashboardPeriod'
 import { formatCurrency } from '@/utils/formatCurrency'
@@ -547,11 +548,11 @@ const ContractExpiryCard = ({ items, dictionary, locale, formatters }) => (
   </Card>
 )
 
-const LoanCard = ({ urgent, dictionary, locale, currency }) => (
+const LoanCard = ({ urgent, dictionary, locale, formatMoney }) => (
   <Card className='border border-divider/70 shadow-sm'>
     <PanelHeader
       title={dictionary.urgent.loans}
-      subtitle={`${DASHBOARD_STATUS_LABELS[locale]?.staff || DASHBOARD_STATUS_LABELS.en.staff}: ${formatCurrency(urgent.loanTotals.staffReceivables, locale, currency)} · ${DASHBOARD_STATUS_LABELS[locale]?.corporate || DASHBOARD_STATUS_LABELS.en.corporate}: ${formatCurrency(urgent.loanTotals.corporateLiabilities, locale, currency)}`}
+      subtitle={`${DASHBOARD_STATUS_LABELS[locale]?.staff || DASHBOARD_STATUS_LABELS.en.staff}: ${formatMoney(urgent.loanTotals.staffReceivables, locale)} · ${DASHBOARD_STATUS_LABELS[locale]?.corporate || DASHBOARD_STATUS_LABELS.en.corporate}: ${formatMoney(urgent.loanTotals.corporateLiabilities, locale)}`}
     />
     {urgent.loans.length ? (
       <div className='divide-y divide-divider px-4 pb-2'>
@@ -606,9 +607,52 @@ const DashboardHome = ({ initialData, dictionary }) => {
 
   const requestId = useRef(0)
   const formatters = useFormatters(data.locale)
-  const currency = data.company.currency
-  const finance = data.finance
-  const pipeline = data.pipeline
+  const { currentCurrency: currency, convertCurrency, formatCurrency: formatMoney } = useCurrency()
+
+  const finance = useMemo(() => {
+    if (!data.finance) return null
+
+    const convert = value => convertCurrency(value, 'AFN')
+    const { kpis } = data.finance
+
+    return {
+      ...data.finance,
+      kpis: {
+        ...kpis,
+        netProfit: convert(kpis.netProfit),
+        revenue: convert(kpis.revenue),
+        pendingRevenue: convert(kpis.pendingRevenue),
+        expenses: convert(kpis.expenses),
+        netSparkline: kpis.netSparkline.map(convert),
+        revenueSparkline: kpis.revenueSparkline.map(convert),
+        expenseSparkline: kpis.expenseSparkline.map(convert)
+      },
+      cashFlow: data.finance.cashFlow.map(row => ({
+        ...row,
+        income: convert(row.income),
+        expense: convert(row.expense),
+        operatingExpense: convert(row.operatingExpense),
+        salary: convert(row.salary),
+        net: convert(row.net)
+      })),
+      incomeDistribution: data.finance.incomeDistribution.map(item => ({ ...item, value: convert(item.value) })),
+      expenseDistribution: data.finance.expenseDistribution.map(item => ({ ...item, value: convert(item.value) }))
+    }
+  }, [convertCurrency, data.finance])
+
+  const pipeline = useMemo(() => {
+    if (!data.pipeline) return null
+
+    const convert = value => convertCurrency(value, 'AFN')
+
+    return {
+      ...data.pipeline,
+      value: convert(data.pipeline.value),
+      sparkline: data.pipeline.sparkline.map(convert),
+      funnel: data.pipeline.funnel.map(item => ({ ...item, value: convert(item.value) }))
+    }
+  }, [convertCurrency, data.pipeline])
+
   const operations = data.operations
   const workforce = data.workforce
   const personal = data.personal
@@ -765,7 +809,7 @@ const DashboardHome = ({ initialData, dictionary }) => {
         {
           key: 'loan',
           title: dictionary.personal.loan,
-          value: formatCurrency(personal.loans.balance, data.locale, currency),
+          value: formatMoney(personal.loans.balance, data.locale),
           hint: replace(dictionary.personal.loanHint, { count: personal.loans.count }),
           series: [0, personal.loans.balance],
           color: 'warning',
@@ -904,7 +948,7 @@ const DashboardHome = ({ initialData, dictionary }) => {
               />
             )}
             {data.capabilities.loans && (
-              <LoanCard urgent={data.urgent} dictionary={dictionary} locale={data.locale} currency={currency} />
+              <LoanCard urgent={data.urgent} dictionary={dictionary} locale={data.locale} formatMoney={formatMoney} />
             )}
             {data.capabilities.inventory && <InventoryCard items={data.urgent.inventory} dictionary={dictionary} locale={data.locale} />}
           </div>

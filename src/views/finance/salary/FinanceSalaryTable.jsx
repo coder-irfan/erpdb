@@ -11,7 +11,8 @@ import EntityActionsMenu from '@/components/table/EntityActionsMenu'
 import TableEmptyStateRow from '@/components/table/TableEmptyStateRow'
 import TableSkeletonRows from '@/components/table/TableSkeletonRows'
 import ResponsiveDataTable from '@/components/tables/ResponsiveDataTable'
-import { formatCurrency, toFiniteNumber } from '@/utils/formatCurrency'
+import { useCurrency } from '@/contexts/CurrencyContext'
+import { toFiniteNumber } from '@/utils/formatCurrency'
 
 import tableStyles from '@core/styles/table.module.css'
 
@@ -44,6 +45,8 @@ const FinanceSalaryTable = ({
   onPay,
   onDelete
 }) => {
+  const { formatCurrency } = useCurrency()
+
   const renderActions = salary => (
     <EntityActionsMenu
       moreActionsLabel={dictionary.table.actions}

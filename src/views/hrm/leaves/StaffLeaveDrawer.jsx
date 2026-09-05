@@ -353,7 +353,7 @@ const StaffLeaveDrawer = ({
                 {balance.allowed == null
                   ? 'Yearly allowance is not configured for this leave type.'
                   : isPaid
-                    ? `Allowed: ${balance.allowed} / Taken: ${balance.taken} / Pending: ${balance.pending} → ${projectedPending} / Remaining: ${balance.remaining} → ${projectedRemaining} days`
+                    ? `Allowed: ${balance.allowed} / Taken: ${balance.taken} / Pending: ${balance.pending} \u2192 ${projectedPending} / Remaining: ${balance.remaining} \u2192 ${projectedRemaining} days`
                     : `Allowed: ${balance.allowed} / Taken: ${balance.taken} / Pending: ${balance.pending} / Remaining: ${balance.remaining}`}
               </Typography>
               {!isPaid && (

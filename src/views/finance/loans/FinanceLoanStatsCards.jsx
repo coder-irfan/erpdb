@@ -5,7 +5,7 @@ import CardContent from '@mui/material/CardContent'
 import Skeleton from '@mui/material/Skeleton'
 import Typography from '@mui/material/Typography'
 
-import { formatCurrency } from '@/utils/formatCurrency'
+import { useCurrency } from '@/contexts/CurrencyContext'
 
 const STAFF_CARDS = [
   {
@@ -72,6 +72,7 @@ const CORPORATE_CARDS = [
 ]
 
 const FinanceLoanStatsCards = ({ summary, loanType, locale, loading }) => {
+  const { formatCurrency } = useCurrency()
   const cards = loanType === 'CORPORATE' ? CORPORATE_CARDS : STAFF_CARDS
 
   return (

@@ -128,7 +128,7 @@ const OthersContractTableView = ({
           {
             id: 'duration',
             label: 'Contract Duration',
-            render: contract => `${toDateInputValue(contract.start_date)} → ${toDateInputValue(contract.end_date)}`
+            render: contract => `${toDateInputValue(contract.start_date)} \u2192 ${toDateInputValue(contract.end_date)}`
           },
           {
             id: 'amount',
@@ -233,7 +233,7 @@ const OthersContractTableView = ({
                       <td>
                         <div className='min-is-[190px]'>
                           <Typography variant='body2' className='whitespace-nowrap font-medium'>
-                            {toDateInputValue(contract.start_date)} → {toDateInputValue(contract.end_date)}
+                            {toDateInputValue(contract.start_date)} {' \u2192 '} {toDateInputValue(contract.end_date)}
                           </Typography>
                           <Chip
                             size='small'

@@ -25,7 +25,8 @@ import TableSkeletonRows from '@/components/table/TableSkeletonRows'
 import TableFiltersPopover from '@/components/table/TableFiltersPopover'
 import NativeDateTimeInput from '@/components/inputs/NativeDateTimeInput'
 import ResponsiveDataTable from '@/components/tables/ResponsiveDataTable'
-import { formatCurrency, toFiniteNumber } from '@/utils/formatCurrency'
+import { useCurrency } from '@/contexts/CurrencyContext'
+import { formatCurrency as formatNativeCurrency, toFiniteNumber } from '@/utils/formatCurrency'
 import { formatStatusLabel } from '@/utils/formatStatusLabel'
 import { EMPTY_TABLE_CELL } from '@/libs/tableCell'
 import ContractFormDrawer from '@/views/contracts/ContractFormDrawer'
@@ -98,6 +99,7 @@ const HrmReportsView = ({
   const [archiveTarget, setArchiveTarget] = useState(null)
   const [actionBusy, setActionBusy] = useState(false)
   const requestIdRef = useRef(0)
+  const { formatCurrency } = useCurrency()
 
   const formatDate = useCallback(
     value =>
@@ -129,7 +131,10 @@ const HrmReportsView = ({
     [locale]
   )
 
-  const currency = useCallback(value => formatCurrency(toFiniteNumber(value), locale, REPORT_BASE_CURRENCY), [locale])
+  const currency = useCallback(
+    value => formatCurrency(toFiniteNumber(value), locale, REPORT_BASE_CURRENCY),
+    [formatCurrency, locale]
+  )
 
   const loadReport = useCallback(async () => {
     if (!startDate || !endDate || startDate > endDate) {
@@ -537,7 +542,7 @@ const HrmReportsView = ({
       </Typography>
       {row.original_currency !== REPORT_BASE_CURRENCY && (
         <Typography variant='caption' color='text.secondary' className='whitespace-nowrap'>
-          {formatCurrency(row[originalKey], locale, row.original_currency)}
+          {formatNativeCurrency(row[originalKey], locale, row.original_currency)}
         </Typography>
       )}
     </div>

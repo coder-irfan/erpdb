@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 
 import Button from '@mui/material/Button'
 import ClickAwayListener from '@mui/material/ClickAwayListener'
@@ -24,18 +24,31 @@ const CurrencyDropdown = () => {
   const [tooltipOpen, setTooltipOpen] = useState(false)
   const anchorRef = useRef(null)
   const { settings } = useSettings()
-  const { currency, exchangeRate, setCurrency } = useCurrency()
-  const selected = CURRENCIES[currency]
+  const { currentCurrency, exchangeRate, setCurrency } = useCurrency()
+  const selected = CURRENCIES[currentCurrency]
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     setOpen(false)
     setTooltipOpen(false)
-  }
+  }, [])
 
-  const handleCurrencyChange = nextCurrency => {
-    setCurrency(nextCurrency)
-    handleClose()
-  }
+  const handleToggle = useCallback(() => setOpen(current => !current), [])
+
+  const handleCurrencyChange = useCallback(
+    nextCurrency => {
+      if (nextCurrency !== currentCurrency) setCurrency(nextCurrency)
+
+      handleClose()
+    },
+    [currentCurrency, handleClose, setCurrency]
+  )
+
+  const handleMenuKeyDown = useCallback(
+    event => {
+      if (event.key === 'Escape') handleClose()
+    },
+    [handleClose]
+  )
 
   return (
     <>
@@ -49,7 +62,7 @@ const CurrencyDropdown = () => {
           ref={anchorRef}
           aria-haspopup='menu'
           aria-expanded={open}
-          onClick={() => setOpen(current => !current)}
+          onClick={handleToggle}
           className='min-is-0 whitespace-nowrap px-2 text-textPrimary sm:px-2.5'
           startIcon={<i className='tabler-currency-exchange text-base' />}
         >
@@ -69,11 +82,11 @@ const CurrencyDropdown = () => {
           <Fade {...TransitionProps} style={{ transformOrigin: placement === 'bottom-end' ? 'left top' : 'right top' }}>
             <Paper className={`topbar-dropdown ${settings.skin === 'bordered' ? 'border shadow-none' : 'shadow-lg'}`}>
               <ClickAwayListener onClickAway={handleClose}>
-                <MenuList onKeyDown={handleClose} aria-label='Display currency'>
+                <MenuList onKeyDown={handleMenuKeyDown} aria-label='Display currency'>
                   {Object.entries(CURRENCIES).map(([code, option]) => (
                     <MenuItem
                       key={code}
-                      selected={currency === code}
+                      selected={currentCurrency === code}
                       className='gap-3'
                       onClick={() => handleCurrencyChange(code)}
                     >
@@ -81,7 +94,9 @@ const CurrencyDropdown = () => {
                         {option.symbol}
                       </span>
                       <span>{option.label}</span>
-                      {code === 'USD' && <span className='ms-auto text-xs text-textSecondary'>1 = {exchangeRate} AFN</span>}
+                      {code === 'USD' && (
+                        <span className='ms-auto text-xs text-textSecondary'>1 = {exchangeRate} AFN</span>
+                      )}
                     </MenuItem>
                   ))}
                 </MenuList>

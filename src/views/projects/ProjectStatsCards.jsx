@@ -4,9 +4,11 @@ import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import Typography from '@mui/material/Typography'
 
-import { formatCurrency } from '@/utils/formatCurrency'
+import { useCurrency } from '@/contexts/CurrencyContext'
 
 const ProjectStatsCards = ({ summary, locale, currency, dictionary }) => {
+  const { currentCurrency, formatCurrency } = useCurrency()
+
   const cards = [
     {
       title: dictionary.metrics.active,
@@ -18,7 +20,7 @@ const ProjectStatsCards = ({ summary, locale, currency, dictionary }) => {
     {
       title: dictionary.metrics.budget,
       value: formatCurrency(summary.amountBase, locale, currency),
-      hint: dictionary.metrics.budgetHint.replace('{currency}', currency),
+      hint: dictionary.metrics.budgetHint.replace('{currency}', currentCurrency),
       icon: 'tabler-wallet',
       iconClass: 'bg-successLighter text-success'
     },

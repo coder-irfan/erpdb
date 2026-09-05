@@ -12,7 +12,7 @@ import TableEmptyStateRow from '@/components/table/TableEmptyStateRow'
 import TableSkeletonRows from '@/components/table/TableSkeletonRows'
 import ResponsiveDataTable from '@/components/tables/ResponsiveDataTable'
 import { toDateInputValue } from '@/utils/contractDuration'
-import { formatCurrency } from '@/utils/formatCurrency'
+import { useCurrency } from '@/contexts/CurrencyContext'
 
 import tableStyles from '@core/styles/table.module.css'
 
@@ -52,6 +52,8 @@ const FinanceIncomeTable = ({
   onDelete,
   onAdd
 }) => {
+  const { formatCurrency } = useCurrency()
+
   const today = new Date()
 
   today.setHours(0, 0, 0, 0)

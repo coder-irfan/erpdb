@@ -2,7 +2,12 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 
-import { normalizeCurrency, toFiniteNumber } from '@/utils/formatCurrency'
+import {
+  convertToBaseCurrency,
+  formatCurrency as formatMoney,
+  normalizeCurrency,
+  toFiniteNumber
+} from '@/utils/formatCurrency'
 
 const CURRENCY_PREFERENCE_KEY = 'services-dashboard.display-currency'
 
@@ -10,25 +15,50 @@ const CurrencyContext = createContext(null)
 
 export const CurrencyProvider = ({ children, initialCurrency = 'AFN', exchangeRate = 65 }) => {
   const defaultCurrency = normalizeCurrency(initialCurrency)
-  const [currency, setCurrency] = useState(defaultCurrency)
+  const [currentCurrency, setCurrentCurrency] = useState(defaultCurrency)
   const normalizedExchangeRate = toFiniteNumber(exchangeRate) || 65
 
   useEffect(() => {
     const savedCurrency = window.localStorage.getItem(CURRENCY_PREFERENCE_KEY)
 
-    if (savedCurrency) setCurrency(normalizeCurrency(savedCurrency))
+    if (savedCurrency) {
+      const normalizedCurrency = normalizeCurrency(savedCurrency)
+
+      setCurrentCurrency(current => (current === normalizedCurrency ? current : normalizedCurrency))
+    }
   }, [])
 
   const selectCurrency = useCallback(nextCurrency => {
     const normalizedCurrency = normalizeCurrency(nextCurrency)
 
-    setCurrency(normalizedCurrency)
+    setCurrentCurrency(current => (current === normalizedCurrency ? current : normalizedCurrency))
     window.localStorage.setItem(CURRENCY_PREFERENCE_KEY, normalizedCurrency)
   }, [])
 
+  const convertCurrency = useCallback(
+    (amount, sourceCurrency = 'AFN', targetCurrency = currentCurrency) =>
+      convertToBaseCurrency(amount, sourceCurrency, normalizedExchangeRate, targetCurrency),
+    [currentCurrency, normalizedExchangeRate]
+  )
+
+  const formatCurrency = useCallback(
+    (amount, locale = 'en', sourceCurrency = 'AFN', targetCurrency = currentCurrency) =>
+      formatMoney(convertCurrency(amount, sourceCurrency, targetCurrency), locale, targetCurrency),
+    [convertCurrency, currentCurrency]
+  )
+
   const value = useMemo(
-    () => ({ currency, exchangeRate: normalizedExchangeRate, setCurrency: selectCurrency }),
-    [currency, normalizedExchangeRate, selectCurrency]
+    () => ({
+      currentCurrency,
+
+      // Kept as an alias while existing consumers migrate to the clearer name.
+      currency: currentCurrency,
+      exchangeRate: normalizedExchangeRate,
+      setCurrency: selectCurrency,
+      convertCurrency,
+      formatCurrency
+    }),
+    [convertCurrency, currentCurrency, formatCurrency, normalizedExchangeRate, selectCurrency]
   )
 
   return <CurrencyContext.Provider value={value}>{children}</CurrencyContext.Provider>

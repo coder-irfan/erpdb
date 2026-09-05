@@ -178,7 +178,7 @@ const FinanceLoanFormDrawer = ({ open, initialLoanType = 'STAFF', options, local
               {loanType === 'STAFF' ? 'Staff Loan & Salary Advance' : 'Corporate Debt & Liability'}
             </Typography>
             <Typography variant='body2' color='text.secondary'>
-              {loanType === 'STAFF' ? 'Company → employee receivable' : 'Lender → company payable'}
+              {loanType === 'STAFF' ? 'Company \u2192 employee receivable' : 'Lender \u2192 company payable'}
             </Typography>
           </div>
           {loanType === 'STAFF' ? (
