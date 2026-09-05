@@ -122,12 +122,18 @@ const AuditLogsView = ({ initialResult, initialError, locale, dictionary }) => {
       </Tooltip>
     ) : null
 
-  const mobileActions = item => canDelete ? (
-    <div className='flex items-center gap-1'>
-      <Checkbox size='small' checked={selectedIds.has(item.id)} onChange={() => toggleOne(item.id)} inputProps={{ 'aria-label': `${dictionary.action}: ${item.action}` }} />
-      {deleteButton(item)}
-    </div>
-  ) : null
+  const mobileActions = item =>
+    canDelete ? (
+      <div className='flex items-center gap-1'>
+        <Checkbox
+          size='small'
+          checked={selectedIds.has(item.id)}
+          onChange={() => toggleOne(item.id)}
+          inputProps={{ 'aria-label': `${dictionary.action}: ${item.action}` }}
+        />
+        {deleteButton(item)}
+      </div>
+    ) : null
 
   const allPageSelected = logs.length > 0 && logs.every(item => selectedIds.has(item.id))
   const somePageSelected = logs.some(item => selectedIds.has(item.id)) && !allPageSelected
@@ -203,7 +209,13 @@ const AuditLogsView = ({ initialResult, initialError, locale, dictionary }) => {
                 <tr>
                   {canDelete && (
                     <th className='w-12'>
-                      <Checkbox size='small' checked={allPageSelected} indeterminate={somePageSelected} onChange={toggleAll} inputProps={{ 'aria-label': dictionary.selectAll || 'Select all audit logs on this page' }} />
+                      <Checkbox
+                        size='small'
+                        checked={allPageSelected}
+                        indeterminate={somePageSelected}
+                        onChange={toggleAll}
+                        inputProps={{ 'aria-label': dictionary.selectAll || 'Select all audit logs on this page' }}
+                      />
                     </th>
                   )}
                   <th>{dictionary.action}</th>
@@ -229,11 +241,18 @@ const AuditLogsView = ({ initialResult, initialError, locale, dictionary }) => {
                     <tr key={item.id}>
                       {canDelete && (
                         <td>
-                          <Checkbox size='small' checked={selectedIds.has(item.id)} onChange={() => toggleOne(item.id)} inputProps={{ 'aria-label': `${dictionary.action}: ${item.action}` }} />
+                          <Checkbox
+                            size='small'
+                            checked={selectedIds.has(item.id)}
+                            onChange={() => toggleOne(item.id)}
+                            inputProps={{ 'aria-label': `${dictionary.action}: ${item.action}` }}
+                          />
                         </td>
                       )}
                       <td>
-                        <Typography className='font-medium'>{item.action.replaceAll('_', ' ')}</Typography>
+                        <Typography className='font-medium capitalize!'>
+                          {item.action.replaceAll('_', ' ').toLowerCase()}
+                        </Typography>
                       </td>
                       <td>{item.actor || dictionary.systemActor}</td>
                       <td>{item.module}</td>

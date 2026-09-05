@@ -16,6 +16,7 @@ import ReportStatsCards from '@/components/reports/ReportStatsCards'
 import DashboardTablePagination from '@/components/table/DashboardTablePagination'
 import TableFiltersPopover from '@/components/table/TableFiltersPopover'
 import NativeDateTimeInput from '@/components/inputs/NativeDateTimeInput'
+import { useCurrency } from '@/contexts/CurrencyContext'
 import { formatCurrency, toFiniteNumber } from '@/utils/formatCurrency'
 
 import FinanceReportCharts from './FinanceReportCharts'
@@ -75,13 +76,13 @@ const rowCategory = (tab, row) => {
 const FinanceReportsView = ({ locale, dictionary, setup, generatedAt }) => {
   const initialRange = getPresetRange('this_year')
   const initialCurrency = 'AFN'
+  const { currency: displayCurrency, exchangeRate, setCurrency } = useCurrency()
   const initialRate = String(toFiniteNumber(setup.usd_afn_exchange_rate) || 65)
   const [reportType, setReportType] = useState('income')
   const [datePreset, setDatePreset] = useState('this_year')
   const [startDate, setStartDate] = useState(initialRange.start)
   const [endDate, setEndDate] = useState(initialRange.end)
-  const [displayCurrency, setDisplayCurrency] = useState(initialCurrency)
-  const reportRate = initialRate
+  const reportRate = String(exchangeRate || initialRate)
   const [search, setSearch] = useState('')
   const [category, setCategory] = useState('')
   const [data, setData] = useState(EMPTY_REPORT)
@@ -429,7 +430,7 @@ const FinanceReportsView = ({ locale, dictionary, setup, generatedAt }) => {
                 label={dictionary.filters.currency}
                 value={displayCurrency}
                 onChange={event => {
-                  setDisplayCurrency(event.target.value)
+                  setCurrency(event.target.value)
                   setPage(0)
                 }}
                 className='is-full'
@@ -449,7 +450,7 @@ const FinanceReportsView = ({ locale, dictionary, setup, generatedAt }) => {
                     setStartDate(range.start)
                     setEndDate(range.end)
                     setCategory('')
-                    setDisplayCurrency(initialCurrency)
+                    setCurrency(initialCurrency)
                     setPage(0)
                   }}
                 >

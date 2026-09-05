@@ -65,7 +65,7 @@ const translations = {
       manager: 'Project Manager',
       status: 'Status',
       priority: 'Priority',
-      country: 'Country / Jurisdiction',
+      country: 'Country',
       area: 'Project Area',
       sponsor: 'Project Sponsor',
       estimatedHours: 'Estimated Hours',

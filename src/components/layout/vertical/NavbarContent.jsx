@@ -3,6 +3,7 @@
 import classnames from 'classnames'
 
 import LanguageDropdown from '@components/layout/shared/LanguageDropdown'
+import CurrencyDropdown from '@components/layout/shared/CurrencyDropdown'
 import ModeDropdown from '@components/layout/shared/ModeDropdown'
 import NotificationsDropdown from '@components/layout/shared/NotificationsDropdown'
 import NavSearch from '@components/layout/shared/search'
@@ -16,7 +17,7 @@ const NavbarContent = ({ dictionary }) => (
   <div
     className={classnames(
       verticalLayoutClasses.navbarContent,
-      'flex items-center justify-between gap-2 sm:gap-4 is-full'
+      'flex flex-wrap items-center justify-between gap-2 sm:flex-nowrap sm:gap-4 is-full'
     )}
   >
     <div className='flex items-center gap-1 sm:gap-2'>
@@ -25,8 +26,9 @@ const NavbarContent = ({ dictionary }) => (
       <LayoutToggle />
       <NavSearch dictionary={dictionary} />
     </div>
-    <div className='flex items-center'>
+    <div className='flex shrink-0 flex-wrap items-center justify-end gap-0.5'>
       <LanguageDropdown />
+      <CurrencyDropdown />
       <ModeDropdown />
       <NotificationsDropdown dictionary={dictionary?.notifications} />
       <UserDropdown dictionary={dictionary} />

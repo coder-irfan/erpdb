@@ -117,12 +117,15 @@ const ContractFormDrawer = ({
   const staffId = useWatch({ control, name: 'staff_id' })
   const configuredDurations = formOptions.options.CONTRACT_DURATION
   const countries = useActiveCountries(open, formOptions.options.COUNTRY || [])
+
   const countryOptions = useMemo(
-    () => contract?.country && !countries.some(option => option.id === contract.country.id)
-      ? [...countries, { ...contract.country, disabled: true }]
-      : countries,
+    () =>
+      contract?.country && !countries.some(option => option.id === contract.country.id)
+        ? [...countries, { ...contract.country, disabled: true }]
+        : countries,
     [contract, countries]
   )
+
   const durations = useMemo(() => configuredDurations || [], [configuredDurations])
   const durationHelperText = getContractDurationHelperText(startDate, endDate)
 
@@ -272,7 +275,11 @@ const ContractFormDrawer = ({
             }
           }}
         >
-          {!options.length && <MenuItem disabled value=''>No active countries/options available</MenuItem>}
+          {!options.length && (
+            <MenuItem disabled value=''>
+              No active countries/options available
+            </MenuItem>
+          )}
           {options.map(option => (
             <MenuItem disabled={option.disabled} key={option.id} value={option.id}>
               {option.label}
